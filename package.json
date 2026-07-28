@@ -1,0 +1,15 @@
+{
+  "name": "exally",
+  "version": "1.0.0",
+  "description": "Exally スイート(共通基盤: 課金/利用権・共有データ・きく + ハブ + 日次/期間台帳 + 横断集計)。アプリ本体は依存ゼロの静的HTML/JS。",
+  "scripts": {
+    "test": "node tests/run.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "0.27.3"
+  },
+  "devDependencies": {
+    "@supabase/supabase-js": "^2.110.8",
+    "jsdom": "^29.1.1"
+  }
+}
