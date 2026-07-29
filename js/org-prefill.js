@@ -83,6 +83,18 @@
     return n;
   }
 
+  // 条件が満たされるまで待つ（最大 ms ミリ秒）。満たされたら true、時間切れなら false。
+  function waitFor(cond, ms) {
+    return new Promise(function (res) {
+      if (cond()) return res(true);
+      var t0 = Date.now();
+      var id = setInterval(function () {
+        if (cond()) { clearInterval(id); res(true); }
+        else if (Date.now() - t0 > ms) { clearInterval(id); res(false); }
+      }, 100);
+    });
+  }
+
   // ★ログインが「使える状態になった時」に確実に受け取る★
   //   ページを開いた直後は、保存済みセッションの復元がまだ終わっていない。
   //   getUser()/getSession() を即座に呼ぶと null が返り、未ログイン扱いで終わってしまう
@@ -117,15 +129,21 @@
       var exists = ids.some(function (id) { return !!document.getElementById(id); });
       if (!exists) return;                                       // 発行者欄が無い画面＝対象外
       var w = window;
-      if (!(w.SUPA && w.SUPA.url && w.SUPA.key && w.supabase)) return;   // 接続設定なし＝何もしない
-      var sb;
-      try { sb = w.supabase.createClient(w.SUPA.url, w.SUPA.key); } catch (e) { return; }
-      whenSignedIn(sb, function (client) {                       // ★ログインが使えるようになってから読む
-        fetchOrg(client).then(function (org) {
-          if (!org) return;                                      // 未設定＝空のまま(勝手に埋めない)
-          var plan = planPrefill(pickOrgFields(org), readCurrent(ids));
-          var n = apply(plan);
-          if (n) notify(n);
+      if (!(w.SUPA && w.SUPA.url && w.SUPA.key)) return;          // 接続設定なし＝何もしない
+      // ★supabase-js が現れるのを待つ★
+      //   請求書/見積では statutory-hydrate.js が「後から」CDNを差し込む作りなので、
+      //   ここが動く時点では window.supabase がまだ無い(実機で特定した本当の原因)。
+      waitFor(function () { return !!w.supabase; }, 8000).then(function (ok) {
+        if (!ok) return;                                          // 8秒来なければ諦める(請求書は今まで通り使える)
+        var sb;
+        try { sb = w.supabase.createClient(w.SUPA.url, w.SUPA.key); } catch (e) { return; }
+        whenSignedIn(sb, function (client) {                      // ログインが使えるようになってから読む
+          fetchOrg(client).then(function (org) {
+            if (!org) return;                                     // 未設定＝空のまま(勝手に埋めない)
+            var plan = planPrefill(pickOrgFields(org), readCurrent(ids));
+            var n = apply(plan);
+            if (n) notify(n);
+          });
         });
       });
     }
