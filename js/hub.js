@@ -346,7 +346,7 @@
         + '<span class="x-m">' + (x.basis ? yen(v) : b.rows + '件') + '</span></div>'
         + (x.basis ? '<div class="x-bar"><i style="width:' + (b.bar * 100).toFixed(1) + '%"></i></div>' : '')
         + '<div class="x-months">' + x.months.map(function (m, i) {
-            var h = maxMo > 0 ? Math.round((b.byMonth[m] / maxMo) * 22) : 0;
+            var h = maxMo > 0 ? Math.round((b.byMonth[m] / maxMo) * 28) : 0;
             return '<span class="x-mo" title="' + m + ' ' + yen(b.byMonth[m]) + '">'
               + '<i style="height:' + h + 'px"></i><span>' + esc(moLabel[i]) + '</span></span>';
           }).join('') + '</div>'

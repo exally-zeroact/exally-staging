@@ -215,9 +215,10 @@ button, input, select { font-family: inherit; font-size: 16px; } /* 16px=iOSで�
 .x-bar { height: 8px; background: #E4F1EA; border-radius: 999px; overflow: hidden; margin: 7px 0 6px; }
 .x-bar > i { display: block; height: 100%; background: #52B788; border-radius: 999px; }
 /* 月の推移=小さな棒を横に並べるだけ(散布図や折れ線は作らない) */
-.x-months { display: flex; gap: 4px; align-items: flex-end; height: 30px; }
+.x-months { display: flex; gap: 4px; align-items: flex-end; height: 38px; }
 .x-mo { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 3px; min-width: 0; }
-.x-mo > i { display: block; width: 100%; background: #A9DCC2; border-radius: 3px 3px 0 0; min-height: 2px; }
+/* 縦棒に見えるよう細く(幅100%だと横帯になって高さの差が読めない=実機で確認) */
+.x-mo > i { display: block; width: 58%; max-width: 26px; background: #A9DCC2; border-radius: 3px 3px 0 0; min-height: 2px; }
 .x-mo > span { font-size: 9px; color: #B7CFC3; white-space: nowrap; }
 .x-total { display: flex; align-items: baseline; padding: 13px 2px; border-top: 2px solid #3D9E72; font-weight: 700; }
 .x-total .x-m { font-size: 15px; }
