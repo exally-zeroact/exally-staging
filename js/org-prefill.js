@@ -84,14 +84,22 @@
   }
 
   // pay_org を読む（未ログイン・未設定・通信失敗はすべて「何もしない」）
-  function fetchOrg() {
+  //  ★getUser() ではなく getSession() を使う★
+  //    getUser() はサーバへ問い合わせるため、ページを開いた直後は
+  //    セッション復元が終わっておらず null が返ることがある(実機で踏んだ: 部品は載っているのに埋まらない)。
+  //    getSession() は保存済みセッションを見るので、開いた直後でも取れる。
+  //    それでも取れない時に備えて、少し待って1回だけやり直す。
+  function fetchOrg(retry) {
     try {
       var w = window;
       if (!(w.SUPA && w.SUPA.url && w.SUPA.key && w.supabase)) return Promise.resolve(null);
       var sb = w.supabase.createClient(w.SUPA.url, w.SUPA.key);
-      return sb.auth.getUser().then(function (r) {
-        var uid = r && r.data && r.data.user && r.data.user.id;
-        if (!uid) return null;                                  // 未ログイン＝何もしない
+      return sb.auth.getSession().then(function (r) {
+        var uid = r && r.data && r.data.session && r.data.session.user && r.data.session.user.id;
+        if (!uid) {
+          if (retry) return null;                               // 2回目も駄目＝未ログイン。何もしない
+          return new Promise(function (res) { setTimeout(res, 700); }).then(function () { return fetchOrg(true); });
+        }
         return sb.from('pay_org').select('data').maybeSingle().then(function (q) {
           if (q && q.error) return null;
           return (q && q.data && q.data.data) || null;
