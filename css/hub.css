@@ -13,7 +13,7 @@ body {
 button, input, select { font-family: inherit; font-size: 16px; } /* 16px=iOSで拡大されない */
 
 /* ── 全体 ── */
-.app { max-width: 720px; margin: 0 auto; min-height: 100vh; padding-bottom: 76px; }
+.app { max-width: 720px; margin: 0 auto; min-height: 100vh; padding-bottom: 96px; } /* 下部タブ(59px)に操作ボタンが隠れないだけの余白 */
 
 /* ── ヘッダー ── */
 .hd {
