@@ -12,6 +12,25 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@500&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css?v=69c28ab6">
+<script>/* exally-selfupdate — 普通のURLで開くだけで必ず最新が載るようにする。
+   GitHub Pages は HTML も max-age=600 で配る＝10分間ふるいHTMLが返り、そこに書かれた古い ?v= の
+   JS/CSSを読み続ける(?v= はJS/CSSには効くが、HTML自体の鮮度には効かない)。
+   そこで起動時に自分のHTMLだけ no-store で取り直し、版が違えば一度だけ自動で読み直す。
+   ★利用者に ?t= などを付けさせない(それは道具側の都合)。 */
+(function(){try{
+  var el=document.querySelector('link[rel="stylesheet"][href*="hub.css?v="]');
+  var m=el&&el.getAttribute('href').match(/?v=([0-9a-f]{8})/); if(!m) return;
+  var mine=m[1];
+  if(sessionStorage.getItem('exally_v')===mine) return;              // 同じ版で二度読み直さない(ループ防止)
+  fetch(location.pathname+'?_='+Date.now(),{cache:'no-store'})
+    .then(function(r){return r.ok?r.text():null;})
+    .then(function(html){
+      if(!html) return;
+      var mm=html.match(/hub.css?v=([0-9a-f]{8})/);
+      if(mm&&mm[1]!==mine){ sessionStorage.setItem('exally_v',mm[1]); location.replace(location.pathname+'?v='+mm[1]); }
+      else sessionStorage.setItem('exally_v',mine);
+    }).catch(function(){});
+}catch(e){}})();</script>
 </head>
 <body>
 
