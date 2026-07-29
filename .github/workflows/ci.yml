@@ -1,0 +1,25 @@
+name: CI
+
+# exally-staging は本番exallyのミラー(テスト環境)。
+#  ここで回すのは「キャッシュバスターの貼り忘れガード」だけ。
+#  機能テスト一式は本番リポジトリ(exally)のCIが持つ。
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Cache-buster stamp guard (貼り忘れ検知・コードより先に見る)
+        run: node scripts/stamp-build.mjs --check
+
+      - name: Stamp tool tests (ハッシュが決定論か=CRLF/LF・OS差でブレないか)
+        run: node tests/stamp.test.mjs
+
