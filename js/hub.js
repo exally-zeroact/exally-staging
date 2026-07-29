@@ -61,7 +61,7 @@
   function show(id) {
     $$('.scr').forEach(function (s) { s.classList.toggle('active', s.id === id); });
     $$('.bn-i').forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-go') === id); });
-    if (id === 'scr-agg') renderAgg();
+    if (id === 'scr-agg') { renderAgg(); renderCross(); }
     try { window.scrollTo(0, 0); } catch (e) {}
   }
   function showTab(tab) {
@@ -295,6 +295,71 @@
     body.innerHTML = html;
   }
 
+  /* ═══ E5 横断集計(事業のまとめ・月をまたいで見る) ═══ */
+  //  E1の集計は「1つの期間の事業別」。ここは「月をまたいだ推移」と「動いていない事業」を見せる。
+  //  ★支給額(円)は出さない(E2と同じ。決め方はKyuallyのpay-rule.jsが唯一の源)
+  function crossSpan() {
+    var n = parseInt(($('x-span') && $('x-span').value) || '3', 10);
+    var t = state.today || todayYmd();
+    var y = +t.slice(0, 4), m = +t.slice(5, 7);
+    var to = global.Aggregate.periodOf('thisMonth', t).to;      // 今月末
+    var sm = m - (n - 1), sy = y;
+    while (sm <= 0) { sm += 12; sy -= 1; }
+    return { from: sy + '-' + ('0' + sm).slice(-2) + '-01', to: to };
+  }
+  function renderCross() {
+    var body = $('x-body'); if (!body) return;
+    if (!SD) { body.innerHTML = ''; msg('x-msg', 'ログインしてください', true); return; }
+    var sp = crossSpan();
+    $('x-range').textContent = sp.from + ' 〜 ' + sp.to;
+    msg('x-msg', '読み込み中...');
+    SD.ledger.list({ from: sp.from, to: sp.to }).then(function (rows) {
+      msg('x-msg', '');
+      paintCross(global.CrossAgg.crossByBusiness({
+        businesses: state.businesses, employees: state.employees,
+        ledgerRows: rows, from: sp.from, to: sp.to
+      }));
+    }).catch(function (e) {
+      body.innerHTML = '';
+      msg('x-msg', (e && e.message) || '読み込めませんでした', true);   // 件数上限で切れた時も合計を出さない
+    });
+  }
+  function paintCross(x) {
+    var body = $('x-body');
+    if (!x.rows.length) {
+      body.innerHTML = '<div class="empty"><div class="empty-ic">🗂</div>'
+        + '<div class="empty-t">まだ事業がありません</div>'
+        + '<div class="empty-s">「共有データ ▸ 会社」で事業を足すと、ここに事業ごとのまとめが出ます。</div></div>';
+      return;
+    }
+    var moLabel = x.months.map(function (m) { return m.slice(5) + '月'; });
+    var maxMo = 0;
+    x.rows.forEach(function (b) { x.months.forEach(function (m) { if (b.byMonth[m] > maxMo) maxMo = b.byMonth[m]; }); });
+
+    var html = x.rows.map(function (b) {
+      var v = x.basis === 'amount' ? b.amount : b.sales;
+      var zero = b.rows === 0;
+      return '<div class="x-row' + (zero ? ' x-zero' : '') + '">'
+        + '<div class="x-h"><span class="x-b">' + esc(b.business) + '</span>'
+        + (x.basis && !zero ? '<span class="x-pct">' + b.pct + '%</span>' : '')
+        + (zero ? '<span class="x-zero-tag">記録なし</span>' : '')
+        + '<span class="x-m">' + (x.basis ? yen(v) : b.rows + '件') + '</span></div>'
+        + (x.basis ? '<div class="x-bar"><i style="width:' + (b.bar * 100).toFixed(1) + '%"></i></div>' : '')
+        + '<div class="x-months">' + x.months.map(function (m, i) {
+            var h = maxMo > 0 ? Math.round((b.byMonth[m] / maxMo) * 22) : 0;
+            return '<span class="x-mo" title="' + m + ' ' + yen(b.byMonth[m]) + '">'
+              + '<i style="height:' + h + 'px"></i><span>' + esc(moLabel[i]) + '</span></span>';
+          }).join('') + '</div>'
+        + '</div>';
+    }).join('');
+
+    html += '<div class="x-total"><span>合計</span><span class="x-m">'
+      + (x.basis ? yen(x.basis === 'amount' ? x.total.amount : x.total.sales) : x.total.rows + '件') + '</span></div>';
+    if (!x.basis) html += '<p class="note" style="margin-top:10px">金額の記録がないため、件数だけ出しています。</p>';
+    if (x.empty) html += '<p class="note" style="margin-top:10px">この期間の記録はまだありません（事業は登録済みのものを並べています）。</p>';
+    body.innerHTML = html;
+  }
+
   /* ═══ 読み込み ═══ */
   function loadPartners() {
     if (!SD) return Promise.resolve();
@@ -356,6 +421,8 @@
       if (state.aggKind !== 'custom') renderAgg();
     });
     $('agg-reload').addEventListener('click', renderAgg);
+    $('x-reload').addEventListener('click', renderCross);
+    $('x-span').addEventListener('change', renderCross);
   }
 
   /* ═══ 起動 ═══ */
@@ -390,6 +457,7 @@
   var Hub = {
     init: init, attach: attach, show: show, showTab: showTab,
     loadAll: loadAll, renderAgg: renderAgg, paintAgg: paintAgg,
+    renderCross: renderCross, paintCross: paintCross, crossSpan: crossSpan,
     state: state,
     _setSuiteData: function (sd) { SD = sd; },     // テスト用の差し込み口
     _toast: toast, _jpFail: jpFail,

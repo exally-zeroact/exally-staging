@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@500&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/hub.css?v=c28cc252">
+<link rel="stylesheet" href="css/hub.css?v=56ceb63b">
 </head>
 <body>
 
@@ -239,6 +239,23 @@
     <div class="agg-range" id="agg-range"></div>
     <div id="agg-body"></div>
     <div class="msg" id="agg-msg"></div>
+
+    <!-- ═══ E5 横断集計(事業別のまとめ・月をまたいで見る) ═══ -->
+    <div class="x-sec">
+      <h3 class="x-t">事業のまとめ</h3>
+      <p class="note">月をまたいで「どの事業でいくら」を見ます。動いていない事業も出します。</p>
+      <div class="agg-ctl" data-kiku="cross-period">
+        <select id="x-span">
+          <option value="3">直近3か月</option>
+          <option value="6">直近6か月</option>
+          <option value="12">直近12か月</option>
+        </select>
+        <button class="b2" type="button" id="x-reload">更新</button>
+      </div>
+      <div class="agg-range" id="x-range"></div>
+      <div id="x-body"></div>
+      <div class="msg" id="x-msg"></div>
+    </div>
   </section>
 
   <nav class="bn">
@@ -260,14 +277,15 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supa-config.js?v=c28cc252"></script>
-<script src="lib/access.js?v=c28cc252"></script>
-<script src="lib/aggregate.js?v=c28cc252"></script>
-<script src="lib/periods.js?v=c28cc252"></script>
-<script src="lib/ledger-agg.js?v=c28cc252"></script>
-<script src="js/suite-data.js?v=c28cc252"></script>
-<script src="js/hub.js?v=c28cc252"></script>
-<script src="js/ledger.js?v=c28cc252"></script>
-<script src="js/auth.js?v=c28cc252"></script>
+<script src="js/supa-config.js?v=56ceb63b"></script>
+<script src="lib/access.js?v=56ceb63b"></script>
+<script src="lib/aggregate.js?v=56ceb63b"></script>
+<script src="lib/periods.js?v=56ceb63b"></script>
+<script src="lib/ledger-agg.js?v=56ceb63b"></script>
+<script src="lib/cross-agg.js?v=56ceb63b"></script>
+<script src="js/suite-data.js?v=56ceb63b"></script>
+<script src="js/hub.js?v=56ceb63b"></script>
+<script src="js/ledger.js?v=56ceb63b"></script>
+<script src="js/auth.js?v=56ceb63b"></script>
 </body>
 </html>
