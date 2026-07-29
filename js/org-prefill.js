@@ -83,29 +83,31 @@
     return n;
   }
 
-  // pay_org を読む（未ログイン・未設定・通信失敗はすべて「何もしない」）
-  //  ★getUser() ではなく getSession() を使う★
-  //    getUser() はサーバへ問い合わせるため、ページを開いた直後は
-  //    セッション復元が終わっておらず null が返ることがある(実機で踏んだ: 部品は載っているのに埋まらない)。
-  //    getSession() は保存済みセッションを見るので、開いた直後でも取れる。
-  //    それでも取れない時に備えて、少し待って1回だけやり直す。
-  function fetchOrg(retry) {
-    try {
-      var w = window;
-      if (!(w.SUPA && w.SUPA.url && w.SUPA.key && w.supabase)) return Promise.resolve(null);
-      var sb = w.supabase.createClient(w.SUPA.url, w.SUPA.key);
-      return sb.auth.getSession().then(function (r) {
-        var uid = r && r.data && r.data.session && r.data.session.user && r.data.session.user.id;
-        if (!uid) {
-          if (retry) return null;                               // 2回目も駄目＝未ログイン。何もしない
-          return new Promise(function (res) { setTimeout(res, 700); }).then(function () { return fetchOrg(true); });
-        }
-        return sb.from('pay_org').select('data').maybeSingle().then(function (q) {
-          if (q && q.error) return null;
-          return (q && q.data && q.data.data) || null;
-        });
-      }).catch(function () { return null; });
-    } catch (e) { return Promise.resolve(null); }
+  // ★ログインが「使える状態になった時」に確実に受け取る★
+  //   ページを開いた直後は、保存済みセッションの復元がまだ終わっていない。
+  //   getUser()/getSession() を即座に呼ぶと null が返り、未ログイン扱いで終わってしまう
+  //   （実機で踏んだ: 手で呼べば埋まるのに、読み込み時だけ埋まらない）。
+  //   supabase-js は復元が済むと onAuthStateChange を必ず呼ぶので、そこで受け取る。
+  //   すでに復元済みなら getSession() が即座に返るので、両方を見て早い方を使う。
+  function whenSignedIn(sb, cb) {
+    var done = false;
+    function fire(session) {
+      if (done) return;
+      var uid = session && session.user && session.user.id;
+      if (!uid) return;
+      done = true;
+      cb(sb);
+    }
+    try { sb.auth.onAuthStateChange(function (_e, session) { fire(session); }); } catch (e) {}
+    sb.auth.getSession().then(function (r) { fire(r && r.data && r.data.session); }).catch(function () {});
+  }
+
+  // pay_org を読む（未設定・通信失敗は「何もしない」）
+  function fetchOrg(sb) {
+    return sb.from('pay_org').select('data').maybeSingle().then(function (q) {
+      if (q && q.error) return null;
+      return (q && q.data && q.data.data) || null;
+    }).catch(function () { return null; });
   }
 
   // 読み込むだけで効く。発行者欄がある画面(請求書/見積)でのみ動く。
@@ -114,11 +116,17 @@
       var ids = Object.keys(MAP).map(function (k) { return MAP[k]; });
       var exists = ids.some(function (id) { return !!document.getElementById(id); });
       if (!exists) return;                                       // 発行者欄が無い画面＝対象外
-      fetchOrg().then(function (org) {
-        if (!org) return;                                        // 未設定/未ログイン＝空のまま
-        var plan = planPrefill(pickOrgFields(org), readCurrent(ids));
-        var n = apply(plan);
-        if (n) notify(n);
+      var w = window;
+      if (!(w.SUPA && w.SUPA.url && w.SUPA.key && w.supabase)) return;   // 接続設定なし＝何もしない
+      var sb;
+      try { sb = w.supabase.createClient(w.SUPA.url, w.SUPA.key); } catch (e) { return; }
+      whenSignedIn(sb, function (client) {                       // ★ログインが使えるようになってから読む
+        fetchOrg(client).then(function (org) {
+          if (!org) return;                                      // 未設定＝空のまま(勝手に埋めない)
+          var plan = planPrefill(pickOrgFields(org), readCurrent(ids));
+          var n = apply(plan);
+          if (n) notify(n);
+        });
       });
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
