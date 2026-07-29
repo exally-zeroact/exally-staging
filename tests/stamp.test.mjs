@@ -65,10 +65,42 @@ test('★内容の「境目」がずれてもハッシュが変わる（連結�
   assert.notStrictEqual(buildHash(a), buildHash(b), '区切り無しで連結している＝別物が同じハッシュになる');
 });
 
-test('js/lib/css だけを見る（画像やHTMLが変わってもハッシュは動かない）', () => {
+test('JS/CSSだけを見る（画像やHTMLが変わってもハッシュは動かない）', () => {
   const a = mkRepo({ 'js/a.js': 'x', 'img/i.png': '1', 'hub.html': '<p>a' });
   const b = mkRepo({ 'js/a.js': 'x', 'img/i.png': '2', 'hub.html': '<p>b' });
   assert.strictEqual(buildHash(a), buildHash(b));
+});
+
+// ★グリッド(book.html)が読む exally-formula.js / hyperformula.full.min.js はリポジトリ直下に居る。
+//   ここが対象から漏れると「グリッドを直したのに端末が旧コードのまま」になる(2026-07-29 に対象へ追加)。
+test('★リポジトリ直下の .js もハッシュの対象（book.html の資産が漏れない）', () => {
+  const a = mkRepo({ 'js/a.js': 'x', 'exally-formula.js': 'v1' });
+  const b = mkRepo({ 'js/a.js': 'x', 'exally-formula.js': 'v2' });
+  assert.notStrictEqual(buildHash(a), buildHash(b), '直下の.jsを変えてもハッシュが動かない=版が上がらない');
+});
+
+test('★直下の .js にも ?v= が付く（book.html の書き換え）', () => {
+  const html = '<script src="hyperformula.full.min.js"></script>\n<script src="exally-formula.js"></script>';
+  const out = stampHtml(html, 'abc12345');
+  assert.ok(out.includes('src="hyperformula.full.min.js?v=abc12345"'), out);
+  assert.ok(out.includes('src="exally-formula.js?v=abc12345"'), out);
+});
+
+test('★直下パターンを足しても外部CDNには付かない（: を含むURLを除外）', () => {
+  const html = '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>\n'
+    + '<script src="//example.com/x.js"></script>\n'
+    + '<link href="https://fonts.googleapis.com/css2?family=DM+Mono" rel="stylesheet">';
+  assert.strictEqual(stampHtml(html, 'abc12345'), html);
+});
+
+test('★book.html の全ローカルアセットに ?v= が付いている', () => {
+  const p = path.join(ROOT, 'book.html');
+  if (!fs.existsSync(p)) return;
+  const html = fs.readFileSync(p, 'utf8');
+  const refs = [...html.matchAll(/<script src="([^"]+)"/g)].map(m => m[1]).filter(u => !/^(https?:)?\/\//.test(u));
+  assert.ok(refs.length >= 2, 'book.html のローカルscriptが少なすぎる(検査が空振り): ' + refs.length);
+  const noV = refs.filter(r => !/\?v=[0-9a-f]{8}$/.test(r));
+  assert.deepStrictEqual(noV, [], '?v= が無い参照: ' + noV.join(', '));
 });
 
 test('ディレクトリが無くても落ちない', () => {

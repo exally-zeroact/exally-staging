@@ -19,8 +19,12 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
-const ASSET_DIRS = ['js', 'lib', 'css'];
-const ASSET_RE = /((?:src|href)=")((?:js|lib|css)\/[^"?\s]+\.(?:js|css))(\?v=[^"]*)?(")/g;
+// '.' = リポジトリ直下の .js も対象。book.html が読む exally-formula.js / hyperformula.full.min.js 等が
+//   ここに居るため（グリッドをハブから使えるようにした 2026-07-29）。
+const ASSET_DIRS = ['.', 'js', 'lib', 'css'];
+// 対象 = ローカルの js|lib|css/ 配下、または直下の .js/.css。
+//   直下は「/ を含まない」ので https://... の外部CDNには当たらない。
+const ASSET_RE = /((?:src|href)=")((?:js|lib|css)\/[^"?\s]+\.(?:js|css)|[^"?\s\/:]+\.(?:js|css))(\?v=[^"]*)?(")/g;
 
 // 対象HTML = リポジトリ直下の *.html を全部（貼り忘れに強い。
 //   js/|lib/|css/ を参照していないHTMLは正規表現に当たらないので無害）
@@ -36,7 +40,9 @@ export function buildHash(root = ROOT) {
     const dir = path.join(root, d);
     if (!fs.existsSync(dir)) continue;
     for (const f of fs.readdirSync(dir).sort()) {
-      if (/\.(js|css)$/.test(f)) files.push(d + '/' + f); // ★relは常にスラッシュ=OS差でハッシュがブレない
+      if (!/\.(js|css)$/.test(f)) continue;
+      // ★relは常にスラッシュ=OS差でハッシュがブレない。直下('.')は 'name.js' の形にする
+      files.push(d === '.' ? f : d + '/' + f);
     }
   }
   files.sort();

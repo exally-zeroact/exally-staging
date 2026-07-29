@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@500&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/hub.css?v=69c28ab6">
+<link rel="stylesheet" href="css/hub.css?v=7512ecc1">
 
 </head>
 <body>
@@ -52,7 +52,14 @@
         <span class="tile-t">共有データ</span>
         <span class="tile-d">会社・人・取引先</span>
         <span class="tile-go">開く →</span>
-      </button>
+      </button>      <!-- 表(ブック)=自由に表を組みたい人向け。普段の入力は台帳(聞いて選ぶ)が本筋なので、位置づけを一言だけ添える -->
+      <a class="tile" id="tile-book" href="book.html">
+        <span class="tile-ic">📗</span>
+        <span class="tile-t">表（ブック）</span>
+        <span class="tile-d">自分で表を組みたい時に</span>
+        <span class="tile-go">開く →</span>
+      </a>
+
     </div>
   </section>
 
@@ -278,15 +285,15 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supa-config.js?v=69c28ab6"></script>
-<script src="lib/access.js?v=69c28ab6"></script>
-<script src="lib/aggregate.js?v=69c28ab6"></script>
-<script src="lib/periods.js?v=69c28ab6"></script>
-<script src="lib/ledger-agg.js?v=69c28ab6"></script>
-<script src="lib/cross-agg.js?v=69c28ab6"></script>
-<script src="js/suite-data.js?v=69c28ab6"></script>
-<script src="js/hub.js?v=69c28ab6"></script>
-<script src="js/ledger.js?v=69c28ab6"></script>
-<script src="js/auth.js?v=69c28ab6"></script>
+<script src="js/supa-config.js?v=7512ecc1"></script>
+<script src="lib/access.js?v=7512ecc1"></script>
+<script src="lib/aggregate.js?v=7512ecc1"></script>
+<script src="lib/periods.js?v=7512ecc1"></script>
+<script src="lib/ledger-agg.js?v=7512ecc1"></script>
+<script src="lib/cross-agg.js?v=7512ecc1"></script>
+<script src="js/suite-data.js?v=7512ecc1"></script>
+<script src="js/hub.js?v=7512ecc1"></script>
+<script src="js/ledger.js?v=7512ecc1"></script>
+<script src="js/auth.js?v=7512ecc1"></script>
 </body>
 </html>
