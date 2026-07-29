@@ -134,6 +134,21 @@ test('★hub.html の全ローカルアセットに ?v= が付いている（1�
   assert.deepStrictEqual(noV, [], '?v= が無い参照: ' + noV.join(', '));
 });
 
+/* ═══ HTMLに直接書いたスクリプトが壊れていないか ═══
+ * ★2026-07-29 に本番で踏んだ: node -e 経由で自己更新チェックを埋め込んだ時にバックスラッシュが
+ *   1段落ち、/\?v=/ が /?v=/ になって "Invalid regular expression: Nothing to repeat" が
+ *   本番のコンソールに出た。インラインスクリプトは jsdom の UIテストの読み込み対象外なので、ここで見る。
+ */
+test('★hub.html のインラインスクリプトが構文として通る(壊れた正規表現も捕まえる)', () => {
+  const html = fs.readFileSync(path.join(ROOT, 'hub.html'), 'utf8');
+  const inline = [...html.matchAll(/<script(?![^>]*\ssrc=)[^>]*>([\s\S]*?)<\/script>/g)].map(m => m[1]);
+  assert.ok(inline.length >= 1, 'インラインスクリプトが見つからない(検査が空振り)');
+  inline.forEach((code, i) => {
+    try { new Function(code); }                       // 構文エラー・不正な正規表現をここで捕まえる
+    catch (e) { throw new Error('インラインscript[' + i + '] が壊れている: ' + e.message + '\n       ' + code.slice(0, 160)); }
+  });
+});
+
 /* ═══ 実行 ═══ */
 let ng = 0;
 for (const t of T) {
