@@ -180,6 +180,41 @@ test('★hub.html のインラインスクリプトが構文として通る(壊�
   });
 });
 
+/* ═══ 撤去したものが表に出ていないか ═══
+ * 2026-07-30: chat.html に「売っていない月額プラン」と撤去済みの看板が載っていたので中身を撤去した。
+ * 同じものが戻ってこないよう見張る。
+ */
+// ★既知の残り（今回の指示の対象外なので触っていない。司さんの判断待ち）
+//   home.html     = 旧トップ。front door 切替のロールバック先として温存すると決めたので触らない
+//   template.html = 旧テンプレpage。ハブから辿れない
+//   どちらも front door ではないが「14日間無料トライアル中」のバッジが残っている。
+//   ここを空にしたら、この2つも検査対象に戻すこと。
+const KNOWN_LEFTOVER = ['home.html', 'template.html'];
+
+test('★売っていない課金や撤去した看板が、表に出るHTMLに残っていない', () => {
+  const NG = [/¥1,280/, /1日43円/, /Excel専門AI/, /Excel上級者/, /14日間無料/];
+  const bad = [];
+  for (const f of fs.readdirSync(ROOT).filter(x => /\.html$/i.test(x))) {
+    if (KNOWN_LEFTOVER.includes(f)) continue;
+    const s = fs.readFileSync(path.join(ROOT, f), 'utf8');
+    NG.forEach(re => { if (re.test(s)) bad.push(f + ' に ' + re.source); });
+  }
+  assert.deepStrictEqual(bad, [], '売っていない課金/撤去した看板が残っている: ' + bad.join(' / '));
+});
+
+test('★既知の残り(home/template)は「まだ残っている」ことを記録する（黙って忘れない）', () => {
+  const still = KNOWN_LEFTOVER.filter(f => {
+    const p = path.join(ROOT, f);
+    return fs.existsSync(p) && /14日間無料/.test(fs.readFileSync(p, 'utf8'));
+  });
+  if (still.length) {
+    console.log('       (未対応: ' + still.join(', ') + ' に「14日間無料」が残っています＝司さんの判断待ち)');
+  } else {
+    // 消えたなら除外リストから外すべき。気づけるように赤にする。
+    assert.fail('KNOWN_LEFTOVER の ' + KNOWN_LEFTOVER.join(', ') + ' は綺麗になりました。除外リストから外してください');
+  }
+});
+
 /* ═══ 実行 ═══ */
 let ng = 0;
 for (const t of T) {
