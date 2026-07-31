@@ -46,8 +46,8 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 
 | 区分 | 関数 | ケース | 式 | Exally | Excel真値 | 中身と期限 |
 |---|---|---|---|---|---|---|
-| B | SUMPRODUCT | SUMPRODUCT_cond | `=SUMPRODUCT((D1:D6="A")*E1:E6)` | #VALUE! | 1000 | ★条件×金額の定番形。SUMPRODUCT を自前実装しても直らないことを実測で確認した。原因は HyperFormula の配列演算((範囲=値)*範囲 が配列にならない)で、エンジン側の課題。SUMIFS で書けば正しく出る |
-| B | SUMPRODUCT | SUMPRODUCT_len | `=SUMPRODUCT(LEN(B1:B3))` | #VALUE! | 11 | 同上(配列を返す関数を引数に取る形) |
+| A | SUMPRODUCT | SUMPRODUCT_cond | `=SUMPRODUCT((D1:D6="A")*E1:E6)` | #VALUE! | 1000 | 条件×金額の定番形。★2026-08-01 実測で直し方が判明: buildEmpty に useArrayArithmetic:true を足すだけ(HF2.6.1のまま)。全247ケースで副作用ゼロ・入れ子監査38本のまま・往復14/14・hub-ui 65/65 を確認済み。検証はcommitせず作業ツリーは戻してある。実装GO待ち / 期限 2026-08-31 |
+| A | SUMPRODUCT | SUMPRODUCT_len | `=SUMPRODUCT(LEN(B1:B3))` | #VALUE! | 11 | 配列を返す関数を引数に取る形。★同上(useArrayArithmetic:true で 3→11 に直ることを実測) / 期限 2026-08-31 |
 
 ## 入力の型が保たれるか（別枠）
 
@@ -125,8 +125,8 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 | SUM | SUM_mixed_args | `=SUM(E1:E3,100,A1)` | 1700 | 1700 | 未検証 | 1700 | 一致 |  |
 | SUMPRODUCT | SUMPRODUCT_2range | `=SUMPRODUCT(C1:C6,E1:E6)` | 97100 | 97100 | 未検証 | 97100 | 一致 |  |
 | SUMPRODUCT | SUMPRODUCT_1range | `=SUMPRODUCT(E1:E6)` | 2100 | 2100 | 未検証 | 2100 | 一致 |  |
-| SUMPRODUCT | SUMPRODUCT_cond | `=SUMPRODUCT((D1:D6="A")*E1:E6)` | #VALUE! | 1000 | 未検証 | #VALUE! | 不一致(既知) | B |
-| SUMPRODUCT | SUMPRODUCT_len | `=SUMPRODUCT(LEN(B1:B3))` | #VALUE! | 11 | 未検証 | #VALUE! | 不一致(既知) | B |
+| SUMPRODUCT | SUMPRODUCT_cond | `=SUMPRODUCT((D1:D6="A")*E1:E6)` | #VALUE! | 1000 | 未検証 | #VALUE! | 不一致(既知) | A |
+| SUMPRODUCT | SUMPRODUCT_len | `=SUMPRODUCT(LEN(B1:B3))` | #VALUE! | 11 | 未検証 | #VALUE! | 不一致(既知) | A |
 | COUNT | COUNT_numbers | `=COUNT(A1:A8)` | 8 | 8 | 未検証 | 8 | 一致 |  |
 | COUNT | COUNT_mixed | `=COUNT(A1:B8)` | 8 | 8 | 未検証 | 8 | 一致 |  |
 | COUNT | COUNT_text_number | `=COUNT(B6:B7)` | 0 | 0 | 未検証 | 0 | 一致 |  |

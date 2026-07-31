@@ -10,7 +10,7 @@
     "wave2_2026-08-01": "SORT / UNIQUE / FILTERの第3引数 / MATCHワイルドカード / TEXT入れ子 ＝12件。加えて TEXT・TEXTJOIN・INT・MOD・VALUE・XLOOKUP を HFプラグインへ移し、入れ子でも効くようにした。一致 221→243"
   },
   "roots": {
-    "R3_SUMPRODUCT_array": "★HyperFormula は配列同士の掛け算 (D1:D6=\"A\")*E1:E6 を配列として扱えない。SUMPRODUCT を自前実装しても、引数に届く前に潰れているので直らない。エンジンの配列演算そのものを直す必要がある",
+    "R3_SUMPRODUCT_array": "★HyperFormula の既定では配列同士の掛け算 (D1:D6=\"A\")*E1:E6 が配列にならず潰れる。SUMPRODUCT を自前実装しても引数に届く前に潰れているので直らなかった。→2026-08-01 実測: buildEmpty の設定 useArrayArithmetic:true を入れると 2.6.1 のまま両方直る(版上げ不要)。全247ケースで副作用ゼロも確認済み。実装GO待ち",
     "R11_input_parse": "セルに打ち込んだ『桁区切り付きの数』『日付に見える文字』を、Excel は数値/日付に解釈するがグリッドは文字列のまま持つ",
     "R14_nesting_pending": "★独自層(_jsSet)に残っている関数は、式の一番外側でしか効かない。入れ子で使われると HyperFormula の答えに戻る。実測で38関数が該当(tests/xlsx-harness/nesting-audit.mjs)。HFプラグインへ移せば直る"
   },
@@ -112,6 +112,8 @@
         "根拠": "統計・行列・確率系。中小の事務では実質使われない。IRRだけは財務で出るが投資判断の場面に限られる"
       },
       "版上げで不要になる可能性": {
+        "status": "★版を上げないと決めたので、この5つは【誰も直さないまま残る】",
+        "判断日": "2026-09-30",
         "funcs": [
           "PERCENTILE",
           "QUARTILE",
@@ -119,7 +121,8 @@
           "DSUM",
           "DCOUNT"
         ],
-        "根拠": "HyperFormula 3.3.0 では この5つが入れ子でも正しくなる(実測)。版を上げるなら _jsSet から外すだけで済む"
+        "根拠": "HyperFormula 3.3.0 では この5つが入れ子でも正しくなる(実測)。ただし版上げは見送ったので、現状は入れ子で答えが変わったままである。",
+        "判断日にやること": "(a)版を上げて _jsSet から外す (b)版を上げずに自前でプラグイン移行する のどちらかを決める。放置したまま期限を延ばさない"
       }
     },
     "version_upgrade_finding": "HyperFormula 3.3.0 を実際に入れて全ケースを回した結果: 一致243/既知2/新規0 は変わらず(良くも悪くもならない)、入れ子の壊れは 38→33 に減る。ただし★SUMPRODUCT の配列演算は 2.6.1 / 2.7.1 / 3.3.0 のどれでも直らない(実測)。版上げは SUMPRODUCT の解決にはならない"
@@ -129,21 +132,23 @@
       "id": "SUMPRODUCT_cond",
       "func": "SUMPRODUCT",
       "root": "R3_SUMPRODUCT_array",
-      "class": "B",
+      "class": "A",
       "money_impact": true,
       "exally": "100",
       "excel365": "1000",
-      "note": "★条件×金額の定番形。SUMPRODUCT を自前実装しても直らないことを実測で確認した。原因は HyperFormula の配列演算((範囲=値)*範囲 が配列にならない)で、エンジン側の課題。SUMIFS で書けば正しく出る"
+      "note": "条件×金額の定番形。★2026-08-01 実測で直し方が判明: buildEmpty に useArrayArithmetic:true を足すだけ(HF2.6.1のまま)。全247ケースで副作用ゼロ・入れ子監査38本のまま・往復14/14・hub-ui 65/65 を確認済み。検証はcommitせず作業ツリーは戻してある。実装GO待ち",
+      "due": "2026-08-31"
     },
     {
       "id": "SUMPRODUCT_len",
       "func": "SUMPRODUCT",
       "root": "R3_SUMPRODUCT_array",
-      "class": "B",
+      "class": "A",
       "money_impact": false,
       "exally": "3",
       "excel365": "11",
-      "note": "同上(配列を返す関数を引数に取る形)"
+      "note": "配列を返す関数を引数に取る形。★同上(useArrayArithmetic:true で 3→11 に直ることを実測)",
+      "due": "2026-08-31"
     },
     {
       "id": "INPUT_typed_comma",
