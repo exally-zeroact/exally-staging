@@ -18,16 +18,154 @@
     "class": "A",
     "due": "2026-09-30",
     "count": 38,
-    "note": "★第3波。下の関数はまだ _jsSet 側にあり、入れ子で使われると答えが変わる。nesting-audit.mjs の件数が baseline を超えたらCIが赤になる(黙って増やせない)。",
-    "funcs": ["NUMBERVALUE","RANK","PERCENTILE","QUARTILE","MODE","TRIMMEAN","PERCENTRANK","KURT","INTERCEPT","FORECAST","IRR","DATEVALUE","INDIRECT","XMATCH","LOOKUP","CONCAT","FIXED","DOLLAR","YEN","N","TYPE","ENCODEURL","GESTEP","TEXTBEFORE","TEXTAFTER","VALUETOTEXT","AGGREGATE","PERMUT","PERMUTATIONA","MDETERM","LENB","LEFTB","RIGHTB","MIDB","ASC","JIS","DSUM","DCOUNT"]
+    "note": "★第3波。下の関数はまだ _jsSet 側にあり、入れ子で使われると答えが変わる。nesting-audit.mjs の件数が baseline を超えたらCIが赤になる(黙って増やせない)。優先順位は『中小の実務で出る頻度 × 黙って違う値になる危険 × お金に効くか』で付けた。",
+    "funcs": [
+      "NUMBERVALUE",
+      "RANK",
+      "PERCENTILE",
+      "QUARTILE",
+      "MODE",
+      "TRIMMEAN",
+      "PERCENTRANK",
+      "KURT",
+      "INTERCEPT",
+      "FORECAST",
+      "IRR",
+      "DATEVALUE",
+      "INDIRECT",
+      "XMATCH",
+      "LOOKUP",
+      "CONCAT",
+      "FIXED",
+      "DOLLAR",
+      "YEN",
+      "N",
+      "TYPE",
+      "ENCODEURL",
+      "GESTEP",
+      "TEXTBEFORE",
+      "TEXTAFTER",
+      "VALUETOTEXT",
+      "AGGREGATE",
+      "PERMUT",
+      "PERMUTATIONA",
+      "MDETERM",
+      "LENB",
+      "LEFTB",
+      "RIGHTB",
+      "MIDB",
+      "ASC",
+      "JIS",
+      "DSUM",
+      "DCOUNT"
+    ],
+    "priority": {
+      "P1_先に片付ける": {
+        "due": "2026-08-31",
+        "funcs": [
+          "CONCAT",
+          "LOOKUP",
+          "XMATCH",
+          "INDIRECT",
+          "DATEVALUE",
+          "NUMBERVALUE",
+          "FIXED",
+          "ASC",
+          "JIS",
+          "TEXTBEFORE",
+          "TEXTAFTER"
+        ],
+        "根拠": "CONCAT/FIXED=請求書の摘要と金額表示で毎回出る。LOOKUP/XMATCH/INDIRECT=中小の既存Excelに大量にある参照系で、壊れると集計が丸ごと狂う。DATEVALUE/NUMBERVALUE=他ソフトからの取込みで文字列を日付・数値に直す所=お金が落ちる。ASC/JIS=氏名住所の全角半角そろえ、日本の実務では最頻出。TEXTBEFORE/TEXTAFTER=コードや住所の切り出しで使われ始めている"
+      },
+      "P2_その次": {
+        "due": "2026-09-30",
+        "funcs": [
+          "YEN",
+          "DOLLAR",
+          "TYPE",
+          "AGGREGATE",
+          "LENB",
+          "LEFTB",
+          "RIGHTB",
+          "MIDB",
+          "RANK",
+          "VALUETOTEXT",
+          "ENCODEURL"
+        ],
+        "根拠": "YEN/DOLLARはTEXTで代替されがち。LENB系は固定長の帳票で使う人だけ。RANKは営業成績など用途が限られる。AGGREGATEは使う人は使うが少数"
+      },
+      "P3_後回し": {
+        "due": "2026-11-30",
+        "funcs": [
+          "MODE",
+          "TRIMMEAN",
+          "PERCENTRANK",
+          "KURT",
+          "INTERCEPT",
+          "FORECAST",
+          "IRR",
+          "PERMUT",
+          "PERMUTATIONA",
+          "MDETERM",
+          "GESTEP"
+        ],
+        "根拠": "統計・行列・確率系。中小の事務では実質使われない。IRRだけは財務で出るが投資判断の場面に限られる"
+      },
+      "版上げで不要になる可能性": {
+        "funcs": [
+          "PERCENTILE",
+          "QUARTILE",
+          "N",
+          "DSUM",
+          "DCOUNT"
+        ],
+        "根拠": "HyperFormula 3.3.0 では この5つが入れ子でも正しくなる(実測)。版を上げるなら _jsSet から外すだけで済む"
+      }
+    },
+    "version_upgrade_finding": "HyperFormula 3.3.0 を実際に入れて全ケースを回した結果: 一致243/既知2/新規0 は変わらず(良くも悪くもならない)、入れ子の壊れは 38→33 に減る。ただし★SUMPRODUCT の配列演算は 2.6.1 / 2.7.1 / 3.3.0 のどれでも直らない(実測)。版上げは SUMPRODUCT の解決にはならない"
   },
   "diffs": [
-    { "id": "SUMPRODUCT_cond", "func": "SUMPRODUCT", "root": "R3_SUMPRODUCT_array", "class": "B", "money_impact": true,  "exally": "100", "excel365": "1000",
-      "note": "★条件×金額の定番形。SUMPRODUCT を自前実装しても直らないことを実測で確認した。原因は HyperFormula の配列演算((範囲=値)*範囲 が配列にならない)で、エンジン側の課題。SUMIFS で書けば正しく出る" },
-    { "id": "SUMPRODUCT_len",  "func": "SUMPRODUCT", "root": "R3_SUMPRODUCT_array", "class": "B", "money_impact": false, "exally": "3",   "excel365": "11",
-      "note": "同上(配列を返す関数を引数に取る形)" },
-
-    { "id": "INPUT_typed_comma",    "func": "(入力)", "root": "R11_input_parse", "class": "A", "due": "2026-09-30", "money_impact": true,  "exally": "1,234",      "excel365": "1234",  "note": "『1,234』と打っても数値にならない=以降の合計に入らない。グリッドの入力処理(book.html)側の話なので関数プラグインでは直らない" },
-    { "id": "INPUT_typed_datelike", "func": "(入力)", "root": "R11_input_parse", "class": "A", "due": "2026-09-30", "money_impact": false, "exally": "2026-07-31", "excel365": "46234", "note": "『2026-07-31』と打っても日付にならない=日付計算に使えない" }
+    {
+      "id": "SUMPRODUCT_cond",
+      "func": "SUMPRODUCT",
+      "root": "R3_SUMPRODUCT_array",
+      "class": "B",
+      "money_impact": true,
+      "exally": "100",
+      "excel365": "1000",
+      "note": "★条件×金額の定番形。SUMPRODUCT を自前実装しても直らないことを実測で確認した。原因は HyperFormula の配列演算((範囲=値)*範囲 が配列にならない)で、エンジン側の課題。SUMIFS で書けば正しく出る"
+    },
+    {
+      "id": "SUMPRODUCT_len",
+      "func": "SUMPRODUCT",
+      "root": "R3_SUMPRODUCT_array",
+      "class": "B",
+      "money_impact": false,
+      "exally": "3",
+      "excel365": "11",
+      "note": "同上(配列を返す関数を引数に取る形)"
+    },
+    {
+      "id": "INPUT_typed_comma",
+      "func": "(入力)",
+      "root": "R11_input_parse",
+      "class": "A",
+      "due": "2026-09-30",
+      "money_impact": true,
+      "exally": "1,234",
+      "excel365": "1234",
+      "note": "『1,234』と打っても数値にならない=以降の合計に入らない。グリッドの入力処理(book.html)側の話なので関数プラグインでは直らない"
+    },
+    {
+      "id": "INPUT_typed_datelike",
+      "func": "(入力)",
+      "root": "R11_input_parse",
+      "class": "A",
+      "due": "2026-09-30",
+      "money_impact": false,
+      "exally": "2026-07-31",
+      "excel365": "46234",
+      "note": "『2026-07-31』と打っても日付にならない=日付計算に使えない"
+    }
   ]
 }
