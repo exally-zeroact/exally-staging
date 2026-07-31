@@ -157,7 +157,8 @@
     "class": "C",
     "root": "R15_no_spill",
     "note": "スピルの見た目(占有範囲)は今回の検証対象外。値は一致する。グリッドにスピルを入れるかは製品判断なので期限を切らない=区分C",
-    "measured": "Excelは ARR_mul_text / ARR_mul_num / ARR_if_cond で6セルを占める(golden の spillCells)。うちは1セル"
+    "measured": "Excelは ARR_mul_text / ARR_mul_num / ARR_if_cond で6セルを占める(golden の spillCells)。うちは1セル",
+    "design_input": "★P2でグリッドを作り直す時の設計入力として docs/SPEC_grid_p2_design_inputs.md §1 に明記済み(台帳の注記だけだと設計時に拾えないため)"
   },
   "file_roundtrip_known": {
     "class": "A",
@@ -171,6 +172,7 @@
       "ARR_count_mul"
     ],
     "measured": "ファイル経由: #VALUE! / #VALUE! / 0 / 0 ・ 画面(グリッド)とExcel直接入力: 97100 / 1000 / 6 / 6",
-    "next": "SheetJS CE で動的配列の印を書けるかを調べる。書けないなら xlsx-io 側で xl/worksheets/sheet1.xml に cm 属性とメタデータを足すか、書き出し時に配列式を検出して警告する"
+    "next": "SheetJS CE で動的配列の印を書けるかを調べる。書けないなら xlsx-io 側で xl/worksheets/sheet1.xml に cm 属性とメタデータを足すか、書き出し時に配列式を検出して警告する",
+    "design_input": "★同 docs/SPEC_grid_p2_design_inputs.md §3"
   }
 }
