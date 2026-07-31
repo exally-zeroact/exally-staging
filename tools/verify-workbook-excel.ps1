@@ -20,19 +20,30 @@ $wb = $xl.Workbooks.Open($xlsx)
 $xl.CalculateFullRebuild()
 $ws = $wb.Worksheets.Item(1)
 
-$ng = 0; $bad = @()
+# ★ファイル経由でだけ出る既知差(台帳 file_roundtrip_known)は分けて数える
+$knownPath = Join-Path $ROOT 'tests/xlsx-harness/known-diffs.json'
+$knownFile = @()
+if (Test-Path $knownPath) {
+  $kj = [System.IO.File]::ReadAllText($knownPath, [Text.Encoding]::UTF8) | ConvertFrom-Json
+  if ($kj.file_roundtrip_known) { $knownFile = @($kj.file_roundtrip_known.cases) }
+}
+$ng = 0; $bad = @(); $knownHit = @()
 for ($i = 0; $i -lt $order.Count; $i++) {
-  $id = $order[$i]
-  $v = $ws.Cells.Item($i + 1, 20).Value2
+  $id = $order[$i].id
+  $v = $ws.Range([string]$order[$i].addr).Value2
   $g = $gold.cases.PSObject.Properties[$id].Value
   $got = if ($null -eq $v) { '' } elseif ($v -is [bool]) { if ($v) { 'TRUE' } else { 'FALSE' } } else { [string]$v }
   $want = if ($g.t -eq 'b') { if ($g.v) { 'TRUE' } else { 'FALSE' } } elseif ($g.t -eq 'e') { [string]$g.code } else { [string]$g.v }
   $ok = if ($g.t -eq 'n' -or $g.t -eq 'e') { [math]::Abs([double]$got - [double]$want) -le 1e-9 } else { $got -eq $want }
-  if (-not $ok) { $ng++; if ($bad.Count -lt 20) { $bad += "  $id : ファイル経由=$got  golden=$want (t=$($g.t))" } }
+  if (-not $ok) {
+    if ($knownFile -contains $id) { $knownHit += "  $id : ファイル経由=$got  golden=$want" }
+    else { $ng++; if ($bad.Count -lt 20) { $bad += "  $id : ファイル経由=$got  golden=$want (t=$($g.t))" } }
+  }
 }
 $wb.Close($false); $xl.Quit()
 [System.Runtime.InteropServices.Marshal]::ReleaseComObject($xl) | Out-Null
 
-"書き出したブックを実Excelで再計算 -> 一致 $($order.Count - $ng) / $($order.Count)  (golden: $($goldPath.Name))"
+"書き出したブックを実Excelで再計算 -> 一致 $($order.Count - $ng - $knownHit.Count) / $($order.Count)  既知差 $($knownHit.Count) 件  (golden: $($goldPath.Name))"
+if ($knownHit.Count) { "既知差(SheetJSが動的配列の印を書けない・台帳 file_roundtrip_known に登録済み):"; $knownHit | ForEach-Object { $_ } }
 if ($ng) { "★不一致 $ng 件:"; $bad | ForEach-Object { $_ }; exit 1 }
 exit 0

@@ -25,7 +25,7 @@ $caseFiles = Get-ChildItem $CASEDIR -Filter '*.json' | Where-Object { $_.Name -n
 $allCases = @()
 foreach ($f in $caseFiles) {
   $j = ReadJson $f.FullName
-  foreach ($c in $j.cases) { $allCases += ,@($c.id, $c.f, [bool]$c.volatile) }
+  foreach ($c in $j.cases) { $allCases += ,@($c.id, $c.f, [bool]$c.volatile, [bool]$c.spill) }
 }
 Write-Host ("cases: {0} (files: {1})" -f $allCases.Count, $caseFiles.Count)
 
@@ -77,14 +77,22 @@ foreach ($p in $inputs.cells.PSObject.Properties) {
 $cases = [ordered]@{}
 $volatileSkipped = @()
 $row = 1
+$spillCol = 30                        # ★スピルする式は1本ずつ別の列(AD以降)に置く。
+                                      #   T列に並べると隣の行へ溢れて次の式を潰し、#SPILL! だらけになる。
 foreach ($c in $allCases) {
-  $id = $c[0]; $formula = $c[1]; $isVolatile = $c[2]
+  $id = $c[0]; $formula = $c[1]; $isVolatile = $c[2]; $isSpill = $c[3]
   if ($isVolatile) { $volatileSkipped += $id; continue }   # ★揮発性はgoldenに入れない
-  $cell = $ws.Cells.Item($row, 20)   # T列
-  $row++
+  if ($isSpill) { $cell = $ws.Cells.Item(1, $spillCol); $spillCol++ }
+  else          { $cell = $ws.Cells.Item($row, 20); $row++ }   # T列
   $rec = [ordered]@{ f = $formula }
   try {
-    $cell.Formula = [string]$formula
+    # ★.Formula2 で入れる(動的配列の解釈)。.Formula は旧来の解釈で、
+    #   配列を返す式に「暗黙の交差」が働き、置いた行によって答えが変わってしまう(実測):
+    #     .Formula  : =SUM(C1:C6*E1:E6) が row1で100 / row2で0 …(行依存のデタラメ)
+    #     .Formula2 : 97100(Excelの画面で人が入力した時と同じ)
+    #   配列でない式は両者で同じ。古いExcelには Formula2 が無いので、その時は Formula に落とす。
+    try   { $cell.Formula2 = [string]$formula }
+    catch { $cell.Formula  = [string]$formula }
     $v = $cell.Value2
     if ($null -eq $v) {
       $rec['t'] = 'z'; $rec['v'] = $null
@@ -99,6 +107,10 @@ foreach ($c in $allCases) {
       else                           { $rec['t'] = 'n'; $rec['v'] = $n }
     }
     $rec['text'] = [string]$cell.Text
+    if ($isSpill) {
+      # Excelが何セルに溢れたか(スピル範囲)。うちのグリッドは再現できないので記録だけする。
+      try { $rec['spillCells'] = [int]$cell.SpillingToRange.Count } catch { $rec['spillCells'] = $null }
+    }
   } catch {
     $rec['t'] = 'throw'; $rec['v'] = $_.Exception.Message; $rec['text'] = ''
   }

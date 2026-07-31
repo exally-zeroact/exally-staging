@@ -29,7 +29,8 @@ const order = JSON.parse(fs.readFileSync(csvPath.replace(/\.csv$/, '.xlsx.order.
 const rows = parseCsv(fs.readFileSync(csvPath, 'utf8'));
 
 const cases = {};
-order.forEach((id, i) => {
+order.forEach((o, i) => {
+  const id = typeof o === 'string' ? o : o.id;
   const raw = (rows[i] && rows[i][19] !== undefined) ? rows[i][19] : '';   // T列 = 20列目
   let rec;
   if (ERRS.includes(raw)) rec = { t: 'e', v: raw };

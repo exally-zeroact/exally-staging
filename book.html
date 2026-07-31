@@ -1153,7 +1153,7 @@ var HF_ERR = {
 // ================================================================
 function initFormulaEngine(sheetNames) {
   if(typeof HyperFormula === 'undefined') return;
-  hf = HyperFormula.buildEmpty({licenseKey:'gpl-v3'});
+  hf = HyperFormula.buildEmpty({licenseKey:'gpl-v3', useArrayArithmetic:true});
   // FN_LIBRARY に HyperFormula の全関数を自動追加（既存重複は除く）
   try {
     if(typeof HyperFormula.getRegisteredFunctionNames==='function' && typeof FN_LIBRARY!=='undefined'){

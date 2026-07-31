@@ -12,12 +12,12 @@
 
 | 判定 | 件数 |
 |---|---|
-| 一致 | 243 |
-| 不一致(既知) | 2 |
+| 一致 | 253 |
+| 不一致(既知) | 0 |
 | 不一致(新規) | 0 |
 | 未検証 | 0 |
 | 揮発性 | 2 |
-| **合計** | 247 |
+| **合計** | 255 |
 
 ※ 「未検証」は緑ではない。その版の真値がまだ無い、という意味。
 
@@ -44,10 +44,7 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 
 ## 不一致（既知＝台帳にあり・緑だが必ず全件出す）
 
-| 区分 | 関数 | ケース | 式 | Exally | Excel真値 | 中身と期限 |
-|---|---|---|---|---|---|---|
-| A | SUMPRODUCT | SUMPRODUCT_cond | `=SUMPRODUCT((D1:D6="A")*E1:E6)` | #VALUE! | 1000 | 条件×金額の定番形。★2026-08-01 実測で直し方が判明: buildEmpty に useArrayArithmetic:true を足すだけ(HF2.6.1のまま)。全247ケースで副作用ゼロ・入れ子監査38本のまま・往復14/14・hub-ui 65/65 を確認済み。検証はcommitせず作業ツリーは戻してある。実装GO待ち / 期限 2026-08-31 |
-| A | SUMPRODUCT | SUMPRODUCT_len | `=SUMPRODUCT(LEN(B1:B3))` | #VALUE! | 11 | 配列を返す関数を引数に取る形。★同上(useArrayArithmetic:true で 3→11 に直ることを実測) / 期限 2026-08-31 |
+なし。
 
 ## 入力の型が保たれるか（別枠）
 
@@ -71,7 +68,7 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 ## 経路の固定（将来 生HF に落ちたら気付くための錠）
 
 - 独自層(_jsComputeFormula)が答えたケース: **0件**
-- 生HFと本番経路で答えが違うケース: **71件** … この差が消えたら「素通りに落ちた」ということ
+- 生HFと本番経路で答えが違うケース: **79件** … この差が消えたら「素通りに落ちた」ということ
 - 独自層の入口: {"jsSetCount":1,"entryPoints":1,"pluginRegistered":true,"pluginCount":11}（1つだけであること）
 
 ## 全ケース
@@ -125,8 +122,8 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 | SUM | SUM_mixed_args | `=SUM(E1:E3,100,A1)` | 1700 | 1700 | 未検証 | 1700 | 一致 |  |
 | SUMPRODUCT | SUMPRODUCT_2range | `=SUMPRODUCT(C1:C6,E1:E6)` | 97100 | 97100 | 未検証 | 97100 | 一致 |  |
 | SUMPRODUCT | SUMPRODUCT_1range | `=SUMPRODUCT(E1:E6)` | 2100 | 2100 | 未検証 | 2100 | 一致 |  |
-| SUMPRODUCT | SUMPRODUCT_cond | `=SUMPRODUCT((D1:D6="A")*E1:E6)` | #VALUE! | 1000 | 未検証 | #VALUE! | 不一致(既知) | A |
-| SUMPRODUCT | SUMPRODUCT_len | `=SUMPRODUCT(LEN(B1:B3))` | #VALUE! | 11 | 未検証 | #VALUE! | 不一致(既知) | A |
+| SUMPRODUCT | SUMPRODUCT_cond | `=SUMPRODUCT((D1:D6="A")*E1:E6)` | 1000 | 1000 | 未検証 | #VALUE! | 一致 |  |
+| SUMPRODUCT | SUMPRODUCT_len | `=SUMPRODUCT(LEN(B1:B3))` | 11 | 11 | 未検証 | #VALUE! | 一致 |  |
 | COUNT | COUNT_numbers | `=COUNT(A1:A8)` | 8 | 8 | 未検証 | 8 | 一致 |  |
 | COUNT | COUNT_mixed | `=COUNT(A1:B8)` | 8 | 8 | 未検証 | 8 | 一致 |  |
 | COUNT | COUNT_text_number | `=COUNT(B6:B7)` | 0 | 0 | 未検証 | 0 | 一致 |  |
@@ -323,3 +320,11 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 | FILTER | FILTER_empty | `=IFERROR(TEXTJOIN(",",TRUE,FILTER(E1:E6,D1:D6="Z")),"NA")` | NA | NA | 未検証 | NA | 一致 |  |
 | FILTER | FILTER_if_empty | `=TEXTJOIN(",",TRUE,FILTER(E1:E6,D1:D6="Z","なし"))` | なし | なし | 未検証 | #NAME? | 一致 |  |
 | SORT | ARRAY_sort_unique | `=TEXTJOIN(",",TRUE,SORT(UNIQUE(D1:D6)))` | A,B,C | A,B,C | 未検証 | #NAME? | 一致 |  |
+| 配列演算 | ARR_mul_text | `=D1:D6*E1:E6` | #VALUE! | #VALUE! | 未検証 | #VALUE! | 一致 |  |
+| 配列演算 | ARR_mul_num | `=C1:C6*E1:E6` | 100 | 100 | 未検証 | #VALUE! | 一致 |  |
+| 配列演算 | ARR_if_cond | `=IF(D1:D6="A",E1:E6,0)` | 100 | 100 | 未検証 | #VALUE! | 一致 |  |
+| 配列演算 | ARR_sum_mul_text | `=IFERROR(SUM(D1:D6*E1:E6),"ERR")` | ERR | ERR | 未検証 | ERR | 一致 |  |
+| 配列演算 | ARR_sum_mul_num | `=SUM(C1:C6*E1:E6)` | 97100 | 97100 | 未検証 | #VALUE! | 一致 |  |
+| 配列演算 | ARR_sum_if | `=SUM(IF(D1:D6="A",E1:E6,0))` | 1000 | 1000 | 未検証 | #VALUE! | 一致 |  |
+| 配列演算 | ARR_count_if | `=COUNT(IF(D1:D6="A",E1:E6,0))` | 6 | 6 | 未検証 | 0 | 一致 |  |
+| 配列演算 | ARR_count_mul | `=COUNT(C1:C6*E1:E6)` | 6 | 6 | 未検証 | 0 | 一致 |  |

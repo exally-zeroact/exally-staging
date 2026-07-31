@@ -402,13 +402,21 @@ function runSelfTest(base) {
   if (r1.exitCode === 1 && r1.counts['不一致(新規)'] === 1 && hit1?.verdict === '不一致(新規)') line('    OK: 赤くなった');
   else { line('    ★NG: 赤くならない'); ng++; }
 
-  // 2) known-diffs から1件消す → 既知が新規不一致に昇格して赤
-  const knownA = base.known.diffs.find(d => base.cases.some(c => c.id === d.id));
-  const k2 = clone(base.known);
-  k2.diffs = k2.diffs.filter(d => d.id !== knownA.id);
-  const r2 = evaluate({ ...base, known: k2 });
+  // 2) 「既知として台帳に載っている不一致」を作り、台帳から消すと新規不一致に昇格して赤になるか。
+  //    ★台帳の中身に依存させない(全部直して既知0件になった時にテストが落ちないように)。
+  const victim2 = base.rows0.find(r => r.verdict === '一致' && !r.volatile);
+  const g2 = clone(base.golden);
+  g2.cases[victim2.id].v = (g2.cases[victim2.id].t === 'n')
+    ? Number(g2.cases[victim2.id].v) + 999 : String(g2.cases[victim2.id].v) + 'X';
+  const kWith = clone(base.known);
+  kWith.diffs.push({ id: victim2.id, func: victim2.func, root: 'self-test', class: 'C', note: 'self-test用に台帳へ載せた' });
+  const rWith = evaluate({ ...base, golden: g2, known: kWith });
+  const knownA = { id: victim2.id };
+  const k2 = clone(base.known);           // 台帳に載っていない状態
+  const r2 = evaluate({ ...base, golden: g2, known: k2 });
   const hit2 = r2.rows.find(r => r.id === knownA.id);
-  line(`\n[2] known-diffs から1件削除 (${knownA.id})`);
+  line(`\n[2] 台帳に載せた不一致(${knownA.id})を台帳から削除`);
+  line(`    台帳に有る時: exit=${rWith.exitCode} 判定=${rWith.rows.find(r => r.id === knownA.id)?.verdict}`);
   line(`    exit=${r2.exitCode} 新規不一致=${r2.counts['不一致(新規)']} 判定=${hit2?.verdict}`);
   if (r2.exitCode === 1 && hit2?.verdict === '不一致(新規)') line('    OK: 既知が新規不一致に昇格して赤くなった');
   else { line('    ★NG: 昇格しない'); ng++; }

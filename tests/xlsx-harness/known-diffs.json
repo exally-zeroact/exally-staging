@@ -7,12 +7,14 @@
   },
   "history": {
     "wave1_2026-07-31": "TEXT書式5 / TEXT日付2 / INT負数2 / MOD符号3 / VALUE桁区切り1 / TEXTJOIN引数分解2 ＝15件。一致 193→221",
-    "wave2_2026-08-01": "SORT / UNIQUE / FILTERの第3引数 / MATCHワイルドカード / TEXT入れ子 ＝12件。加えて TEXT・TEXTJOIN・INT・MOD・VALUE・XLOOKUP を HFプラグインへ移し、入れ子でも効くようにした。一致 221→243"
+    "wave2_2026-08-01": "SORT / UNIQUE / FILTERの第3引数 / MATCHワイルドカード / TEXT入れ子 ＝12件。加えて TEXT・TEXTJOIN・INT・MOD・VALUE・XLOOKUP を HFプラグインへ移し、入れ子でも効くようにした。一致 221→243",
+    "wave2b_2026-08-01": "SUMPRODUCT 2件を解消。原因はHFの既定で範囲どうしの計算が配列にならないことで、buildEmpty の useArrayArithmetic:true で解決(版上げ不要)。配列演算のケース8件を新設し全て一致。一致 243→253 / 既知 2→0"
   },
   "roots": {
-    "R3_SUMPRODUCT_array": "★HyperFormula の既定では配列同士の掛け算 (D1:D6=\"A\")*E1:E6 が配列にならず潰れる。SUMPRODUCT を自前実装しても引数に届く前に潰れているので直らなかった。→2026-08-01 実測: buildEmpty の設定 useArrayArithmetic:true を入れると 2.6.1 のまま両方直る(版上げ不要)。全247ケースで副作用ゼロも確認済み。実装GO待ち",
     "R11_input_parse": "セルに打ち込んだ『桁区切り付きの数』『日付に見える文字』を、Excel は数値/日付に解釈するがグリッドは文字列のまま持つ",
-    "R14_nesting_pending": "★独自層(_jsSet)に残っている関数は、式の一番外側でしか効かない。入れ子で使われると HyperFormula の答えに戻る。実測で38関数が該当(tests/xlsx-harness/nesting-audit.mjs)。HFプラグインへ移せば直る"
+    "R14_nesting_pending": "★独自層(_jsSet)に残っている関数は、式の一番外側でしか効かない。入れ子で使われると HyperFormula の答えに戻る。実測で38関数が該当(tests/xlsx-harness/nesting-audit.mjs)。HFプラグインへ移せば直る",
+    "R15_no_spill": "★うちのグリッドはスピル(配列が隣のセルへ溢れる)に未対応。Excelでは =C1:C6*E1:E6 が6セルを占めるが、うちは1セルに左上の値だけを出す。★左上の値そのものはExcelと一致することを実測済み(ARR_* ケース)。溢れる範囲の見た目だけが違う",
+    "R16_file_array_legacy": "★SheetJSが書き出したxlsxをExcelで開くと、配列を返す式が『旧来の解釈(暗黙の交差)』になる。Excelの動的配列として扱わせる印(セルの cm 属性とメタデータ)をSheetJSが書いていないため。グリッドの画面では正しいのに、落としたファイルをExcelで開くと違う値になる=『Excel落とし』の忠実さの問題"
   },
   "nesting_pending": {
     "class": "A",
@@ -129,28 +131,6 @@
   },
   "diffs": [
     {
-      "id": "SUMPRODUCT_cond",
-      "func": "SUMPRODUCT",
-      "root": "R3_SUMPRODUCT_array",
-      "class": "A",
-      "money_impact": true,
-      "exally": "100",
-      "excel365": "1000",
-      "note": "条件×金額の定番形。★2026-08-01 実測で直し方が判明: buildEmpty に useArrayArithmetic:true を足すだけ(HF2.6.1のまま)。全247ケースで副作用ゼロ・入れ子監査38本のまま・往復14/14・hub-ui 65/65 を確認済み。検証はcommitせず作業ツリーは戻してある。実装GO待ち",
-      "due": "2026-08-31"
-    },
-    {
-      "id": "SUMPRODUCT_len",
-      "func": "SUMPRODUCT",
-      "root": "R3_SUMPRODUCT_array",
-      "class": "A",
-      "money_impact": false,
-      "exally": "3",
-      "excel365": "11",
-      "note": "配列を返す関数を引数に取る形。★同上(useArrayArithmetic:true で 3→11 に直ることを実測)",
-      "due": "2026-08-31"
-    },
-    {
       "id": "INPUT_typed_comma",
       "func": "(入力)",
       "root": "R11_input_parse",
@@ -172,5 +152,25 @@
       "excel365": "46234",
       "note": "『2026-07-31』と打っても日付にならない=日付計算に使えない"
     }
-  ]
+  ],
+  "spill_note": {
+    "class": "C",
+    "root": "R15_no_spill",
+    "note": "スピルの見た目(占有範囲)は今回の検証対象外。値は一致する。グリッドにスピルを入れるかは製品判断なので期限を切らない=区分C",
+    "measured": "Excelは ARR_mul_text / ARR_mul_num / ARR_if_cond で6セルを占める(golden の spillCells)。うちは1セル"
+  },
+  "file_roundtrip_known": {
+    "class": "A",
+    "due": "2026-09-30",
+    "root": "R16_file_array_legacy",
+    "note": "tools/verify-workbook-excel.ps1(書き出したブックを実Excelで開いて再計算)でのみ出る差。ハーネス本体(compare.mjs)は緑。★今は実害なし(給料明細の出力は値のみ・グリッドのExcel保存はまだ未接続)だが、P2でグリッドがxlsxを書き出す前に必ず解決すること",
+    "cases": [
+      "ARR_sum_mul_num",
+      "ARR_sum_if",
+      "ARR_count_if",
+      "ARR_count_mul"
+    ],
+    "measured": "ファイル経由: #VALUE! / #VALUE! / 0 / 0 ・ 画面(グリッド)とExcel直接入力: 97100 / 1000 / 6 / 6",
+    "next": "SheetJS CE で動的配列の印を書けるかを調べる。書けないなら xlsx-io 側で xl/worksheets/sheet1.xml に cm 属性とメタデータを足すか、書き出し時に配列式を検出して警告する"
+  }
 }

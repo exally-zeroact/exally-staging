@@ -13,7 +13,7 @@
     "listSep": ",",
     "date1904": false,
     "formulaProperty": ".Formula (US-English) only; .FormulaLocal is NOT used",
-    "caseCount": 245,
+    "caseCount": 253,
     "volatileSkipped": [
       "TODAY_serial",
       "NOW_int_is_today"
@@ -1490,6 +1490,58 @@
       "t": "s",
       "v": "A,B,C",
       "text": "A,B,C"
+    },
+    "ARR_mul_text": {
+      "f": "=D1:D6*E1:E6",
+      "t": "e",
+      "v": "#VALUE!",
+      "code": -2146826273,
+      "text": "#VALUE!",
+      "spillCells": 6
+    },
+    "ARR_mul_num": {
+      "f": "=C1:C6*E1:E6",
+      "t": "n",
+      "v": 100.0,
+      "text": "100",
+      "spillCells": 6
+    },
+    "ARR_if_cond": {
+      "f": "=IF(D1:D6=\"A\",E1:E6,0)",
+      "t": "n",
+      "v": 100.0,
+      "text": "100",
+      "spillCells": 6
+    },
+    "ARR_sum_mul_text": {
+      "f": "=IFERROR(SUM(D1:D6*E1:E6),\"ERR\")",
+      "t": "s",
+      "v": "ERR",
+      "text": "ERR"
+    },
+    "ARR_sum_mul_num": {
+      "f": "=SUM(C1:C6*E1:E6)",
+      "t": "n",
+      "v": 97100.0,
+      "text": "97100"
+    },
+    "ARR_sum_if": {
+      "f": "=SUM(IF(D1:D6=\"A\",E1:E6,0))",
+      "t": "n",
+      "v": 1000.0,
+      "text": "1000"
+    },
+    "ARR_count_if": {
+      "f": "=COUNT(IF(D1:D6=\"A\",E1:E6,0))",
+      "t": "n",
+      "v": 6.0,
+      "text": "6"
+    },
+    "ARR_count_mul": {
+      "f": "=COUNT(C1:C6*E1:E6)",
+      "t": "n",
+      "v": 6.0,
+      "text": "6"
     }
   },
   "inputProbes": {

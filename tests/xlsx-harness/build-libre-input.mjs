@@ -21,13 +21,16 @@ for (const [addr, spec] of Object.entries(inputs.cells)) {
   else if (spec.t === 'b') cells[addr] = { v: spec.v, t: 'b' };
   else cells[addr] = { v: String(spec.v), t: 's' };     // 文字列は文字列のまま
 }
+//  ★スピルする式は1本ずつ別の列(AD以降)に置く。T列に並べると隣の行へ溢れて
+//    次の式を潰し、Excelで開いた時に #SPILL! だらけになる(golden生成器と同じ決まり)。
+function colName(c){ var s=''; c=c+1; while(c>0){ var m=(c-1)%26; s=String.fromCharCode(65+m)+s; c=Math.floor((c-1)/26);} return s; }
 const order = [];
-let row = 1;
+let row = 1, spillCol = 29;                              // 0始まり: 29 = AD列
 for (const c of cases) {
   if (c.volatile) continue;                              // 揮発性は対象外
-  cells['T' + row] = { f: c.f };   // ★キャッシュ値は入れない(必ず計算させる)
-  order.push(c.id);
-  row++;
+  const addr = c.spill ? (colName(spillCol++) + '1') : ('T' + row++);
+  cells[addr] = { f: c.f };                              // ★キャッシュ値は入れない(必ず計算させる)
+  order.push({ id: c.id, addr });
 }
 fs.writeFileSync(outPath, XlsxIO.writeBook({ sheets: [{ name: 'Sheet1', cells }] }));
 fs.writeFileSync(outPath + '.order.json', JSON.stringify(order, null, 1));

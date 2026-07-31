@@ -1,0 +1,15 @@
+{
+  "group": "配列演算(範囲どうしの計算)",
+  "note": "★useArrayArithmetic を入れると『範囲どうしの計算』が配列になる。うちのグリッドはスピル未対応なので、配列を返す式が単一セルに入った時に噛み合うかをここで見る。spill:true のケースは Excel 側で隣のセルへ溢れる(スピル)ので、golden生成では1本ずつ別の列に置く。",
+  "cases": [
+    { "id": "ARR_mul_text",   "func": "配列演算", "f": "=D1:D6*E1:E6",            "spill": true, "why": "文字列×数値の範囲どうし。Excelでも各要素がエラーになるはず" },
+    { "id": "ARR_mul_num",    "func": "配列演算", "f": "=C1:C6*E1:E6",            "spill": true, "why": "数値どうしの範囲。単一セルに入れた時に何が見えるか" },
+    { "id": "ARR_if_cond",    "func": "配列演算", "f": "=IF(D1:D6=\"A\",E1:E6,0)", "spill": true, "why": "条件で配列を作る定番形" },
+
+    { "id": "ARR_sum_mul_text", "func": "配列演算", "f": "=IFERROR(SUM(D1:D6*E1:E6),\"ERR\")", "why": "エラーが合計まで伝わるか" },
+    { "id": "ARR_sum_mul_num",  "func": "配列演算", "f": "=SUM(C1:C6*E1:E6)",                 "why": "SUMで包んだ配列の掛け算" },
+    { "id": "ARR_sum_if",       "func": "配列演算", "f": "=SUM(IF(D1:D6=\"A\",E1:E6,0))",      "why": "SUMIFの代わりに使われる形" },
+    { "id": "ARR_count_if",     "func": "配列演算", "f": "=COUNT(IF(D1:D6=\"A\",E1:E6,0))",    "why": "COUNTで包んだ時に要素数が見えるか" },
+    { "id": "ARR_count_mul",    "func": "配列演算", "f": "=COUNT(C1:C6*E1:E6)",               "why": "同上(掛け算版)" }
+  ]
+}
