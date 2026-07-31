@@ -1,0 +1,3 @@
+# 同梱ライブラリは改行変換しない(バイト単位で固定=RECIPEのsha256と一致させる)
+xlsx.full.min.js -text
+hyperformula.full.min.js -text

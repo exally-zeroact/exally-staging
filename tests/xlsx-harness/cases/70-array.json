@@ -1,0 +1,24 @@
+{
+  "group": "配列(スピル)",
+  "note": "配列は TEXTJOIN で1本の文字列に畳んで比較する=配列の中身と並び順まで1セルで見える。スピルの見た目(占有範囲)そのものは今回の対象外(区分Cで別枠)。",
+  "cases": [
+    { "id": "SORT_asc_join",      "func": "SORT",   "f": "=TEXTJOIN(\",\",TRUE,SORT(E1:E6))" },
+    { "id": "SORT_desc_join",     "func": "SORT",   "f": "=TEXTJOIN(\",\",TRUE,SORT(E1:E6,1,-1))" },
+    { "id": "SORT_first",         "func": "SORT",   "f": "=INDEX(SORT(E1:E6,1,-1),1)" },
+    { "id": "SORT_text",          "func": "SORT",   "f": "=TEXTJOIN(\",\",TRUE,SORT(D1:D6))" },
+    { "id": "SORT_count",         "func": "SORT",   "f": "=COUNTA(SORT(E1:E6))" },
+
+    { "id": "UNIQUE_join",        "func": "UNIQUE", "f": "=TEXTJOIN(\",\",TRUE,UNIQUE(D1:D6))" },
+    { "id": "UNIQUE_count",       "func": "UNIQUE", "f": "=COUNTA(UNIQUE(D1:D6))" },
+    { "id": "UNIQUE_nums",        "func": "UNIQUE", "f": "=TEXTJOIN(\",\",TRUE,UNIQUE(E1:E6))" },
+    { "id": "UNIQUE_all_same",    "func": "UNIQUE", "f": "=COUNTA(UNIQUE(D1:D1))" },
+
+    { "id": "FILTER_sum",         "func": "FILTER", "f": "=SUM(FILTER(E1:E6,D1:D6=\"A\"))" },
+    { "id": "FILTER_join",        "func": "FILTER", "f": "=TEXTJOIN(\",\",TRUE,FILTER(E1:E6,D1:D6=\"A\"))" },
+    { "id": "FILTER_num_cond",    "func": "FILTER", "f": "=TEXTJOIN(\",\",TRUE,FILTER(E1:E6,C1:C6>=10))" },
+    { "id": "FILTER_empty",       "func": "FILTER", "f": "=IFERROR(TEXTJOIN(\",\",TRUE,FILTER(E1:E6,D1:D6=\"Z\")),\"NA\")" },
+    { "id": "FILTER_if_empty",    "func": "FILTER", "f": "=TEXTJOIN(\",\",TRUE,FILTER(E1:E6,D1:D6=\"Z\",\"なし\"))" },
+
+    { "id": "ARRAY_sort_unique",  "func": "SORT",   "f": "=TEXTJOIN(\",\",TRUE,SORT(UNIQUE(D1:D6)))" }
+  ]
+}

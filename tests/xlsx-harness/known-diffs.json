@@ -1,0 +1,62 @@
+{
+  "note": "既知の不一致の台帳。ここに載っている物だけが「既知」として緑になる。載っていない不一致は赤。★載せる=直したではない。全部レポートに並び続ける。",
+  "classes": {
+    "A": "うちで潰す。exally-formula.js の _jsComputeFormula の対象表(_jsSet)に足して実装する。★期限(due)必須",
+    "B": "HyperFormula 側の更新待ち。版と課題を書いて据え置く",
+    "C": "仕様差として明示的に放置。理由を書いて表に出し続ける"
+  },
+  "roots": {
+    "R1_INT_sign": "HyperFormula の INT は 0 方向へ切り捨て、Excel は負の方向へ丸める。負数で1ずれる",
+    "R2_MOD_sign": "剰余の符号が Excel は除数側、HyperFormula は被除数側。負数で符号が逆になる",
+    "R3_SUMPRODUCT_array": "配列同士の演算や、配列を返す関数を引数にすると #VALUE! になる",
+    "R4_MATCH_wildcard": "MATCH がワイルドカード(* ?)に対応していない",
+    "R5_TEXT_literal": "独自層は TEXT(セル参照,\"書式\") の形しか横取りしない。数値リテラルを渡すと HyperFormula へ素通りし、HF の TEXT は書式コードを解釈せずそのまま返す",
+    "R6_TEXT_date": "独自層の書式適用が日付書式(yyyy/mm/dd 等)に未対応で、シリアル値をそのまま返す。★HFに任せた方が正しい答えになる箇所＝独自層が結果を劣化させている",
+    "R7_VALUE_sep": "VALUE が桁区切り付きの文字列を数値にできない(ロケール依存)",
+    "R8_TEXTJOIN_args": "独自層の TEXTJOIN が引数を素朴なカンマ分割で切るため、入れ子の関数呼び出しがあると壊れる。★エラーではなく『1,-1)』のような無意味な文字列を黙って返すのが一番危険",
+    "R9_SORT_missing": "SORT が HyperFormula 2.6.1 に無く、独自層の対象表にも無い(#NAME?)",
+    "R10_UNIQUE_spill": "UNIQUE は HyperFormula にあるが、複数セルへ展開(スピル)できずスカラー化する",
+    "R11_input_parse": "セルに打ち込んだ『桁区切り付きの数』『日付に見える文字』を、Excel は数値/日付に解釈するがグリッドは文字列のまま持つ"
+  },
+  "diffs": [
+    { "id": "INT_neg",            "func": "INT",  "root": "R1_INT_sign",       "class": "A", "due": "2026-08-14", "money_impact": true,  "exally": "-2", "excel365": "-3",   "note": "INTが負数で1ずれる(端数処理で金額がずれる)" },
+    { "id": "INT_neg_cell",       "func": "INT",  "root": "R1_INT_sign",       "class": "A", "due": "2026-08-14", "money_impact": true,  "exally": "-2", "excel365": "-3",   "note": "同上(セル参照でも同じ)" },
+
+    { "id": "MOD_neg_dividend",   "func": "MOD",  "root": "R2_MOD_sign",       "class": "A", "due": "2026-08-14", "money_impact": true,  "exally": "-1", "excel365": "1",    "note": "MODの符号が逆(シフト・端数・按分の計算で効く)" },
+    { "id": "MOD_neg_divisor",    "func": "MOD",  "root": "R2_MOD_sign",       "class": "A", "due": "2026-08-14", "money_impact": true,  "exally": "1",  "excel365": "-1",   "note": "同上(除数が負の場合)" },
+    { "id": "MOD_cell",           "func": "MOD",  "root": "R2_MOD_sign",       "class": "A", "due": "2026-08-14", "money_impact": true,  "exally": "-1", "excel365": "1",    "note": "同上(セル参照でも同じ)" },
+
+    { "id": "TEXT_thousands",     "func": "TEXT", "root": "R5_TEXT_literal",   "class": "A", "due": "2026-08-14", "money_impact": true,  "exally": "1235,##0",          "excel365": "1,235",    "note": "書式コードが効かず壊れた文字列が出る(請求書の金額表示が崩れる)" },
+    { "id": "TEXT_thousands_dec", "func": "TEXT", "root": "R5_TEXT_literal",   "class": "A", "due": "2026-08-14", "money_impact": true,  "exally": "1235,##0.00",       "excel365": "1,234.57", "note": "同上(小数付き。四捨五入も行われていない)" },
+    { "id": "TEXT_percent",       "func": "TEXT", "root": "R5_TEXT_literal",   "class": "A", "due": "2026-08-14", "money_impact": true,  "exally": "0.1%",              "excel365": "12.4%",    "note": "百分率にならない(0.1235→12.4%が0.1%になる=100倍違う)" },
+    { "id": "TEXT_currency_yen",  "func": "TEXT", "root": "R5_TEXT_literal",   "class": "A", "due": "2026-08-14", "money_impact": true,  "exally": "¥1235,##0",         "excel365": "¥1,235",   "note": "同上(通貨書式)" },
+    { "id": "TEXT_neg_paren",     "func": "TEXT", "root": "R5_TEXT_literal",   "class": "A", "due": "2026-08-14", "money_impact": true,  "exally": "-1234,##0;(#,##0)", "excel365": "(1,234)",  "note": "同上(正負で書式を分ける指定)" },
+
+    { "id": "TEXT_date",          "func": "TEXT", "root": "R6_TEXT_date",      "class": "A", "due": "2026-08-14", "money_impact": true,  "exally": "46234", "excel365": "2026/07/31", "note": "日付が数字のまま出る。★独自層を通さずHFに任せれば正しい=独自層が劣化させている" },
+    { "id": "TEXT_date_slash_md", "func": "TEXT", "root": "R6_TEXT_date",      "class": "A", "due": "2026-08-14", "money_impact": true,  "exally": "46053", "excel365": "1/31",       "note": "同上(m/d)" },
+
+    { "id": "VALUE_comma",        "func": "VALUE","root": "R7_VALUE_sep",      "class": "A", "due": "2026-08-14", "money_impact": true,  "exally": "NA", "excel365": "1234", "note": "貼り付けた『1,234』を数値にできない(取込みで金額が落ちる)" },
+
+    { "id": "SUMPRODUCT_cond",    "func": "SUMPRODUCT", "root": "R3_SUMPRODUCT_array", "class": "A", "due": "2026-08-31", "money_impact": true, "exally": "#VALUE!", "excel365": "1000", "note": "条件×金額の定番形が動かない(SUMIFSの代わりに広く使われる形)" },
+    { "id": "SUMPRODUCT_len",     "func": "SUMPRODUCT", "root": "R3_SUMPRODUCT_array", "class": "A", "due": "2026-08-31", "money_impact": false, "exally": "#VALUE!", "excel365": "11", "note": "配列を返す関数を引数に取れない" },
+
+    { "id": "MATCH_wildcard",     "func": "MATCH", "root": "R4_MATCH_wildcard", "class": "A", "due": "2026-08-31", "money_impact": false, "exally": "#N/A", "excel365": "1", "note": "部分一致の検索ができない" },
+
+    { "id": "SORT_asc_join",      "func": "SORT",   "root": "R8_TEXTJOIN_args", "class": "A", "due": "2026-08-14", "money_impact": false, "exally": "(空)",   "excel365": "100,200,300,400,500,600", "note": "TEXTJOINの引数分解が壊れる＋SORT未実装(R9)の二重" },
+    { "id": "SORT_desc_join",     "func": "SORT",   "root": "R8_TEXTJOIN_args", "class": "A", "due": "2026-08-14", "money_impact": false, "exally": "1,-1)", "excel365": "600,500,400,300,200,100", "note": "★エラーではなく『1,-1)』という無意味な文字列を黙って返す=一番危険な壊れ方" },
+    { "id": "SORT_text",          "func": "SORT",   "root": "R8_TEXTJOIN_args", "class": "A", "due": "2026-08-14", "money_impact": false, "exally": "(空)",   "excel365": "A,A,A,B,B,C",             "note": "同上" },
+    { "id": "UNIQUE_join",        "func": "UNIQUE", "root": "R8_TEXTJOIN_args", "class": "A", "due": "2026-08-14", "money_impact": false, "exally": "(空)",   "excel365": "A,B,C",                   "note": "同上" },
+    { "id": "UNIQUE_nums",        "func": "UNIQUE", "root": "R8_TEXTJOIN_args", "class": "A", "due": "2026-08-14", "money_impact": false, "exally": "(空)",   "excel365": "100,200,300,400,500,600", "note": "同上" },
+    { "id": "FILTER_join",        "func": "FILTER", "root": "R8_TEXTJOIN_args", "class": "A", "due": "2026-08-14", "money_impact": false, "exally": "(空)",   "excel365": "100,300,600",             "note": "FILTER自体は動く(=SUM(FILTER(...))は一致)。壊しているのはTEXTJOINの引数分解" },
+    { "id": "FILTER_num_cond",    "func": "FILTER", "root": "R8_TEXTJOIN_args", "class": "A", "due": "2026-08-14", "money_impact": false, "exally": "(空)",   "excel365": "300,400,500,600",         "note": "同上" },
+    { "id": "FILTER_if_empty",    "func": "FILTER", "root": "R8_TEXTJOIN_args", "class": "A", "due": "2026-08-14", "money_impact": false, "exally": "なし\")", "excel365": "なし",                    "note": "★『なし\")』という壊れた文字列を黙って返す" },
+    { "id": "ARRAY_sort_unique",  "func": "SORT",   "root": "R8_TEXTJOIN_args", "class": "A", "due": "2026-08-14", "money_impact": false, "exally": "(空)",   "excel365": "A,B,C",                   "note": "同上(SORT未実装も重なる)" },
+
+    { "id": "SORT_first",         "func": "SORT",   "root": "R9_SORT_missing",  "class": "A", "due": "2026-08-31", "money_impact": false, "exally": "#NAME?", "excel365": "600", "note": "SORTが無い(HF2.6.1に未実装・独自層の対象表にも無い)" },
+    { "id": "SORT_count",         "func": "SORT",   "root": "R9_SORT_missing",  "class": "A", "due": "2026-08-31", "money_impact": false, "exally": "1",      "excel365": "6",   "note": "同上" },
+    { "id": "UNIQUE_count",       "func": "UNIQUE", "root": "R10_UNIQUE_spill", "class": "A", "due": "2026-08-31", "money_impact": false, "exally": "1",      "excel365": "3",   "note": "UNIQUEはあるがスピルしない(件数が常に1になる)" },
+
+    { "id": "INPUT_typed_comma",    "func": "(入力)", "root": "R11_input_parse", "class": "A", "due": "2026-08-31", "money_impact": true,  "exally": "1,234",      "excel365": "1234",  "note": "『1,234』と打っても数値にならない=以降の合計に入らない" },
+    { "id": "INPUT_typed_datelike", "func": "(入力)", "root": "R11_input_parse", "class": "A", "due": "2026-08-31", "money_impact": false, "exally": "2026-07-31", "excel365": "46234", "note": "『2026-07-31』と打っても日付にならない=日付計算に使えない" }
+  ]
+}

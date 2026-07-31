@@ -15,13 +15,18 @@ const FILES = [
   'ledger-agg.test.js',     // E2 台帳→期間の実績値(ctx)
   'cross-agg.test.js',      // E5 横断集計(事業別のまとめ)
   'org-prefill.test.mjs',   // 請求書/見積の自社情報 自動プリフィル
-  'hub-ui.mjs'              // E1 UI 全ボタン(jsdom)
+  'hub-ui.mjs',             // E1 UI 全ボタン(jsdom)
+  // P1② 版対応 検証ハーネス
+  'xlsx-harness/roundtrip.test.mjs',        // 数式入りxlsxの往復(SheetJS・★新関数の _xlfn.)
+  'xlsx-harness/compare.mjs',               // Excelの真値と突合(新規の不一致があれば赤)
+  ['xlsx-harness/compare.mjs', '--self-test'] // ★わざと壊して赤になるかの自己確認
 ];
 
 let ng = 0;
 for (const f of FILES) {
-  console.log('\n=== ' + f + ' ===');
-  try { execFileSync(process.execPath, [path.join(__dirname, f)], { stdio: 'inherit' }); }
+  const [file, ...args] = Array.isArray(f) ? f : [f];
+  console.log('\n=== ' + file + (args.length ? ' ' + args.join(' ') : '') + ' ===');
+  try { execFileSync(process.execPath, [path.join(__dirname, file), ...args], { stdio: 'inherit' }); }
   catch (e) { ng++; }
 }
 console.log('\n' + (ng ? '★ ' + ng + ' ファイルで失敗' : '全テストファイル 緑'));

@@ -1,0 +1,69 @@
+{
+  "group": "文字列",
+  "note": "★TEXTの書式コードと区切り記号はロケール依存。RECIPE.md に記録した環境(日本語1041 / 小数点'.' / 桁区切り',')が前提。",
+  "cases": [
+    { "id": "TEXT_thousands",     "func": "TEXT",        "f": "=TEXT(1234.5,\"#,##0\")" },
+    { "id": "TEXT_thousands_dec", "func": "TEXT",        "f": "=TEXT(1234.567,\"#,##0.00\")" },
+    { "id": "TEXT_percent",       "func": "TEXT",        "f": "=TEXT(0.1235,\"0.0%\")" },
+    { "id": "TEXT_currency_yen",  "func": "TEXT",        "f": "=TEXT(1234.5,\"¥#,##0\")" },
+    { "id": "TEXT_pad_zero",      "func": "TEXT",        "f": "=TEXT(7,\"0000\")" },
+    { "id": "TEXT_date",          "func": "TEXT",        "f": "=TEXT(F5,\"yyyy/mm/dd\")" },
+    { "id": "TEXT_date_slash_md", "func": "TEXT",        "f": "=TEXT(F1,\"m/d\")" },
+    { "id": "TEXT_neg_paren",     "func": "TEXT",        "f": "=TEXT(-1234,\"#,##0;(#,##0)\")" },
+    { "id": "TEXT_cellref",       "func": "TEXT",        "f": "=TEXT(A2,\"#,##0\")" },
+
+    { "id": "LEFT_jp",            "func": "LEFT",        "f": "=LEFT(B1,2)" },
+    { "id": "LEFT_1",             "func": "LEFT",        "f": "=LEFT(B3,1)" },
+    { "id": "LEFT_over",          "func": "LEFT",        "f": "=LEFT(B1,99)" },
+    { "id": "LEFT_zero",          "func": "LEFT",        "f": "=\"[\"&LEFT(B1,0)&\"]\"" },
+
+    { "id": "RIGHT_jp",           "func": "RIGHT",       "f": "=RIGHT(B1,1)" },
+    { "id": "RIGHT_ascii",        "func": "RIGHT",       "f": "=RIGHT(B3,3)" },
+    { "id": "RIGHT_over",         "func": "RIGHT",       "f": "=RIGHT(B3,99)" },
+
+    { "id": "MID_jp",             "func": "MID",         "f": "=MID(B1,2,2)" },
+    { "id": "MID_start1",         "func": "MID",         "f": "=MID(B8,1,2)" },
+    { "id": "MID_beyond",         "func": "MID",         "f": "=\"[\"&MID(B3,99,2)&\"]\"" },
+
+    { "id": "LEN_jp",             "func": "LEN",         "f": "=LEN(B1)" },
+    { "id": "LEN_ascii",          "func": "LEN",         "f": "=LEN(B3)" },
+    { "id": "LEN_space",          "func": "LEN",         "f": "=LEN(B4)" },
+    { "id": "LEN_num_text",       "func": "LEN",         "f": "=LEN(B6)" },
+    { "id": "LEN_number_cell",    "func": "LEN",         "f": "=LEN(A1)" },
+
+    { "id": "FIND_jp",            "func": "FIND",        "f": "=FIND(\"ん\",B2)" },
+    { "id": "FIND_ascii",         "func": "FIND",        "f": "=FIND(\"pp\",B3)" },
+    { "id": "FIND_missing",       "func": "FIND",        "f": "=IFERROR(FIND(\"z\",B3),\"NA\")" },
+    { "id": "FIND_start",         "func": "FIND",        "f": "=FIND(\"p\",B3,3)" },
+    { "id": "FIND_case",          "func": "FIND",        "f": "=IFERROR(FIND(\"A\",B3),\"NA\")" },
+
+    { "id": "SUBSTITUTE_jp",      "func": "SUBSTITUTE",  "f": "=SUBSTITUTE(B1,\"ご\",\"GO\")" },
+    { "id": "SUBSTITUTE_all",     "func": "SUBSTITUTE",  "f": "=SUBSTITUTE(B3,\"p\",\"P\")" },
+    { "id": "SUBSTITUTE_nth",     "func": "SUBSTITUTE",  "f": "=SUBSTITUTE(B3,\"p\",\"P\",2)" },
+    { "id": "SUBSTITUTE_none",    "func": "SUBSTITUTE",  "f": "=SUBSTITUTE(B3,\"z\",\"Z\")" },
+    { "id": "SUBSTITUTE_comma",   "func": "SUBSTITUTE",  "f": "=SUBSTITUTE(B7,\",\",\"\")" },
+
+    { "id": "CONCATENATE_2",      "func": "CONCATENATE", "f": "=CONCATENATE(B1,\"-\",A1)" },
+    { "id": "CONCATENATE_3",      "func": "CONCATENATE", "f": "=CONCATENATE(B1,B2,B3)" },
+    { "id": "CONCATENATE_blank",  "func": "CONCATENATE", "f": "=\"[\"&CONCATENATE(G1,B3)&\"]\"" },
+
+    { "id": "AMP_text_num",       "func": "&",           "f": "=B1&\"-\"&A1" },
+    { "id": "AMP_blank",          "func": "&",           "f": "=\"[\"&G1&\"]\"" },
+    { "id": "AMP_number_fmt",     "func": "&",           "f": "=\"[\"&A4&\"]\"" },
+    { "id": "AMP_bool",           "func": "&",           "f": "=\"[\"&H1&\"]\"" },
+
+    { "id": "TRIM_pad",           "func": "TRIM",        "f": "=\"[\"&TRIM(B4)&\"]\"" },
+    { "id": "TRIM_inner",         "func": "TRIM",        "f": "=\"[\"&TRIM(B8)&\"]\"" },
+    { "id": "TRIM_none",          "func": "TRIM",        "f": "=\"[\"&TRIM(B3)&\"]\"" },
+
+    { "id": "VALUE_num_text",     "func": "VALUE",       "f": "=VALUE(B6)" },
+    { "id": "VALUE_comma",        "func": "VALUE",       "f": "=IFERROR(VALUE(B7),\"NA\")" },
+    { "id": "VALUE_bad",          "func": "VALUE",       "f": "=IFERROR(VALUE(B1),\"NA\")" },
+    { "id": "VALUE_zero_text",    "func": "VALUE",       "f": "=VALUE(G3)" },
+
+    { "id": "TEXTJOIN_skip",      "func": "TEXTJOIN",    "f": "=TEXTJOIN(\"|\",TRUE,B1:B3)" },
+    { "id": "TEXTJOIN_keep",      "func": "TEXTJOIN",    "f": "=TEXTJOIN(\"|\",FALSE,G1:G3)" },
+    { "id": "TEXTJOIN_nums",      "func": "TEXTJOIN",    "f": "=TEXTJOIN(\",\",TRUE,E1:E6)" },
+    { "id": "TEXTJOIN_blank_skip","func": "TEXTJOIN",    "f": "=TEXTJOIN(\"|\",TRUE,G1:G3)" }
+  ]
+}

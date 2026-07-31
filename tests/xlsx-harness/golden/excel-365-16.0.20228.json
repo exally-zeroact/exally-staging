@@ -1,0 +1,1381 @@
+{
+  "meta": {
+    "source": "real-excel",
+    "product": "O365HomePremRetail",
+    "version": "16.0.20228.20124",
+    "platform": "x64",
+    "updateChannel": "http://officecdn.microsoft.com/pr/492350f6-3a01-4f97-b9c0-c7c6ddf67d60",
+    "uiLanguageId": 1041,
+    "installLangId": 1041,
+    "countrySetting": 81,
+    "decimalSep": ".",
+    "thousandsSep": ",",
+    "listSep": ",",
+    "date1904": false,
+    "formulaProperty": ".Formula (US-English) only; .FormulaLocal is NOT used",
+    "caseCount": 221,
+    "volatileSkipped": [
+      "TODAY_serial",
+      "NOW_int_is_today"
+    ]
+  },
+  "cases": {
+    "ROUND_pos_2": {
+      "f": "=ROUND(A5,2)",
+      "t": "n",
+      "v": 2.68,
+      "text": "2.68"
+    },
+    "ROUND_half_up": {
+      "f": "=ROUND(A6,0)",
+      "t": "n",
+      "v": 5.0,
+      "text": "5"
+    },
+    "ROUND_half_neg": {
+      "f": "=ROUND(-2.5,0)",
+      "t": "n",
+      "v": -3.0,
+      "text": "-3"
+    },
+    "ROUND_neg_digits": {
+      "f": "=ROUND(A2,-2)",
+      "t": "n",
+      "v": 2500.0,
+      "text": "2500"
+    },
+    "ROUND_zero": {
+      "f": "=ROUND(A7,2)",
+      "t": "n",
+      "v": 0.0,
+      "text": "0"
+    },
+    "ROUND_money_10pct": {
+      "f": "=ROUND(A2*0.1,0)",
+      "t": "n",
+      "v": 250.0,
+      "text": "250"
+    },
+    "ROUNDUP_pos": {
+      "f": "=ROUNDUP(2.001,0)",
+      "t": "n",
+      "v": 3.0,
+      "text": "3"
+    },
+    "ROUNDUP_neg": {
+      "f": "=ROUNDUP(-2.4,0)",
+      "t": "n",
+      "v": -3.0,
+      "text": "-3"
+    },
+    "ROUNDUP_digits": {
+      "f": "=ROUNDUP(A5,1)",
+      "t": "n",
+      "v": 2.7,
+      "text": "2.7"
+    },
+    "ROUNDUP_zero": {
+      "f": "=ROUNDUP(A7,0)",
+      "t": "n",
+      "v": 0.0,
+      "text": "0"
+    },
+    "ROUNDDOWN_pos": {
+      "f": "=ROUNDDOWN(2.999,0)",
+      "t": "n",
+      "v": 2.0,
+      "text": "2"
+    },
+    "ROUNDDOWN_neg": {
+      "f": "=ROUNDDOWN(-2.6,0)",
+      "t": "n",
+      "v": -2.0,
+      "text": "-2"
+    },
+    "ROUNDDOWN_shohizei": {
+      "f": "=ROUNDDOWN(1980*1.1,0)",
+      "t": "n",
+      "v": 2178.0,
+      "text": "2178"
+    },
+    "ROUNDDOWN_digits": {
+      "f": "=ROUNDDOWN(A5,2)",
+      "t": "n",
+      "v": 2.67,
+      "text": "2.67"
+    },
+    "INT_pos": {
+      "f": "=INT(2.9)",
+      "t": "n",
+      "v": 2.0,
+      "text": "2"
+    },
+    "INT_neg": {
+      "f": "=INT(-2.5)",
+      "t": "n",
+      "v": -3.0,
+      "text": "-3"
+    },
+    "INT_neg_cell": {
+      "f": "=INT(A8)",
+      "t": "n",
+      "v": -3.0,
+      "text": "-3"
+    },
+    "INT_zero": {
+      "f": "=INT(A7)",
+      "t": "n",
+      "v": 0.0,
+      "text": "0"
+    },
+    "MOD_pos": {
+      "f": "=MOD(7,3)",
+      "t": "n",
+      "v": 1.0,
+      "text": "1"
+    },
+    "MOD_neg_dividend": {
+      "f": "=MOD(-3,2)",
+      "t": "n",
+      "v": 1.0,
+      "text": "1"
+    },
+    "MOD_neg_divisor": {
+      "f": "=MOD(3,-2)",
+      "t": "n",
+      "v": -1.0,
+      "text": "-1"
+    },
+    "MOD_cell": {
+      "f": "=MOD(A3,2)",
+      "t": "n",
+      "v": 1.0,
+      "text": "1"
+    },
+    "MOD_div0": {
+      "f": "=MOD(3,0)",
+      "t": "e",
+      "v": "#DIV/0!",
+      "code": -2146826281,
+      "text": "#DIV/0!"
+    },
+    "ABS_neg": {
+      "f": "=ABS(A3)",
+      "t": "n",
+      "v": 3.0,
+      "text": "3"
+    },
+    "ABS_pos": {
+      "f": "=ABS(A1)",
+      "t": "n",
+      "v": 1000.0,
+      "text": "1000"
+    },
+    "ABS_zero": {
+      "f": "=ABS(A7)",
+      "t": "n",
+      "v": 0.0,
+      "text": "0"
+    },
+    "MAX_range": {
+      "f": "=MAX(E1:E6)",
+      "t": "n",
+      "v": 600.0,
+      "text": "600"
+    },
+    "MAX_with_text": {
+      "f": "=MAX(A1:B8)",
+      "t": "n",
+      "v": 2500.0,
+      "text": "2500"
+    },
+    "MAX_neg_only": {
+      "f": "=MAX(A3,A8)",
+      "t": "n",
+      "v": -2.5,
+      "text": "-2.5"
+    },
+    "MIN_range": {
+      "f": "=MIN(E1:E6)",
+      "t": "n",
+      "v": 100.0,
+      "text": "100"
+    },
+    "MIN_with_text": {
+      "f": "=MIN(A1:B8)",
+      "t": "n",
+      "v": -3.0,
+      "text": "-3"
+    },
+    "MIN_empty_cell": {
+      "f": "=MIN(G1:G2)",
+      "t": "n",
+      "v": 0.0,
+      "text": "0"
+    },
+    "AVERAGE_range": {
+      "f": "=AVERAGE(E1:E6)",
+      "t": "n",
+      "v": 350.0,
+      "text": "350"
+    },
+    "AVERAGE_with_text": {
+      "f": "=AVERAGE(A1:B8)",
+      "t": "n",
+      "v": 437.721875,
+      "text": "437.7219"
+    },
+    "AVERAGE_blank_skip": {
+      "f": "=AVERAGE(G1:G2)",
+      "t": "n",
+      "v": 0.0,
+      "text": "0"
+    },
+    "AVERAGE_frac": {
+      "f": "=ROUND(AVERAGE(C1:C6),6)",
+      "t": "n",
+      "v": 31.0,
+      "text": "31"
+    },
+    "SUM_range": {
+      "f": "=SUM(E1:E6)",
+      "t": "n",
+      "v": 2100.0,
+      "text": "2100"
+    },
+    "SUM_text_ignored": {
+      "f": "=SUM(A1:B8)",
+      "t": "n",
+      "v": 3501.775,
+      "text": "3501.775"
+    },
+    "SUM_blank": {
+      "f": "=SUM(G1:G3)",
+      "t": "n",
+      "v": 0.0,
+      "text": "0"
+    },
+    "SUM_float": {
+      "f": "=SUM(A4,0.2)",
+      "t": "n",
+      "v": 0.30000000000000004,
+      "text": "0.3"
+    },
+    "SUM_mixed_args": {
+      "f": "=SUM(E1:E3,100,A1)",
+      "t": "n",
+      "v": 1700.0,
+      "text": "1700"
+    },
+    "SUMPRODUCT_2range": {
+      "f": "=SUMPRODUCT(C1:C6,E1:E6)",
+      "t": "n",
+      "v": 97100.0,
+      "text": "97100"
+    },
+    "SUMPRODUCT_1range": {
+      "f": "=SUMPRODUCT(E1:E6)",
+      "t": "n",
+      "v": 2100.0,
+      "text": "2100"
+    },
+    "SUMPRODUCT_cond": {
+      "f": "=SUMPRODUCT((D1:D6=\"A\")*E1:E6)",
+      "t": "n",
+      "v": 1000.0,
+      "text": "1000"
+    },
+    "SUMPRODUCT_len": {
+      "f": "=SUMPRODUCT(LEN(B1:B3))",
+      "t": "n",
+      "v": 11.0,
+      "text": "11"
+    },
+    "COUNT_numbers": {
+      "f": "=COUNT(A1:A8)",
+      "t": "n",
+      "v": 8.0,
+      "text": "8"
+    },
+    "COUNT_mixed": {
+      "f": "=COUNT(A1:B8)",
+      "t": "n",
+      "v": 8.0,
+      "text": "8"
+    },
+    "COUNT_text_number": {
+      "f": "=COUNT(B6:B7)",
+      "t": "n",
+      "v": 0.0,
+      "text": "0"
+    },
+    "COUNT_blank_range": {
+      "f": "=COUNT(G1:G3)",
+      "t": "n",
+      "v": 1.0,
+      "text": "1"
+    },
+    "COUNTA_mixed": {
+      "f": "=COUNTA(A1:B8)",
+      "t": "n",
+      "v": 16.0,
+      "text": "16"
+    },
+    "COUNTA_blank": {
+      "f": "=COUNTA(G1:G3)",
+      "t": "n",
+      "v": 2.0,
+      "text": "2"
+    },
+    "COUNTA_bool": {
+      "f": "=COUNTA(H1:H2)",
+      "t": "n",
+      "v": 2.0,
+      "text": "2"
+    },
+    "COUNTBLANK_range": {
+      "f": "=COUNTBLANK(G1:G3)",
+      "t": "n",
+      "v": 1.0,
+      "text": "1"
+    },
+    "COUNTBLANK_none": {
+      "f": "=COUNTBLANK(E1:E6)",
+      "t": "n",
+      "v": 0.0,
+      "text": "0"
+    },
+    "COUNTBLANK_wide": {
+      "f": "=COUNTBLANK(G1:H2)",
+      "t": "n",
+      "v": 1.0,
+      "text": "1"
+    },
+    "COUNTIF_ge": {
+      "f": "=COUNTIF(C1:C6,\">=10\")",
+      "t": "n",
+      "v": 4.0,
+      "text": "4"
+    },
+    "COUNTIF_eq_text": {
+      "f": "=COUNTIF(D1:D6,\"A\")",
+      "t": "n",
+      "v": 3.0,
+      "text": "3"
+    },
+    "COUNTIF_wildcard": {
+      "f": "=COUNTIF(B1:B8,\"*ん*\")",
+      "t": "n",
+      "v": 2.0,
+      "text": "2"
+    },
+    "COUNTIF_wild_q": {
+      "f": "=COUNTIF(B1:B8,\"A-?\")",
+      "t": "n",
+      "v": 1.0,
+      "text": "1"
+    },
+    "COUNTIF_cellref": {
+      "f": "=COUNTIF(D1:D6,D1)",
+      "t": "n",
+      "v": 3.0,
+      "text": "3"
+    },
+    "COUNTIF_zero_blank": {
+      "f": "=COUNTIF(G1:G3,0)",
+      "t": "n",
+      "v": 2.0,
+      "text": "2"
+    },
+    "COUNTIFS_2cond": {
+      "f": "=COUNTIFS(D1:D6,\"A\",E1:E6,\">100\")",
+      "t": "n",
+      "v": 2.0,
+      "text": "2"
+    },
+    "COUNTIFS_range_num": {
+      "f": "=COUNTIFS(C1:C6,\">=5\",C1:C6,\"<=50\")",
+      "t": "n",
+      "v": 4.0,
+      "text": "4"
+    },
+    "COUNTIFS_nomatch": {
+      "f": "=COUNTIFS(D1:D6,\"Z\")",
+      "t": "n",
+      "v": 0.0,
+      "text": "0"
+    },
+    "COUNTIFS_ne": {
+      "f": "=COUNTIFS(D1:D6,\"<>A\")",
+      "t": "n",
+      "v": 3.0,
+      "text": "3"
+    },
+    "SUMIF_ge": {
+      "f": "=SUMIF(C1:C6,\">=10\",E1:E6)",
+      "t": "n",
+      "v": 1800.0,
+      "text": "1800"
+    },
+    "SUMIF_text_key": {
+      "f": "=SUMIF(D1:D6,\"B\",E1:E6)",
+      "t": "n",
+      "v": 700.0,
+      "text": "700"
+    },
+    "SUMIF_no_sumrange": {
+      "f": "=SUMIF(E1:E6,\">300\")",
+      "t": "n",
+      "v": 1500.0,
+      "text": "1500"
+    },
+    "SUMIF_wildcard": {
+      "f": "=SUMIF(B1:B6,\"*ん*\",E1:E6)",
+      "t": "n",
+      "v": 300.0,
+      "text": "300"
+    },
+    "SUMIF_nomatch": {
+      "f": "=SUMIF(D1:D6,\"Z\",E1:E6)",
+      "t": "n",
+      "v": 0.0,
+      "text": "0"
+    },
+    "SUMIFS_2cond": {
+      "f": "=SUMIFS(E1:E6,D1:D6,\"A\",C1:C6,\">1\")",
+      "t": "n",
+      "v": 900.0,
+      "text": "900"
+    },
+    "SUMIFS_range_num": {
+      "f": "=SUMIFS(E1:E6,C1:C6,\">=5\",C1:C6,\"<=50\")",
+      "t": "n",
+      "v": 1400.0,
+      "text": "1400"
+    },
+    "SUMIFS_ne": {
+      "f": "=SUMIFS(E1:E6,D1:D6,\"<>A\")",
+      "t": "n",
+      "v": 1100.0,
+      "text": "1100"
+    },
+    "SUMIFS_nomatch": {
+      "f": "=SUMIFS(E1:E6,D1:D6,\"Z\")",
+      "t": "n",
+      "v": 0.0,
+      "text": "0"
+    },
+    "SUMIFS_cellref": {
+      "f": "=SUMIFS(E1:E6,D1:D6,D2)",
+      "t": "n",
+      "v": 700.0,
+      "text": "700"
+    },
+    "IF_true": {
+      "f": "=IF(A1>500,\"大\",\"小\")",
+      "t": "s",
+      "v": "大",
+      "text": "大"
+    },
+    "IF_false": {
+      "f": "=IF(A3>0,\"大\",\"小\")",
+      "t": "s",
+      "v": "小",
+      "text": "小"
+    },
+    "IF_nested": {
+      "f": "=IF(A1>2000,\"甲\",IF(A1>500,\"乙\",\"丙\"))",
+      "t": "s",
+      "v": "乙",
+      "text": "乙"
+    },
+    "IF_blank_cond": {
+      "f": "=IF(G1=\"\",\"空\",\"有\")",
+      "t": "s",
+      "v": "空",
+      "text": "空"
+    },
+    "IF_num_result": {
+      "f": "=IF(H1,A1,A2)",
+      "t": "n",
+      "v": 1000.0,
+      "text": "1000"
+    },
+    "IFS_first": {
+      "f": "=IFS(A1>2000,\"大\",A1>500,\"中\",TRUE,\"小\")",
+      "t": "s",
+      "v": "中",
+      "text": "中"
+    },
+    "IFS_second": {
+      "f": "=IFS(A1>5000,\"大\",A1>500,\"中\",TRUE,\"小\")",
+      "t": "s",
+      "v": "中",
+      "text": "中"
+    },
+    "IFS_fallback": {
+      "f": "=IFS(A7>5000,\"大\",A7>500,\"中\",TRUE,\"小\")",
+      "t": "s",
+      "v": "小",
+      "text": "小"
+    },
+    "IFS_no_match": {
+      "f": "=IFERROR(IFS(A7>5000,\"大\",A7>500,\"中\"),\"NA\")",
+      "t": "s",
+      "v": "NA",
+      "text": "NA"
+    },
+    "IFERROR_div0": {
+      "f": "=IFERROR(1/0,\"err\")",
+      "t": "s",
+      "v": "err",
+      "text": "err"
+    },
+    "IFERROR_ok": {
+      "f": "=IFERROR(A1/A2,\"err\")",
+      "t": "n",
+      "v": 0.4,
+      "text": "0.4"
+    },
+    "IFERROR_na": {
+      "f": "=IFERROR(NA(),\"err\")",
+      "t": "s",
+      "v": "err",
+      "text": "err"
+    },
+    "IFERROR_value": {
+      "f": "=IFERROR(VALUE(\"あ\"),-1)",
+      "t": "n",
+      "v": -1.0,
+      "text": "-1"
+    },
+    "IFNA_na": {
+      "f": "=IFNA(NA(),\"なし\")",
+      "t": "s",
+      "v": "なし",
+      "text": "なし"
+    },
+    "IFNA_div0_passes": {
+      "f": "=IFERROR(IFNA(1/0,\"なし\"),\"div0が素通り\")",
+      "t": "s",
+      "v": "div0が素通り",
+      "text": "div0が素通り"
+    },
+    "IFNA_ok": {
+      "f": "=IFNA(A1,\"なし\")",
+      "t": "n",
+      "v": 1000.0,
+      "text": "1000"
+    },
+    "AND_all_true": {
+      "f": "=AND(A1>0,A2>0)",
+      "t": "b",
+      "v": true,
+      "text": "TRUE"
+    },
+    "AND_one_false": {
+      "f": "=AND(A1>0,A3>0)",
+      "t": "b",
+      "v": false,
+      "text": "FALSE"
+    },
+    "AND_cellbool": {
+      "f": "=AND(H1,H1)",
+      "t": "b",
+      "v": true,
+      "text": "TRUE"
+    },
+    "OR_one_true": {
+      "f": "=OR(A3>0,A1>0)",
+      "t": "b",
+      "v": true,
+      "text": "TRUE"
+    },
+    "OR_all_false": {
+      "f": "=OR(A3>0,A8>0)",
+      "t": "b",
+      "v": false,
+      "text": "FALSE"
+    },
+    "OR_cellbool": {
+      "f": "=OR(H2,H1)",
+      "t": "b",
+      "v": true,
+      "text": "TRUE"
+    },
+    "NOT_true": {
+      "f": "=NOT(TRUE)",
+      "t": "b",
+      "v": false,
+      "text": "FALSE"
+    },
+    "NOT_cell": {
+      "f": "=NOT(H2)",
+      "t": "b",
+      "v": true,
+      "text": "TRUE"
+    },
+    "NOT_expr": {
+      "f": "=NOT(A1>A2)",
+      "t": "b",
+      "v": true,
+      "text": "TRUE"
+    },
+    "LOGIC_combo": {
+      "f": "=IF(AND(OR(A1>0,NOT(TRUE)),A3<0),\"y\",\"n\")",
+      "t": "s",
+      "v": "y",
+      "text": "y"
+    },
+    "LOGIC_bool_to_num": {
+      "f": "=(A1>0)*1+(A3>0)*1",
+      "t": "n",
+      "v": 1.0,
+      "text": "1"
+    },
+    "VLOOKUP_exact": {
+      "f": "=VLOOKUP(20,C1:E6,3,FALSE)",
+      "t": "n",
+      "v": 400.0,
+      "text": "400"
+    },
+    "VLOOKUP_exact_miss": {
+      "f": "=IFERROR(VLOOKUP(30,C1:E6,3,FALSE),\"NA\")",
+      "t": "s",
+      "v": "NA",
+      "text": "NA"
+    },
+    "VLOOKUP_approx": {
+      "f": "=VLOOKUP(30,C1:E6,3,TRUE)",
+      "t": "n",
+      "v": 400.0,
+      "text": "400"
+    },
+    "VLOOKUP_approx_low": {
+      "f": "=IFERROR(VLOOKUP(0,C1:E6,3,TRUE),\"NA\")",
+      "t": "s",
+      "v": "NA",
+      "text": "NA"
+    },
+    "VLOOKUP_col2": {
+      "f": "=VLOOKUP(50,C1:E6,2,FALSE)",
+      "t": "s",
+      "v": "B",
+      "text": "B"
+    },
+    "VLOOKUP_text_key": {
+      "f": "=VLOOKUP(\"C\",D1:E6,2,FALSE)",
+      "t": "n",
+      "v": 400.0,
+      "text": "400"
+    },
+    "VLOOKUP_badcol": {
+      "f": "=IFERROR(VLOOKUP(20,C1:E6,9,FALSE),\"ERR\")",
+      "t": "s",
+      "v": "ERR",
+      "text": "ERR"
+    },
+    "XLOOKUP_basic": {
+      "f": "=XLOOKUP(20,C1:C6,E1:E6)",
+      "t": "n",
+      "v": 400.0,
+      "text": "400"
+    },
+    "XLOOKUP_notfound": {
+      "f": "=XLOOKUP(999,C1:C6,E1:E6,\"なし\")",
+      "t": "s",
+      "v": "なし",
+      "text": "なし"
+    },
+    "XLOOKUP_text": {
+      "f": "=XLOOKUP(\"C\",D1:D6,E1:E6,\"なし\")",
+      "t": "n",
+      "v": 400.0,
+      "text": "400"
+    },
+    "XLOOKUP_first_dup": {
+      "f": "=XLOOKUP(\"A\",D1:D6,E1:E6,\"なし\")",
+      "t": "n",
+      "v": 100.0,
+      "text": "100"
+    },
+    "XLOOKUP_no_default": {
+      "f": "=IFERROR(XLOOKUP(999,C1:C6,E1:E6),\"NA\")",
+      "t": "s",
+      "v": "NA",
+      "text": "NA"
+    },
+    "INDEX_row": {
+      "f": "=INDEX(E1:E6,4)",
+      "t": "n",
+      "v": 400.0,
+      "text": "400"
+    },
+    "INDEX_2d": {
+      "f": "=INDEX(C1:E6,4,3)",
+      "t": "n",
+      "v": 400.0,
+      "text": "400"
+    },
+    "INDEX_out_of_range": {
+      "f": "=IFERROR(INDEX(E1:E6,99),\"ERR\")",
+      "t": "s",
+      "v": "ERR",
+      "text": "ERR"
+    },
+    "INDEX_text_range": {
+      "f": "=INDEX(B1:B8,8)",
+      "t": "s",
+      "v": "山田 太郎",
+      "text": "山田 太郎"
+    },
+    "MATCH_exact": {
+      "f": "=MATCH(20,C1:C6,0)",
+      "t": "n",
+      "v": 4.0,
+      "text": "4"
+    },
+    "MATCH_exact_miss": {
+      "f": "=IFERROR(MATCH(30,C1:C6,0),\"NA\")",
+      "t": "s",
+      "v": "NA",
+      "text": "NA"
+    },
+    "MATCH_approx_asc": {
+      "f": "=MATCH(30,C1:C6,1)",
+      "t": "n",
+      "v": 4.0,
+      "text": "4"
+    },
+    "MATCH_text": {
+      "f": "=MATCH(\"C\",D1:D6,0)",
+      "t": "n",
+      "v": 4.0,
+      "text": "4"
+    },
+    "MATCH_wildcard": {
+      "f": "=MATCH(\"りん*\",B1:B8,0)",
+      "t": "n",
+      "v": 1.0,
+      "text": "1"
+    },
+    "INDEX_MATCH_combo": {
+      "f": "=INDEX(E1:E6,MATCH(20,C1:C6,0))",
+      "t": "n",
+      "v": 400.0,
+      "text": "400"
+    },
+    "INDEX_MATCH_text": {
+      "f": "=INDEX(E1:E6,MATCH(\"C\",D1:D6,0))",
+      "t": "n",
+      "v": 400.0,
+      "text": "400"
+    },
+    "DATE_basic": {
+      "f": "=DATE(2026,7,31)*1",
+      "t": "n",
+      "v": 46234.0,
+      "text": "46234"
+    },
+    "DATE_month_over": {
+      "f": "=DATE(2026,13,1)*1",
+      "t": "n",
+      "v": 46388.0,
+      "text": "46388"
+    },
+    "DATE_day_over": {
+      "f": "=DATE(2026,1,32)*1",
+      "t": "n",
+      "v": 46054.0,
+      "text": "46054"
+    },
+    "DATE_leap_2024": {
+      "f": "=DATE(2024,2,29)*1",
+      "t": "n",
+      "v": 45351.0,
+      "text": "45351"
+    },
+    "DATE_diff_days": {
+      "f": "=DATE(2026,7,31)-DATE(2026,7,1)",
+      "t": "n",
+      "v": 30.0,
+      "text": "30"
+    },
+    "YEAR_cell": {
+      "f": "=YEAR(F5)",
+      "t": "n",
+      "v": 2026.0,
+      "text": "2026"
+    },
+    "YEAR_expr": {
+      "f": "=YEAR(DATE(2000,3,1))",
+      "t": "n",
+      "v": 2000.0,
+      "text": "2000"
+    },
+    "YEAR_old": {
+      "f": "=YEAR(F6)",
+      "t": "n",
+      "v": 2000.0,
+      "text": "2000"
+    },
+    "MONTH_cell": {
+      "f": "=MONTH(F5)",
+      "t": "n",
+      "v": 7.0,
+      "text": "7"
+    },
+    "MONTH_jan": {
+      "f": "=MONTH(F1)",
+      "t": "n",
+      "v": 1.0,
+      "text": "1"
+    },
+    "MONTH_expr": {
+      "f": "=MONTH(DATE(2026,12,1))",
+      "t": "n",
+      "v": 12.0,
+      "text": "12"
+    },
+    "DAY_cell": {
+      "f": "=DAY(F5)",
+      "t": "n",
+      "v": 31.0,
+      "text": "31"
+    },
+    "DAY_month_end": {
+      "f": "=DAY(F3)",
+      "t": "n",
+      "v": 31.0,
+      "text": "31"
+    },
+    "DAY_ymd_combo": {
+      "f": "=YEAR(F5)*10000+MONTH(F5)*100+DAY(F5)",
+      "t": "n",
+      "v": 20260731.0,
+      "text": "20260731"
+    },
+    "EOMONTH_0": {
+      "f": "=EOMONTH(F2,0)*1",
+      "t": "n",
+      "v": 46081.0,
+      "text": "46081"
+    },
+    "EOMONTH_plus1": {
+      "f": "=EOMONTH(F1,1)*1",
+      "t": "n",
+      "v": 46081.0,
+      "text": "46081"
+    },
+    "EOMONTH_minus1": {
+      "f": "=EOMONTH(F3,-1)*1",
+      "t": "n",
+      "v": 46081.0,
+      "text": "46081"
+    },
+    "EOMONTH_leap": {
+      "f": "=EOMONTH(DATE(2024,2,1),0)*1",
+      "t": "n",
+      "v": 45351.0,
+      "text": "45351"
+    },
+    "EOMONTH_year_over": {
+      "f": "=EOMONTH(DATE(2026,12,15),1)*1",
+      "t": "n",
+      "v": 46418.0,
+      "text": "46418"
+    },
+    "DATEDIF_Y": {
+      "f": "=DATEDIF(DATE(2000,3,1),DATE(2026,2,28),\"Y\")",
+      "t": "n",
+      "v": 25.0,
+      "text": "25"
+    },
+    "DATEDIF_Y_after": {
+      "f": "=DATEDIF(DATE(2000,3,1),DATE(2026,3,1),\"Y\")",
+      "t": "n",
+      "v": 26.0,
+      "text": "26"
+    },
+    "DATEDIF_M": {
+      "f": "=DATEDIF(DATE(2026,1,31),DATE(2026,3,30),\"M\")",
+      "t": "n",
+      "v": 1.0,
+      "text": "1"
+    },
+    "DATEDIF_D": {
+      "f": "=DATEDIF(F1,F5,\"D\")",
+      "t": "n",
+      "v": 181.0,
+      "text": "181"
+    },
+    "DATEDIF_MD": {
+      "f": "=DATEDIF(DATE(2026,1,31),DATE(2026,3,30),\"MD\")",
+      "t": "n",
+      "v": 27.0,
+      "text": "27"
+    },
+    "DATEDIF_YM": {
+      "f": "=DATEDIF(DATE(2000,3,1),DATE(2026,2,28),\"YM\")",
+      "t": "n",
+      "v": 11.0,
+      "text": "11"
+    },
+    "WEEKDAY_default": {
+      "f": "=WEEKDAY(F5)",
+      "t": "n",
+      "v": 6.0,
+      "text": "6"
+    },
+    "WEEKDAY_type2": {
+      "f": "=WEEKDAY(F5,2)",
+      "t": "n",
+      "v": 5.0,
+      "text": "5"
+    },
+    "WEEKDAY_type3": {
+      "f": "=WEEKDAY(F5,3)",
+      "t": "n",
+      "v": 4.0,
+      "text": "4"
+    },
+    "WEEKDAY_sunday": {
+      "f": "=WEEKDAY(F4,2)",
+      "t": "n",
+      "v": 3.0,
+      "text": "3"
+    },
+    "TEXT_thousands": {
+      "f": "=TEXT(1234.5,\"#,##0\")",
+      "t": "s",
+      "v": "1,235",
+      "text": "1,235"
+    },
+    "TEXT_thousands_dec": {
+      "f": "=TEXT(1234.567,\"#,##0.00\")",
+      "t": "s",
+      "v": "1,234.57",
+      "text": "1,234.57"
+    },
+    "TEXT_percent": {
+      "f": "=TEXT(0.1235,\"0.0%\")",
+      "t": "s",
+      "v": "12.4%",
+      "text": "12.4%"
+    },
+    "TEXT_currency_yen": {
+      "f": "=TEXT(1234.5,\"¥#,##0\")",
+      "t": "s",
+      "v": "¥1,235",
+      "text": "¥1,235"
+    },
+    "TEXT_pad_zero": {
+      "f": "=TEXT(7,\"0000\")",
+      "t": "s",
+      "v": "0007",
+      "text": "0007"
+    },
+    "TEXT_date": {
+      "f": "=TEXT(F5,\"yyyy/mm/dd\")",
+      "t": "s",
+      "v": "2026/07/31",
+      "text": "2026/07/31"
+    },
+    "TEXT_date_slash_md": {
+      "f": "=TEXT(F1,\"m/d\")",
+      "t": "s",
+      "v": "1/31",
+      "text": "1/31"
+    },
+    "TEXT_neg_paren": {
+      "f": "=TEXT(-1234,\"#,##0;(#,##0)\")",
+      "t": "s",
+      "v": "(1,234)",
+      "text": "(1,234)"
+    },
+    "TEXT_cellref": {
+      "f": "=TEXT(A2,\"#,##0\")",
+      "t": "s",
+      "v": "2,500",
+      "text": "2,500"
+    },
+    "LEFT_jp": {
+      "f": "=LEFT(B1,2)",
+      "t": "s",
+      "v": "りん",
+      "text": "りん"
+    },
+    "LEFT_1": {
+      "f": "=LEFT(B3,1)",
+      "t": "s",
+      "v": "a",
+      "text": "a"
+    },
+    "LEFT_over": {
+      "f": "=LEFT(B1,99)",
+      "t": "s",
+      "v": "りんご",
+      "text": "りんご"
+    },
+    "LEFT_zero": {
+      "f": "=\"[\"&LEFT(B1,0)&\"]\"",
+      "t": "s",
+      "v": "[]",
+      "text": "[]"
+    },
+    "RIGHT_jp": {
+      "f": "=RIGHT(B1,1)",
+      "t": "s",
+      "v": "ご",
+      "text": "ご"
+    },
+    "RIGHT_ascii": {
+      "f": "=RIGHT(B3,3)",
+      "t": "s",
+      "v": "ple",
+      "text": "ple"
+    },
+    "RIGHT_over": {
+      "f": "=RIGHT(B3,99)",
+      "t": "s",
+      "v": "apple",
+      "text": "apple"
+    },
+    "MID_jp": {
+      "f": "=MID(B1,2,2)",
+      "t": "s",
+      "v": "んご",
+      "text": "んご"
+    },
+    "MID_start1": {
+      "f": "=MID(B8,1,2)",
+      "t": "s",
+      "v": "山田",
+      "text": "山田"
+    },
+    "MID_beyond": {
+      "f": "=\"[\"&MID(B3,99,2)&\"]\"",
+      "t": "s",
+      "v": "[]",
+      "text": "[]"
+    },
+    "LEN_jp": {
+      "f": "=LEN(B1)",
+      "t": "n",
+      "v": 3.0,
+      "text": "3"
+    },
+    "LEN_ascii": {
+      "f": "=LEN(B3)",
+      "t": "n",
+      "v": 5.0,
+      "text": "5"
+    },
+    "LEN_space": {
+      "f": "=LEN(B4)",
+      "t": "n",
+      "v": 5.0,
+      "text": "5"
+    },
+    "LEN_num_text": {
+      "f": "=LEN(B6)",
+      "t": "n",
+      "v": 4.0,
+      "text": "4"
+    },
+    "LEN_number_cell": {
+      "f": "=LEN(A1)",
+      "t": "n",
+      "v": 4.0,
+      "text": "4"
+    },
+    "FIND_jp": {
+      "f": "=FIND(\"ん\",B2)",
+      "t": "n",
+      "v": 3.0,
+      "text": "3"
+    },
+    "FIND_ascii": {
+      "f": "=FIND(\"pp\",B3)",
+      "t": "n",
+      "v": 2.0,
+      "text": "2"
+    },
+    "FIND_missing": {
+      "f": "=IFERROR(FIND(\"z\",B3),\"NA\")",
+      "t": "s",
+      "v": "NA",
+      "text": "NA"
+    },
+    "FIND_start": {
+      "f": "=FIND(\"p\",B3,3)",
+      "t": "n",
+      "v": 3.0,
+      "text": "3"
+    },
+    "FIND_case": {
+      "f": "=IFERROR(FIND(\"A\",B3),\"NA\")",
+      "t": "s",
+      "v": "NA",
+      "text": "NA"
+    },
+    "SUBSTITUTE_jp": {
+      "f": "=SUBSTITUTE(B1,\"ご\",\"GO\")",
+      "t": "s",
+      "v": "りんGO",
+      "text": "りんGO"
+    },
+    "SUBSTITUTE_all": {
+      "f": "=SUBSTITUTE(B3,\"p\",\"P\")",
+      "t": "s",
+      "v": "aPPle",
+      "text": "aPPle"
+    },
+    "SUBSTITUTE_nth": {
+      "f": "=SUBSTITUTE(B3,\"p\",\"P\",2)",
+      "t": "s",
+      "v": "apPle",
+      "text": "apPle"
+    },
+    "SUBSTITUTE_none": {
+      "f": "=SUBSTITUTE(B3,\"z\",\"Z\")",
+      "t": "s",
+      "v": "apple",
+      "text": "apple"
+    },
+    "SUBSTITUTE_comma": {
+      "f": "=SUBSTITUTE(B7,\",\",\"\")",
+      "t": "s",
+      "v": "1234",
+      "text": "1234"
+    },
+    "CONCATENATE_2": {
+      "f": "=CONCATENATE(B1,\"-\",A1)",
+      "t": "s",
+      "v": "りんご-1000",
+      "text": "りんご-1000"
+    },
+    "CONCATENATE_3": {
+      "f": "=CONCATENATE(B1,B2,B3)",
+      "t": "s",
+      "v": "りんごみかんapple",
+      "text": "りんごみかんapple"
+    },
+    "CONCATENATE_blank": {
+      "f": "=\"[\"&CONCATENATE(G1,B3)&\"]\"",
+      "t": "s",
+      "v": "[apple]",
+      "text": "[apple]"
+    },
+    "AMP_text_num": {
+      "f": "=B1&\"-\"&A1",
+      "t": "s",
+      "v": "りんご-1000",
+      "text": "りんご-1000"
+    },
+    "AMP_blank": {
+      "f": "=\"[\"&G1&\"]\"",
+      "t": "s",
+      "v": "[]",
+      "text": "[]"
+    },
+    "AMP_number_fmt": {
+      "f": "=\"[\"&A4&\"]\"",
+      "t": "s",
+      "v": "[0.1]",
+      "text": "[0.1]"
+    },
+    "AMP_bool": {
+      "f": "=\"[\"&H1&\"]\"",
+      "t": "s",
+      "v": "[TRUE]",
+      "text": "[TRUE]"
+    },
+    "TRIM_pad": {
+      "f": "=\"[\"&TRIM(B4)&\"]\"",
+      "t": "s",
+      "v": "[pad]",
+      "text": "[pad]"
+    },
+    "TRIM_inner": {
+      "f": "=\"[\"&TRIM(B8)&\"]\"",
+      "t": "s",
+      "v": "[山田 太郎]",
+      "text": "[山田 太郎]"
+    },
+    "TRIM_none": {
+      "f": "=\"[\"&TRIM(B3)&\"]\"",
+      "t": "s",
+      "v": "[apple]",
+      "text": "[apple]"
+    },
+    "VALUE_num_text": {
+      "f": "=VALUE(B6)",
+      "t": "n",
+      "v": 7.0,
+      "text": "7"
+    },
+    "VALUE_comma": {
+      "f": "=IFERROR(VALUE(B7),\"NA\")",
+      "t": "n",
+      "v": 1234.0,
+      "text": "1234"
+    },
+    "VALUE_bad": {
+      "f": "=IFERROR(VALUE(B1),\"NA\")",
+      "t": "s",
+      "v": "NA",
+      "text": "NA"
+    },
+    "VALUE_zero_text": {
+      "f": "=VALUE(G3)",
+      "t": "n",
+      "v": 0.0,
+      "text": "0"
+    },
+    "TEXTJOIN_skip": {
+      "f": "=TEXTJOIN(\"|\",TRUE,B1:B3)",
+      "t": "s",
+      "v": "りんご|みかん|apple",
+      "text": "りんご|みかん|apple"
+    },
+    "TEXTJOIN_keep": {
+      "f": "=TEXTJOIN(\"|\",FALSE,G1:G3)",
+      "t": "s",
+      "v": "|0|0",
+      "text": "|0|0"
+    },
+    "TEXTJOIN_nums": {
+      "f": "=TEXTJOIN(\",\",TRUE,E1:E6)",
+      "t": "s",
+      "v": "100,200,300,400,500,600",
+      "text": "100,200,300,400,500,600"
+    },
+    "TEXTJOIN_blank_skip": {
+      "f": "=TEXTJOIN(\"|\",TRUE,G1:G3)",
+      "t": "s",
+      "v": "0|0",
+      "text": "0|0"
+    },
+    "SORT_asc_join": {
+      "f": "=TEXTJOIN(\",\",TRUE,SORT(E1:E6))",
+      "t": "s",
+      "v": "100,200,300,400,500,600",
+      "text": "100,200,300,400,500,600"
+    },
+    "SORT_desc_join": {
+      "f": "=TEXTJOIN(\",\",TRUE,SORT(E1:E6,1,-1))",
+      "t": "s",
+      "v": "600,500,400,300,200,100",
+      "text": "600,500,400,300,200,100"
+    },
+    "SORT_first": {
+      "f": "=INDEX(SORT(E1:E6,1,-1),1)",
+      "t": "n",
+      "v": 600.0,
+      "text": "600"
+    },
+    "SORT_text": {
+      "f": "=TEXTJOIN(\",\",TRUE,SORT(D1:D6))",
+      "t": "s",
+      "v": "A,A,A,B,B,C",
+      "text": "A,A,A,B,B,C"
+    },
+    "SORT_count": {
+      "f": "=COUNTA(SORT(E1:E6))",
+      "t": "n",
+      "v": 6.0,
+      "text": "6"
+    },
+    "UNIQUE_join": {
+      "f": "=TEXTJOIN(\",\",TRUE,UNIQUE(D1:D6))",
+      "t": "s",
+      "v": "A,B,C",
+      "text": "A,B,C"
+    },
+    "UNIQUE_count": {
+      "f": "=COUNTA(UNIQUE(D1:D6))",
+      "t": "n",
+      "v": 3.0,
+      "text": "3"
+    },
+    "UNIQUE_nums": {
+      "f": "=TEXTJOIN(\",\",TRUE,UNIQUE(E1:E6))",
+      "t": "s",
+      "v": "100,200,300,400,500,600",
+      "text": "100,200,300,400,500,600"
+    },
+    "UNIQUE_all_same": {
+      "f": "=COUNTA(UNIQUE(D1:D1))",
+      "t": "n",
+      "v": 1.0,
+      "text": "1"
+    },
+    "FILTER_sum": {
+      "f": "=SUM(FILTER(E1:E6,D1:D6=\"A\"))",
+      "t": "n",
+      "v": 1000.0,
+      "text": "1000"
+    },
+    "FILTER_join": {
+      "f": "=TEXTJOIN(\",\",TRUE,FILTER(E1:E6,D1:D6=\"A\"))",
+      "t": "s",
+      "v": "100,300,600",
+      "text": "100,300,600"
+    },
+    "FILTER_num_cond": {
+      "f": "=TEXTJOIN(\",\",TRUE,FILTER(E1:E6,C1:C6>=10))",
+      "t": "s",
+      "v": "300,400,500,600",
+      "text": "300,400,500,600"
+    },
+    "FILTER_empty": {
+      "f": "=IFERROR(TEXTJOIN(\",\",TRUE,FILTER(E1:E6,D1:D6=\"Z\")),\"NA\")",
+      "t": "s",
+      "v": "NA",
+      "text": "NA"
+    },
+    "FILTER_if_empty": {
+      "f": "=TEXTJOIN(\",\",TRUE,FILTER(E1:E6,D1:D6=\"Z\",\"なし\"))",
+      "t": "s",
+      "v": "なし",
+      "text": "なし"
+    },
+    "ARRAY_sort_unique": {
+      "f": "=TEXTJOIN(\",\",TRUE,SORT(UNIQUE(D1:D6)))",
+      "t": "s",
+      "v": "A,B,C",
+      "text": "A,B,C"
+    }
+  },
+  "inputProbes": {
+    "INPUT_typed_0007": {
+      "raw": "0007",
+      "label": "先頭ゼロの番号",
+      "t": "n",
+      "v": 7.0,
+      "text": "7"
+    },
+    "INPUT_typed_comma": {
+      "raw": "1,234",
+      "label": "桁区切り付きの数",
+      "t": "n",
+      "v": 1234.0,
+      "text": "1,234"
+    },
+    "INPUT_typed_datelike": {
+      "raw": "2026-07-31",
+      "label": "日付に見える文字",
+      "t": "n",
+      "v": 46234.0,
+      "text": "#######"
+    },
+    "INPUT_typed_code": {
+      "raw": "007-1234",
+      "label": "コード(数字とハイフン)",
+      "t": "s",
+      "v": "007-1234",
+      "text": "007-1234"
+    }
+  }
+}

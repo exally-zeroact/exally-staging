@@ -1,12 +1,16 @@
 name: CI
 
 # exally-staging は本番exallyのミラー(テスト環境)。
-#  ここで回すのは「キャッシュバスターの貼り忘れガード」だけ。
-#  機能テスト一式は本番リポジトリ(exally)のCIが持つ。
+#  以前は「キャッシュバスターの貼り忘れガード」だけを回していて、
+#  機能テスト一式(tests/run.js)はどこのCIでも回っていなかった
+#  (「本番リポジトリのCIが持つ」と書いてあったが、本番exallyのci.ymlも同じ内容だった)。その穴を塞ぐ。
 on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 20 * * 0'   # 毎週月曜 5:00 JST = LibreOffice ジョブ用
 
 jobs:
   test:
@@ -16,6 +20,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
 
       - name: Cache-buster stamp guard (貼り忘れ検知・コードより先に見る)
         run: node scripts/stamp-build.mjs --check
@@ -23,3 +28,42 @@ jobs:
       - name: Stamp tool tests (ハッシュが決定論か=CRLF/LF・OS差でブレないか)
         run: node tests/stamp.test.mjs
 
+      - name: 依存を入れる(jsdom / supabase-js)
+        run: npm ci
+
+      - name: 機能テスト一式
+        run: node tests/run.js
+
+      # ↓ tests/run.js の中にも入っているが、赤くなった時にどれで落ちたか一目で分かるよう分けて出す
+      - name: 版対応 検証ハーネス(Excelの真値と突合)
+        run: node tests/xlsx-harness/compare.mjs
+
+      - name: 版対応 検証ハーネス(★わざと壊して赤になるかの自己確認)
+        run: node tests/xlsx-harness/compare.mjs --self-test
+
+  # LibreOffice は「別の版」であって Excel の真値ではないので、本流とは分ける。
+  #  ここが落ちても上の test ジョブ(=リリース判断)は赤にしない。
+  libreoffice:
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      # ubuntu-24.04 のランナー画像から LibreOffice は削除されているので自分で入れる
+      - name: LibreOffice Calc を入れる
+        run: sudo apt-get update && sudo apt-get install -y libreoffice-calc
+      - name: LibreOffice の答えを作る(★Excelの真値ではない・参考列)
+        run: bash tools/golden-libre.sh
+      - name: レポートを作り直す(LibreOffice列が埋まる)
+        run: node tests/xlsx-harness/compare.mjs || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: libreoffice-golden
+          path: |
+            tests/xlsx-harness/golden/libreoffice-*.json
+            tests/xlsx-harness/report.md

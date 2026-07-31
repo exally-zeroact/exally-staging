@@ -1,0 +1,60 @@
+{
+  "group": "数値・丸め",
+  "cases": [
+    { "id": "ROUND_pos_2",        "func": "ROUND",       "f": "=ROUND(A5,2)" },
+    { "id": "ROUND_half_up",      "func": "ROUND",       "f": "=ROUND(A6,0)" },
+    { "id": "ROUND_half_neg",     "func": "ROUND",       "f": "=ROUND(-2.5,0)" },
+    { "id": "ROUND_neg_digits",   "func": "ROUND",       "f": "=ROUND(A2,-2)" },
+    { "id": "ROUND_zero",         "func": "ROUND",       "f": "=ROUND(A7,2)" },
+    { "id": "ROUND_money_10pct",  "func": "ROUND",       "f": "=ROUND(A2*0.1,0)" },
+
+    { "id": "ROUNDUP_pos",        "func": "ROUNDUP",     "f": "=ROUNDUP(2.001,0)" },
+    { "id": "ROUNDUP_neg",        "func": "ROUNDUP",     "f": "=ROUNDUP(-2.4,0)" },
+    { "id": "ROUNDUP_digits",     "func": "ROUNDUP",     "f": "=ROUNDUP(A5,1)" },
+    { "id": "ROUNDUP_zero",       "func": "ROUNDUP",     "f": "=ROUNDUP(A7,0)" },
+
+    { "id": "ROUNDDOWN_pos",      "func": "ROUNDDOWN",   "f": "=ROUNDDOWN(2.999,0)" },
+    { "id": "ROUNDDOWN_neg",      "func": "ROUNDDOWN",   "f": "=ROUNDDOWN(-2.6,0)" },
+    { "id": "ROUNDDOWN_shohizei", "func": "ROUNDDOWN",   "f": "=ROUNDDOWN(1980*1.1,0)" },
+    { "id": "ROUNDDOWN_digits",   "func": "ROUNDDOWN",   "f": "=ROUNDDOWN(A5,2)" },
+
+    { "id": "INT_pos",            "func": "INT",         "f": "=INT(2.9)" },
+    { "id": "INT_neg",            "func": "INT",         "f": "=INT(-2.5)" },
+    { "id": "INT_neg_cell",       "func": "INT",         "f": "=INT(A8)" },
+    { "id": "INT_zero",           "func": "INT",         "f": "=INT(A7)" },
+
+    { "id": "MOD_pos",            "func": "MOD",         "f": "=MOD(7,3)" },
+    { "id": "MOD_neg_dividend",   "func": "MOD",         "f": "=MOD(-3,2)" },
+    { "id": "MOD_neg_divisor",    "func": "MOD",         "f": "=MOD(3,-2)" },
+    { "id": "MOD_cell",           "func": "MOD",         "f": "=MOD(A3,2)" },
+    { "id": "MOD_div0",           "func": "MOD",         "f": "=MOD(3,0)" },
+
+    { "id": "ABS_neg",            "func": "ABS",         "f": "=ABS(A3)" },
+    { "id": "ABS_pos",            "func": "ABS",         "f": "=ABS(A1)" },
+    { "id": "ABS_zero",           "func": "ABS",         "f": "=ABS(A7)" },
+
+    { "id": "MAX_range",          "func": "MAX",         "f": "=MAX(E1:E6)" },
+    { "id": "MAX_with_text",      "func": "MAX",         "f": "=MAX(A1:B8)" },
+    { "id": "MAX_neg_only",       "func": "MAX",         "f": "=MAX(A3,A8)" },
+
+    { "id": "MIN_range",          "func": "MIN",         "f": "=MIN(E1:E6)" },
+    { "id": "MIN_with_text",      "func": "MIN",         "f": "=MIN(A1:B8)" },
+    { "id": "MIN_empty_cell",     "func": "MIN",         "f": "=MIN(G1:G2)" },
+
+    { "id": "AVERAGE_range",      "func": "AVERAGE",     "f": "=AVERAGE(E1:E6)" },
+    { "id": "AVERAGE_with_text",  "func": "AVERAGE",     "f": "=AVERAGE(A1:B8)" },
+    { "id": "AVERAGE_blank_skip", "func": "AVERAGE",     "f": "=AVERAGE(G1:G2)" },
+    { "id": "AVERAGE_frac",       "func": "AVERAGE",     "f": "=ROUND(AVERAGE(C1:C6),6)" },
+
+    { "id": "SUM_range",          "func": "SUM",         "f": "=SUM(E1:E6)" },
+    { "id": "SUM_text_ignored",   "func": "SUM",         "f": "=SUM(A1:B8)" },
+    { "id": "SUM_blank",          "func": "SUM",         "f": "=SUM(G1:G3)" },
+    { "id": "SUM_float",          "func": "SUM",         "f": "=SUM(A4,0.2)" },
+    { "id": "SUM_mixed_args",     "func": "SUM",         "f": "=SUM(E1:E3,100,A1)" },
+
+    { "id": "SUMPRODUCT_2range",  "func": "SUMPRODUCT",  "f": "=SUMPRODUCT(C1:C6,E1:E6)" },
+    { "id": "SUMPRODUCT_1range",  "func": "SUMPRODUCT",  "f": "=SUMPRODUCT(E1:E6)" },
+    { "id": "SUMPRODUCT_cond",    "func": "SUMPRODUCT",  "f": "=SUMPRODUCT((D1:D6=\"A\")*E1:E6)" },
+    { "id": "SUMPRODUCT_len",     "func": "SUMPRODUCT",  "f": "=SUMPRODUCT(LEN(B1:B3))" }
+  ]
+}

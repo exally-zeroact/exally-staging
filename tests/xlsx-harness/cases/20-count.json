@@ -1,0 +1,41 @@
+{
+  "group": "集計・条件付き集計",
+  "cases": [
+    { "id": "COUNT_numbers",       "func": "COUNT",      "f": "=COUNT(A1:A8)" },
+    { "id": "COUNT_mixed",         "func": "COUNT",      "f": "=COUNT(A1:B8)" },
+    { "id": "COUNT_text_number",   "func": "COUNT",      "f": "=COUNT(B6:B7)" },
+    { "id": "COUNT_blank_range",   "func": "COUNT",      "f": "=COUNT(G1:G3)" },
+
+    { "id": "COUNTA_mixed",        "func": "COUNTA",     "f": "=COUNTA(A1:B8)" },
+    { "id": "COUNTA_blank",        "func": "COUNTA",     "f": "=COUNTA(G1:G3)" },
+    { "id": "COUNTA_bool",         "func": "COUNTA",     "f": "=COUNTA(H1:H2)" },
+
+    { "id": "COUNTBLANK_range",    "func": "COUNTBLANK", "f": "=COUNTBLANK(G1:G3)" },
+    { "id": "COUNTBLANK_none",     "func": "COUNTBLANK", "f": "=COUNTBLANK(E1:E6)" },
+    { "id": "COUNTBLANK_wide",     "func": "COUNTBLANK", "f": "=COUNTBLANK(G1:H2)" },
+
+    { "id": "COUNTIF_ge",          "func": "COUNTIF",    "f": "=COUNTIF(C1:C6,\">=10\")" },
+    { "id": "COUNTIF_eq_text",     "func": "COUNTIF",    "f": "=COUNTIF(D1:D6,\"A\")" },
+    { "id": "COUNTIF_wildcard",    "func": "COUNTIF",    "f": "=COUNTIF(B1:B8,\"*ん*\")" },
+    { "id": "COUNTIF_wild_q",      "func": "COUNTIF",    "f": "=COUNTIF(B1:B8,\"A-?\")" },
+    { "id": "COUNTIF_cellref",     "func": "COUNTIF",    "f": "=COUNTIF(D1:D6,D1)" },
+    { "id": "COUNTIF_zero_blank",  "func": "COUNTIF",    "f": "=COUNTIF(G1:G3,0)" },
+
+    { "id": "COUNTIFS_2cond",      "func": "COUNTIFS",   "f": "=COUNTIFS(D1:D6,\"A\",E1:E6,\">100\")" },
+    { "id": "COUNTIFS_range_num",  "func": "COUNTIFS",   "f": "=COUNTIFS(C1:C6,\">=5\",C1:C6,\"<=50\")" },
+    { "id": "COUNTIFS_nomatch",    "func": "COUNTIFS",   "f": "=COUNTIFS(D1:D6,\"Z\")" },
+    { "id": "COUNTIFS_ne",         "func": "COUNTIFS",   "f": "=COUNTIFS(D1:D6,\"<>A\")" },
+
+    { "id": "SUMIF_ge",            "func": "SUMIF",      "f": "=SUMIF(C1:C6,\">=10\",E1:E6)" },
+    { "id": "SUMIF_text_key",      "func": "SUMIF",      "f": "=SUMIF(D1:D6,\"B\",E1:E6)" },
+    { "id": "SUMIF_no_sumrange",   "func": "SUMIF",      "f": "=SUMIF(E1:E6,\">300\")" },
+    { "id": "SUMIF_wildcard",      "func": "SUMIF",      "f": "=SUMIF(B1:B6,\"*ん*\",E1:E6)" },
+    { "id": "SUMIF_nomatch",       "func": "SUMIF",      "f": "=SUMIF(D1:D6,\"Z\",E1:E6)" },
+
+    { "id": "SUMIFS_2cond",        "func": "SUMIFS",     "f": "=SUMIFS(E1:E6,D1:D6,\"A\",C1:C6,\">1\")" },
+    { "id": "SUMIFS_range_num",    "func": "SUMIFS",     "f": "=SUMIFS(E1:E6,C1:C6,\">=5\",C1:C6,\"<=50\")" },
+    { "id": "SUMIFS_ne",           "func": "SUMIFS",     "f": "=SUMIFS(E1:E6,D1:D6,\"<>A\")" },
+    { "id": "SUMIFS_nomatch",      "func": "SUMIFS",     "f": "=SUMIFS(E1:E6,D1:D6,\"Z\")" },
+    { "id": "SUMIFS_cellref",      "func": "SUMIFS",     "f": "=SUMIFS(E1:E6,D1:D6,D2)" }
+  ]
+}

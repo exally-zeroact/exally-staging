@@ -1,0 +1,39 @@
+{
+  "group": "論理",
+  "cases": [
+    { "id": "IF_true",           "func": "IF",      "f": "=IF(A1>500,\"大\",\"小\")" },
+    { "id": "IF_false",          "func": "IF",      "f": "=IF(A3>0,\"大\",\"小\")" },
+    { "id": "IF_nested",         "func": "IF",      "f": "=IF(A1>2000,\"甲\",IF(A1>500,\"乙\",\"丙\"))" },
+    { "id": "IF_blank_cond",     "func": "IF",      "f": "=IF(G1=\"\",\"空\",\"有\")" },
+    { "id": "IF_num_result",     "func": "IF",      "f": "=IF(H1,A1,A2)" },
+
+    { "id": "IFS_first",         "func": "IFS",     "f": "=IFS(A1>2000,\"大\",A1>500,\"中\",TRUE,\"小\")" },
+    { "id": "IFS_second",        "func": "IFS",     "f": "=IFS(A1>5000,\"大\",A1>500,\"中\",TRUE,\"小\")" },
+    { "id": "IFS_fallback",      "func": "IFS",     "f": "=IFS(A7>5000,\"大\",A7>500,\"中\",TRUE,\"小\")" },
+    { "id": "IFS_no_match",      "func": "IFS",     "f": "=IFERROR(IFS(A7>5000,\"大\",A7>500,\"中\"),\"NA\")" },
+
+    { "id": "IFERROR_div0",      "func": "IFERROR", "f": "=IFERROR(1/0,\"err\")" },
+    { "id": "IFERROR_ok",        "func": "IFERROR", "f": "=IFERROR(A1/A2,\"err\")" },
+    { "id": "IFERROR_na",        "func": "IFERROR", "f": "=IFERROR(NA(),\"err\")" },
+    { "id": "IFERROR_value",     "func": "IFERROR", "f": "=IFERROR(VALUE(\"あ\"),-1)" },
+
+    { "id": "IFNA_na",           "func": "IFNA",    "f": "=IFNA(NA(),\"なし\")" },
+    { "id": "IFNA_div0_passes",  "func": "IFNA",    "f": "=IFERROR(IFNA(1/0,\"なし\"),\"div0が素通り\")" },
+    { "id": "IFNA_ok",           "func": "IFNA",    "f": "=IFNA(A1,\"なし\")" },
+
+    { "id": "AND_all_true",      "func": "AND",     "f": "=AND(A1>0,A2>0)" },
+    { "id": "AND_one_false",     "func": "AND",     "f": "=AND(A1>0,A3>0)" },
+    { "id": "AND_cellbool",      "func": "AND",     "f": "=AND(H1,H1)" },
+
+    { "id": "OR_one_true",       "func": "OR",      "f": "=OR(A3>0,A1>0)" },
+    { "id": "OR_all_false",      "func": "OR",      "f": "=OR(A3>0,A8>0)" },
+    { "id": "OR_cellbool",       "func": "OR",      "f": "=OR(H2,H1)" },
+
+    { "id": "NOT_true",          "func": "NOT",     "f": "=NOT(TRUE)" },
+    { "id": "NOT_cell",          "func": "NOT",     "f": "=NOT(H2)" },
+    { "id": "NOT_expr",          "func": "NOT",     "f": "=NOT(A1>A2)" },
+
+    { "id": "LOGIC_combo",       "func": "AND",     "f": "=IF(AND(OR(A1>0,NOT(TRUE)),A3<0),\"y\",\"n\")" },
+    { "id": "LOGIC_bool_to_num", "func": "NOT",     "f": "=(A1>0)*1+(A3>0)*1" }
+  ]
+}

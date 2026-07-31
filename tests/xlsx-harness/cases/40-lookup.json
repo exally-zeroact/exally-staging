@@ -1,0 +1,32 @@
+{
+  "group": "検索・参照",
+  "cases": [
+    { "id": "VLOOKUP_exact",       "func": "VLOOKUP", "f": "=VLOOKUP(20,C1:E6,3,FALSE)" },
+    { "id": "VLOOKUP_exact_miss",  "func": "VLOOKUP", "f": "=IFERROR(VLOOKUP(30,C1:E6,3,FALSE),\"NA\")" },
+    { "id": "VLOOKUP_approx",      "func": "VLOOKUP", "f": "=VLOOKUP(30,C1:E6,3,TRUE)" },
+    { "id": "VLOOKUP_approx_low",  "func": "VLOOKUP", "f": "=IFERROR(VLOOKUP(0,C1:E6,3,TRUE),\"NA\")" },
+    { "id": "VLOOKUP_col2",        "func": "VLOOKUP", "f": "=VLOOKUP(50,C1:E6,2,FALSE)" },
+    { "id": "VLOOKUP_text_key",    "func": "VLOOKUP", "f": "=VLOOKUP(\"C\",D1:E6,2,FALSE)" },
+    { "id": "VLOOKUP_badcol",      "func": "VLOOKUP", "f": "=IFERROR(VLOOKUP(20,C1:E6,9,FALSE),\"ERR\")" },
+
+    { "id": "XLOOKUP_basic",       "func": "XLOOKUP", "f": "=XLOOKUP(20,C1:C6,E1:E6)" },
+    { "id": "XLOOKUP_notfound",    "func": "XLOOKUP", "f": "=XLOOKUP(999,C1:C6,E1:E6,\"なし\")" },
+    { "id": "XLOOKUP_text",        "func": "XLOOKUP", "f": "=XLOOKUP(\"C\",D1:D6,E1:E6,\"なし\")" },
+    { "id": "XLOOKUP_first_dup",   "func": "XLOOKUP", "f": "=XLOOKUP(\"A\",D1:D6,E1:E6,\"なし\")" },
+    { "id": "XLOOKUP_no_default",  "func": "XLOOKUP", "f": "=IFERROR(XLOOKUP(999,C1:C6,E1:E6),\"NA\")" },
+
+    { "id": "INDEX_row",           "func": "INDEX",   "f": "=INDEX(E1:E6,4)" },
+    { "id": "INDEX_2d",            "func": "INDEX",   "f": "=INDEX(C1:E6,4,3)" },
+    { "id": "INDEX_out_of_range",  "func": "INDEX",   "f": "=IFERROR(INDEX(E1:E6,99),\"ERR\")" },
+    { "id": "INDEX_text_range",    "func": "INDEX",   "f": "=INDEX(B1:B8,8)" },
+
+    { "id": "MATCH_exact",         "func": "MATCH",   "f": "=MATCH(20,C1:C6,0)" },
+    { "id": "MATCH_exact_miss",    "func": "MATCH",   "f": "=IFERROR(MATCH(30,C1:C6,0),\"NA\")" },
+    { "id": "MATCH_approx_asc",    "func": "MATCH",   "f": "=MATCH(30,C1:C6,1)" },
+    { "id": "MATCH_text",          "func": "MATCH",   "f": "=MATCH(\"C\",D1:D6,0)" },
+    { "id": "MATCH_wildcard",      "func": "MATCH",   "f": "=MATCH(\"りん*\",B1:B8,0)" },
+
+    { "id": "INDEX_MATCH_combo",   "func": "INDEX",   "f": "=INDEX(E1:E6,MATCH(20,C1:C6,0))" },
+    { "id": "INDEX_MATCH_text",    "func": "INDEX",   "f": "=INDEX(E1:E6,MATCH(\"C\",D1:D6,0))" }
+  ]
+}
