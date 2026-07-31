@@ -97,6 +97,26 @@
       }).catch(function () { return null; });
     }
 
+    // ── 全件ページング(PostgREST既定 max_rows=1000 で"黙って"切れるのを根治) ──
+    //  build=(from,to)=>.select(cols,{count:'exact'})...range(from,to) を付けた完成クエリ。返り={data,error,count}。
+    //  ★次ページの開始は「実際に返ってきた件数」で進める。サーバ上限がページ幅より小さくても取りこぼさない。
+    function fetchAllQ(build) {
+      var out = [], from = 0, size = 1000;
+      function step() {
+        return Promise.resolve(build(from, from + size - 1)).then(function (r) {
+          if (r && r.error) return { data: null, error: r.error };
+          var got = (r && r.data) || [];
+          out = out.concat(got);
+          if (!got.length || r.count == null || out.length >= r.count) {
+            return { data: out, error: null, count: (r && r.count != null) ? r.count : out.length };
+          }
+          from += got.length;   // ★size ではなく実受信数で進める(上限<ページ幅でも漏れない)
+          return step();
+        });
+      }
+      return step();
+    }
+
     // ── §2-2 Kyuallyの競合検知を起こすための「updated_at だけ」空更新 ──
     //   data は読みも書きもしない。行が無ければ 0行更新=無害(勝手に作らない)。
     function touchCompanies(u) {
@@ -114,11 +134,12 @@
       employees: {
         // 一覧(RLSで自分のぶんだけ)。Exallyの既定値は読み時に当てるだけ=DBは書き換えない。
         list: function () {
-          return Promise.resolve(sb.from('pay_employees').select('id,sort,data,updated_at').order('sort', { ascending: true }))
-            .then(function (r) {
-              if (r && r.error) throw new Error(err(r.error));
-              return (r.data || []).map(readEmp);
-            });
+          return fetchAllQ(function (a, b) {
+            return sb.from('pay_employees').select('id,sort,data,updated_at', { count: 'exact' }).order('sort', { ascending: true }).range(a, b);
+          }).then(function (r) {
+            if (r && r.error) throw new Error(err(r.error));
+            return (r.data || []).map(readEmp);
+          });
         },
         // ★allowlist のキーだけを read-modify-write で更新 → pay_companies.updated_at を空更新
         patch: function (id, patch) {
@@ -193,11 +214,12 @@
       /* ═══ 取引先(pay_partners) ═══ */
       partners: {
         list: function () {
-          return Promise.resolve(sb.from('pay_partners').select('id,sort,data,updated_at').is('deleted_at', null).order('sort', { ascending: true }))
-            .then(function (r) {
-              if (r && r.error) throw new Error(err(r.error));
-              return r.data || [];
-            });
+          return fetchAllQ(function (a, b) {
+            return sb.from('pay_partners').select('id,sort,data,updated_at', { count: 'exact' }).is('deleted_at', null).order('sort', { ascending: true }).range(a, b);
+          }).then(function (r) {
+            if (r && r.error) throw new Error(err(r.error));
+            return r.data || [];
+          });
         },
         upsert: function (p) {
           return P(function () {
@@ -233,19 +255,16 @@
           return P(function () {
           q = q || {};
           if (!isYmd(q.from) || !isYmd(q.to)) throw new Error('from/to は YYYY-MM-DD です');
-          // ★count:'exact' で「本当は何件あるか」を必ず一緒に取る。
-          //   PostgREST はサーバ側の上限(Supabase既定1000行)で黙って切る＝お金の集計が
-          //   静かに過少になる。切れたら結果を返さず失敗させる(嘘の合計を出さない)。
-          var sel = sb.from('pay_ledger').select('id,employee_id,ymd,data,updated_at', { count: 'exact' }).is('deleted_at', null)
-            .gte('ymd', q.from).lte('ymd', q.to);
-          if (q.employeeId) sel = sel.eq('employee_id', q.employeeId);
-          return Promise.resolve(sel.order('ymd', { ascending: true })).then(function (r) {
+          // ★count:'exact' + range で全ページ取り切る。PostgREST はサーバ側の上限(Supabase既定1000行)で
+          //   黙って切る＝お金の集計が静かに過少になるので、期間を短く区切らせず全件読む(取りこぼしゼロ)。
+          return fetchAllQ(function (a, b) {
+            var sel = sb.from('pay_ledger').select('id,employee_id,ymd,data,updated_at', { count: 'exact' }).is('deleted_at', null)
+              .gte('ymd', q.from).lte('ymd', q.to);
+            if (q.employeeId) sel = sel.eq('employee_id', q.employeeId);
+            return sel.order('ymd', { ascending: true }).range(a, b);
+          }).then(function (r) {
             if (r && r.error) throw new Error(err(r.error));
-            var rows = r.data || [];
-            if (r.count != null && r.count > rows.length) {
-              throw new Error('台帳が多すぎて全部読めませんでした（' + rows.length + '/' + r.count + '件）。期間を短く区切ってください');
-            }
-            return rows.map(function (x) {
+            return (r.data || []).map(function (x) {
               return { id: x.id, employeeId: x.employee_id, ymd: x.ymd, data: x.data || {}, updatedAt: x.updated_at };
             });
           });

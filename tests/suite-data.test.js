@@ -283,17 +283,29 @@ test('§5 ledger: 既存idを渡すと更新(重複行を作らない)', async (
 
 /* ═══ 対立監査で見つけた穴(再発防止) ═══ */
 
-test('監査: 台帳が件数上限で切れたら、嘘の合計を返さず失敗する', async () => {
+test('監査: 台帳が件数上限を超えても、全ページ取り切って1件も落とさない', async () => {
+  // ★以前は「上限で切れたら失敗させ、期間を短く区切らせる」設計だったが、最適解＝全件ページング。
+  //   サーバ上限(maxRows)がページ幅より小さくても、実受信数で offset を進めて取りこぼさない。
   const tables = { pay_employees: [], pay_companies: [], pay_org: [], pay_partners: [], pay_ledger: [], exally_entitlements: [] };
   for (let i = 1; i <= 12; i++) {
     tables.pay_ledger.push({ id: 'lg' + i, account_id: 'u1', employee_id: 'e1', ymd: '2026-07-' + ('0' + i).slice(-2), data: { uriage: 1000 }, deleted_at: null });
   }
-  const sb = createFakeSupa({ uid: 'u1', tables, maxRows: 10 });   // サーバ側で10件に切られる状況
+  const sb = createFakeSupa({ uid: 'u1', tables, maxRows: 10 });   // 1応答=最大10件しか返らない状況
   const sd = SuiteData.create({ client: sb });
-  await assert.rejects(() => sd.ledger.list({ from: '2026-07-01', to: '2026-07-31' }), /10\/12件/);
-  // 期間を短く区切れば読める
-  const rows = await sd.ledger.list({ from: '2026-07-01', to: '2026-07-08' });
-  assert.strictEqual(rows.length, 8);
+  const rows = await sd.ledger.list({ from: '2026-07-01', to: '2026-07-31' });
+  assert.strictEqual(rows.length, 12, '上限10で頭打ち＝ページングが効いていない');
+  assert.strictEqual(rows[11].id, 'lg12', '最後の1件まで取れている');
+});
+
+test('監査: 従業員/取引先も件数上限を超えて全件読む(ページング)', async () => {
+  const tables = { pay_employees: [], pay_companies: [], pay_org: [], pay_partners: [], pay_ledger: [], exally_entitlements: [] };
+  for (let i = 1; i <= 25; i++) {
+    tables.pay_employees.push({ id: 'e' + i, account_id: 'u1', sort: i, data: { name: '従業員' + i }, updated_at: '2026-07-01T00:00:00Z' });
+    tables.pay_partners.push({ id: 'pt' + i, account_id: 'u1', sort: i, data: { name: '取引先' + i }, deleted_at: null, updated_at: '2026-07-01T00:00:00Z' });
+  }
+  const sd = SuiteData.create({ client: createFakeSupa({ uid: 'u1', tables, maxRows: 10 }) });
+  assert.strictEqual((await sd.employees.list()).length, 25, '従業員が上限10で切れている');
+  assert.strictEqual((await sd.partners.list()).length, 25, '取引先が上限10で切れている');
 });
 
 test('監査: 取引先を直す時 sort を渡さなくても並び順が0に戻らない', async () => {
@@ -411,6 +423,24 @@ test('§2-2以外で pay_companies を書き換えていない(読み取りはOK
     assert.strictEqual(new RegExp("from\\(\\s*'pay_companies'\\s*\\)\\s*\\.\\s*" + bad).test(src), false,
       'pay_companies に ' + bad + ' がある');
   });
+});
+
+/* ═══ 全件ページングが消えていないか（巻き戻り防止） ═══
+ * ★2026-07-31 に危うくやりかけた: 別セッションが入れた「1000件超の全件ページング(fetchAllQ)」を、
+ *   それより古い枝から本番へ出して消しかけた。お金の記録が黙って欠ける事故になるので、テストで居座らせる。
+ */
+test('★全件ページング(fetchAllQ)が消えていない=1000件超が黙って欠けない', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'js', 'suite-data.js'), 'utf8');
+  assert.ok(/function\s+fetchAllQ/.test(src), 'fetchAllQ(全件ページング)が消えている＝1000件超が欠落する');
+  const uses = (src.match(/fetchAllQ\(/g) || []).length;
+  assert.ok(uses >= 4, 'fetchAllQ の利用が少なすぎる(' + uses + '箇所)＝どこかが素の select に戻っている');
+});
+
+test('★台帳の読みが件数上限で黙って切れない仕掛けが残っている', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'js', 'suite-data.js'), 'utf8');
+  // 「全件取り切る」か「切れたら検知する」か、どちらかは必ず有ること
+  const guarded = /fetchAllQ/.test(src) || /count:\s*'exact'/.test(src);
+  assert.ok(guarded, '台帳の読みに「全件取得」も「切れ検知」も無い＝合計が静かに過少になる');
 });
 
 /* ═══ DDL の安全性(既存を壊さない) ═══ */

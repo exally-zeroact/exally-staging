@@ -30,11 +30,24 @@
   }
 
   function boot(sb) {
-    try {
-      sb.from('statutory').select('kind,year,data')
-        .then(function (res) { if (res && res.data) distribute(res.data); })
-        .catch(function () { /* フォールバック */ });
-    } catch (e) { /* フォールバック */ }
+    // 全ページ取得。PostgREST既定 max_rows=1000 で黙って切れると法定値の一部が更新されない
+    //  （静かに古い値のまま）ので、count:'exact'+range で取り切る。取れた分だけ随時注入(フォールバック維持)。
+    var out = [], from = 0, size = 1000;
+    function step() {
+      try {
+        return Promise.resolve(sb.from('statutory').select('kind,year,data', { count: 'exact' }).range(from, from + size - 1))
+          .then(function (res) {
+            if (!res || res.error) { if (out.length) distribute(out); return; }
+            var got = res.data || [];
+            out = out.concat(got);
+            if (!got.length || res.count == null || out.length >= res.count) { distribute(out); return; }
+            from += got.length;   // 実受信数で進める(上限<ページ幅でも漏れない)
+            return step();
+          })
+          .catch(function () { if (out.length) distribute(out); });
+      } catch (e) { if (out.length) distribute(out); }
+    }
+    step();
   }
   function tryReady() {
     if (typeof window === 'undefined' || !(window.supabase && window.supabase.createClient)) return false;

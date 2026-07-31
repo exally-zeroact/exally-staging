@@ -107,7 +107,8 @@ T('1. ハブが出る・タイルは7つ(請求書/見積を足した)', () => {
 T('1. 給料明細タイルは働くKyuallyへ繋がる(本物の行き先が1つある)', () => {
   const a = doc.getElementById('tile-payslip');
   ok(a.tagName === 'A', 'リンクでない');
-  ok(a.getAttribute('href') === 'https://payslip-app-olive.vercel.app', 'href=' + a.getAttribute('href'));
+  // staging(テスト環境)の給与タイルはテスト版Kyually(payslip-app-test)を指す＝本番URLでなくこちらが正
+  ok(a.getAttribute('href') === 'https://exally-zeroact.github.io/payslip-app-test/', 'href=' + a.getAttribute('href'));
   ok(a.getAttribute('target') === '_blank' && /noopener/.test(a.getAttribute('rel') || ''), '別タブ/noopenerでない');
 });
 T('1. ★請求書・見積のタイルがあり、それぞれのページを開く', () => {

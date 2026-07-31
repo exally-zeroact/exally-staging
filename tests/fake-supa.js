@@ -43,6 +43,7 @@ function createFakeSupa(opts) {
   Query.prototype.in = function (c, arr) { this._filters.push(function (r) { return arr.indexOf(r[c]) >= 0; }); return this; };
   Query.prototype.order = function (c, o) { this._order = { c: c, asc: !(o && o.ascending === false) }; return this; };
   Query.prototype.limit = function (n) { this._limit = n; return this; };
+  Query.prototype.range = function (a, b) { this._range = { from: a, to: b }; return this; };  // ページング(両端含む)
   Query.prototype.maybeSingle = function () { this._single = 'maybe'; return this; };
   Query.prototype.single = function () { this._single = 'one'; return this; };
 
@@ -97,15 +98,17 @@ function createFakeSupa(opts) {
       out.sort(function (a, b) { var x = a[c], y = b[c]; var d = (x > y) - (x < y); return asc ? d : -d; });
     }
     if (this._limit != null) out = out.slice(0, this._limit);
+    // ★range(from,to): ページング(両端含む)。order後の並びに対して窓を取る。
+    if (this._range) out = out.slice(this._range.from, this._range.to + 1);
+    // ★本番PostgRESTは server 側 max-rows(Supabase既定1000)で黙って切る（range窓にも掛かる）。
+    //   テストでも再現できるよう opts.maxRows で切って count は「切る前の総数」を返す。
+    if (opts.maxRows != null && out.length > opts.maxRows) out = out.slice(0, opts.maxRows);
     if (this._cols && this._cols !== '*') {
       var keep = this._cols.split(',').map(function (s) { return s.trim(); });
       out = out.map(function (r) { var o = {}; keep.forEach(function (k) { if (k in r) o[k] = r[k]; }); return o; });
     }
     if (this._single === 'maybe') return { data: out[0] || null, error: null };
     if (this._single === 'one') return out.length === 1 ? { data: out[0], error: null } : { data: null, error: { message: 'not exactly one row' } };
-    // ★本番PostgRESTは server 側 max-rows(Supabase既定1000)で黙って切る。
-    //   テストでも再現できるよう opts.maxRows で切って count は「切る前の総数」を返す。
-    if (opts.maxRows != null && out.length > opts.maxRows) out = out.slice(0, opts.maxRows);
     return this._count ? { data: out, count: total, error: null } : { data: out, error: null };
   };
   Query.prototype.then = function (res, rej) { try { return Promise.resolve(this._run()).then(res, rej); } catch (e) { return Promise.reject(e); } };
