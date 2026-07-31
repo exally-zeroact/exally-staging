@@ -26,6 +26,8 @@
     { "id": "MATCH_text",          "func": "MATCH",   "f": "=MATCH(\"C\",D1:D6,0)" },
     { "id": "MATCH_wildcard",      "func": "MATCH",   "f": "=MATCH(\"りん*\",B1:B8,0)" },
 
+    { "id": "XLOOKUP_nested",      "func": "XLOOKUP", "f": "=ROUND(XLOOKUP(20,C1:C6,E1:E6),0)", "why": "★入れ子" },
+    { "id": "MATCH_nested_wild",   "func": "MATCH",   "f": "=INDEX(E1:E6,MATCH(\"りん*\",B1:B8,0))", "why": "★入れ子+ワイルドカード" },
     { "id": "INDEX_MATCH_combo",   "func": "INDEX",   "f": "=INDEX(E1:E6,MATCH(20,C1:C6,0))" },
     { "id": "INDEX_MATCH_text",    "func": "INDEX",   "f": "=INDEX(E1:E6,MATCH(\"C\",D1:D6,0))" }
   ]

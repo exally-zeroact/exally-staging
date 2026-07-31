@@ -70,6 +70,9 @@
     { "id": "VALUE_empty",        "func": "VALUE",       "f": "=IFERROR(VALUE(\"\"),\"NA\")" },
     { "id": "VALUE_nested_calc",  "func": "VALUE",       "f": "=IFERROR(VALUE(B7)+1,\"NA\")" },
 
+    { "id": "TEXTJOIN_nested_len", "func": "TEXTJOIN",   "f": "=LEN(TEXTJOIN(\",\",TRUE,D1:D3))", "why": "★入れ子" },
+    { "id": "VALUE_nested_sum",    "func": "VALUE",      "f": "=SUM(VALUE(B7),1)", "why": "★入れ子" },
+    { "id": "TEXT_nested_concat",  "func": "TEXT",       "f": "=\"[\"&TEXT(A2,\"#,##0\")&\"]\"", "why": "★入れ子" },
     { "id": "TEXTJOIN_skip",      "func": "TEXTJOIN",    "f": "=TEXTJOIN(\"|\",TRUE,B1:B3)" },
     { "id": "TEXTJOIN_delim_comma","func": "TEXTJOIN",   "f": "=TEXTJOIN(\",\",TRUE,\"a\",\"b\")", "why": "★区切り文字が引数の区切りと同じ=素朴なカンマ分割だと壊れる形" },
     { "id": "TEXTJOIN_nested_fn", "func": "TEXTJOIN",    "f": "=TEXTJOIN(\"|\",TRUE,LEFT(B1,1),LEFT(B2,1))", "why": "★引数が関数呼び出し" },

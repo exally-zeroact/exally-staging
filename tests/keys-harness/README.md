@@ -9,7 +9,7 @@ Excel を触ってきた人がグリッドで同じ手が使えるか。
 
 | 区分 | 件数 | 中身 |
 |---|---|---|
-| Excelと同じ | 12 | 個別の一覧は未記録（件数だけの報告だった） |
+| Excelと同じ | 12 | 矢印↑↓←→ / Shift+矢印 / Home / Ctrl+Home / Ctrl+End / F2 / Tab / Shift+Tab / Ctrl+A / Ctrl+C→Ctrl+V / Ctrl+Z / Ctrl+Y |
 | 入っているが挙動が違う | 8行 | Ctrl+↓ / Ctrl+Shift+↓ / **Delete が範囲を消さず左上1個だけ** / Ctrl+D / Ctrl+R / Enter が編集開始 / Escape でコピー範囲が解除されない / PageDown 無効 |
 | 未実装 | 10 | Ctrl+F / Ctrl+H / Ctrl+1 / F4 / Ctrl+; / Ctrl+Space / Shift+Space / Ctrl+"+"-" / Shift+F11 / Ctrl+PageUp・PageDown |
 | 別件 | 1 | グリッド→Excel のコピーが片道（`ctxCopy` が OS のクリップボードに書いていない） |

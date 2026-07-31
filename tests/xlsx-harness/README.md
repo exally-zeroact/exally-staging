@@ -76,6 +76,32 @@ XLOOKUP / IFS / TEXTJOIN / SORT / UNIQUE / FILTER のような新しい関数を
 
 2026-07-31 実施: **221/221 完全一致**（実Chrome と jsdom）。
 
+## ★関数がどこで定義されているか（1つの関数は1箇所だけ）
+
+同じ関数を2箇所で定義しない。**両方に居たら CI が赤**（`compare.mjs` が検査し、`--self-test` の[6]で確認）。
+
+### 振り分けの基準
+
+| どこ | 何を置くか | なぜ |
+|---|---|---|
+| **HyperFormula プラグイン**（`registerExallyFunctions`） | **入れ子で使われうる純粋な関数は全部ここ** | エンジン自身が計算するので `=INDEX(SORT(...),1)` のような入れ子でも、そのセルを参照した先でも正しい |
+| `_jsSet`（`_jsComputeFormula`） | セルを直接読む必要があるグリッド固有のオペだけ | 式の**一番外側でしか効かない**。ここに純粋な関数を置くと入れ子で答えが変わる |
+
+### 今どちらに居るか（2026-08-01）
+
+**プラグイン側（11）**：`SORT` `UNIQUE` `TEXT` `TEXTJOIN` `INT` `MOD` `VALUE` `XLOOKUP` `FILTER` `MATCH` `SUMPRODUCT`
+
+**`_jsSet` 側（60）**：残りの独自層関数。**うち38関数は入れ子で答えが変わる**（第3波でプラグインへ移す・台帳 `nesting_pending`・期限 2026-09-30）。
+一覧と実測は `node tests/xlsx-harness/nesting-audit.mjs --probe`。
+
+### 入れ子の壊れを増やさない錠
+
+```bash
+node tests/xlsx-harness/nesting-audit.mjs --probe --check   # baseline(38)を超えたら赤
+```
+
+`_jsSet` に純粋な関数を足すと件数が増えて **CI が赤**になる。減らしたら `--update-baseline` で締め直す。
+
 ## 不一致が出たらどう直すか
 
 `known-diffs.json` に区分を書く。

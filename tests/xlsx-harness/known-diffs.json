@@ -1,42 +1,33 @@
 {
   "note": "既知の不一致の台帳。ここに載っている物だけが「既知」として緑になる。載っていない不一致は赤。★載せる=直したではない。全部レポートに並び続ける。",
   "classes": {
-    "A": "うちで潰す。exally-formula.js の _jsComputeFormula の対象表(_jsSet)に足して実装する。★期限(due)必須",
+    "A": "うちで潰す。★期限(due)必須",
     "B": "HyperFormula 側の更新待ち。版と課題を書いて据え置く",
     "C": "仕様差として明示的に放置。理由を書いて表に出し続ける"
   },
-  "fixed_2026-07-31_wave1": "第1波で解消: TEXT書式5件 / TEXT日付書式2件 / INT負数2件 / MOD符号3件 / VALUE桁区切り1件 / TEXTJOIN引数分解(FILTER系2件) ＝15件。加えて入れ子のINT・MODも convertFormula の書換で根治した。",
+  "history": {
+    "wave1_2026-07-31": "TEXT書式5 / TEXT日付2 / INT負数2 / MOD符号3 / VALUE桁区切り1 / TEXTJOIN引数分解2 ＝15件。一致 193→221",
+    "wave2_2026-08-01": "SORT / UNIQUE / FILTERの第3引数 / MATCHワイルドカード / TEXT入れ子 ＝12件。加えて TEXT・TEXTJOIN・INT・MOD・VALUE・XLOOKUP を HFプラグインへ移し、入れ子でも効くようにした。一致 221→243"
+  },
   "roots": {
-    "R3_SUMPRODUCT_array": "配列同士の演算や、配列を返す関数を引数にすると #VALUE! になる",
-    "R4_MATCH_wildcard": "MATCH がワイルドカード(* ?)に対応していない",
-    "R9_SORT_missing": "SORT が HyperFormula 2.6.1 に無い(#NAME?)。独自層の対象表にも無い",
-    "R10_UNIQUE_missing": "UNIQUE が HyperFormula 2.6.1 に無い(#NAME?)。★以前『あるがスピルしない』と書いていたのは誤りで、実測すると Function name UNIQUE not recognized。COUNTA(UNIQUE(...)) が 1 になるのはエラー値を1個数えているだけ",
-    "R13_FILTER_ifempty": "HyperFormula の FILTER は、該当なしの時に返す第3引数(if_empty)に対応していない。Excelは『なし』を返すが #N/A になる",
+    "R3_SUMPRODUCT_array": "★HyperFormula は配列同士の掛け算 (D1:D6=\"A\")*E1:E6 を配列として扱えない。SUMPRODUCT を自前実装しても、引数に届く前に潰れているので直らない。エンジンの配列演算そのものを直す必要がある",
     "R11_input_parse": "セルに打ち込んだ『桁区切り付きの数』『日付に見える文字』を、Excel は数値/日付に解釈するがグリッドは文字列のまま持つ",
-    "R12_override_toplevel": "★独自層(_jsComputeFormula)は『式の一番外側の関数』しか横取りしない。=LEN(TEXT(...)) のように入れ子になると届かず、HyperFormula の答えがそのまま出る。INT と MOD は HF の式に書き換えて根治したが、TEXT は書式処理を式で書けないため同じ手が使えない"
+    "R14_nesting_pending": "★独自層(_jsSet)に残っている関数は、式の一番外側でしか効かない。入れ子で使われると HyperFormula の答えに戻る。実測で38関数が該当(tests/xlsx-harness/nesting-audit.mjs)。HFプラグインへ移せば直る"
+  },
+  "nesting_pending": {
+    "class": "A",
+    "due": "2026-09-30",
+    "count": 38,
+    "note": "★第3波。下の関数はまだ _jsSet 側にあり、入れ子で使われると答えが変わる。nesting-audit.mjs の件数が baseline を超えたらCIが赤になる(黙って増やせない)。",
+    "funcs": ["NUMBERVALUE","RANK","PERCENTILE","QUARTILE","MODE","TRIMMEAN","PERCENTRANK","KURT","INTERCEPT","FORECAST","IRR","DATEVALUE","INDIRECT","XMATCH","LOOKUP","CONCAT","FIXED","DOLLAR","YEN","N","TYPE","ENCODEURL","GESTEP","TEXTBEFORE","TEXTAFTER","VALUETOTEXT","AGGREGATE","PERMUT","PERMUTATIONA","MDETERM","LENB","LEFTB","RIGHTB","MIDB","ASC","JIS","DSUM","DCOUNT"]
   },
   "diffs": [
-    { "id": "SUMPRODUCT_cond",    "func": "SUMPRODUCT", "root": "R3_SUMPRODUCT_array",  "class": "A", "due": "2026-08-31", "money_impact": true,  "exally": "#VALUE!", "excel365": "1000", "note": "条件×金額の定番形が動かない(SUMIFSの代わりに広く使われる形)" },
-    { "id": "SUMPRODUCT_len",     "func": "SUMPRODUCT", "root": "R3_SUMPRODUCT_array",  "class": "A", "due": "2026-08-31", "money_impact": false, "exally": "#VALUE!", "excel365": "11",   "note": "配列を返す関数を引数に取れない" },
+    { "id": "SUMPRODUCT_cond", "func": "SUMPRODUCT", "root": "R3_SUMPRODUCT_array", "class": "B", "money_impact": true,  "exally": "100", "excel365": "1000",
+      "note": "★条件×金額の定番形。SUMPRODUCT を自前実装しても直らないことを実測で確認した。原因は HyperFormula の配列演算((範囲=値)*範囲 が配列にならない)で、エンジン側の課題。SUMIFS で書けば正しく出る" },
+    { "id": "SUMPRODUCT_len",  "func": "SUMPRODUCT", "root": "R3_SUMPRODUCT_array", "class": "B", "money_impact": false, "exally": "3",   "excel365": "11",
+      "note": "同上(配列を返す関数を引数に取る形)" },
 
-    { "id": "MATCH_wildcard",     "func": "MATCH",  "root": "R4_MATCH_wildcard",   "class": "A", "due": "2026-08-31", "money_impact": false, "exally": "#N/A",   "excel365": "1",   "note": "部分一致の検索ができない" },
-
-    { "id": "SORT_asc_join",      "func": "SORT",   "root": "R9_SORT_missing",     "class": "A", "due": "2026-08-31", "money_impact": false, "exally": "#NAME?", "excel365": "100,200,300,400,500,600", "note": "SORTが無い。★第1波でTEXTJOINの引数分解を直したので、壊れた文字列ではなくエラーが出るようになった" },
-    { "id": "SORT_desc_join",     "func": "SORT",   "root": "R9_SORT_missing",     "class": "A", "due": "2026-08-31", "money_impact": false, "exally": "#NAME?", "excel365": "600,500,400,300,200,100", "note": "同上(以前は『1,-1)』という無意味な文字列を黙って返していた)" },
-    { "id": "SORT_text",          "func": "SORT",   "root": "R9_SORT_missing",     "class": "A", "due": "2026-08-31", "money_impact": false, "exally": "#NAME?", "excel365": "A,A,A,B,B,C",             "note": "同上" },
-    { "id": "SORT_first",         "func": "SORT",   "root": "R9_SORT_missing",     "class": "A", "due": "2026-08-31", "money_impact": false, "exally": "#NAME?", "excel365": "600",                     "note": "SORTが無い" },
-    { "id": "SORT_count",         "func": "SORT",   "root": "R9_SORT_missing",     "class": "A", "due": "2026-08-31", "money_impact": false, "exally": "1",      "excel365": "6",                       "note": "SORTが無く、COUNTAがエラー値を1個数えている" },
-    { "id": "ARRAY_sort_unique",  "func": "SORT",   "root": "R9_SORT_missing",     "class": "A", "due": "2026-08-31", "money_impact": false, "exally": "#NAME?", "excel365": "A,B,C",                   "note": "SORTとUNIQUEの両方が要る" },
-
-    { "id": "UNIQUE_join",        "func": "UNIQUE", "root": "R10_UNIQUE_missing",  "class": "A", "due": "2026-08-31", "money_impact": false, "exally": "#NAME?", "excel365": "A,B,C",                   "note": "UNIQUEが無い" },
-    { "id": "UNIQUE_nums",        "func": "UNIQUE", "root": "R10_UNIQUE_missing",  "class": "A", "due": "2026-08-31", "money_impact": false, "exally": "#NAME?", "excel365": "100,200,300,400,500,600", "note": "同上" },
-    { "id": "UNIQUE_count",       "func": "UNIQUE", "root": "R10_UNIQUE_missing",  "class": "A", "due": "2026-08-31", "money_impact": false, "exally": "1",      "excel365": "3",                       "note": "同上(COUNTAがエラー値を1個数えている)" },
-
-    { "id": "FILTER_if_empty",    "func": "FILTER", "root": "R13_FILTER_ifempty",  "class": "A", "due": "2026-08-31", "money_impact": false, "exally": "#N/A",   "excel365": "なし",                     "note": "該当なしの時に返す第3引数に未対応" },
-
-    { "id": "TEXT_nested",        "func": "TEXT",   "root": "R12_override_toplevel","class": "A", "due": "2026-08-31", "money_impact": true,  "exally": "8",      "excel365": "5",                       "note": "★=LEN(TEXT(1234.5,\"#,##0\")) のように入れ子だと独自層が届かず、書式が効かないHFの結果(『1234.5』の8文字)になる。INT/MODは式に書き換えて根治したが、TEXTは書式処理を式で書けない。第2波で仕組みごと直す" },
-
-    { "id": "INPUT_typed_comma",    "func": "(入力)", "root": "R11_input_parse", "class": "A", "due": "2026-08-31", "money_impact": true,  "exally": "1,234",      "excel365": "1234",  "note": "『1,234』と打っても数値にならない=以降の合計に入らない" },
-    { "id": "INPUT_typed_datelike", "func": "(入力)", "root": "R11_input_parse", "class": "A", "due": "2026-08-31", "money_impact": false, "exally": "2026-07-31", "excel365": "46234", "note": "『2026-07-31』と打っても日付にならない=日付計算に使えない" }
+    { "id": "INPUT_typed_comma",    "func": "(入力)", "root": "R11_input_parse", "class": "A", "due": "2026-09-30", "money_impact": true,  "exally": "1,234",      "excel365": "1234",  "note": "『1,234』と打っても数値にならない=以降の合計に入らない。グリッドの入力処理(book.html)側の話なので関数プラグインでは直らない" },
+    { "id": "INPUT_typed_datelike", "func": "(入力)", "root": "R11_input_parse", "class": "A", "due": "2026-09-30", "money_impact": false, "exally": "2026-07-31", "excel365": "46234", "note": "『2026-07-31』と打っても日付にならない=日付計算に使えない" }
   ]
 }

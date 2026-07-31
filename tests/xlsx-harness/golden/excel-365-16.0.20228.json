@@ -13,7 +13,7 @@
     "listSep": ",",
     "date1904": false,
     "formulaProperty": ".Formula (US-English) only; .FormulaLocal is NOT used",
-    "caseCount": 235,
+    "caseCount": 245,
     "volatileSkipped": [
       "TODAY_serial",
       "NOW_int_is_today"
@@ -783,6 +783,18 @@
       "v": 1.0,
       "text": "1"
     },
+    "XLOOKUP_nested": {
+      "f": "=ROUND(XLOOKUP(20,C1:C6,E1:E6),0)",
+      "t": "n",
+      "v": 400.0,
+      "text": "400"
+    },
+    "MATCH_nested_wild": {
+      "f": "=INDEX(E1:E6,MATCH(\"りん*\",B1:B8,0))",
+      "t": "n",
+      "v": 100.0,
+      "text": "100"
+    },
     "INDEX_MATCH_combo": {
       "f": "=INDEX(E1:E6,MATCH(20,C1:C6,0))",
       "t": "n",
@@ -1299,6 +1311,24 @@
       "v": 1235.0,
       "text": "1235"
     },
+    "TEXTJOIN_nested_len": {
+      "f": "=LEN(TEXTJOIN(\",\",TRUE,D1:D3))",
+      "t": "n",
+      "v": 5.0,
+      "text": "5"
+    },
+    "VALUE_nested_sum": {
+      "f": "=SUM(VALUE(B7),1)",
+      "t": "n",
+      "v": 1235.0,
+      "text": "1235"
+    },
+    "TEXT_nested_concat": {
+      "f": "=\"[\"&TEXT(A2,\"#,##0\")&\"]\"",
+      "t": "s",
+      "v": "[2,500]",
+      "text": "[2,500]"
+    },
     "TEXTJOIN_skip": {
       "f": "=TEXTJOIN(\"|\",TRUE,B1:B3)",
       "t": "s",
@@ -1340,6 +1370,36 @@
       "t": "s",
       "v": "0|0",
       "text": "0|0"
+    },
+    "SORT_nested_sum": {
+      "f": "=SUM(SORT(E1:E6))",
+      "t": "n",
+      "v": 2100.0,
+      "text": "2100"
+    },
+    "SORT_nested_index2": {
+      "f": "=INDEX(SORT(E1:E6,1,-1),2)",
+      "t": "n",
+      "v": 500.0,
+      "text": "500"
+    },
+    "UNIQUE_nested_sum": {
+      "f": "=SUM(UNIQUE(E1:E6))",
+      "t": "n",
+      "v": 2100.0,
+      "text": "2100"
+    },
+    "UNIQUE_nested_count": {
+      "f": "=COUNT(UNIQUE(D1:D6))",
+      "t": "n",
+      "v": 0.0,
+      "text": "0"
+    },
+    "FILTER_nested_count": {
+      "f": "=COUNT(FILTER(E1:E6,D1:D6=\"A\"))",
+      "t": "n",
+      "v": 3.0,
+      "text": "3"
     },
     "SORT_asc_join": {
       "f": "=TEXTJOIN(\",\",TRUE,SORT(E1:E6))",

@@ -578,10 +578,10 @@ function _jsComputeFormula(sheet, v) {
   var _fn = _f0.match(/^([A-Z][A-Z0-9.]*)\s*\(/i);
   if(!_fn) return null; // 関数形式でない（=A1+B1等）→ HFへ
   var _fnBase = _fn[1].toUpperCase().split('.')[0];
-  var _jsSet = {TEXT:1,VALUE:1,NUMBERVALUE:1,RANK:1,PERCENTILE:1,QUARTILE:1,INT:1,MOD:1,
+  var _jsSet = {NUMBERVALUE:1,RANK:1,PERCENTILE:1,QUARTILE:1,
     MODE:1,TRIMMEAN:1,PERCENTRANK:1,KURT:1,INTERCEPT:1,FORECAST:1,IRR:1,XIRR:1,
-    DATEVALUE:1,DATESTRING:1,INDIRECT:1,OFFSET:1,XLOOKUP:1,XMATCH:1,LOOKUP:1,
-    CONCAT:1,TEXTJOIN:1,FIXED:1,DOLLAR:1,YEN:1,N:1,TYPE:1,ENCODEURL:1,
+    DATEVALUE:1,DATESTRING:1,INDIRECT:1,OFFSET:1,XMATCH:1,LOOKUP:1,
+    CONCAT:1,FIXED:1,DOLLAR:1,YEN:1,N:1,TYPE:1,ENCODEURL:1,
     CONVERT:1,GESTEP:1,TEXTBEFORE:1,TEXTAFTER:1,VALUETOTEXT:1,
     DSUM:1,DAVERAGE:1,DCOUNT:1,DCOUNTA:1,DMAX:1,DMIN:1,DPRODUCT:1,
     DGET:1,DSTDEV:1,DSTDEVP:1,DVAR:1,DVARP:1,
@@ -592,48 +592,6 @@ function _jsComputeFormula(sheet, v) {
 
   var f = v.slice(1).trim().toUpperCase();
   var fOrig = v.slice(1).trim();
-
-  // TEXT ★以前は TEXT(セル参照,"書式") の形しか見ていなかったので、
-  //        TEXT(1234.5,"#,##0") のような数値リテラルはHFに素通りして書式が効かなかった。
-  var mText=_wholeCallArgs(fOrig,'TEXT');
-  if(mText!==null){
-    var ta=_parseFuncArgs(mText);
-    if(ta.length===2){
-      var tf=_argScalar(sheet,ta[1]); if(_isErrBox(tf)) return tf.err;
-      var tv=_argScalar(sheet,ta[0]); if(_isErrBox(tv)) return tv.err;
-      var tn=_argNum(tv);
-      if(tn!==null){
-        var formatted=_applyTextFormat(tn, String(tf));
-        if(formatted!==null) return formatted;   // 対応できない書式は下へ=HFに任せる
-      }
-    }
-  }
-
-  // INT ★HFのINTは0方向へ切り捨て、Excelは負の方向へ丸める(INT(-2.5)=-3)
-  var mIntF=_wholeCallArgs(fOrig,'INT');
-  if(mIntF!==null){
-    var ia=_parseFuncArgs(mIntF);
-    if(ia.length===1){
-      var iv=_argScalar(sheet,ia[0]); if(_isErrBox(iv)) return iv.err;
-      var inum=_argNum(iv);
-      if(inum!==null) return String(Math.floor(inum));
-    }
-  }
-
-  // MOD ★Excelの剰余は符号が除数側(MOD(-3,2)=1)。HFは被除数側で符号が逆になる
-  var mModF=_wholeCallArgs(fOrig,'MOD');
-  if(mModF!==null){
-    var ma=_parseFuncArgs(mModF);
-    if(ma.length===2){
-      var mx=_argScalar(sheet,ma[0]); if(_isErrBox(mx)) return mx.err;
-      var my=_argScalar(sheet,ma[1]); if(_isErrBox(my)) return my.err;
-      var nx=_argNum(mx), ny=_argNum(my);
-      if(nx!==null&&ny!==null){
-        if(ny===0) return '#DIV/0!';
-        return String(nx - ny*Math.floor(nx/ny));
-      }
-    }
-  }
 
   // VALUE / NUMBERVALUE
   var mVal=fOrig.match(/^(?:VALUE|NUMBERVALUE)\s*\(([^)]+)\)$/i);
@@ -718,26 +676,6 @@ function _jsComputeFormula(sheet, v) {
       return a.replace(/^["']|["']$/g,'');
     });
     return args.join('');
-  }
-
-  // TEXTJOIN ★以前は引数を素朴な split(',') で切っていたため、入れ子の関数呼び出しがあると
-  //           『1,-1)』のような無意味な文字列を黙って返していた(エラーにもならない=一番危険)。
-  var mTj=_wholeCallArgs(fOrig,'TEXTJOIN');
-  if(mTj!==null){
-    var tja=_parseFuncArgs(mTj);
-    if(tja.length>=3){
-      var d1=_argScalar(sheet,tja[0]); if(_isErrBox(d1)) return d1.err;
-      var d2=_argScalar(sheet,tja[1]); if(_isErrBox(d2)) return d2.err;
-      var delim = d1===null||d1===undefined ? '' : String(d1);
-      var ignore = (d2===true) || String(d2).toUpperCase()==='TRUE';
-      var vals=[];
-      for(var tji=2;tji<tja.length;tji++){
-        var lst=_argList(sheet,tja[tji]);
-        if(_isErrBox(lst)) return lst.err;          // ★エラーはエラーのまま返す
-        vals=vals.concat(lst);
-      }
-      return _jsTextjoin(delim,ignore,vals.map(function(v){return v===null||v===undefined?'':v;}));
-    }
   }
 
   // FIXED
@@ -930,4 +868,273 @@ if (typeof module !== 'undefined' && module.exports) {
     convertFormula: convertFormula,
     _jsComputeFormula: _jsComputeFormula
   };
+}
+
+// ================================================================
+// 【HyperFormula 関数プラグイン】★ここが「その関数の唯一の定義場所」
+// ================================================================
+//  なぜプラグインなのか:
+//    独自層(_jsComputeFormula)は「式の一番外側の関数」しか横取りしない。
+//    =INDEX(SORT(...),1) や =IF(1=1,XLOOKUP(...),...) のように入れ子で使われると
+//    救済が効かず、HyperFormula の違う答えがそのまま出る(実測で275本中61本)。
+//    表示だけ正しくて、そのセルを参照した先が間違う=一番タチが悪い壊れ方。
+//    プラグインとして登録すればエンジン自身が正しく計算するので、入れ子でも参照先でも正しくなる。
+//
+//  ★決まり: ここに登録した関数は _jsSet に入れない(1つの関数は1箇所でだけ定義する)。
+//           テストが両方に居たら赤にする。
+//  ★振り分けの基準:
+//     ・入れ子で使われうる純粋な関数              → ここ(HFプラグイン)
+//     ・セルを直接読む必要があるグリッド固有のオペ → _jsSet
+var _PLUGIN_FUNCS = ['SORT','UNIQUE','TEXT','TEXTJOIN','INT','MOD','VALUE','XLOOKUP','FILTER','MATCH','SUMPRODUCT'];
+var _pluginRegistered = false;
+
+// 渡された物がクラス(HyperFormula)でも名前空間({HyperFormula, FunctionPlugin, ...})でも動くようにする。
+//  ブラウザとNodeで形が違うため。
+function _resolveHFParts(ns) {
+  if(!ns) return null;
+  var cls = (typeof ns.registerFunctionPlugin === 'function') ? ns
+          : (ns.HyperFormula && typeof ns.HyperFormula.registerFunctionPlugin === 'function') ? ns.HyperFormula
+          : null;
+  if(!cls) return null;
+  var g = (typeof window !== 'undefined' && window) ? window : {};
+  function pick(k){ return ns[k] || cls[k] || g[k]; }
+  return {
+    cls: cls,
+    FunctionPlugin: pick('FunctionPlugin'),
+    T: pick('FunctionArgumentType'),
+    SRV: pick('SimpleRangeValue'),
+    CellError: pick('CellError'),
+    ErrorType: pick('ErrorType')
+  };
+}
+
+function registerExallyFunctions(HFns) {
+  if(_pluginRegistered) return true;
+  var P = _resolveHFParts(HFns);
+  if(!P) return false;
+  var FunctionPlugin = P.FunctionPlugin;
+  var T = P.T;
+  var SRV = P.SRV;
+  var CellError = P.CellError, ErrorType = P.ErrorType;
+  if(!FunctionPlugin || !T || !SRV || !CellError || !ErrorType) return false;
+
+  function err(t){ return new CellError(t); }
+  //  HyperFormula は空セルを Symbol(Empty value) で渡してくる。文字列化すると
+  //  「Symbol(Empty value)」という文字がそのまま出るので、空文字に直す(実測で踏んだ)。
+  function unwrap(v){ return (typeof v === 'symbol') ? '' : v; }
+  function flat(v){
+    if(v && typeof v==='object' && v.data) return [].concat.apply([], v.data).map(unwrap);
+    if(Array.isArray(v)) return [].concat.apply([], v).map(unwrap);
+    return [unwrap(v)];
+  }
+  function isErr(v){ return v instanceof CellError; }
+  function firstErr(arr){ for(var i=0;i<arr.length;i++) if(isErr(arr[i])) return arr[i]; return null; }
+  function toNum(v){
+    if(typeof v==='number') return v;
+    if(typeof v==='boolean') return v?1:0;
+    if(typeof v==='string' && v.trim()!=='' && !isNaN(v)) return parseFloat(v);
+    return null;
+  }
+  function col(arr){ return SRV.onlyValues(arr.map(function(v){ return [v]; })); }
+  function esc(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+  function wildRe(pat){
+    var out='';
+    for(var i=0;i<pat.length;i++){
+      var c=pat.charAt(i);
+      if(c==='~' && i+1<pat.length){ out += esc(pat.charAt(i+1)); i++; continue; }
+      if(c==='*'){ out += '[\\s\\S]*'; continue; }
+      if(c==='?'){ out += '[\\s\\S]'; continue; }
+      out += esc(c);
+    }
+    return new RegExp('^'+out+'$','i');
+  }
+  function hasWild(s){ return typeof s==='string' && /[*?]/.test(s); }
+  function eqVal(a,b){
+    if(typeof a==='string' && typeof b==='string') return a.toLowerCase()===b.toLowerCase();
+    return a===b;
+  }
+
+  //  FunctionPlugin は ES のクラス。ES5の apply では継承できない
+  //  (実測: Class constructors cannot be invoked without 'new')
+  var ExallyPlugin = class ExallyPlugin extends FunctionPlugin {};
+
+  ExallyPlugin.prototype.exSort = function(ast, state){
+    return this.runFunction(ast.args, state, this.metadata('EX.SORT'), function(range, idx, order){
+      var arr = flat(range).filter(function(v){ return v!==null && v!==undefined && v!==''; });
+      var e = firstErr(arr); if(e) return e;
+      var dir = (toNum(order)===-1) ? -1 : 1;
+      arr.sort(function(a,b){
+        if(typeof a==='number' && typeof b==='number') return (a-b)*dir;
+        return String(a).localeCompare(String(b))*dir;
+      });
+      return col(arr);
+    });
+  };
+  ExallyPlugin.prototype.exUnique = function(ast, state){
+    return this.runFunction(ast.args, state, this.metadata('EX.UNIQUE'), function(range){
+      var arr = flat(range).filter(function(v){ return v!==null && v!==undefined && v!==''; });
+      var e = firstErr(arr); if(e) return e;
+      var seen = [], out = [];
+      for(var i=0;i<arr.length;i++){
+        var key = (typeof arr[i]) + ' ' + String(arr[i]);
+        if(seen.indexOf(key)<0){ seen.push(key); out.push(arr[i]); }
+      }
+      return col(out);
+    });
+  };
+  ExallyPlugin.prototype.exText = function(ast, state){
+    return this.runFunction(ast.args, state, this.metadata('EX.TEXT'), function(v, fmt){
+      if(isErr(v)) return v;
+      if(isErr(fmt)) return fmt;
+      var raw = flat(v)[0];
+      var n = toNum(raw);
+      if(n===null) return raw===null||raw===undefined ? '' : String(raw);
+      var r = _applyTextFormat(n, String(fmt));
+      return r===null ? String(n) : r;
+    });
+  };
+  ExallyPlugin.prototype.exTextjoin = function(ast, state){
+    return this.runFunction(ast.args, state, this.metadata('EX.TEXTJOIN'), function(){
+      var a = Array.prototype.slice.call(arguments);
+      var delim = a[0]===null||a[0]===undefined ? '' : String(flat(a[0])[0]);
+      var ign = a[1]===true || String(flat(a[1])[0]).toUpperCase()==='TRUE';
+      var vals = [];
+      for(var i=2;i<a.length;i++) vals = vals.concat(flat(a[i]));
+      var e = firstErr(vals); if(e) return e;
+      return _jsTextjoin(delim, ign, vals.map(function(v){ return v===null||v===undefined?'':v; }));
+    });
+  };
+  ExallyPlugin.prototype.exInt = function(ast, state){
+    return this.runFunction(ast.args, state, this.metadata('EX.INT'), function(v){
+      if(isErr(v)) return v;
+      var n = toNum(flat(v)[0]);
+      if(n===null) return err(ErrorType.VALUE);
+      return Math.floor(n);
+    });
+  };
+  ExallyPlugin.prototype.exMod = function(ast, state){
+    return this.runFunction(ast.args, state, this.metadata('EX.MOD'), function(x, y){
+      if(isErr(x)) return x;
+      if(isErr(y)) return y;
+      var a = toNum(flat(x)[0]), b = toNum(flat(y)[0]);
+      if(a===null || b===null) return err(ErrorType.VALUE);
+      if(b===0) return err(ErrorType.DIV_BY_ZERO);
+      return a - b*Math.floor(a/b);
+    });
+  };
+  ExallyPlugin.prototype.exValue = function(ast, state){
+    return this.runFunction(ast.args, state, this.metadata('EX.VALUE'), function(v){
+      if(isErr(v)) return v;
+      var raw = flat(v)[0];
+      if(raw===null || raw===undefined || raw==='') return err(ErrorType.VALUE);
+      if(typeof raw==='number') return raw;
+      var n = _jsValue(raw);
+      return n===null ? err(ErrorType.VALUE) : n;
+    });
+  };
+  ExallyPlugin.prototype.exXlookup = function(ast, state){
+    return this.runFunction(ast.args, state, this.metadata('EX.XLOOKUP'), function(key, la, ra, ifnf){
+      if(isErr(key)) return key;
+      var k = flat(key)[0];
+      var L = flat(la), R = flat(ra);
+      var e = firstErr(L) || firstErr(R); if(e) return e;
+      for(var i=0;i<L.length;i++){
+        if(hasWild(k) ? wildRe(String(k)).test(String(L[i])) : eqVal(L[i], k)) return R[i]===undefined?null:R[i];
+      }
+      if(ifnf===undefined || ifnf===null) return err(ErrorType.NA);
+      return flat(ifnf)[0];
+    });
+  };
+  ExallyPlugin.prototype.exFilter = function(ast, state){
+    return this.runFunction(ast.args, state, this.metadata('EX.FILTER'), function(range, cond, ifEmpty){
+      var A = flat(range), C = flat(cond);
+      var e = firstErr(A) || firstErr(C); if(e) return e;
+      var out = [];
+      for(var i=0;i<A.length;i++){
+        var c = C[i];
+        if(c===true || c===1 || (typeof c==='string' && c.toUpperCase()==='TRUE')) out.push(A[i]);
+      }
+      if(!out.length){
+        if(ifEmpty===undefined || ifEmpty===null) return err(ErrorType.NA);
+        return col(flat(ifEmpty));
+      }
+      return col(out);
+    });
+  };
+  ExallyPlugin.prototype.exMatch = function(ast, state){
+    return this.runFunction(ast.args, state, this.metadata('EX.MATCH'), function(key, range, type){
+      if(isErr(key)) return key;
+      var k = flat(key)[0], A = flat(range);
+      var e = firstErr(A); if(e) return e;
+      var t = (type===undefined||type===null) ? 1 : toNum(flat(type)[0]);
+      if(t===0){
+        for(var i=0;i<A.length;i++){
+          if(hasWild(k) ? wildRe(String(k)).test(String(A[i])) : eqVal(A[i], k)) return i+1;
+        }
+        return err(ErrorType.NA);
+      }
+      var best=-1;
+      for(var j=0;j<A.length;j++){
+        var v=A[j];
+        if(t===1 && typeof v==='number' && typeof k==='number' && v<=k) best=j;
+        if(t===-1 && typeof v==='number' && typeof k==='number' && v>=k) best=j;
+        if(t===1 && typeof v==='string' && typeof k==='string' && String(v).toLowerCase()<=String(k).toLowerCase()) best=j;
+      }
+      return best<0 ? err(ErrorType.NA) : best+1;
+    });
+  };
+  ExallyPlugin.prototype.exSumproduct = function(ast, state){
+    return this.runFunction(ast.args, state, this.metadata('EX.SUMPRODUCT'), function(){
+      var a = Array.prototype.slice.call(arguments).map(flat);
+      if(!a.length) return 0;
+      for(var i=0;i<a.length;i++){ var e=firstErr(a[i]); if(e) return e; }
+      var n = a[0].length, sum = 0;
+      for(var r=0;r<n;r++){
+        var p = 1;
+        for(var c=0;c<a.length;c++){
+          var v = a[c][r];
+          if(v===true) v=1; else if(v===false) v=0;
+          var num = typeof v==='number' ? v : ((v===null||v===undefined||v===''||isNaN(v)) ? 0 : parseFloat(v));
+          p *= num;
+        }
+        sum += p;
+      }
+      return sum;
+    });
+  };
+
+  var ANY = { argumentType: T.ANY };
+  var OPT = { argumentType: T.ANY, optionalArg: true };
+  ExallyPlugin.implementedFunctions = {
+    'EX.SORT':       { method: 'exSort',       parameters: [ANY, OPT, OPT, OPT], arrayFunction: true },
+    'EX.UNIQUE':     { method: 'exUnique',     parameters: [ANY, OPT, OPT],      arrayFunction: true },
+    'EX.TEXT':       { method: 'exText',       parameters: [ANY, ANY] },
+    'EX.TEXTJOIN':   { method: 'exTextjoin',   parameters: [ANY, ANY, ANY], repeatLastArgs: 1 },
+    'EX.INT':        { method: 'exInt',        parameters: [ANY] },
+    'EX.MOD':        { method: 'exMod',        parameters: [ANY, ANY] },
+    'EX.VALUE':      { method: 'exValue',      parameters: [ANY] },
+    'EX.XLOOKUP':    { method: 'exXlookup',    parameters: [ANY, ANY, ANY, OPT, OPT, OPT] },
+    'EX.FILTER':     { method: 'exFilter',     parameters: [ANY, ANY, OPT],      arrayFunction: true },
+    'EX.MATCH':      { method: 'exMatch',      parameters: [ANY, ANY, OPT] },
+    'EX.SUMPRODUCT': { method: 'exSumproduct', parameters: [ANY], repeatLastArgs: 1 }
+  };
+  var tr = {};
+  _PLUGIN_FUNCS.forEach(function(n){ tr['EX.'+n] = n; });
+  try {
+    P.cls.registerFunctionPlugin(ExallyPlugin, { enGB: tr, enUS: tr });
+  } catch(e) {
+    if(typeof console!=='undefined') console.warn('Exally関数プラグインの登録に失敗', e);
+    return false;
+  }
+  _pluginRegistered = true;
+  return true;
+}
+
+// ブラウザ: hyperformula.full.min.js の後に読まれるので、ここで登録する
+//  (HyperFormula.buildEmpty より前に登録されている必要がある)
+if (typeof HyperFormula !== 'undefined') registerExallyFunctions(HyperFormula);
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports.registerExallyFunctions = registerExallyFunctions;
+  module.exports._PLUGIN_FUNCS = _PLUGIN_FUNCS;
 }

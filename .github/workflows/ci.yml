@@ -41,6 +41,9 @@ jobs:
       - name: 版対応 検証ハーネス(★わざと壊して赤になるかの自己確認)
         run: node tests/xlsx-harness/compare.mjs --self-test
 
+      - name: ★入れ子で壊れる式が増えていないか(独自層に純粋な関数を足したら赤)
+        run: node tests/xlsx-harness/nesting-audit.mjs --probe --check
+
   # LibreOffice は「別の版」であって Excel の真値ではないので、本流とは分ける。
   #  ここが落ちても上の test ジョブ(=リリース判断)は赤にしない。
   libreoffice:

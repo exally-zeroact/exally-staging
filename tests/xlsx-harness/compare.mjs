@@ -110,7 +110,7 @@ function judgeVolatile(cs, actual, now) {
 }
 
 /* ══ 判定本体(純関数。self-test はここへ細工したデータを渡す) ═══ */
-export function evaluate({ cases, golden, libre, exally, raw, known, snapshot, spy, entry, inputFidelity, now }) {
+export function evaluate({ cases, golden, libre, exally, raw, known, snapshot, spy, entry, split, inputFidelity, now }) {
   const todayStr = new Date(now).toISOString().slice(0, 10);
   const { errs: knownErrs, byId: knownById } = checkKnownDiffs(known, todayStr);
 
@@ -174,8 +174,14 @@ export function evaluate({ cases, golden, libre, exally, raw, known, snapshot, s
     if (entry && (entry.jsSetCount !== snapshot.entry.jsSetCount || entry.entryPoints !== snapshot.entry.entryPoints)) {
       routeErrs.push(`★独自層の入口の数が変わった: 今=${JSON.stringify(entry)} 期待=${JSON.stringify(snapshot.entry)}`);
     }
-    if (jsAnswered.length === 0) routeErrs.push('★独自層が1件も答えていない=生HFに素通りしている疑い');
+    if (rawDiffers.length === 0) routeErrs.push('★生HFと本番経路で答えが1件も違わない=うちの関数が1つも効いていない疑い');
     if (spy && spy.js === 0) routeErrs.push('★_jsComputeFormula が一度も呼ばれていない=本番経路を通っていない');
+  }
+  //  ★1つの関数は1箇所でだけ定義する: HFプラグインと _jsSet の両方に居たら赤
+  if (split) {
+    if (!entry?.pluginRegistered) routeErrs.push('★HFの関数プラグインが登録されていない(登録は buildEmpty より前に済んでいる必要がある)');
+    const both = split.plugin.filter(n => split.jsSet.includes(n));
+    if (both.length) routeErrs.push(`★同じ関数が2箇所で定義されている(プラグインと_jsSetの両方): ${both.join(',')}`);
   }
 
   /* ── ★独自層が生HFより悪くしていないか(常設チェック) ──
@@ -342,7 +348,7 @@ async function main() {
   if (prod.skipped) { console.log('SKIP: ' + prod.skipped); process.exit(1); }
   const raw = runRawHF(inputs, cases);
   const now = Date.now();
-  const base = { cases, golden, libre, exally: prod.out, raw, known, snapshot, spy: prod.spyTotals, entry: prod.entry, inputFidelity: prod.inputFidelity, now };
+  const base = { cases, golden, libre, exally: prod.out, raw, known, snapshot, spy: prod.spyTotals, entry: prod.entry, split: prod.split, inputFidelity: prod.inputFidelity, now };
 
   if (updateSnap) {
     const r = evaluate({ ...base, snapshot: null });
@@ -441,7 +447,16 @@ function runSelfTest(base) {
     line('    OK: 台帳に載っていても「独自層が悪くしている」として赤くなった');
   } else { line('    ★NG: 劣化を見逃した'); ng++; }
 
-  line(`\n══ self-test: ${ng ? '★' + ng + '件 失敗' : '5通りとも期待どおり'} ══`);
+  // 6) 同じ関数が HFプラグインと _jsSet の両方に居る状態を作る → 赤
+  const sp6 = { plugin: base.split.plugin.slice(), jsSet: base.split.jsSet.slice() };
+  sp6.jsSet.push(sp6.plugin[0]);
+  const r6 = evaluate({ ...base, split: sp6 });
+  line(`\n[6] 同じ関数を2箇所に登録した状態にする (${sp6.plugin[0]} を _jsSet にも入れる)`);
+  line(`    exit=${r6.exitCode} / ${r6.routeErrs.find(e => e.includes('2箇所')) || '(検出できず)'}`);
+  if (r6.exitCode === 1 && r6.routeErrs.some(e => e.includes('2箇所'))) line('    OK: 二重定義を赤にできた');
+  else { line('    ★NG: 二重定義を見逃した'); ng++; }
+
+  line(`\n══ self-test: ${ng ? '★' + ng + '件 失敗' : '6通りとも期待どおり'} ══`);
   return ng ? 1 : 0;
 }
 

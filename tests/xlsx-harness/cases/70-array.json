@@ -2,6 +2,11 @@
   "group": "配列(スピル)",
   "note": "配列は TEXTJOIN で1本の文字列に畳んで比較する=配列の中身と並び順まで1セルで見える。スピルの見た目(占有範囲)そのものは今回の対象外(区分Cで別枠)。",
   "cases": [
+    { "id": "SORT_nested_sum",     "func": "SORT",   "f": "=SUM(SORT(E1:E6))", "why": "★入れ子" },
+    { "id": "SORT_nested_index2",  "func": "SORT",   "f": "=INDEX(SORT(E1:E6,1,-1),2)", "why": "★入れ子" },
+    { "id": "UNIQUE_nested_sum",   "func": "UNIQUE", "f": "=SUM(UNIQUE(E1:E6))", "why": "★入れ子" },
+    { "id": "UNIQUE_nested_count", "func": "UNIQUE", "f": "=COUNT(UNIQUE(D1:D6))", "why": "★入れ子" },
+    { "id": "FILTER_nested_count", "func": "FILTER", "f": "=COUNT(FILTER(E1:E6,D1:D6=\"A\"))", "why": "★入れ子" },
     { "id": "SORT_asc_join",      "func": "SORT",   "f": "=TEXTJOIN(\",\",TRUE,SORT(E1:E6))" },
     { "id": "SORT_desc_join",     "func": "SORT",   "f": "=TEXTJOIN(\",\",TRUE,SORT(E1:E6,1,-1))" },
     { "id": "SORT_first",         "func": "SORT",   "f": "=INDEX(SORT(E1:E6,1,-1),1)" },

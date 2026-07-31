@@ -12,12 +12,12 @@
 
 | 判定 | 件数 |
 |---|---|
-| 一致 | 221 |
-| 不一致(既知) | 14 |
+| 一致 | 243 |
+| 不一致(既知) | 2 |
 | 不一致(新規) | 0 |
 | 未検証 | 0 |
 | 揮発性 | 2 |
-| **合計** | 237 |
+| **合計** | 247 |
 
 ※ 「未検証」は緑ではない。その版の真値がまだ無い、という意味。
 
@@ -35,7 +35,7 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 
 | ケース | 式 | 見方 | 期待 | 実際 | 判定 |
 |---|---|---|---|---|---|
-| TODAY_serial | `=TODAY()*1` | 実行時点の日付シリアルと一致するか | 46234 | 46234 | OK |
+| TODAY_serial | `=TODAY()*1` | 実行時点の日付シリアルと一致するか | 46235 | 46235 | OK |
 | NOW_int_is_today | `=INT(NOW())-TODAY()` | NOWの整数部がTODAYと一致するか | 0 | 0 | OK |
 
 ## 不一致（新規）＝赤
@@ -46,20 +46,8 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 
 | 区分 | 関数 | ケース | 式 | Exally | Excel真値 | 中身と期限 |
 |---|---|---|---|---|---|---|
-| A | SUMPRODUCT | SUMPRODUCT_cond | `=SUMPRODUCT((D1:D6="A")*E1:E6)` | #VALUE! | 1000 | 条件×金額の定番形が動かない(SUMIFSの代わりに広く使われる形) / 期限 2026-08-31 |
-| A | SUMPRODUCT | SUMPRODUCT_len | `=SUMPRODUCT(LEN(B1:B3))` | #VALUE! | 11 | 配列を返す関数を引数に取れない / 期限 2026-08-31 |
-| A | MATCH | MATCH_wildcard | `=MATCH("りん*",B1:B8,0)` | #N/A | 1 | 部分一致の検索ができない / 期限 2026-08-31 |
-| A | TEXT | TEXT_nested | `=LEN(TEXT(1234.5,"#,##0"))` | 8 | 5 | ★=LEN(TEXT(1234.5,"#,##0")) のように入れ子だと独自層が届かず、書式が効かないHFの結果(『1234.5』の8文字)になる。INT/MODは式に書き換えて根治したが、TEXTは書式処理を式で書けない。第2波で仕組みごと直す / 期限 2026-08-31 |
-| A | SORT | SORT_asc_join | `=TEXTJOIN(",",TRUE,SORT(E1:E6))` | #NAME? | 100,200,300,400,500,600 | SORTが無い。★第1波でTEXTJOINの引数分解を直したので、壊れた文字列ではなくエラーが出るようになった / 期限 2026-08-31 |
-| A | SORT | SORT_desc_join | `=TEXTJOIN(",",TRUE,SORT(E1:E6,1,-1))` | #NAME? | 600,500,400,300,200,100 | 同上(以前は『1,-1)』という無意味な文字列を黙って返していた) / 期限 2026-08-31 |
-| A | SORT | SORT_first | `=INDEX(SORT(E1:E6,1,-1),1)` | #NAME? | 600 | SORTが無い / 期限 2026-08-31 |
-| A | SORT | SORT_text | `=TEXTJOIN(",",TRUE,SORT(D1:D6))` | #NAME? | A,A,A,B,B,C | 同上 / 期限 2026-08-31 |
-| A | SORT | SORT_count | `=COUNTA(SORT(E1:E6))` | 1 | 6 | SORTが無く、COUNTAがエラー値を1個数えている / 期限 2026-08-31 |
-| A | UNIQUE | UNIQUE_join | `=TEXTJOIN(",",TRUE,UNIQUE(D1:D6))` | #NAME? | A,B,C | UNIQUEが無い / 期限 2026-08-31 |
-| A | UNIQUE | UNIQUE_count | `=COUNTA(UNIQUE(D1:D6))` | 1 | 3 | 同上(COUNTAがエラー値を1個数えている) / 期限 2026-08-31 |
-| A | UNIQUE | UNIQUE_nums | `=TEXTJOIN(",",TRUE,UNIQUE(E1:E6))` | #NAME? | 100,200,300,400,500,600 | 同上 / 期限 2026-08-31 |
-| A | FILTER | FILTER_if_empty | `=TEXTJOIN(",",TRUE,FILTER(E1:E6,D1:D6="Z","なし"))` | #N/A | なし | 該当なしの時に返す第3引数に未対応 / 期限 2026-08-31 |
-| A | SORT | ARRAY_sort_unique | `=TEXTJOIN(",",TRUE,SORT(UNIQUE(D1:D6)))` | #NAME? | A,B,C | SORTとUNIQUEの両方が要る / 期限 2026-08-31 |
+| B | SUMPRODUCT | SUMPRODUCT_cond | `=SUMPRODUCT((D1:D6="A")*E1:E6)` | #VALUE! | 1000 | ★条件×金額の定番形。SUMPRODUCT を自前実装しても直らないことを実測で確認した。原因は HyperFormula の配列演算((範囲=値)*範囲 が配列にならない)で、エンジン側の課題。SUMIFS で書けば正しく出る |
+| B | SUMPRODUCT | SUMPRODUCT_len | `=SUMPRODUCT(LEN(B1:B3))` | #VALUE! | 11 | 同上(配列を返す関数を引数に取る形) |
 
 ## 入力の型が保たれるか（別枠）
 
@@ -69,7 +57,7 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 | ケース | 打ち込んだ値 | Exally | Excel(標準書式セル) | Excel型 | 判定 | 中身 |
 |---|---|---|---|---|---|---|
 | INPUT_typed_0007 | `0007` | 7 | 7 | n | 一致 |  |
-| INPUT_typed_comma | `1,234` | 1,234 | 1234 | n | 不一致(既知) | 『1,234』と打っても数値にならない=以降の合計に入らない |
+| INPUT_typed_comma | `1,234` | 1,234 | 1234 | n | 不一致(既知) | 『1,234』と打っても数値にならない=以降の合計に入らない。グリッドの入力処理(book.html)側の話なので関数プラグインでは直らない |
 | INPUT_typed_datelike | `2026-07-31` | 2026-07-31 | 46234 | n | 不一致(既知) | 『2026-07-31』と打っても日付にならない=日付計算に使えない |
 | INPUT_typed_code | `007-1234` | 007-1234 | 007-1234 | s | 一致 |  |
 
@@ -82,9 +70,9 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 
 ## 経路の固定（将来 生HF に落ちたら気付くための錠）
 
-- 独自層(_jsComputeFormula)が答えたケース: **46件**
-- 生HFと本番経路で答えが違うケース: **52件** … この差が消えたら「素通りに落ちた」ということ
-- 独自層の入口: {"jsSetCount":1,"entryPoints":1}（1つだけであること）
+- 独自層(_jsComputeFormula)が答えたケース: **0件**
+- 生HFと本番経路で答えが違うケース: **71件** … この差が消えたら「素通りに落ちた」ということ
+- 独自層の入口: {"jsSetCount":1,"entryPoints":1,"pluginRegistered":true,"pluginCount":11}（1つだけであること）
 
 ## 全ケース
 
@@ -137,8 +125,8 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 | SUM | SUM_mixed_args | `=SUM(E1:E3,100,A1)` | 1700 | 1700 | 未検証 | 1700 | 一致 |  |
 | SUMPRODUCT | SUMPRODUCT_2range | `=SUMPRODUCT(C1:C6,E1:E6)` | 97100 | 97100 | 未検証 | 97100 | 一致 |  |
 | SUMPRODUCT | SUMPRODUCT_1range | `=SUMPRODUCT(E1:E6)` | 2100 | 2100 | 未検証 | 2100 | 一致 |  |
-| SUMPRODUCT | SUMPRODUCT_cond | `=SUMPRODUCT((D1:D6="A")*E1:E6)` | #VALUE! | 1000 | 未検証 | #VALUE! | 不一致(既知) | A |
-| SUMPRODUCT | SUMPRODUCT_len | `=SUMPRODUCT(LEN(B1:B3))` | #VALUE! | 11 | 未検証 | #VALUE! | 不一致(既知) | A |
+| SUMPRODUCT | SUMPRODUCT_cond | `=SUMPRODUCT((D1:D6="A")*E1:E6)` | #VALUE! | 1000 | 未検証 | #VALUE! | 不一致(既知) | B |
+| SUMPRODUCT | SUMPRODUCT_len | `=SUMPRODUCT(LEN(B1:B3))` | #VALUE! | 11 | 未検証 | #VALUE! | 不一致(既知) | B |
 | COUNT | COUNT_numbers | `=COUNT(A1:A8)` | 8 | 8 | 未検証 | 8 | 一致 |  |
 | COUNT | COUNT_mixed | `=COUNT(A1:B8)` | 8 | 8 | 未検証 | 8 | 一致 |  |
 | COUNT | COUNT_text_number | `=COUNT(B6:B7)` | 0 | 0 | 未検証 | 0 | 一致 |  |
@@ -216,7 +204,9 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 | MATCH | MATCH_exact_miss | `=IFERROR(MATCH(30,C1:C6,0),"NA")` | NA | NA | 未検証 | NA | 一致 |  |
 | MATCH | MATCH_approx_asc | `=MATCH(30,C1:C6,1)` | 4 | 4 | 未検証 | 4 | 一致 |  |
 | MATCH | MATCH_text | `=MATCH("C",D1:D6,0)` | 4 | 4 | 未検証 | 4 | 一致 |  |
-| MATCH | MATCH_wildcard | `=MATCH("りん*",B1:B8,0)` | #N/A | 1 | 未検証 | #N/A | 不一致(既知) | A |
+| MATCH | MATCH_wildcard | `=MATCH("りん*",B1:B8,0)` | 1 | 1 | 未検証 | #N/A | 一致 |  |
+| XLOOKUP | XLOOKUP_nested | `=ROUND(XLOOKUP(20,C1:C6,E1:E6),0)` | 400 | 400 | 未検証 | #NAME? | 一致 |  |
+| MATCH | MATCH_nested_wild | `=INDEX(E1:E6,MATCH("りん*",B1:B8,0))` | 100 | 100 | 未検証 | #N/A | 一致 |  |
 | INDEX | INDEX_MATCH_combo | `=INDEX(E1:E6,MATCH(20,C1:C6,0))` | 400 | 400 | 未検証 | 400 | 一致 |  |
 | INDEX | INDEX_MATCH_text | `=INDEX(E1:E6,MATCH("C",D1:D6,0))` | 400 | 400 | 未検証 | 400 | 一致 |  |
 | DATE | DATE_basic | `=DATE(2026,7,31)*1` | 46234 | 46234 | 未検証 | 46234 | 一致 |  |
@@ -300,9 +290,12 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 | TEXT | TEXT_dec_round | `=TEXT(2.675,"0.00")` | 2.68 | 2.68 | 未検証 | 2.67 | 一致 |  |
 | TEXT | TEXT_neg_number | `=TEXT(-1234.5,"#,##0")` | -1,235 | -1,235 | 未検証 | -1235,##0 | 一致 |  |
 | TEXT | TEXT_date_yy | `=TEXT(F5,"yy/m/d")` | 26/7/31 | 26/7/31 | 未検証 | 26/7/31 | 一致 |  |
-| TEXT | TEXT_nested | `=LEN(TEXT(1234.5,"#,##0"))` | 8 | 5 | 未検証 | 8 | 不一致(既知) | A |
+| TEXT | TEXT_nested | `=LEN(TEXT(1234.5,"#,##0"))` | 5 | 5 | 未検証 | 8 | 一致 |  |
 | VALUE | VALUE_empty | `=IFERROR(VALUE(""),"NA")` | NA | NA | 未検証 | NA | 一致 |  |
 | VALUE | VALUE_nested_calc | `=IFERROR(VALUE(B7)+1,"NA")` | 1235 | 1235 | 未検証 | NA | 一致 |  |
+| TEXTJOIN | TEXTJOIN_nested_len | `=LEN(TEXTJOIN(",",TRUE,D1:D3))` | 5 | 5 | 未検証 | #NAME? | 一致 |  |
+| VALUE | VALUE_nested_sum | `=SUM(VALUE(B7),1)` | 1235 | 1235 | 未検証 | #NAME? | 一致 |  |
+| TEXT | TEXT_nested_concat | `="["&TEXT(A2,"#,##0")&"]"` | [2,500] | [2,500] | 未検証 | [2500,##0] | 一致 |  |
 | TEXTJOIN | TEXTJOIN_skip | `=TEXTJOIN("\|",TRUE,B1:B3)` | りんご\|みかん\|apple | りんご\|みかん\|apple | 未検証 | #NAME? | 一致 |  |
 | TEXTJOIN | TEXTJOIN_delim_comma | `=TEXTJOIN(",",TRUE,"a","b")` | a,b | a,b | 未検証 | #NAME? | 一致 |  |
 | TEXTJOIN | TEXTJOIN_nested_fn | `=TEXTJOIN("\|",TRUE,LEFT(B1,1),LEFT(B2,1))` | り\|み | り\|み | 未検証 | #NAME? | 一致 |  |
@@ -310,18 +303,23 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 | TEXTJOIN | TEXTJOIN_keep | `=TEXTJOIN("\|",FALSE,G1:G3)` | \|0\|0 | \|0\|0 | 未検証 | #NAME? | 一致 |  |
 | TEXTJOIN | TEXTJOIN_nums | `=TEXTJOIN(",",TRUE,E1:E6)` | 100,200,300,400,500,600 | 100,200,300,400,500,600 | 未検証 | #NAME? | 一致 |  |
 | TEXTJOIN | TEXTJOIN_blank_skip | `=TEXTJOIN("\|",TRUE,G1:G3)` | 0\|0 | 0\|0 | 未検証 | #NAME? | 一致 |  |
-| SORT | SORT_asc_join | `=TEXTJOIN(",",TRUE,SORT(E1:E6))` | #NAME? | 100,200,300,400,500,600 | 未検証 | #NAME? | 不一致(既知) | A |
-| SORT | SORT_desc_join | `=TEXTJOIN(",",TRUE,SORT(E1:E6,1,-1))` | #NAME? | 600,500,400,300,200,100 | 未検証 | #NAME? | 不一致(既知) | A |
-| SORT | SORT_first | `=INDEX(SORT(E1:E6,1,-1),1)` | #NAME? | 600 | 未検証 | #NAME? | 不一致(既知) | A |
-| SORT | SORT_text | `=TEXTJOIN(",",TRUE,SORT(D1:D6))` | #NAME? | A,A,A,B,B,C | 未検証 | #NAME? | 不一致(既知) | A |
-| SORT | SORT_count | `=COUNTA(SORT(E1:E6))` | 1 | 6 | 未検証 | 1 | 不一致(既知) | A |
-| UNIQUE | UNIQUE_join | `=TEXTJOIN(",",TRUE,UNIQUE(D1:D6))` | #NAME? | A,B,C | 未検証 | #NAME? | 不一致(既知) | A |
-| UNIQUE | UNIQUE_count | `=COUNTA(UNIQUE(D1:D6))` | 1 | 3 | 未検証 | 1 | 不一致(既知) | A |
-| UNIQUE | UNIQUE_nums | `=TEXTJOIN(",",TRUE,UNIQUE(E1:E6))` | #NAME? | 100,200,300,400,500,600 | 未検証 | #NAME? | 不一致(既知) | A |
+| SORT | SORT_nested_sum | `=SUM(SORT(E1:E6))` | 2100 | 2100 | 未検証 | #NAME? | 一致 |  |
+| SORT | SORT_nested_index2 | `=INDEX(SORT(E1:E6,1,-1),2)` | 500 | 500 | 未検証 | #NAME? | 一致 |  |
+| UNIQUE | UNIQUE_nested_sum | `=SUM(UNIQUE(E1:E6))` | 2100 | 2100 | 未検証 | #NAME? | 一致 |  |
+| UNIQUE | UNIQUE_nested_count | `=COUNT(UNIQUE(D1:D6))` | 0 | 0 | 未検証 | 0 | 一致 |  |
+| FILTER | FILTER_nested_count | `=COUNT(FILTER(E1:E6,D1:D6="A"))` | 3 | 3 | 未検証 | 3 | 一致 |  |
+| SORT | SORT_asc_join | `=TEXTJOIN(",",TRUE,SORT(E1:E6))` | 100,200,300,400,500,600 | 100,200,300,400,500,600 | 未検証 | #NAME? | 一致 |  |
+| SORT | SORT_desc_join | `=TEXTJOIN(",",TRUE,SORT(E1:E6,1,-1))` | 600,500,400,300,200,100 | 600,500,400,300,200,100 | 未検証 | #NAME? | 一致 |  |
+| SORT | SORT_first | `=INDEX(SORT(E1:E6,1,-1),1)` | 600 | 600 | 未検証 | #NAME? | 一致 |  |
+| SORT | SORT_text | `=TEXTJOIN(",",TRUE,SORT(D1:D6))` | A,A,A,B,B,C | A,A,A,B,B,C | 未検証 | #NAME? | 一致 |  |
+| SORT | SORT_count | `=COUNTA(SORT(E1:E6))` | 6 | 6 | 未検証 | 1 | 一致 |  |
+| UNIQUE | UNIQUE_join | `=TEXTJOIN(",",TRUE,UNIQUE(D1:D6))` | A,B,C | A,B,C | 未検証 | #NAME? | 一致 |  |
+| UNIQUE | UNIQUE_count | `=COUNTA(UNIQUE(D1:D6))` | 3 | 3 | 未検証 | 1 | 一致 |  |
+| UNIQUE | UNIQUE_nums | `=TEXTJOIN(",",TRUE,UNIQUE(E1:E6))` | 100,200,300,400,500,600 | 100,200,300,400,500,600 | 未検証 | #NAME? | 一致 |  |
 | UNIQUE | UNIQUE_all_same | `=COUNTA(UNIQUE(D1:D1))` | 1 | 1 | 未検証 | 1 | 一致 |  |
 | FILTER | FILTER_sum | `=SUM(FILTER(E1:E6,D1:D6="A"))` | 1000 | 1000 | 未検証 | 1000 | 一致 |  |
 | FILTER | FILTER_join | `=TEXTJOIN(",",TRUE,FILTER(E1:E6,D1:D6="A"))` | 100,300,600 | 100,300,600 | 未検証 | #NAME? | 一致 |  |
 | FILTER | FILTER_num_cond | `=TEXTJOIN(",",TRUE,FILTER(E1:E6,C1:C6>=10))` | 300,400,500,600 | 300,400,500,600 | 未検証 | #NAME? | 一致 |  |
 | FILTER | FILTER_empty | `=IFERROR(TEXTJOIN(",",TRUE,FILTER(E1:E6,D1:D6="Z")),"NA")` | NA | NA | 未検証 | NA | 一致 |  |
-| FILTER | FILTER_if_empty | `=TEXTJOIN(",",TRUE,FILTER(E1:E6,D1:D6="Z","なし"))` | #N/A | なし | 未検証 | #NAME? | 不一致(既知) | A |
-| SORT | ARRAY_sort_unique | `=TEXTJOIN(",",TRUE,SORT(UNIQUE(D1:D6)))` | #NAME? | A,B,C | 未検証 | #NAME? | 不一致(既知) | A |
+| FILTER | FILTER_if_empty | `=TEXTJOIN(",",TRUE,FILTER(E1:E6,D1:D6="Z","なし"))` | なし | なし | 未検証 | #NAME? | 一致 |  |
+| SORT | ARRAY_sort_unique | `=TEXTJOIN(",",TRUE,SORT(UNIQUE(D1:D6)))` | A,B,C | A,B,C | 未検証 | #NAME? | 一致 |  |

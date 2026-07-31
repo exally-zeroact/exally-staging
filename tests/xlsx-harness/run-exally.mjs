@@ -192,6 +192,12 @@ export async function runProductionPath(inputs, cases) {
   const formulaSrc = fs.readFileSync(path.join(ROOT, 'exally-formula.js'), 'utf8');
   const jsSetCount = (formulaSrc.match(/var\s+_jsSet\s*=/g) || []).length;
   const entryPoints = (formulaSrc.match(/function\s+_jsComputeFormula\s*\(/g) || []).length;
+  const pluginRegistered = win._pluginRegistered === true;
+  const pluginFuncs = Array.isArray(win._PLUGIN_FUNCS) ? win._PLUGIN_FUNCS.slice().sort() : [];
+  const jsSetNames = (() => {
+    const m = formulaSrc.match(/var _jsSet = \{([\s\S]*?)\};/);
+    return m ? [...m[1].matchAll(/([A-Z][A-Z0-9.]*)\s*:\s*1/g)].map(x => x[1]).sort() : [];
+  })();
 
   const closeErrs = [];
   try { dom.window.close(); } catch (e) { closeErrs.push(e.message); }
@@ -199,7 +205,8 @@ export async function runProductionPath(inputs, cases) {
   return {
     out, inputFidelity,
     spyTotals: { js: spy.js, convert: spy.convert, hfSet: spy.hfSet },
-    entry: { jsSetCount, entryPoints },
+    entry: { jsSetCount, entryPoints, pluginRegistered, pluginCount: pluginFuncs.length },
+    split: { plugin: pluginFuncs, jsSet: jsSetNames },
     domErrors: winErrors.concat(injectErrors)
   };
 }
