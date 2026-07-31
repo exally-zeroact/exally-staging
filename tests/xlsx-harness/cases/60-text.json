@@ -61,7 +61,19 @@
     { "id": "VALUE_bad",          "func": "VALUE",       "f": "=IFERROR(VALUE(B1),\"NA\")" },
     { "id": "VALUE_zero_text",    "func": "VALUE",       "f": "=VALUE(G3)" },
 
+    { "id": "TEXT_pct_zero",      "func": "TEXT",        "f": "=TEXT(0.5,\"0%\")" },
+    { "id": "TEXT_dec_round",     "func": "TEXT",        "f": "=TEXT(2.675,\"0.00\")" },
+    { "id": "TEXT_neg_number",    "func": "TEXT",        "f": "=TEXT(-1234.5,\"#,##0\")" },
+    { "id": "TEXT_date_yy",       "func": "TEXT",        "f": "=TEXT(F5,\"yy/m/d\")" },
+    { "id": "TEXT_nested",        "func": "TEXT",        "f": "=LEN(TEXT(1234.5,\"#,##0\"))", "why": "★独自層は式の一番外側しか横取りしない。入れ子でも合うか" },
+
+    { "id": "VALUE_empty",        "func": "VALUE",       "f": "=IFERROR(VALUE(\"\"),\"NA\")" },
+    { "id": "VALUE_nested_calc",  "func": "VALUE",       "f": "=IFERROR(VALUE(B7)+1,\"NA\")" },
+
     { "id": "TEXTJOIN_skip",      "func": "TEXTJOIN",    "f": "=TEXTJOIN(\"|\",TRUE,B1:B3)" },
+    { "id": "TEXTJOIN_delim_comma","func": "TEXTJOIN",   "f": "=TEXTJOIN(\",\",TRUE,\"a\",\"b\")", "why": "★区切り文字が引数の区切りと同じ=素朴なカンマ分割だと壊れる形" },
+    { "id": "TEXTJOIN_nested_fn", "func": "TEXTJOIN",    "f": "=TEXTJOIN(\"|\",TRUE,LEFT(B1,1),LEFT(B2,1))", "why": "★引数が関数呼び出し" },
+    { "id": "TEXTJOIN_mixed",     "func": "TEXTJOIN",    "f": "=TEXTJOIN(\"-\",TRUE,B5,A1,C1:C2)" },
     { "id": "TEXTJOIN_keep",      "func": "TEXTJOIN",    "f": "=TEXTJOIN(\"|\",FALSE,G1:G3)" },
     { "id": "TEXTJOIN_nums",      "func": "TEXTJOIN",    "f": "=TEXTJOIN(\",\",TRUE,E1:E6)" },
     { "id": "TEXTJOIN_blank_skip","func": "TEXTJOIN",    "f": "=TEXTJOIN(\"|\",TRUE,G1:G3)" }

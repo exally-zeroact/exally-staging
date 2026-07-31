@@ -13,7 +13,7 @@
     "listSep": ",",
     "date1904": false,
     "formulaProperty": ".Formula (US-English) only; .FormulaLocal is NOT used",
-    "caseCount": 221,
+    "caseCount": 235,
     "volatileSkipped": [
       "TODAY_serial",
       "NOW_int_is_today"
@@ -158,6 +158,30 @@
       "v": "#DIV/0!",
       "code": -2146826281,
       "text": "#DIV/0!"
+    },
+    "MOD_both_neg": {
+      "f": "=MOD(-3,-2)",
+      "t": "n",
+      "v": -1.0,
+      "text": "-1"
+    },
+    "MOD_nested": {
+      "f": "=ROUND(MOD(-3,2),0)",
+      "t": "n",
+      "v": 1.0,
+      "text": "1"
+    },
+    "INT_neg_small": {
+      "f": "=INT(-0.5)",
+      "t": "n",
+      "v": -1.0,
+      "text": "-1"
+    },
+    "INT_nested": {
+      "f": "=SUM(INT(-2.5),0)",
+      "t": "n",
+      "v": -3.0,
+      "text": "-3"
     },
     "ABS_neg": {
       "f": "=ABS(A3)",
@@ -1233,11 +1257,71 @@
       "v": 0.0,
       "text": "0"
     },
+    "TEXT_pct_zero": {
+      "f": "=TEXT(0.5,\"0%\")",
+      "t": "s",
+      "v": "50%",
+      "text": "50%"
+    },
+    "TEXT_dec_round": {
+      "f": "=TEXT(2.675,\"0.00\")",
+      "t": "s",
+      "v": "2.68",
+      "text": "2.68"
+    },
+    "TEXT_neg_number": {
+      "f": "=TEXT(-1234.5,\"#,##0\")",
+      "t": "s",
+      "v": "-1,235",
+      "text": "-1,235"
+    },
+    "TEXT_date_yy": {
+      "f": "=TEXT(F5,\"yy/m/d\")",
+      "t": "s",
+      "v": "26/7/31",
+      "text": "26/7/31"
+    },
+    "TEXT_nested": {
+      "f": "=LEN(TEXT(1234.5,\"#,##0\"))",
+      "t": "n",
+      "v": 5.0,
+      "text": "5"
+    },
+    "VALUE_empty": {
+      "f": "=IFERROR(VALUE(\"\"),\"NA\")",
+      "t": "s",
+      "v": "NA",
+      "text": "NA"
+    },
+    "VALUE_nested_calc": {
+      "f": "=IFERROR(VALUE(B7)+1,\"NA\")",
+      "t": "n",
+      "v": 1235.0,
+      "text": "1235"
+    },
     "TEXTJOIN_skip": {
       "f": "=TEXTJOIN(\"|\",TRUE,B1:B3)",
       "t": "s",
       "v": "りんご|みかん|apple",
       "text": "りんご|みかん|apple"
+    },
+    "TEXTJOIN_delim_comma": {
+      "f": "=TEXTJOIN(\",\",TRUE,\"a\",\"b\")",
+      "t": "s",
+      "v": "a,b",
+      "text": "a,b"
+    },
+    "TEXTJOIN_nested_fn": {
+      "f": "=TEXTJOIN(\"|\",TRUE,LEFT(B1,1),LEFT(B2,1))",
+      "t": "s",
+      "v": "り|み",
+      "text": "り|み"
+    },
+    "TEXTJOIN_mixed": {
+      "f": "=TEXTJOIN(\"-\",TRUE,B5,A1,C1:C2)",
+      "t": "s",
+      "v": "A-1-1000-1-5",
+      "text": "A-1-1000-1-5"
     },
     "TEXTJOIN_keep": {
       "f": "=TEXTJOIN(\"|\",FALSE,G1:G3)",

@@ -1,0 +1,40 @@
+{
+  "note": "★これは台帳だけ。ハーネス(自動検証)はまだ作っていない=P2の入口。ここに実装を足す前に、関数ハーネス(tests/xlsx-harness/)と同じ形(golden=Excelの仕様・台帳＋期限・self-test)で組むこと。",
+  "source": "指示役が本番グリッドで Excel ショートカット30通りを実測(2026-07-31)",
+  "status": "台帳のみ・未実装",
+  "counting_note": "指示役の集計は『違う=7個』だが、挙がったキーを1つずつ行にすると8行になる(Ctrl+↓とCtrl+Shift+↓、Ctrl+DとCtrl+Rのまとめ方の違い)。数え方の差であって中身は同じ。ハーネスを作る時に数え方を揃える。",
+  "classes": {
+    "A": "うちで直す。★期限(due)必須",
+    "B": "外部ライブラリ待ち",
+    "C": "仕様差として明示的に放置"
+  },
+  "same_as_excel": {
+    "count": 12,
+    "list": "未記録(指示役の実測では『Excelと同じ=12個』とだけ報告された。ハーネスを作る時に1つずつ書き出す)"
+  },
+  "diffs": [
+    { "id": "KEY_ctrl_down",      "keys": "Ctrl+↓",            "kind": "挙動が違う", "class": "A", "due": "2026-09-30", "excel": "データの終端まで一気に移動", "exally": "1個しか動かない" },
+    { "id": "KEY_ctrl_shift_down","keys": "Ctrl+Shift+↓",      "kind": "挙動が違う", "class": "A", "due": "2026-09-30", "excel": "終端まで選択を広げる",       "exally": "1個しか動かない" },
+    { "id": "KEY_delete_range",   "keys": "Delete",            "kind": "挙動が違う", "class": "A", "due": "2026-09-30", "excel": "選んだ範囲を全部消す",       "exally": "★左上の1個しか消えない", "money_impact": true, "note": "消したつもりが残る=データが中途半端になる。優先度高" },
+    { "id": "KEY_ctrl_d",         "keys": "Ctrl+D",            "kind": "挙動が違う", "class": "A", "due": "2026-09-30", "excel": "上のセルを下方向にコピー",   "exally": "無効" },
+    { "id": "KEY_ctrl_r",         "keys": "Ctrl+R",            "kind": "挙動が違う", "class": "A", "due": "2026-09-30", "excel": "左のセルを右方向にコピー",   "exally": "無効" },
+    { "id": "KEY_enter",          "keys": "Enter",             "kind": "挙動が違う", "class": "A", "due": "2026-09-30", "excel": "下のセルへ移動",             "exally": "編集を始めてしまう", "note": "Excelに慣れた人が一番最初に触る操作" },
+    { "id": "KEY_escape_copy",    "keys": "Escape",            "kind": "挙動が違う", "class": "A", "due": "2026-09-30", "excel": "コピー範囲の点線が消える",   "exally": "コピー範囲が解除されない" },
+    { "id": "KEY_pagedown",       "keys": "PageDown",          "kind": "挙動が違う", "class": "A", "due": "2026-09-30", "excel": "1画面下へ",                 "exally": "無効" },
+
+    { "id": "KEY_ctrl_f",         "keys": "Ctrl+F",            "kind": "未実装", "class": "A", "due": "2026-09-30", "excel": "検索" },
+    { "id": "KEY_ctrl_h",         "keys": "Ctrl+H",            "kind": "未実装", "class": "A", "due": "2026-09-30", "excel": "置換" },
+    { "id": "KEY_ctrl_1",         "keys": "Ctrl+1",            "kind": "未実装", "class": "A", "due": "2026-09-30", "excel": "セルの書式設定" },
+    { "id": "KEY_f4",             "keys": "F4",                "kind": "未実装", "class": "A", "due": "2026-09-30", "excel": "参照の絶対/相対を切り替え($の付け外し)" },
+    { "id": "KEY_ctrl_semicolon", "keys": "Ctrl+;",            "kind": "未実装", "class": "A", "due": "2026-09-30", "excel": "今日の日付を入れる" },
+    { "id": "KEY_ctrl_space",     "keys": "Ctrl+Space",        "kind": "未実装", "class": "A", "due": "2026-09-30", "excel": "列を選択" },
+    { "id": "KEY_shift_space",    "keys": "Shift+Space",       "kind": "未実装", "class": "A", "due": "2026-09-30", "excel": "行を選択" },
+    { "id": "KEY_ctrl_plusminus", "keys": "Ctrl+\"+\" / Ctrl+\"-\"", "kind": "未実装", "class": "A", "due": "2026-09-30", "excel": "行/列の挿入・削除" },
+    { "id": "KEY_shift_f11",      "keys": "Shift+F11",         "kind": "未実装", "class": "A", "due": "2026-09-30", "excel": "シートを追加" },
+    { "id": "KEY_ctrl_pageupdown","keys": "Ctrl+PageUp / PageDown", "kind": "未実装", "class": "A", "due": "2026-09-30", "excel": "シートを切り替え" },
+
+    { "id": "CLIP_grid_to_excel", "keys": "Ctrl+C(グリッド→Excel)", "kind": "別件", "class": "A", "due": "2026-09-30", "money_impact": true,
+      "excel": "コピーした範囲をExcelに貼れる", "exally": "★片道。ctxCopy がOSのクリップボードに書いていないので、Excelへ貼れない",
+      "note": "『Excel落とし』の入口として効く。関数ハーネスの xlsx-io.js と同じく『唯一の口』を作る形にすること" }
+  ]
+}

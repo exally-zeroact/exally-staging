@@ -28,6 +28,10 @@
     { "id": "MOD_neg_divisor",    "func": "MOD",         "f": "=MOD(3,-2)" },
     { "id": "MOD_cell",           "func": "MOD",         "f": "=MOD(A3,2)" },
     { "id": "MOD_div0",           "func": "MOD",         "f": "=MOD(3,0)" },
+    { "id": "MOD_both_neg",       "func": "MOD",         "f": "=MOD(-3,-2)" },
+    { "id": "MOD_nested",         "func": "MOD",         "f": "=ROUND(MOD(-3,2),0)", "why": "★独自層は式の一番外側しか横取りしない。入れ子でも合うか" },
+    { "id": "INT_neg_small",      "func": "INT",         "f": "=INT(-0.5)" },
+    { "id": "INT_nested",         "func": "INT",         "f": "=SUM(INT(-2.5),0)", "why": "★同上(入れ子)" },
 
     { "id": "ABS_neg",            "func": "ABS",         "f": "=ABS(A3)" },
     { "id": "ABS_pos",            "func": "ABS",         "f": "=ABS(A1)" },

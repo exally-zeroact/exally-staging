@@ -139,13 +139,18 @@ export function evaluate({ cases, golden, libre, exally, raw, known, snapshot, s
         else { verdict = '不一致(新規)'; note = m.why; counts['不一致(新規)']++; }
       }
     }
+    //  ★劣化検知: 生HFなら合っていたのに、独自層を通したら合わなくなった＝独自層が結果を悪くしている。
+    //    実際に TEXT の日付書式で起きた。独自層に関数を足す時はここが鳴らないことを必ず確認する。
+    const rawOk = g ? matches(g, raw?.[cs.id]?.v).ok : false;
+    const prodOk = verdict === '一致';
     rows.push({
       ...cs, verdict, cls, note,
       exally: exallyDisplay(act),
       excel: excelDisplay(g),
       libre: lo ? excelDisplay(lo) : '未検証',
       rawhf: rawHfDisplay(raw?.[cs.id]),
-      route: exally?.[cs.id]?.route || {}
+      route: exally?.[cs.id]?.route || {},
+      degraded: rawOk && !prodOk
     });
   }
 
@@ -173,6 +178,14 @@ export function evaluate({ cases, golden, libre, exally, raw, known, snapshot, s
     if (spy && spy.js === 0) routeErrs.push('★_jsComputeFormula が一度も呼ばれていない=本番経路を通っていない');
   }
 
+  /* ── ★独自層が生HFより悪くしていないか(常設チェック) ──
+   *  独自層に関数を足すと、HFなら合っていた物を壊すことがある(TEXTの日付書式で実際に起きた)。
+   *  台帳に degradation:true で登録されている物だけ既知として通し、それ以外は赤。 */
+  const degradedRows = rows.filter(r => r.degraded);
+  const degradedErrs = degradedRows
+    .filter(r => !(knownById[r.id] && knownById[r.id].degradation))
+    .map(r => `★独自層が生HFより悪くしている: ${r.id} 生HF=${r.rawhf} → 本番経路=${r.exally} (Excel真値=${r.excel})`);
+
   /* ── 揮発性の失敗 ── */
   const volatileErrs = volatileRows.filter(v => !v.ok).map(v => `★揮発性の確認に失敗: ${v.id} 期待=${v.want} 実際=${v.got}`);
 
@@ -188,9 +201,9 @@ export function evaluate({ cases, golden, libre, exally, raw, known, snapshot, s
   });
   const inputNew = inputRows.filter(r => r.verdict === '不一致(新規)').length;
 
-  const hardErrs = [...knownErrs, ...routeErrs, ...volatileErrs];
+  const hardErrs = [...knownErrs, ...routeErrs, ...volatileErrs, ...degradedErrs];
   const exitCode = (counts['不一致(新規)'] > 0 || inputNew > 0 || hardErrs.length > 0) ? 1 : 0;
-  return { rows, counts, volatileRows, inputRows, hardErrs, knownErrs, routeErrs, volatileErrs, exitCode, jsAnswered, rawDiffers };
+  return { rows, counts, volatileRows, inputRows, hardErrs, knownErrs, routeErrs, volatileErrs, degradedErrs, degradedRows, exitCode, jsAnswered, rawDiffers };
 }
 
 /* ══ レポート ═══════════════════════════════════════════════ */
@@ -269,6 +282,21 @@ function buildReport(res, meta) {
   for (const r of res.inputRows) L.push(`| ${r.id} | \`${esc(r.raw)}\` | ${esc(r.got)} | ${esc(r.excel)} | ${r.excelType} | ${r.verdict} | ${esc(r.note)} |`);
   L.push('');
 
+  L.push('## ★独自層が生HFより悪くしていないか');
+  L.push('');
+  L.push('独自層に関数を足すと、HyperFormula なら合っていた物を壊すことがある（TEXTの日付書式で実際に起きた）。');
+  L.push('**独自層に関数を足す時は、必ずここが増えていないことを確認してから足す。** 台帳に載っていない劣化は赤。');
+  L.push('');
+  if (!res.degradedRows.length) L.push('劣化なし。');
+  else {
+    L.push('| ケース | 生HF | 本番経路(独自層あり) | Excel真値 | 状態 |');
+    L.push('|---|---|---|---|---|');
+    for (const r of res.degradedRows) {
+      const k = r.cls ? '既知(台帳)' : '★新規';
+      L.push(`| ${r.id} | ${esc(r.rawhf)} | ${esc(r.exally)} | ${esc(r.excel)} | ${k} |`);
+    }
+  }
+  L.push('');
   L.push('## 経路の固定（将来 生HF に落ちたら気付くための錠）');
   L.push('');
   L.push(`- 独自層(_jsComputeFormula)が答えたケース: **${res.jsAnswered.length}件**`);
@@ -353,6 +381,7 @@ function runSelfTest(base) {
 
   // 0) まず素の状態が緑であること
   const r0 = evaluate(base);
+  base.rows0 = r0.rows;
   line(`\n[0] 素の状態      : exit=${r0.exitCode} 新規不一致=${r0.counts['不一致(新規)']} 既知=${r0.counts['不一致(既知)']} 未検証=${r0.counts.未検証}`);
   if (r0.exitCode !== 0) { line('    ★NG: 壊す前から赤い'); ng++; } else line('    OK: 壊す前は緑');
 
@@ -398,7 +427,21 @@ function runSelfTest(base) {
   if (r4.exitCode === 1 && r4.knownErrs.some(e => e.includes(a4.id))) line('    OK: 期限が空だと赤くなった');
   else { line('    ★NG: 期限の空欄を見逃した'); ng++; }
 
-  line(`\n══ self-test: ${ng ? '★' + ng + '件 失敗' : '4通りとも期待どおり'} ══`);
+  // 5) ★独自層が生HFより悪くしている状態を作る → 台帳に載っていても赤
+  const victim5 = base.rows0.find(r => r.verdict === '一致' && r.rawhf === r.exally && !r.volatile);
+  const e5 = clone(base.exally);
+  e5[victim5.id].v = 'こわした値';
+  const k5 = clone(base.known);
+  k5.diffs.push({ id: victim5.id, func: victim5.func, root: 'self-test', class: 'C', note: 'self-test(劣化印は付けない)' });
+  const r5 = evaluate({ ...base, exally: e5, known: k5 });
+  const hit5 = r5.rows.find(r => r.id === victim5.id);
+  line(`\n[5] 生HFなら合う物を独自層で壊す (${victim5.id} → こわした値)。台帳には載せるが劣化印は付けない`);
+  line(`    exit=${r5.exitCode} 新規不一致=${r5.counts['不一致(新規)']} 判定=${hit5?.verdict} / ${r5.degradedErrs[0] || '(検出できず)'}`);
+  if (r5.exitCode === 1 && r5.counts['不一致(新規)'] === 0 && r5.degradedErrs.some(e => e.includes(victim5.id))) {
+    line('    OK: 台帳に載っていても「独自層が悪くしている」として赤くなった');
+  } else { line('    ★NG: 劣化を見逃した'); ng++; }
+
+  line(`\n══ self-test: ${ng ? '★' + ng + '件 失敗' : '5通りとも期待どおり'} ══`);
   return ng ? 1 : 0;
 }
 

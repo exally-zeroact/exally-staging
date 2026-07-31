@@ -81,23 +81,165 @@ function _getSingleVal(sheet, ref) {
 }
 
 // ================================================================
+// 引数の式を値にする(★入れ子の関数呼び出しに対応)
+//   以前は引数を素朴なカンマ分割で切っていたため、TEXTJOIN(",",TRUE,SORT(E1:E6,1,-1)) のような
+//   入れ子があると『1,-1)』という無意味な文字列を黙って返していた。
+//   ・引数の切り分けは _parseFuncArgs(括弧と引用符を数える)を使う
+//   ・値にできない式は HyperFormula の calculateFormula に計算させる
+//     (getCellValue は配列の先頭1個しか返さないが、calculateFormula は配列のまま返す)
+//   ・★エラーはエラーのまま返す。壊れた文字列を返さない。
+// ================================================================
+var _ERRTXT = {DIV_BY_ZERO:'#DIV/0!',NUM:'#NUM!',NA:'#N/A',VALUE:'#VALUE!',REF:'#REF!',NAME:'#NAME?',CYCLE:'#CYCLE!',NULL:'#NULL!',SPILL:'#SPILL!'};
+function _errText(v){
+  if(typeof HF_ERR!=='undefined' && HF_ERR[v.type]) return HF_ERR[v.type];
+  return _ERRTXT[v.type] || ('#'+v.type);
+}
+function _isErrObj(v){ return !!v && typeof v==='object' && !Array.isArray(v) && !!v.type; }
+function _isErrBox(x){ return !!x && typeof x==='object' && !Array.isArray(x) && typeof x.err==='string'; }
+
+function _argList(sheet, arg) {
+  arg = String(arg).trim();
+  var q = arg.match(/^"([\s\S]*)"$/);
+  if(q) return [q[1].replace(/""/g,'"')];
+  if(/^[A-Z]+\d+:[A-Z]+\d+$/i.test(arg)) return _getRangeAll(sheet, arg);
+  if(/^[A-Z]+\d+$/i.test(arg))            return [_getSingleVal(sheet, arg)];
+  if(/^-?\d+(\.\d+)?$/.test(arg))         return [parseFloat(arg)];
+  if(/^(TRUE|FALSE)$/i.test(arg))         return [arg.toUpperCase()==='TRUE'];
+  if(!_hf || typeof _hf.calculateFormula!=='function') return {err:'#VALUE!'};
+  var v;
+  try { v = _hf.calculateFormula(arg.charAt(0)==='=' ? arg : '='+arg, _hfSid(sheet)); }
+  catch(e){ return {err:'#VALUE!'}; }
+  if(_isErrObj(v)) return {err:_errText(v)};
+  if(Array.isArray(v)){
+    var out=[];
+    for(var i=0;i<v.length;i++){
+      var row=Array.isArray(v[i]) ? v[i] : [v[i]];
+      for(var j=0;j<row.length;j++){
+        if(_isErrObj(row[j])) return {err:_errText(row[j])};
+        out.push(row[j]);
+      }
+    }
+    return out;
+  }
+  return [v];
+}
+function _argScalar(sheet, arg) {
+  var l = _argList(sheet, arg);
+  if(_isErrBox(l)) return l;
+  return l.length ? l[0] : null;
+}
+// 「その式が NAME(...) だけで出来ているか」を括弧を数えて確かめ、中身の引数文字列を返す。
+//  ★ /^INT\s*\((.+)\)$/ のような貪欲な正規表現だと INT(NOW())-TODAY() の
+//    最後の ")" まで飲み込んで別物になる(実際にこれで揮発性の確認を壊した)。
+function _wholeCallArgs(f, name) {
+  var m = new RegExp('^' + name + '\\s*\\(', 'i').exec(f);
+  if(!m) return null;
+  var i = m[0].length, depth = 1, ins = false;
+  for(; i<f.length; i++){
+    var c = f.charAt(i);
+    if(c==='"'){ ins=!ins; continue; }
+    if(ins) continue;
+    if(c==='(') depth++;
+    else if(c===')'){ depth--; if(depth===0) break; }
+  }
+  if(depth!==0) return null;
+  if(i !== f.length-1) return null;      // 閉じ括弧が式の末尾でない=この関数だけの式ではない
+  return f.slice(m[0].length, i);
+}
+function _argNum(v) {
+  if(typeof v==='number') return v;
+  if(typeof v==='boolean') return v?1:0;
+  if(typeof v==='string' && v.trim()!=='' && !isNaN(v)) return parseFloat(v);
+  return null;
+}
+
+// ================================================================
 // JS実装関数群
 // ================================================================
 
-// --- TEXT書式 ---
+// --- TEXT書式 ---------------------------------------------------
+//  ★以前は #,##0 / 0.00 / 0% / 0.00% / ¥#,##0 の5通りしか見ておらず、
+//    それ以外(0.0% や yyyy/mm/dd、正負で分ける #,##0;(#,##0))は書式を無視して
+//    数値をそのまま返していた。0.1235 が「0.1%」になる(=100倍違う)状態だった。
+//  ★対応できない書式では null を返す。呼び出し側はHyperFormulaに任せる。
+//    黙って String(num) を返すと「独自層を足したせいで悪くなる」ことがあるため
+//    (実際に日付書式でそうなっていた)。
+
+// Excelの丸め=四捨五入(0から遠い方向)。JSのMath.roundは負数で挙動が違うので符号を分ける。
+// 12.35 のような2進で表せない数は e記法の文字列経由で丸める(toFixedだと12.3になる)。
+function _fmtRound(n, d) {
+  var sign = n<0 ? -1 : 1, a = Math.abs(n);
+  var r = +(Math.round(+(a + 'e' + d)) + 'e' + (-d));
+  return sign * r;
+}
+// 「正の書式;負の書式」を引用符の外の ; で分ける
+function _fmtSections(fmt) {
+  var out=[], cur='', ins=false;
+  for(var i=0;i<fmt.length;i++){
+    var c=fmt.charAt(i);
+    if(c==='"'){ ins=!ins; cur+=c; continue; }
+    if(c===';'&&!ins){ out.push(cur); cur=''; continue; }
+    cur+=c;
+  }
+  out.push(cur);
+  return out;
+}
+function _fmtLit(s) { return String(s).replace(/"([^"]*)"/g,'$1').replace(/\\(.)/g,'$1'); }
+function _fmtIsDate(fmt) {
+  var f = String(fmt).replace(/"[^"]*"/g,'');
+  return /[ymdhs]/i.test(f) && !/[#0]/.test(f);
+}
+// シリアル値 → 日付(1900系。Excelの1900年閏年バグ域=シリアル60以前は扱わない)
+function _fmtDate(serial, fmt) {
+  var days = Math.floor(serial);
+  var ms   = Math.round((serial - days) * 86400) * 1000;
+  var d    = new Date(Date.UTC(1899,11,30) + days*86400000 + ms);
+  var Y=d.getUTCFullYear(), Mo=d.getUTCMonth()+1, D=d.getUTCDate();
+  var H=d.getUTCHours(), Mi=d.getUTCMinutes(), S=d.getUTCSeconds();
+  var p2=function(v){ return (v<10?'0':'')+v; };
+  return String(fmt).replace(/"[^"]*"|yyyy|yy|mm|m|dd|d|hh|h|ss|s/gi, function(t){
+    if(t.charAt(0)==='"') return t.slice(1,-1);
+    switch(t.toLowerCase()){
+      case 'yyyy': return String(Y);
+      case 'yy':   return p2(Y%100);
+      case 'mm':   return p2(Mo);
+      case 'm':    return String(Mo);
+      case 'dd':   return p2(D);
+      case 'd':    return String(D);
+      case 'hh':   return p2(H);
+      case 'h':    return String(H);
+      case 'ss':   return p2(S);
+      case 's':    return String(S);
+      default:     return t;
+    }
+  });
+}
+function _fmtNumber(num, fmt) {
+  var secs = _fmtSections(fmt);
+  var useNeg = num<0 && secs.length>1;
+  var f = useNeg ? secs[1] : secs[0];
+  var v = useNeg ? Math.abs(num) : num;
+  var m = f.match(/^([^#0]*?)([#0][#0,]*(?:\.[#0]+)?)(%?)([^#0]*)$/);
+  if(!m) return null;
+  var pre=m[1], core=m[2], pct=m[3], suf=m[4];
+  if(pct) v = v*100;
+  var dot = core.indexOf('.');
+  var dec = dot>=0 ? core.length-dot-1 : 0;
+  var grp = core.indexOf(',')>=0;
+  var intCore = (dot>=0 ? core.slice(0,dot) : core).replace(/,/g,'');
+  var minInt = (intCore.match(/0/g)||[]).length;
+  var r = _fmtRound(v, dec);
+  var sign = r<0 ? '-' : '';
+  var parts = Math.abs(r).toFixed(dec).split('.');
+  while(parts[0].length < minInt) parts[0] = '0' + parts[0];
+  if(grp) parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return sign + _fmtLit(pre) + parts.join('.') + pct + _fmtLit(suf);
+}
 function _applyTextFormat(num, fmt) {
-  if(/^#,##0(\.0+)?$/.test(fmt)) {
-    var d=fmt.indexOf('.')===-1?0:fmt.length-fmt.indexOf('.')-1;
-    return num.toLocaleString('ja-JP',{minimumFractionDigits:d,maximumFractionDigits:d});
-  }
-  if(/^0+(\.0+)?$/.test(fmt)) {
-    var d=fmt.indexOf('.')===-1?0:fmt.length-fmt.indexOf('.')-1;
-    return num.toFixed(d);
-  }
-  if(fmt==='0%') return Math.round(num*100)+'%';
-  if(fmt==='0.00%') return (num*100).toFixed(2)+'%';
-  if(fmt==='¥#,##0'||fmt==='\\#,##0') return '¥'+Math.round(num).toLocaleString('ja-JP');
-  return String(num);
+  var bare = String(fmt).replace(/"[^"]*"/g,'');
+  if(/m{3,}|d{3,}/i.test(bare)) return null;   // 月名/曜日名(mmm・dddd)は未対応=HFに任せる
+  if(_fmtIsDate(fmt)) return _fmtDate(num, fmt);
+  return _fmtNumber(num, fmt);
 }
 
 // --- 統計 ---
@@ -342,8 +484,75 @@ function _jsIsomitted(v) { return v===undefined||v===null; }
 // ================================================================
 // convertFormula: 文字列変換
 // ================================================================
+// VALUE("1,234") を Excel と同じ 1234 にする。
+//  ★独自層(_jsComputeFormula)は「式の一番外側の関数」しか横取りしないため、
+//    =IFERROR(VALUE(B7),"NA") のように入れ子だと届かない。
+//    そこで文字列書換の段(convertFormula)で桁区切りを外す形に書き換える。ここなら入れ子でも効く。
+//  ・文字列リテラルの中は書き換えない
+//  ・DATEVALUE / NUMBERVALUE のように VALUE で終わる別の関数名は触らない(直前が識別子の文字なら飛ばす)
+//  関数呼び出しを丸ごと別の式に置き換える汎用。文字列リテラルの中は触らない。
+//  DATEVALUE / NUMBERVALUE や POINT( のように名前の一部として現れる物は触らない(直前が識別子の文字なら飛ばす)。
+function _rewriteCalls(f, name, build) {
+  var out='', i=0, ins=false;
+  var re = new RegExp('^' + name + '\\s*\\(', 'i');
+  while(i<f.length){
+    var ch=f.charAt(i);
+    if(ch==='"'){ ins=!ins; out+=ch; i++; continue; }
+    if(ins){ out+=ch; i++; continue; }
+    var m=re.exec(f.slice(i));
+    var prev=i>0?f.charAt(i-1):'';
+    if(m && !/[A-Za-z0-9_.]/.test(prev)){
+      var start=i+m[0].length, depth=1, j=start, sin=false;
+      for(; j<f.length; j++){
+        var c=f.charAt(j);
+        if(c==='"'){ sin=!sin; continue; }
+        if(sin) continue;
+        if(c==='(') depth++;
+        else if(c===')'){ depth--; if(depth===0) break; }
+      }
+      if(depth!==0){ out+=ch; i++; continue; }          // 括弧が閉じていない=触らない
+      var inner=_rewriteCalls(f.slice(start,j), name, build);   // 入れ子も先に置き換える
+      var built=build(_parseFuncArgs(inner));
+      if(built===null){ out+=f.slice(i, j+1); i=j+1; continue; }
+      out += built;
+      i = j+1;
+      continue;
+    }
+    out+=ch; i++;
+  }
+  return out;
+}
+// floor(x) を HyperFormula の式で書く。HFのINTは0方向へ切り捨てるので使えない。
+function _floorExpr(x){ return '(IF((' + x + ')<0,-ROUNDUP(-(' + x + '),0),ROUNDDOWN((' + x + '),0)))'; }
+
+function _rewriteValueCalls(f) {
+  // ★HyperFormula 2.6.1 には VALUE 関数自体が無い(#NAME?)。VALUE のまま渡してもだめなので、
+  //   「桁区切りを外して数値に変える」形に置き換える。数値にならない物は #VALUE! になり、
+  //   Excel と同じく IFERROR で拾える。空文字は Excel と同じく #VALUE! にする("x"*1 でエラーを作る)。
+  return _rewriteCalls(f, 'VALUE', function(a){
+    if(a.length!==1) return null;
+    var x=a[0];
+    return '((IF((' + x + ')="","x",SUBSTITUTE((' + x + '),",","")))*1)';
+  });
+}
+// ★独自層(_jsComputeFormula)は「式の一番外側の関数」しか横取りしないので、
+//   =ROUND(MOD(-3,2),0) のように入れ子だと届かず、HFの違う答えがそのまま出ていた。
+//   INT と MOD は HF の式で正しく書けるので、ここで書き換えて入れ子でも合うようにする。
+//   (TEXT は書式処理を式で書けないため、ここでは直せない=台帳 R12 で管理)
+function _rewriteIntMod(f) {
+  f = _rewriteCalls(f, 'INT', function(a){ return a.length===1 ? _floorExpr(a[0]) : null; });
+  f = _rewriteCalls(f, 'MOD', function(a){
+    if(a.length!==2) return null;
+    var x=a[0], y=a[1], q='((' + x + ')/(' + y + '))';
+    return '((' + x + ')-(' + y + ')*' + _floorExpr(q) + ')';
+  });
+  return f;
+}
+
 function convertFormula(f) {
   if(!f||f[0]!=='=') return f;
+  if(/VALUE\s*\(/i.test(f))     f = _rewriteValueCalls(f);
+  if(/\b(INT|MOD)\s*\(/i.test(f)) f = _rewriteIntMod(f);
   // LET展開
   if(/^=LET\s*\(/i.test(f)) f = _jsLetExpand(f);
   // LAMBDA即時呼び出し展開
@@ -369,7 +578,7 @@ function _jsComputeFormula(sheet, v) {
   var _fn = _f0.match(/^([A-Z][A-Z0-9.]*)\s*\(/i);
   if(!_fn) return null; // 関数形式でない（=A1+B1等）→ HFへ
   var _fnBase = _fn[1].toUpperCase().split('.')[0];
-  var _jsSet = {TEXT:1,VALUE:1,NUMBERVALUE:1,RANK:1,PERCENTILE:1,QUARTILE:1,
+  var _jsSet = {TEXT:1,VALUE:1,NUMBERVALUE:1,RANK:1,PERCENTILE:1,QUARTILE:1,INT:1,MOD:1,
     MODE:1,TRIMMEAN:1,PERCENTRANK:1,KURT:1,INTERCEPT:1,FORECAST:1,IRR:1,XIRR:1,
     DATEVALUE:1,DATESTRING:1,INDIRECT:1,OFFSET:1,XLOOKUP:1,XMATCH:1,LOOKUP:1,
     CONCAT:1,TEXTJOIN:1,FIXED:1,DOLLAR:1,YEN:1,N:1,TYPE:1,ENCODEURL:1,
@@ -384,9 +593,47 @@ function _jsComputeFormula(sheet, v) {
   var f = v.slice(1).trim().toUpperCase();
   var fOrig = v.slice(1).trim();
 
-  // TEXT
-  var mText=fOrig.match(/^TEXT\s*\(([A-Z]+\d+)\s*,\s*"([^"]+)"\s*\)$/i);
-  if(mText){var num=_getSingleVal(sheet,mText[1]);if(typeof num==='number')return _applyTextFormat(num,mText[2]);}
+  // TEXT ★以前は TEXT(セル参照,"書式") の形しか見ていなかったので、
+  //        TEXT(1234.5,"#,##0") のような数値リテラルはHFに素通りして書式が効かなかった。
+  var mText=_wholeCallArgs(fOrig,'TEXT');
+  if(mText!==null){
+    var ta=_parseFuncArgs(mText);
+    if(ta.length===2){
+      var tf=_argScalar(sheet,ta[1]); if(_isErrBox(tf)) return tf.err;
+      var tv=_argScalar(sheet,ta[0]); if(_isErrBox(tv)) return tv.err;
+      var tn=_argNum(tv);
+      if(tn!==null){
+        var formatted=_applyTextFormat(tn, String(tf));
+        if(formatted!==null) return formatted;   // 対応できない書式は下へ=HFに任せる
+      }
+    }
+  }
+
+  // INT ★HFのINTは0方向へ切り捨て、Excelは負の方向へ丸める(INT(-2.5)=-3)
+  var mIntF=_wholeCallArgs(fOrig,'INT');
+  if(mIntF!==null){
+    var ia=_parseFuncArgs(mIntF);
+    if(ia.length===1){
+      var iv=_argScalar(sheet,ia[0]); if(_isErrBox(iv)) return iv.err;
+      var inum=_argNum(iv);
+      if(inum!==null) return String(Math.floor(inum));
+    }
+  }
+
+  // MOD ★Excelの剰余は符号が除数側(MOD(-3,2)=1)。HFは被除数側で符号が逆になる
+  var mModF=_wholeCallArgs(fOrig,'MOD');
+  if(mModF!==null){
+    var ma=_parseFuncArgs(mModF);
+    if(ma.length===2){
+      var mx=_argScalar(sheet,ma[0]); if(_isErrBox(mx)) return mx.err;
+      var my=_argScalar(sheet,ma[1]); if(_isErrBox(my)) return my.err;
+      var nx=_argNum(mx), ny=_argNum(my);
+      if(nx!==null&&ny!==null){
+        if(ny===0) return '#DIV/0!';
+        return String(nx - ny*Math.floor(nx/ny));
+      }
+    }
+  }
 
   // VALUE / NUMBERVALUE
   var mVal=fOrig.match(/^(?:VALUE|NUMBERVALUE)\s*\(([^)]+)\)$/i);
@@ -473,18 +720,24 @@ function _jsComputeFormula(sheet, v) {
     return args.join('');
   }
 
-  // TEXTJOIN
-  var mTj=fOrig.match(/^TEXTJOIN\s*\("([^"]*)"\s*,\s*(TRUE|FALSE)\s*,\s*(.+)\)$/i);
-  if(mTj){
-    var delim=mTj[1],ignore=mTj[2].toUpperCase()==='TRUE';
-    var parts=mTj[3].split(',').map(function(a){
-      a=a.trim();
-      if(/:/.test(a))return _getRangeAll(sheet,a).map(function(v){return v===null||v===undefined?'':String(v);});
-      var sv=_getSingleVal(sheet,a);
-      return [sv!==null?String(sv):a.replace(/^["']|["']$/g,'')];
-    });
-    var vals=[].concat.apply([],parts);
-    return _jsTextjoin(delim,ignore,vals);
+  // TEXTJOIN ★以前は引数を素朴な split(',') で切っていたため、入れ子の関数呼び出しがあると
+  //           『1,-1)』のような無意味な文字列を黙って返していた(エラーにもならない=一番危険)。
+  var mTj=_wholeCallArgs(fOrig,'TEXTJOIN');
+  if(mTj!==null){
+    var tja=_parseFuncArgs(mTj);
+    if(tja.length>=3){
+      var d1=_argScalar(sheet,tja[0]); if(_isErrBox(d1)) return d1.err;
+      var d2=_argScalar(sheet,tja[1]); if(_isErrBox(d2)) return d2.err;
+      var delim = d1===null||d1===undefined ? '' : String(d1);
+      var ignore = (d2===true) || String(d2).toUpperCase()==='TRUE';
+      var vals=[];
+      for(var tji=2;tji<tja.length;tji++){
+        var lst=_argList(sheet,tja[tji]);
+        if(_isErrBox(lst)) return lst.err;          // ★エラーはエラーのまま返す
+        vals=vals.concat(lst);
+      }
+      return _jsTextjoin(delim,ignore,vals.map(function(v){return v===null||v===undefined?'':v;}));
+    }
   }
 
   // FIXED
