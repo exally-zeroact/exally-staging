@@ -13,7 +13,7 @@
     "listSep": ",",
     "date1904": false,
     "formulaProperty": ".Formula (US-English) only; .FormulaLocal is NOT used",
-    "caseCount": 253,
+    "caseCount": 306,
     "volatileSkipped": [
       "TODAY_serial",
       "NOW_int_is_today"
@@ -1542,6 +1542,324 @@
       "t": "n",
       "v": 6.0,
       "text": "6"
+    },
+    "CONCAT_range": {
+      "f": "=CONCAT(D1:D3)",
+      "t": "s",
+      "v": "ABA",
+      "text": "ABA"
+    },
+    "CONCAT_mixed": {
+      "f": "=CONCAT(B1,\"-\",A1)",
+      "t": "s",
+      "v": "りんご-1000",
+      "text": "りんご-1000"
+    },
+    "CONCAT_blank": {
+      "f": "=\"[\"&CONCAT(G1:G3)&\"]\"",
+      "t": "s",
+      "v": "[00]",
+      "text": "[00]"
+    },
+    "CONCAT_number_fmt": {
+      "f": "=CONCAT(A4)",
+      "t": "s",
+      "v": "0.1",
+      "text": "0.1"
+    },
+    "CONCAT_nested": {
+      "f": "=LEN(CONCAT(D1:D6))",
+      "t": "n",
+      "v": 6.0,
+      "text": "6"
+    },
+    "LOOKUP_exact": {
+      "f": "=LOOKUP(20,C1:C6,E1:E6)",
+      "t": "n",
+      "v": 400.0,
+      "text": "400"
+    },
+    "LOOKUP_between": {
+      "f": "=LOOKUP(30,C1:C6,E1:E6)",
+      "t": "n",
+      "v": 400.0,
+      "text": "400"
+    },
+    "LOOKUP_below_all": {
+      "f": "=IFERROR(LOOKUP(0,C1:C6,E1:E6),\"NA\")",
+      "t": "s",
+      "v": "NA",
+      "text": "NA"
+    },
+    "LOOKUP_above_all": {
+      "f": "=LOOKUP(999,C1:C6,E1:E6)",
+      "t": "n",
+      "v": 600.0,
+      "text": "600"
+    },
+    "LOOKUP_text": {
+      "f": "=LOOKUP(\"B\",{\"A\",\"B\",\"C\"},{100,200,300})",
+      "t": "n",
+      "v": 200.0,
+      "text": "200"
+    },
+    "LOOKUP_nested": {
+      "f": "=ROUND(LOOKUP(30,C1:C6,E1:E6),0)",
+      "t": "n",
+      "v": 400.0,
+      "text": "400"
+    },
+    "XMATCH_exact": {
+      "f": "=XMATCH(20,C1:C6)",
+      "t": "n",
+      "v": 4.0,
+      "text": "4"
+    },
+    "XMATCH_miss": {
+      "f": "=IFERROR(XMATCH(30,C1:C6),\"NA\")",
+      "t": "s",
+      "v": "NA",
+      "text": "NA"
+    },
+    "XMATCH_next_smaller": {
+      "f": "=XMATCH(30,C1:C6,-1)",
+      "t": "n",
+      "v": 4.0,
+      "text": "4"
+    },
+    "XMATCH_next_larger": {
+      "f": "=XMATCH(30,C1:C6,1)",
+      "t": "n",
+      "v": 5.0,
+      "text": "5"
+    },
+    "XMATCH_wildcard": {
+      "f": "=XMATCH(\"りん*\",B1:B8,2)",
+      "t": "n",
+      "v": 1.0,
+      "text": "1"
+    },
+    "XMATCH_reverse": {
+      "f": "=XMATCH(\"A\",D1:D6,0,-1)",
+      "t": "n",
+      "v": 6.0,
+      "text": "6"
+    },
+    "XMATCH_nested": {
+      "f": "=INDEX(E1:E6,XMATCH(20,C1:C6))",
+      "t": "n",
+      "v": 400.0,
+      "text": "400"
+    },
+    "INDIRECT_cell": {
+      "f": "=INDIRECT(\"E1\")",
+      "t": "n",
+      "v": 100.0,
+      "text": "100"
+    },
+    "INDIRECT_from_cell": {
+      "f": "=INDIRECT(B12)",
+      "t": "n",
+      "v": 200.0,
+      "text": "200"
+    },
+    "INDIRECT_range_sum": {
+      "f": "=SUM(INDIRECT(\"E1:E6\"))",
+      "t": "n",
+      "v": 2100.0,
+      "text": "2100"
+    },
+    "INDIRECT_bad": {
+      "f": "=IFERROR(INDIRECT(\"あ\"),\"NA\")",
+      "t": "s",
+      "v": "NA",
+      "text": "NA"
+    },
+    "INDIRECT_nested": {
+      "f": "=ROUND(SUM(INDIRECT(\"E1:E6\"))/2,0)",
+      "t": "n",
+      "v": 1050.0,
+      "text": "1050"
+    },
+    "DATEVALUE_slash": {
+      "f": "=DATEVALUE(\"2026/7/31\")",
+      "t": "n",
+      "v": 46234.0,
+      "text": "46234"
+    },
+    "DATEVALUE_hyphen": {
+      "f": "=DATEVALUE(\"2026-07-31\")",
+      "t": "n",
+      "v": 46234.0,
+      "text": "46234"
+    },
+    "DATEVALUE_jp": {
+      "f": "=IFERROR(DATEVALUE(\"2026年7月31日\"),\"NA\")",
+      "t": "n",
+      "v": 46234.0,
+      "text": "46234"
+    },
+    "DATEVALUE_bad": {
+      "f": "=IFERROR(DATEVALUE(\"あ\"),\"NA\")",
+      "t": "s",
+      "v": "NA",
+      "text": "NA"
+    },
+    "DATEVALUE_nested": {
+      "f": "=YEAR(DATEVALUE(\"2026-07-31\"))",
+      "t": "n",
+      "v": 2026.0,
+      "text": "2026"
+    },
+    "NUMBERVALUE_plain": {
+      "f": "=NUMBERVALUE(\"1.5\")",
+      "t": "n",
+      "v": 1.5,
+      "text": "1.5"
+    },
+    "NUMBERVALUE_sep": {
+      "f": "=NUMBERVALUE(\"1,234.5\")",
+      "t": "n",
+      "v": 1234.5,
+      "text": "1234.5"
+    },
+    "NUMBERVALUE_custom": {
+      "f": "=NUMBERVALUE(\"1.234,5\",\",\",\".\")",
+      "t": "n",
+      "v": 1234.5,
+      "text": "1234.5"
+    },
+    "NUMBERVALUE_bad": {
+      "f": "=IFERROR(NUMBERVALUE(\"あ\"),\"NA\")",
+      "t": "s",
+      "v": "NA",
+      "text": "NA"
+    },
+    "NUMBERVALUE_nested": {
+      "f": "=SUM(NUMBERVALUE(\"1,234\"),1)",
+      "t": "n",
+      "v": 1235.0,
+      "text": "1235"
+    },
+    "FIXED_default": {
+      "f": "=FIXED(1234.567)",
+      "t": "s",
+      "v": "1,234.57",
+      "text": "1,234.57"
+    },
+    "FIXED_digits0": {
+      "f": "=FIXED(1234.5,0)",
+      "t": "s",
+      "v": "1,235",
+      "text": "1,235"
+    },
+    "FIXED_nocomma": {
+      "f": "=FIXED(1234.567,2,TRUE)",
+      "t": "s",
+      "v": "1234.57",
+      "text": "1234.57"
+    },
+    "FIXED_negative_digits": {
+      "f": "=FIXED(1234.5,-2)",
+      "t": "s",
+      "v": "1,200",
+      "text": "1,200"
+    },
+    "FIXED_is_text": {
+      "f": "=LEN(FIXED(1234.5,0))",
+      "t": "n",
+      "v": 5.0,
+      "text": "5"
+    },
+    "ASC_alnum": {
+      "f": "=ASC(B9)",
+      "t": "s",
+      "v": "ABC123",
+      "text": "ABC123"
+    },
+    "ASC_kana": {
+      "f": "=ASC(\"アイウ\")",
+      "t": "s",
+      "v": "ｱｲｳ",
+      "text": "ｱｲｳ"
+    },
+    "ASC_mixed": {
+      "f": "=ASC(\"Ａ亜１\")",
+      "t": "s",
+      "v": "A亜1",
+      "text": "A亜1"
+    },
+    "DBCS_alnum": {
+      "f": "=DBCS(\"ABC123\")",
+      "t": "s",
+      "v": "ＡＢＣ１２３",
+      "text": "ＡＢＣ１２３"
+    },
+    "DBCS_kana": {
+      "f": "=DBCS(B10)",
+      "t": "s",
+      "v": "アイウ",
+      "text": "アイウ"
+    },
+    "DBCS_dakuten": {
+      "f": "=DBCS(B11)",
+      "t": "s",
+      "v": "ガギ",
+      "text": "ガギ"
+    },
+    "DBCS_nested": {
+      "f": "=LEN(DBCS(B10))",
+      "t": "n",
+      "v": 3.0,
+      "text": "3"
+    },
+    "ASC_nested": {
+      "f": "=LEN(ASC(B9))",
+      "t": "n",
+      "v": 6.0,
+      "text": "6"
+    },
+    "TEXTBEFORE_first": {
+      "f": "=TEXTBEFORE(\"007-1234\",\"-\")",
+      "t": "s",
+      "v": "007",
+      "text": "007"
+    },
+    "TEXTAFTER_first": {
+      "f": "=TEXTAFTER(\"007-1234\",\"-\")",
+      "t": "s",
+      "v": "1234",
+      "text": "1234"
+    },
+    "TEXTBEFORE_nth": {
+      "f": "=TEXTBEFORE(\"a-b-c\",\"-\",2)",
+      "t": "s",
+      "v": "a-b",
+      "text": "a-b"
+    },
+    "TEXTAFTER_negative": {
+      "f": "=TEXTAFTER(\"a-b-c\",\"-\",-1)",
+      "t": "s",
+      "v": "c",
+      "text": "c"
+    },
+    "TEXTBEFORE_missing": {
+      "f": "=IFERROR(TEXTBEFORE(\"abc\",\"-\"),\"NA\")",
+      "t": "s",
+      "v": "NA",
+      "text": "NA"
+    },
+    "TEXTBEFORE_ifmissing": {
+      "f": "=TEXTBEFORE(\"abc\",\"-\",1,0,0,\"なし\")",
+      "t": "s",
+      "v": "なし",
+      "text": "なし"
+    },
+    "TEXTAFTER_nested": {
+      "f": "=LEN(TEXTAFTER(\"007-1234\",\"-\"))",
+      "t": "n",
+      "v": 4.0,
+      "text": "4"
     }
   },
   "inputProbes": {

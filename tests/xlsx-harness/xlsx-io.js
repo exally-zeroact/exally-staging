@@ -41,6 +41,15 @@
   XLFN.forEach(function (n) { XLFN_SET[n] = 1; });
   var NEEDS_XLPM = { LET: 1, LAMBDA: 1 };
 
+  /* ══ 別名(日本語UIの表示名 → ファイルに入る本名) ═════════════════════
+   *  ★実測(Excel 365 16.0.20228 / 2026-08-01): 半角→全角の関数の本名は DBCS。
+   *    JIS は日本語UIの表示名でしかなく、US-English構文/ファイルの中では通らない
+   *    (=JIS(A1) を .Formula で入れると #NAME? になる)。
+   *    Excel自身が「表示名=JIS / 保存名=DBCS」で持っているので、書き出す時に本名へ直す。
+   *    エンジン側は convertFormula(exally-formula.js) が同じ変換をしている＝入口と出口の両方で本名に寄せる。
+   */
+  var ALIAS = { JIS: 'DBCS' };
+
   /* 式の中の関数名だけを見て接頭辞を付ける。
      ・文字列リテラル("...")の中は触らない
      ・すでに _xl… が付いている物は触らない
@@ -65,6 +74,8 @@
         if (isCall && NEEDS_XLPM[upper] && word.indexOf('_xl') !== 0) {
           throw new Error(upper + ' は引数名に _xlpm. が要るため、この書き出しでは未対応です(壊れたxlsxを作らないために止めました)');
         }
+        // ★別名は先に本名へ寄せる(JIS → DBCS)。そのまま書くとExcelが #NAME? にする。
+        if (isCall && word.indexOf('_xl') !== 0 && ALIAS[upper]) { out += ALIAS[upper]; i = j; continue; }
         if (isCall && word.indexOf('_xl') !== 0 && XLFN_SET[upper]) out += '_xlfn.' + upper;
         else out += word;
         i = j;

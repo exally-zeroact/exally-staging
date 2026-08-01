@@ -1,0 +1,67 @@
+{
+  "group": "第3波P1（_jsSet → HFプラグインへ移す11関数）",
+  "note": "★真値は実Excel(16.0.20228 / 日本語1041)から取る。推測で期待値を書かない。★各関数に必ず1本『入れ子』を入れる=独自層は式の一番外側しか効かないため、入れ子こそが移す理由そのもの。入力セル B9-B12 をこの波で追加した。",
+  "cases": [
+    { "id": "CONCAT_range",          "func": "CONCAT",      "f": "=CONCAT(D1:D3)" },
+    { "id": "CONCAT_mixed",          "func": "CONCAT",      "f": "=CONCAT(B1,\"-\",A1)" },
+    { "id": "CONCAT_blank",          "func": "CONCAT",      "f": "=\"[\"&CONCAT(G1:G3)&\"]\"", "why": "空セルG1を飛ばさず\"\"として連結するか" },
+    { "id": "CONCAT_number_fmt",     "func": "CONCAT",      "f": "=CONCAT(A4)", "why": "0.1が書式なしで\"0.1\"になるか" },
+    { "id": "CONCAT_nested",         "func": "CONCAT",      "f": "=LEN(CONCAT(D1:D6))", "why": "★入れ子" },
+
+    { "id": "LOOKUP_exact",          "func": "LOOKUP",      "f": "=LOOKUP(20,C1:C6,E1:E6)" },
+    { "id": "LOOKUP_between",        "func": "LOOKUP",      "f": "=LOOKUP(30,C1:C6,E1:E6)", "why": "中間値=超えない最大を返すか(一番間違えやすい)" },
+    { "id": "LOOKUP_below_all",      "func": "LOOKUP",      "f": "=IFERROR(LOOKUP(0,C1:C6,E1:E6),\"NA\")" },
+    { "id": "LOOKUP_above_all",      "func": "LOOKUP",      "f": "=LOOKUP(999,C1:C6,E1:E6)" },
+    { "id": "LOOKUP_text",           "func": "LOOKUP",      "f": "=LOOKUP(\"B\",{\"A\",\"B\",\"C\"},{100,200,300})", "why": "★昇順の文字列で比較順を見る。D1:D6は昇順でないので使わない=Microsoftが『昇順でない場合は正しい値を返さないことがある』と明記している未定義動作(＝二分探索の実装差)を追いかけても意味がないため" },
+    { "id": "LOOKUP_nested",         "func": "LOOKUP",      "f": "=ROUND(LOOKUP(30,C1:C6,E1:E6),0)", "why": "★入れ子" },
+
+    { "id": "XMATCH_exact",          "func": "XMATCH",      "f": "=XMATCH(20,C1:C6)", "why": "既定が完全一致(MATCHの既定と違う)" },
+    { "id": "XMATCH_miss",           "func": "XMATCH",      "f": "=IFERROR(XMATCH(30,C1:C6),\"NA\")" },
+    { "id": "XMATCH_next_smaller",   "func": "XMATCH",      "f": "=XMATCH(30,C1:C6,-1)" },
+    { "id": "XMATCH_next_larger",    "func": "XMATCH",      "f": "=XMATCH(30,C1:C6,1)" },
+    { "id": "XMATCH_wildcard",       "func": "XMATCH",      "f": "=XMATCH(\"りん*\",B1:B8,2)" },
+    { "id": "XMATCH_reverse",        "func": "XMATCH",      "f": "=XMATCH(\"A\",D1:D6,0,-1)", "why": "検索モード-1=後ろから" },
+    { "id": "XMATCH_nested",         "func": "XMATCH",      "f": "=INDEX(E1:E6,XMATCH(20,C1:C6))", "why": "★入れ子" },
+
+    { "id": "INDIRECT_cell",         "func": "INDIRECT",    "f": "=INDIRECT(\"E1\")" },
+    { "id": "INDIRECT_from_cell",    "func": "INDIRECT",    "f": "=INDIRECT(B12)", "why": "参照文字列をセルから渡す" },
+    { "id": "INDIRECT_range_sum",    "func": "INDIRECT",    "f": "=SUM(INDIRECT(\"E1:E6\"))", "why": "★範囲として使えるか" },
+    { "id": "INDIRECT_bad",          "func": "INDIRECT",    "f": "=IFERROR(INDIRECT(\"あ\"),\"NA\")" },
+    { "id": "INDIRECT_nested",       "func": "INDIRECT",    "f": "=ROUND(SUM(INDIRECT(\"E1:E6\"))/2,0)", "why": "★入れ子" },
+
+    { "id": "DATEVALUE_slash",       "func": "DATEVALUE",   "f": "=DATEVALUE(\"2026/7/31\")" },
+    { "id": "DATEVALUE_hyphen",      "func": "DATEVALUE",   "f": "=DATEVALUE(\"2026-07-31\")" },
+    { "id": "DATEVALUE_jp",          "func": "DATEVALUE",   "f": "=IFERROR(DATEVALUE(\"2026年7月31日\"),\"NA\")", "why": "日本語表記を受けるかは実Excelに聞く(推測しない)" },
+    { "id": "DATEVALUE_bad",         "func": "DATEVALUE",   "f": "=IFERROR(DATEVALUE(\"あ\"),\"NA\")" },
+    { "id": "DATEVALUE_nested",      "func": "DATEVALUE",   "f": "=YEAR(DATEVALUE(\"2026-07-31\"))", "why": "★入れ子" },
+
+    { "id": "NUMBERVALUE_plain",     "func": "NUMBERVALUE", "f": "=NUMBERVALUE(\"1.5\")" },
+    { "id": "NUMBERVALUE_sep",       "func": "NUMBERVALUE", "f": "=NUMBERVALUE(\"1,234.5\")" },
+    { "id": "NUMBERVALUE_custom",    "func": "NUMBERVALUE", "f": "=NUMBERVALUE(\"1.234,5\",\",\",\".\")", "why": "欧州式=引数で区切りを指定" },
+    { "id": "NUMBERVALUE_bad",       "func": "NUMBERVALUE", "f": "=IFERROR(NUMBERVALUE(\"あ\"),\"NA\")" },
+    { "id": "NUMBERVALUE_nested",    "func": "NUMBERVALUE", "f": "=SUM(NUMBERVALUE(\"1,234\"),1)", "why": "★入れ子" },
+
+    { "id": "FIXED_default",         "func": "FIXED",       "f": "=FIXED(1234.567)", "why": "既定2桁+桁区切り" },
+    { "id": "FIXED_digits0",         "func": "FIXED",       "f": "=FIXED(1234.5,0)", "why": "丸め方向(0から遠い方)" },
+    { "id": "FIXED_nocomma",         "func": "FIXED",       "f": "=FIXED(1234.567,2,TRUE)" },
+    { "id": "FIXED_negative_digits", "func": "FIXED",       "f": "=FIXED(1234.5,-2)" },
+    { "id": "FIXED_is_text",         "func": "FIXED",       "f": "=LEN(FIXED(1234.5,0))", "why": "★文字列で返ること+入れ子" },
+
+    { "id": "ASC_alnum",             "func": "ASC",         "f": "=ASC(B9)" },
+    { "id": "ASC_kana",              "func": "ASC",         "f": "=ASC(\"アイウ\")" },
+    { "id": "ASC_mixed",             "func": "ASC",         "f": "=ASC(\"Ａ亜１\")", "why": "漢字は変換されないこと" },
+    { "id": "DBCS_alnum",            "func": "DBCS",        "f": "=DBCS(\"ABC123\")", "why": "★実測: 半角→全角の関数の【本名はDBCS】。JISは日本語UIの表示名で、ファイル/US-English構文では #NAME? になる(実Excelで確認)" },
+    { "id": "DBCS_kana",             "func": "DBCS",        "f": "=DBCS(B10)" },
+    { "id": "DBCS_dakuten",          "func": "DBCS",        "f": "=DBCS(B11)", "why": "濁点の合成(ｶﾞ→ガ)がずれやすい" },
+    { "id": "DBCS_nested",           "func": "DBCS",        "f": "=LEN(DBCS(B10))", "why": "★入れ子" },
+    { "id": "ASC_nested",            "func": "ASC",         "f": "=LEN(ASC(B9))", "why": "★入れ子=長さが変われば変換が効いた証拠" },
+
+    { "id": "TEXTBEFORE_first",      "func": "TEXTBEFORE",  "f": "=TEXTBEFORE(\"007-1234\",\"-\")" },
+    { "id": "TEXTAFTER_first",       "func": "TEXTAFTER",   "f": "=TEXTAFTER(\"007-1234\",\"-\")" },
+    { "id": "TEXTBEFORE_nth",        "func": "TEXTBEFORE",  "f": "=TEXTBEFORE(\"a-b-c\",\"-\",2)" },
+    { "id": "TEXTAFTER_negative",    "func": "TEXTAFTER",   "f": "=TEXTAFTER(\"a-b-c\",\"-\",-1)", "why": "後ろから" },
+    { "id": "TEXTBEFORE_missing",    "func": "TEXTBEFORE",  "f": "=IFERROR(TEXTBEFORE(\"abc\",\"-\"),\"NA\")" },
+    { "id": "TEXTBEFORE_ifmissing",  "func": "TEXTBEFORE",  "f": "=TEXTBEFORE(\"abc\",\"-\",1,0,0,\"なし\")", "why": "見つからない時の既定値" },
+    { "id": "TEXTAFTER_nested",      "func": "TEXTAFTER",   "f": "=LEN(TEXTAFTER(\"007-1234\",\"-\"))", "why": "★入れ子" }
+  ]
+}

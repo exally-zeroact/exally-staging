@@ -8,21 +8,22 @@
   "history": {
     "wave1_2026-07-31": "TEXT書式5 / TEXT日付2 / INT負数2 / MOD符号3 / VALUE桁区切り1 / TEXTJOIN引数分解2 ＝15件。一致 193→221",
     "wave2_2026-08-01": "SORT / UNIQUE / FILTERの第3引数 / MATCHワイルドカード / TEXT入れ子 ＝12件。加えて TEXT・TEXTJOIN・INT・MOD・VALUE・XLOOKUP を HFプラグインへ移し、入れ子でも効くようにした。一致 221→243",
-    "wave2b_2026-08-01": "SUMPRODUCT 2件を解消。原因はHFの既定で範囲どうしの計算が配列にならないことで、buildEmpty の useArrayArithmetic:true で解決(版上げ不要)。配列演算のケース8件を新設し全て一致。一致 243→253 / 既知 2→0"
+    "wave2b_2026-08-01": "SUMPRODUCT 2件を解消。原因はHFの既定で範囲どうしの計算が配列にならないことで、buildEmpty の useArrayArithmetic:true で解決(版上げ不要)。配列演算のケース8件を新設し全て一致。一致 243→253 / 既知 2→0",
+    "wave3_p1_2026-08-01": "第3波P1。CONCAT/LOOKUP/XMATCH/INDIRECT/DATEVALUE/NUMBERVALUE/FIXED/ASC/DBCS(旧JIS)/TEXTBEFORE/TEXTAFTER の11関数を _jsSet から HFプラグインへ移した(入れ子でも効く)。ケース53件を新設し全て一致。一致 253→306 / 既知 0 / 入れ子で壊れる式 38→27。★INDIRECT は isVolatile:true が必須と実測で判明(付けないと参照先を書き換えても古い答えが残る)。★半角→全角の本名は DBCS で、JIS は日本語UIの表示名。JIS のまま xlsx に書くと Excel が #NAME? にするので convertFormula で DBCS に直す"
   },
   "roots": {
     "R11_input_parse": "セルに打ち込んだ『桁区切り付きの数』『日付に見える文字』を、Excel は数値/日付に解釈するがグリッドは文字列のまま持つ",
-    "R14_nesting_pending": "★独自層(_jsSet)に残っている関数は、式の一番外側でしか効かない。入れ子で使われると HyperFormula の答えに戻る。実測で38関数が該当(tests/xlsx-harness/nesting-audit.mjs)。HFプラグインへ移せば直る",
+    "R14_nesting_pending": "★独自層(_jsSet)に残っている関数は、式の一番外側でしか効かない。入れ子で使われると HyperFormula の答えに戻る。実測で27関数が該当(第3波P1で38→27。tests/xlsx-harness/nesting-audit.mjs)。HFプラグインへ移せば直る",
+    "R17_indirect_scope": "★INDIRECT はプラグイン化したが、対応するのは【同じシートのA1形式】のみ。'Sheet1!A1' と R1C1形式(第2引数FALSE)は #REF! を返す＝黙って違う数字を出さない。他シート参照はシート名→IDの解決にHyperFormulaの非公開クラスが要り、版が変わると壊れるため入れていない(版対応が目的のこの作りでは内部APIに寄りかからない)",
     "R15_no_spill": "★うちのグリッドはスピル(配列が隣のセルへ溢れる)に未対応。Excelでは =C1:C6*E1:E6 が6セルを占めるが、うちは1セルに左上の値だけを出す。★左上の値そのものはExcelと一致することを実測済み(ARR_* ケース)。溢れる範囲の見た目だけが違う",
     "R16_file_array_legacy": "★SheetJSが書き出したxlsxをExcelで開くと、配列を返す式が『旧来の解釈(暗黙の交差)』になる。Excelの動的配列として扱わせる印(セルの cm 属性とメタデータ)をSheetJSが書いていないため。グリッドの画面では正しいのに、落としたファイルをExcelで開くと違う値になる=『Excel落とし』の忠実さの問題"
   },
   "nesting_pending": {
     "class": "A",
     "due": "2026-09-30",
-    "count": 38,
-    "note": "★第3波。下の関数はまだ _jsSet 側にあり、入れ子で使われると答えが変わる。nesting-audit.mjs の件数が baseline を超えたらCIが赤になる(黙って増やせない)。優先順位は『中小の実務で出る頻度 × 黙って違う値になる危険 × お金に効くか』で付けた。",
+    "count": 27,
+    "note": "★第3波。下の関数はまだ _jsSet 側にあり、入れ子で使われると答えが変わる。nesting-audit.mjs の件数が baseline を超えたらCIが赤になる(黙って増やせない)。優先順位は『中小の実務で出る頻度 x 黙って違う値になる危険 x お金に効くか』で付けた。★P1の11関数は 2026-08-01 に片付け済み(38->27)。",
     "funcs": [
-      "NUMBERVALUE",
       "RANK",
       "PERCENTILE",
       "QUARTILE",
@@ -33,20 +34,12 @@
       "INTERCEPT",
       "FORECAST",
       "IRR",
-      "DATEVALUE",
-      "INDIRECT",
-      "XMATCH",
-      "LOOKUP",
-      "CONCAT",
-      "FIXED",
       "DOLLAR",
       "YEN",
       "N",
       "TYPE",
       "ENCODEURL",
       "GESTEP",
-      "TEXTBEFORE",
-      "TEXTAFTER",
       "VALUETOTEXT",
       "AGGREGATE",
       "PERMUT",
@@ -56,29 +49,10 @@
       "LEFTB",
       "RIGHTB",
       "MIDB",
-      "ASC",
-      "JIS",
       "DSUM",
       "DCOUNT"
     ],
     "priority": {
-      "P1_先に片付ける": {
-        "due": "2026-08-31",
-        "funcs": [
-          "CONCAT",
-          "LOOKUP",
-          "XMATCH",
-          "INDIRECT",
-          "DATEVALUE",
-          "NUMBERVALUE",
-          "FIXED",
-          "ASC",
-          "JIS",
-          "TEXTBEFORE",
-          "TEXTAFTER"
-        ],
-        "根拠": "CONCAT/FIXED=請求書の摘要と金額表示で毎回出る。LOOKUP/XMATCH/INDIRECT=中小の既存Excelに大量にある参照系で、壊れると集計が丸ごと狂う。DATEVALUE/NUMBERVALUE=他ソフトからの取込みで文字列を日付・数値に直す所=お金が落ちる。ASC/JIS=氏名住所の全角半角そろえ、日本の実務では最頻出。TEXTBEFORE/TEXTAFTER=コードや住所の切り出しで使われ始めている"
-      },
       "P2_その次": {
         "due": "2026-09-30",
         "funcs": [
@@ -125,6 +99,24 @@
         ],
         "根拠": "HyperFormula 3.3.0 では この5つが入れ子でも正しくなる(実測)。ただし版上げは見送ったので、現状は入れ子で答えが変わったままである。",
         "判断日にやること": "(a)版を上げて _jsSet から外す (b)版を上げずに自前でプラグイン移行する のどちらかを決める。放置したまま期限を延ばさない"
+      },
+      "P1_完了_2026-08-01": {
+        "due": "2026-08-31",
+        "funcs": [
+          "CONCAT",
+          "LOOKUP",
+          "XMATCH",
+          "INDIRECT",
+          "DATEVALUE",
+          "NUMBERVALUE",
+          "FIXED",
+          "ASC",
+          "JIS",
+          "TEXTBEFORE",
+          "TEXTAFTER"
+        ],
+        "根拠": "CONCAT/FIXED=請求書の摘要と金額表示で毎回出る。LOOKUP/XMATCH/INDIRECT=中小の既存Excelに大量にある参照系で、壊れると集計が丸ごと狂う。DATEVALUE/NUMBERVALUE=他ソフトからの取込みで文字列を日付・数値に直す所=お金が落ちる。ASC/JIS=氏名住所の全角半角そろえ、日本の実務では最頻出。TEXTBEFORE/TEXTAFTER=コードや住所の切り出しで使われ始めている",
+        "status": "★完了 2026-08-01。11関数すべてHFプラグインへ移し、入れ子でも正しくなった。真値ケース53件を新設し全て一致。"
       }
     },
     "version_upgrade_finding": "HyperFormula 3.3.0 を実際に入れて全ケースを回した結果: 一致243/既知2/新規0 は変わらず(良くも悪くもならない)、入れ子の壊れは 38→33 に減る。ただし★SUMPRODUCT の配列演算は 2.6.1 / 2.7.1 / 3.3.0 のどれでも直らない(実測)。版上げは SUMPRODUCT の解決にはならない"

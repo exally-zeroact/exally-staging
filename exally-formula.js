@@ -272,7 +272,21 @@ function _jsMinverse(m){var det=_jsMdeterm(m);if(Math.abs(det)<1e-10)return null
 // --- 文字列 ---
 function _jsConcat(vals){return vals.map(function(v){return v===null||v===undefined?'':String(v);}).join('');}
 function _jsTextjoin(delim,ignoreEmpty,vals){var f=ignoreEmpty?vals.filter(function(v){return v!==null&&v!==undefined&&v!=='';}) :vals;return f.map(function(v){return String(v===null||v===undefined?'':v);}).join(delim);}
-function _jsFixed(num,dec,noCommas){dec=dec===undefined?2:Math.max(0,Math.round(dec));var str=num.toFixed(dec);if(!noCommas){var p=str.split('.');p[0]=p[0].replace(/\B(?=(\d{3})+(?!\d))/g,',');str=p.join('.');}return str;}
+// Excelの丸め=0から遠い方へ(ROUND(-2.5,0)=-3)。JSの Math.round は -2 になるので使えない。
+//  2.675*100=267.49999… のような二進小数の誤差を吸収してから丸める。
+function _xlRound(x,d){
+  var p=Math.pow(10,d), v=x*p, eps=Math.abs(v)*1e-12;
+  var r = v>=0 ? Math.floor(v+0.5+eps) : Math.ceil(v-0.5-eps);
+  return r/p;
+}
+// FIXED(数値,[桁数],[桁区切りを付けない])。★桁数は負も取る(=FIXED(1234.5,-2) → "1,200")。結果は文字列。
+function _jsFixed(num,dec,noCommas){
+  dec = (dec===undefined||dec===null) ? 2 : Math.trunc(dec);
+  var n = _xlRound(num, dec);
+  var str = n.toFixed(Math.max(0,dec));
+  if(!noCommas){var p=str.split('.');p[0]=p[0].replace(/\B(?=(\d{3})+(?!\d))/g,',');str=p.join('.');}
+  return str;
+}
 function _jsDollar(num,dec){dec=dec===undefined?2:Math.max(0,dec);var abs=Math.abs(num),str=abs.toFixed(dec);var p=str.split('.');p[0]=p[0].replace(/\B(?=(\d{3})+(?!\d))/g,',');str='$'+p.join('.');return num<0?'('+str+')':str;}
 function _jsYen(num,dec){dec=dec===undefined?0:Math.max(0,dec);var v=Math.abs(num);var str=v.toFixed(dec).replace(/\B(?=(\d{3})+(?!\d))/g,',');return'¥'+str;}
 function _jsLenb(s){return s.split('').reduce(function(a,c){return a+(c.charCodeAt(0)>0x7F?2:1);},0);}
@@ -281,16 +295,108 @@ function _jsRightb(s,b){return _jsLeftb(s.split('').reverse().join(''),b).split(
 function _jsMidb(s,start,len){return _jsLeftb(s.substring(start-1),len);}
 function _jsFindb(find,within,start){start=start||1;var pos=within.indexOf(find,start-1);return pos>=0?pos+1:'#VALUE!';}
 function _jsReplaceb(text,start,numBytes,repl){return text.substring(0,start-1)+repl+text.substring(start-1+numBytes);}
-function _jsAsc(s){return s.replace(/[Ａ-Ｚａ-ｚ０-９]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-0xFEE0);});}
-function _jsJis(s){return s.replace(/[A-Za-z0-9]/g,function(c){return String.fromCharCode(c.charCodeAt(0)+0xFEE0);});}
-function _jsTextbefore(text,delim,inst){inst=inst||1;var count=0,idx=0;while((idx=text.indexOf(delim,idx))!==-1){count++;if(count===inst)return text.substring(0,idx);idx++;}return'#N/A';}
-function _jsTextafter(text,delim,inst){inst=inst||1;var count=0,idx=0;while((idx=text.indexOf(delim,idx))!==-1){count++;if(count===inst)return text.substring(idx+delim.length);idx++;}return'#N/A';}
+// ── 全角/半角(ASC / DBCS) ────────────────────────────────────────────
+//  ★半角→全角の関数の【本名は DBCS】。JIS は日本語UIの表示名で、
+//    xlsx の中身/US-English構文では DBCS。JIS のまま書き出すと Excel で #NAME? になる(実測)。
+//    日本語UIの JIS( は convertFormula で DBCS( に直す＝打つ側はどちらでもよい。
+//  ★対応表は順番で対応させる。ズレたら黙って誤変換するので、読み込み時に長さを検査する。
+var _KZ_BASE = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンァィゥェォャュョッー。「」、・゛゜';
+var _KH_BASE = 'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜｦﾝｧｨｩｪｫｬｭｮｯｰ｡｢｣､･ﾞﾟ';
+var _KZ_DAKU = 'ガギグゲゴザジズゼゾダヂヅデドバビブベボヴヷヺ';
+var _KH_DAKU = 'ｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾊﾋﾌﾍﾎｳﾜｦ';
+var _KZ_HAND = 'パピプペポ';
+var _KH_HAND = 'ﾊﾋﾌﾍﾎ';
+if(_KZ_BASE.length!==_KH_BASE.length || _KZ_DAKU.length!==_KH_DAKU.length || _KZ_HAND.length!==_KH_HAND.length){
+  throw new Error('全角/半角カナの対応表がズレています(exally-formula.js)。直してから使うこと。');
+}
+// 全角→半角。濁点は分解する(ガ→ｶﾞ)。漢字・ひらがなは半角が無いので触らない。
+function _jsAsc(s){
+  var out='';
+  for(var i=0;i<s.length;i++){
+    var c=s.charAt(i), k;
+    if((k=_KZ_DAKU.indexOf(c))>=0){ out+=_KH_DAKU.charAt(k)+'ﾞ'; continue; }
+    if((k=_KZ_HAND.indexOf(c))>=0){ out+=_KH_HAND.charAt(k)+'ﾟ'; continue; }
+    if((k=_KZ_BASE.indexOf(c))>=0){ out+=_KH_BASE.charAt(k); continue; }
+    var cc=c.charCodeAt(0);
+    if(cc>=0xFF01 && cc<=0xFF5E){ out+=String.fromCharCode(cc-0xFEE0); continue; }  // 全角英数記号
+    if(cc===0x3000){ out+=' '; continue; }                                          // 全角スペース
+    out+=c;
+  }
+  return out;
+}
+// 半角→全角。濁点は合成する(ｶﾞ→ガ)。
+function _jsDbcs(s){
+  var out='';
+  for(var i=0;i<s.length;i++){
+    var c=s.charAt(i), n=s.charAt(i+1), k;
+    if(n==='ﾞ' && (k=_KH_DAKU.indexOf(c))>=0){ out+=_KZ_DAKU.charAt(k); i++; continue; }
+    if(n==='ﾟ' && (k=_KH_HAND.indexOf(c))>=0){ out+=_KZ_HAND.charAt(k); i++; continue; }
+    if((k=_KH_BASE.indexOf(c))>=0){ out+=_KZ_BASE.charAt(k); continue; }
+    var cc=c.charCodeAt(0);
+    if(cc>=0x21 && cc<=0x7E){ out+=String.fromCharCode(cc+0xFEE0); continue; }       // 半角英数記号
+    if(cc===0x20){ out+='　'; continue; }                                        // 半角スペース
+    out+=c;
+  }
+  return out;
+}
+var _jsJis = _jsDbcs;   // 旧名(日本語UI名)。中身は同じ物を指す＝二重実装にしない。
+// TEXTBEFORE/TEXTAFTER(文字列, 区切り, [出現回数], [大小区別], [末尾一致], [見つからない時])
+//  ★出現回数は負も取る(-1=後ろから1つ目)。見つからない時は既定 #N/A、第6引数があればそれを返す。
+function _tbPositions(t,d,ci){
+  var hay = ci ? t.toLowerCase() : t, ned = ci ? d.toLowerCase() : d;
+  var out=[], i=0;
+  while(ned!=='' && (i=hay.indexOf(ned,i))!==-1){ out.push(i); i++; }
+  return out;
+}
+function _tbPick(t,d,inst,ci){
+  inst = (inst===undefined||inst===null||inst===0) ? 1 : Math.trunc(inst);
+  var pos=_tbPositions(String(t),String(d),ci);
+  return inst>0 ? pos[inst-1] : pos[pos.length+inst];
+}
+function _jsTextbefore(text,delim,inst,matchMode,matchEnd,ifNotFound){
+  var t=String(text), d=String(delim);
+  var p=_tbPick(t,d,inst,!!matchMode);
+  if(p===undefined) return ifNotFound===undefined ? '#N/A' : ifNotFound;
+  return t.substring(0,p);
+}
+function _jsTextafter(text,delim,inst,matchMode,matchEnd,ifNotFound){
+  var t=String(text), d=String(delim);
+  var p=_tbPick(t,d,inst,!!matchMode);
+  if(p===undefined) return ifNotFound===undefined ? '#N/A' : ifNotFound;
+  return t.substring(p+d.length);
+}
 function _jsTextsplit(text,colDelim,rowDelim){if(rowDelim)return text.split(rowDelim).map(function(r){return r.split(colDelim);});return text.split(colDelim);}
 function _jsValuetotext(v){if(typeof v==='string')return'"'+v+'"';if(typeof v==='boolean')return v?'TRUE':'FALSE';return String(v);}
 function _jsArraytotext(vals){return'{'+vals.map(_jsValuetotext).join(',')+'}';}
 
 // --- 日付 ---
-function _jsDateValue(str){var m=str.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);if(!m)return null;var d=new Date(parseInt(m[1]),parseInt(m[2])-1,parseInt(m[3]));return Math.round((d-new Date(1899,11,30))/86400000);}
+// DATEVALUE。受ける表記は【実Excelに聞いた物だけ】(推測で広げない):
+//   2026/7/31 ・ 2026-07-31 ・ 2026年7月31日  … いずれも 46234(実測)
+function _jsDateValue(str){
+  var s=String(str).trim();
+  var m=s.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})$/)
+     || s.match(/^(\d{4})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日$/);
+  if(!m) return null;
+  var y=parseInt(m[1],10), mo=parseInt(m[2],10), da=parseInt(m[3],10);
+  if(mo<1||mo>12||da<1||da>31) return null;
+  var d=new Date(y,mo-1,da);
+  if(d.getFullYear()!==y || d.getMonth()!==mo-1 || d.getDate()!==da) return null; // 2026-02-30 等
+  return Math.round((d-new Date(1899,11,30))/86400000);
+}
+// NUMBERVALUE(文字列,[小数点],[桁区切り])。区切りを引数で指定できるのが VALUE との違い。
+function _jsNumbervalue(text,decSep,grpSep){
+  var d=(decSep===undefined||decSep===null||decSep==='') ? '.' : String(decSep).charAt(0);
+  var g=(grpSep===undefined||grpSep===null||grpSep==='') ? ',' : String(grpSep).charAt(0);
+  var s=String(text).trim();
+  if(s==='') return 0;
+  s=s.split(g).join('');
+  if(d!=='.') s=s.split(d).join('.');
+  var pct=0;
+  while(/%\s*$/.test(s)){ pct++; s=s.replace(/%\s*$/,''); }
+  if(!/^[+-]?(\d+\.?\d*|\.\d+)$/.test(s)) return null;
+  var n=parseFloat(s);
+  return isNaN(n) ? null : n/Math.pow(100,pct);
+}
 function _jsDatestring(serial){var base=new Date(1899,11,30);var d=new Date(base.getTime()+serial*86400000);return d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate();}
 
 // --- 情報 ---
@@ -302,9 +408,74 @@ function _jsCell(infoType,val){if(infoType==='type'){if(val===''||val===null||va
 // --- 参照 ---
 function _jsIndirect(sheet,refStr){var rc=_toRC(refStr.trim());if(rc&&_hf){var v=_hf.getCellValue({sheet:_hfSid(sheet),row:rc.r,col:rc.c});return v===null||v===undefined?'':v;}return'#REF!';}
 function _jsOffset(sheet,ref,dr,dc){var rc=_toRC(ref.trim());if(!rc||!_hf)return'#REF!';var nr=rc.r+dr,nc=rc.c+dc;if(nr<0||nc<0)return'#REF!';var v=_hf.getCellValue({sheet:_hfSid(sheet),row:nr,col:nc});return v===null||v===undefined?'':v;}
-function _jsLookup(val,lookupVals,resultVals){var found=-1;for(var i=0;i<lookupVals.length;i++){if(lookupVals[i]<=val)found=i;else break;}return found>=0?resultVals[found]:'#N/A';}
+// Excelの比較順: 数値 < 文字列 < 論理値。文字列は大小を区別しない。
+function _xlCmp(a,b){
+  var ra=(typeof a==='number')?0:(typeof a==='boolean'?2:1);
+  var rb=(typeof b==='number')?0:(typeof b==='boolean'?2:1);
+  if(ra!==rb) return ra<rb?-1:1;
+  if(ra===0) return a<b?-1:(a>b?1:0);
+  if(ra===2) return (a?1:0)-(b?1:0);
+  var x=String(a).toLowerCase(), y=String(b).toLowerCase();
+  return x<y?-1:(x>y?1:0);
+}
+// LOOKUP(ベクトル形式)。検索範囲は【昇順】が前提(Microsoftの仕様)。
+//  見つからなければ「超えない最大」を返し、全部より小さければ #N/A。
+//  ★昇順でない入力は Microsoft が「正しい値を返さないことがある」と明記している未定義動作。
+//    その二分探索の実装差までは合わせない(合わせても意味がない)。
+function _jsLookup(val,lookupVals,resultVals){
+  var found=-1;
+  for(var i=0;i<lookupVals.length;i++){
+    var lv=lookupVals[i];
+    if(lv===null||lv===undefined||lv==='') continue;
+    if(_xlCmp(lv,val)<=0) found=i;
+  }
+  if(found<0) return '#N/A';
+  var r=resultVals[found];
+  return (r===undefined||r===null)?'':r;
+}
 function _jsXlookup(val,lookupVals,returnVals,notFound){for(var i=0;i<lookupVals.length;i++){if(String(lookupVals[i])===String(val))return returnVals[i];}return notFound!==undefined?notFound:'#N/A';}
-function _jsXmatch(val,arr,mode){if(!mode||mode===0){for(var i=0;i<arr.length;i++)if(String(arr[i])===String(val))return i+1;return'#N/A';}if(mode===1){var found=-1;for(var i=0;i<arr.length;i++)if(arr[i]<=val)found=i;return found>=0?found+1:'#N/A';}return'#N/A';}
+// XMATCH(値, 配列, [一致モード], [検索モード])
+//   一致モード: 0=完全一致(既定・MATCHの既定と違う) / -1=完全一致か次に小さい / 1=完全一致か次に大きい / 2=ワイルドカード
+//   検索モード: 1=先頭から(既定) / -1=末尾から / 2,-2=二分探索(昇順前提。ここでは走査順としてだけ扱う)
+function _jsXmatch(val,arr,matchMode,searchMode){
+  matchMode = (matchMode===undefined||matchMode===null) ? 0 : Math.trunc(matchMode);
+  searchMode = (searchMode===undefined||searchMode===null||searchMode===0) ? 1 : Math.trunc(searchMode);
+  var order=[];
+  for(var i=0;i<arr.length;i++) order.push(i);
+  if(searchMode<0) order.reverse();
+  if(matchMode===0 || matchMode===2){
+    for(var j=0;j<order.length;j++){
+      var k=order[j], v=arr[k];
+      var hit = (matchMode===2 && typeof val==='string' && /[*?]/.test(val))
+        ? _xlWildRe(val).test(String(v))
+        : _xlCmp(v,val)===0;
+      if(hit) return k+1;
+    }
+    return '#N/A';
+  }
+  // -1 = 超えない最大 / 1 = 下回らない最小
+  var best=-1;
+  for(var m=0;m<arr.length;m++){
+    var w=arr[m];
+    if(w===null||w===undefined||w==='') continue;
+    var c=_xlCmp(w,val);
+    if(matchMode===-1 && c<=0 && (best<0 || _xlCmp(w,arr[best])>0)) best=m;
+    if(matchMode===1  && c>=0 && (best<0 || _xlCmp(w,arr[best])<0)) best=m;
+  }
+  return best<0 ? '#N/A' : best+1;
+}
+// Excelのワイルドカード(* ? ~エスケープ)を正規表現へ。大小は区別しない。
+function _xlWildRe(pat){
+  var out='';
+  for(var i=0;i<pat.length;i++){
+    var c=pat.charAt(i);
+    if(c==='~' && i+1<pat.length){ out+=pat.charAt(i+1).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); i++; continue; }
+    if(c==='*'){ out+='[\\s\\S]*'; continue; }
+    if(c==='?'){ out+='[\\s\\S]'; continue; }
+    out+=c.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  }
+  return new RegExp('^'+out+'$','i');
+}
 
 // --- 動的配列 ---
 function _jsSequence(rows,cols,start,step){start=start===undefined?1:start;step=step===undefined?1:step;var r=[],val=start;for(var i=0;i<rows*cols;i++){r.push(val);val+=step;}return r;}
@@ -557,6 +728,11 @@ function convertFormula(f) {
   if(/^=LET\s*\(/i.test(f)) f = _jsLetExpand(f);
   // LAMBDA即時呼び出し展開
   if(/^=LAMBDA\s*\(/i.test(f)) f = _jsLambdaExpand(f);
+  //  ★JIS( → DBCS( … 半角→全角の関数の本名は DBCS。JIS は日本語UIの表示名で、
+  //    xlsx の中身も US-English構文も DBCS。日本語Excelの癖で JIS と打つ人が居るので、
+  //    ここ(入口)で本名に直す＝エンジンにも書き出しにも DBCS しか流れない
+  //    (JIS のまま書き出すと Excel がその式を #NAME? にする。実Excelで確認済み)。
+  f = f.replace(/\bJIS\s*\(/gi, 'DBCS(');
   f = f.replace(/\bFALSE\b(?!\s*\()/g, 'FALSE()');
   f = f.replace(/\bTRUE\b(?!\s*\()/g, 'TRUE()');
   f = f.replace(/\bNORMSDIST\s*\(([^,)]+)\)/gi, 'NORMSDIST($1,TRUE())');
@@ -578,24 +754,26 @@ function _jsComputeFormula(sheet, v) {
   var _fn = _f0.match(/^([A-Z][A-Z0-9.]*)\s*\(/i);
   if(!_fn) return null; // 関数形式でない（=A1+B1等）→ HFへ
   var _fnBase = _fn[1].toUpperCase().split('.')[0];
-  var _jsSet = {NUMBERVALUE:1,RANK:1,PERCENTILE:1,QUARTILE:1,
+  //  ★第3波P1(2026-08-01)で 11関数をここから外して HFプラグインへ移した:
+  //    CONCAT / LOOKUP / XMATCH / INDIRECT / DATEVALUE / NUMBERVALUE / FIXED / ASC / DBCS(JIS) /
+  //    TEXTBEFORE / TEXTAFTER
+  //    理由=ここに居ると「式の一番外側」でしか効かない。=ROUND(LOOKUP(...),0) のような入れ子で
+  //    HFの答え(多くは #NAME?)に戻り、表示だけ正しくて参照先が間違う。
+  //  ★1つの関数は1箇所でだけ定義する（両方に居たら compare.mjs が赤にする）。
+  var _jsSet = {RANK:1,PERCENTILE:1,QUARTILE:1,
     MODE:1,TRIMMEAN:1,PERCENTRANK:1,KURT:1,INTERCEPT:1,FORECAST:1,IRR:1,XIRR:1,
-    DATEVALUE:1,DATESTRING:1,INDIRECT:1,OFFSET:1,XMATCH:1,LOOKUP:1,
-    CONCAT:1,FIXED:1,DOLLAR:1,YEN:1,N:1,TYPE:1,ENCODEURL:1,
-    CONVERT:1,GESTEP:1,TEXTBEFORE:1,TEXTAFTER:1,VALUETOTEXT:1,
+    DATESTRING:1,OFFSET:1,
+    DOLLAR:1,YEN:1,N:1,TYPE:1,ENCODEURL:1,
+    CONVERT:1,GESTEP:1,VALUETOTEXT:1,
     DSUM:1,DAVERAGE:1,DCOUNT:1,DCOUNTA:1,DMAX:1,DMIN:1,DPRODUCT:1,
     DGET:1,DSTDEV:1,DSTDEVP:1,DVAR:1,DVARP:1,
     AGGREGATE:1,LINEST:1,PERMUT:1,PERMUTATIONA:1,BINOM:1,FREQUENCY:1,
     MDETERM:1,REDUCE:1,SCAN:1,MAP:1,MAKEARRAY:1,ISOMITTED:1,
-    LENB:1,LEFTB:1,RIGHTB:1,MIDB:1,ASC:1,JIS:1};
+    LENB:1,LEFTB:1,RIGHTB:1,MIDB:1};
   if(!_jsSet[_fnBase]) return null; // JS非対象 → HFへ
 
   var f = v.slice(1).trim().toUpperCase();
   var fOrig = v.slice(1).trim();
-
-  // VALUE / NUMBERVALUE
-  var mVal=fOrig.match(/^(?:VALUE|NUMBERVALUE)\s*\(([^)]+)\)$/i);
-  if(mVal){var arg=mVal[1].trim().replace(/^["']|["']$/g,'');var sv=_getSingleVal(sheet,arg);var n=_jsValue(sv!==null?sv:arg);return n!==null?String(n):'#VALUE!';}
 
   // RANK / RANK.EQ / RANK.AVG
   var mRank=fOrig.match(/^RANK(?:\.EQ|\.AVG)?\s*\(([A-Z]+\d+)\s*,\s*([A-Z]+\d+:[A-Z]+\d+)\s*,\s*([01])\s*\)$/i);
@@ -637,17 +815,9 @@ function _jsComputeFormula(sheet, v) {
   var mIrr=fOrig.match(/^IRR\s*\(([A-Z]+\d+:[A-Z]+\d+)(?:\s*,\s*[0-9.]+)?\s*\)$/i);
   if(mIrr){var vals=_getRangeAll(sheet,mIrr[1]).filter(function(v){return typeof v==='number';});return String(Math.round(_jsIrr(vals)*10000)/10000);}
 
-  // DATEVALUE
-  var mDate=fOrig.match(/^DATEVALUE\s*\(\s*"([^"]+)"\s*\)$/i);
-  if(mDate){var s=_jsDateValue(mDate[1]);return s!==null?String(s):'#VALUE!';}
-
   // DATESTRING
   var mDs=fOrig.match(/^DATESTRING\s*\(([A-Z]+\d+|[0-9]+)\)$/i);
   if(mDs){var sv=_getSingleVal(sheet,mDs[1])||parseInt(mDs[1]);return _jsDatestring(sv);}
-
-  // INDIRECT
-  var mInd=fOrig.match(/^INDIRECT\s*\(([A-Z]+\d+)\)$/i);
-  if(mInd){var sv=_getSingleVal(sheet,mInd[1]);if(sv)return String(_jsIndirect(sheet,String(sv)));}
 
   // OFFSET
   var mOff=fOrig.match(/^OFFSET\s*\(([A-Z]+\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*\)$/i);
@@ -656,31 +826,6 @@ function _jsComputeFormula(sheet, v) {
   // XLOOKUP
   var mXl=fOrig.match(/^XLOOKUP\s*\(([^,()]+)\s*,\s*([A-Z]+\d+:[A-Z]+\d+)\s*,\s*([A-Z]+\d+:[A-Z]+\d+)(?:\s*,\s*"([^"]*)")?\s*\)$/i);
   if(mXl){var lv=_getSingleVal(sheet,mXl[1]);if(lv===null)lv=mXl[1].replace(/^["']|["']$/g,'');var la=_getRangeAll(sheet,mXl[2]),ra=_getRangeAll(sheet,mXl[3]);return String(_jsXlookup(lv,la,ra,mXl[4]));}
-
-  // XMATCH
-  var mXm=fOrig.match(/^XMATCH\s*\(([^,()]+)\s*,\s*([A-Z]+\d+:[A-Z]+\d+)(?:\s*,\s*(-?\d+))?\s*\)$/i);
-  if(mXm){var lv=_getSingleVal(sheet,mXm[1]);if(lv===null)lv=mXm[1].replace(/^["']|["']$/g,'');var arr=_getRangeAll(sheet,mXm[2]);return String(_jsXmatch(lv,arr,parseInt(mXm[3])||0));}
-
-  // LOOKUP
-  var mLk=fOrig.match(/^LOOKUP\s*\(([A-Z]+\d+|[0-9.]+)\s*,\s*([A-Z]+\d+:[A-Z]+\d+)\s*,\s*([A-Z]+\d+:[A-Z]+\d+)\)$/i);
-  if(mLk){var lv=_getSingleVal(sheet,mLk[1])||parseFloat(mLk[1]);var la=_getRangeAll(sheet,mLk[2]),ra=_getRangeAll(sheet,mLk[3]);return String(_jsLookup(lv,la,ra));}
-
-  // CONCAT
-  var mConcat=fOrig.match(/^CONCAT\s*\((.+)\)$/i);
-  if(mConcat){
-    var args=mConcat[1].split(',').map(function(a){
-      a=a.trim();
-      if(/:/.test(a))return _getRangeAll(sheet,a).map(String).join('');
-      var sv=_getSingleVal(sheet,a);
-      if(sv!==null)return String(sv);
-      return a.replace(/^["']|["']$/g,'');
-    });
-    return args.join('');
-  }
-
-  // FIXED
-  var mFixed=fOrig.match(/^FIXED\s*\(([A-Z]+\d+|[0-9.\-]+)(?:\s*,\s*([0-9]+))?(?:\s*,\s*(TRUE|FALSE))?\s*\)$/i);
-  if(mFixed){var n=_getSingleVal(sheet,mFixed[1])||parseFloat(mFixed[1]);return _jsFixed(n,mFixed[2]?parseInt(mFixed[2]):2,mFixed[3]&&mFixed[3].toUpperCase()==='TRUE');}
 
   // DOLLAR
   var mDollar=fOrig.match(/^DOLLAR\s*\(([A-Z]+\d+|[0-9.\-]+)(?:\s*,\s*(-?\d+))?\s*\)$/i);
@@ -709,14 +854,6 @@ function _jsComputeFormula(sheet, v) {
   // GESTEP
   var mGe=fOrig.match(/^GESTEP\s*\(([A-Z]+\d+|[0-9.\-]+)(?:\s*,\s*([A-Z]+\d+|[0-9.\-]+))?\s*\)$/i);
   if(mGe){var n=_getSingleVal(sheet,mGe[1])||parseFloat(mGe[1]);var s=mGe[2]?(_getSingleVal(sheet,mGe[2])||parseFloat(mGe[2])):0;return String(_jsGestep(n,s));}
-
-  // TEXTBEFORE
-  var mTb=fOrig.match(/^TEXTBEFORE\s*\(([A-Z]+\d+|"[^"]+")\s*,\s*"([^"]*)"\s*(?:,\s*(\d+))?\s*\)$/i);
-  if(mTb){var sv=_getSingleVal(sheet,mTb[1])||mTb[1].replace(/^"|"$/g,'');return _jsTextbefore(String(sv),mTb[2],parseInt(mTb[3])||1);}
-
-  // TEXTAFTER
-  var mTa=fOrig.match(/^TEXTAFTER\s*\(([A-Z]+\d+|"[^"]+")\s*,\s*"([^"]*)"\s*(?:,\s*(\d+))?\s*\)$/i);
-  if(mTa){var sv=_getSingleVal(sheet,mTa[1])||mTa[1].replace(/^"|"$/g,'');return _jsTextafter(String(sv),mTa[2],parseInt(mTa[3])||1);}
 
   // VALUETOTEXT
   var mVtt=fOrig.match(/^VALUETOTEXT\s*\(([^)]+)\)$/i);
@@ -792,12 +929,6 @@ function _jsComputeFormula(sheet, v) {
   var mMidb=fOrig.match(/^MIDB\s*\(([A-Z]+\d+|"[^"]+")\s*,\s*([0-9]+)\s*,\s*([0-9]+)\)$/i);
   if(mMidb){var sv=_getSingleVal(sheet,mMidb[1])||mMidb[1].replace(/^"|"$/g,'');return _jsMidb(String(sv),parseInt(mMidb[2]),parseInt(mMidb[3]));}
 
-  // ASC / JIS
-  var mAsc=fOrig.match(/^ASC\s*\(([A-Z]+\d+|"[^"]+")\)$/i);
-  if(mAsc){var sv=_getSingleVal(sheet,mAsc[1])||mAsc[1].replace(/^"|"$/g,'');return _jsAsc(String(sv));}
-  var mJis=fOrig.match(/^JIS\s*\(([A-Z]+\d+|"[^"]+")\)$/i);
-  if(mJis){var sv=_getSingleVal(sheet,mJis[1])||mJis[1].replace(/^"|"$/g,'');return _jsJis(String(sv));}
-
   // DATESTRING
   var mDstr=fOrig.match(/^DATESTRING\s*\(([A-Z]+\d+|[0-9]+)\)$/i);
   if(mDstr){var sv=_getSingleVal(sheet,mDstr[1])||parseInt(mDstr[1]);return _jsDatestring(sv);}
@@ -836,12 +967,13 @@ if (typeof module !== 'undefined' && module.exports) {
     _jsConcat: _jsConcat, _jsTextjoin: _jsTextjoin, _jsFixed: _jsFixed,
     _jsDollar: _jsDollar, _jsYen: _jsYen, _jsLenb: _jsLenb, _jsLeftb: _jsLeftb,
     _jsRightb: _jsRightb, _jsMidb: _jsMidb, _jsFindb: _jsFindb, _jsReplaceb: _jsReplaceb,
-    _jsAsc: _jsAsc, _jsJis: _jsJis,
+    _jsAsc: _jsAsc, _jsDbcs: _jsDbcs, _jsJis: _jsJis,
     _jsTextbefore: _jsTextbefore, _jsTextafter: _jsTextafter, _jsTextsplit: _jsTextsplit,
     _jsValuetotext: _jsValuetotext, _jsArraytotext: _jsArraytotext,
     // 日付・変換
     _jsDateValue: _jsDateValue, _jsDatestring: _jsDatestring,
-    _jsValue: _jsValue, _jsN: _jsN, _jsType: _jsType, _jsCell: _jsCell,
+    _jsValue: _jsValue, _jsNumbervalue: _jsNumbervalue, _jsN: _jsN, _jsType: _jsType, _jsCell: _jsCell,
+    _xlRound: _xlRound, _xlCmp: _xlCmp, _xlWildRe: _xlWildRe,
     // 参照系
     _jsIndirect: _jsIndirect, _jsOffset: _jsOffset,
     _jsLookup: _jsLookup, _jsXlookup: _jsXlookup, _jsXmatch: _jsXmatch,
@@ -885,7 +1017,9 @@ if (typeof module !== 'undefined' && module.exports) {
 //  ★振り分けの基準:
 //     ・入れ子で使われうる純粋な関数              → ここ(HFプラグイン)
 //     ・セルを直接読む必要があるグリッド固有のオペ → _jsSet
-var _PLUGIN_FUNCS = ['SORT','UNIQUE','TEXT','TEXTJOIN','INT','MOD','VALUE','XLOOKUP','FILTER','MATCH','SUMPRODUCT'];
+var _PLUGIN_FUNCS = ['SORT','UNIQUE','TEXT','TEXTJOIN','INT','MOD','VALUE','XLOOKUP','FILTER','MATCH','SUMPRODUCT',
+  // ★第3波P1(2026-08-01)
+  'CONCAT','LOOKUP','XMATCH','INDIRECT','DATEVALUE','NUMBERVALUE','FIXED','ASC','DBCS','TEXTBEFORE','TEXTAFTER'];
 var _pluginRegistered = false;
 
 // 渡された物がクラス(HyperFormula)でも名前空間({HyperFormula, FunctionPlugin, ...})でも動くようにする。
@@ -1103,6 +1237,136 @@ function registerExallyFunctions(HFns) {
     });
   };
 
+  // ═══ 第3波P1(2026-08-01) ここから ═══════════════════════════════
+  //  _jsSet から移した11関数。入れ子(=ROUND(LOOKUP(...),0) 等)でも正しく計算されるようにする。
+  //  真値は tests/xlsx-harness/cases/90-wave3-p1.json ＋ 実Excel(16.0.20228)の golden。
+  function txt(v){
+    v = unwrap(v);
+    if(v===null || v===undefined) return '';
+    if(v===true) return 'TRUE';
+    if(v===false) return 'FALSE';
+    return String(v);
+  }
+  function optNum(v, dflt){
+    if(v===undefined || v===null) return dflt;
+    var n = toNum(flat(v)[0]);
+    return n===null ? dflt : n;
+  }
+  function optRaw(v){
+    if(v===undefined || v===null) return undefined;
+    return unwrap(flat(v)[0]);
+  }
+  function fromJs(r){ return r==='#N/A' ? err(ErrorType.NA) : (r==='#VALUE!' ? err(ErrorType.VALUE) : (r==='#REF!' ? err(ErrorType.REF) : r)); }
+
+  ExallyPlugin.prototype.exConcat = function(ast, state){
+    return this.runFunction(ast.args, state, this.metadata('EX.CONCAT'), function(){
+      var parts = Array.prototype.slice.call(arguments).map(flat);
+      for(var i=0;i<parts.length;i++){ var e=firstErr(parts[i]); if(e) return e; }
+      return [].concat.apply([], parts).map(txt).join('');
+    });
+  };
+  ExallyPlugin.prototype.exLookup = function(ast, state){
+    return this.runFunction(ast.args, state, this.metadata('EX.LOOKUP'), function(key, la, ra){
+      if(isErr(key)) return key;
+      var k = flat(key)[0], L = flat(la), R = (ra===undefined||ra===null) ? L : flat(ra);
+      var e = firstErr(L) || firstErr(R); if(e) return e;
+      return fromJs(_jsLookup(k, L, R));
+    });
+  };
+  ExallyPlugin.prototype.exXmatch = function(ast, state){
+    return this.runFunction(ast.args, state, this.metadata('EX.XMATCH'), function(key, arr, mm, sm){
+      if(isErr(key)) return key;
+      var k = flat(key)[0], A = flat(arr);
+      var e = firstErr(A); if(e) return e;
+      return fromJs(_jsXmatch(k, A, optNum(mm, 0), optNum(sm, 1)));
+    });
+  };
+  //  ★INDIRECT は【毎回作り直す(isVolatile)】指定が要る。
+  //    プラグインは評価時に値を読むだけで、参照先(E1:E6)は依存グラフに載らない。
+  //    volatile を付けないと E3 を書き換えても古い答えが残る＝表示だけ古い最悪の壊れ方になる
+  //    (実測: 付けないと 210 のまま／付けると 3180 に更新される)。Excel の INDIRECT も揮発性なので挙動も一致する。
+  //  ★対応するのは同じシートの A1形式のみ。'Sheet1!A1' と R1C1形式(第2引数FALSE)は #REF! を返す
+  //    ＝黙って違う数字を出さない。台帳 docs/SPEC_wave3_p1_plugin_migration.md に期限つきで記載。
+  ExallyPlugin.prototype.exIndirect = function(ast, state){
+    var dg = this.dependencyGraph;
+    return this.runFunction(ast.args, state, this.metadata('EX.INDIRECT'), function(refStr, a1){
+      if(isErr(refStr)) return refStr;
+      if(a1!==undefined && a1!==null && flat(a1)[0]===false) return err(ErrorType.REF); // R1C1形式は未対応
+      var s = txt(flat(refStr)[0]).trim();
+      if(s==='' || s.indexOf('!')>=0) return err(ErrorType.REF);                        // 他シートは未対応
+      function one(a){
+        var m = /^\$?([A-Z]+)\$?(\d+)$/i.exec(a.trim());
+        if(!m) return null;
+        var c=0, u=m[1].toUpperCase();
+        for(var i=0;i<u.length;i++) c = c*26 + (u.charCodeAt(i)-64);
+        return { col:c-1, row:parseInt(m[2],10)-1 };
+      }
+      var st, en;
+      if(s.indexOf(':')>=0){ var p=s.split(':'); st=one(p[0]); en=one(p[1]); }
+      else { st=one(s); en=st; }
+      if(!st || !en) return err(ErrorType.REF);
+      var sheet = state.formulaAddress.sheet;
+      var r0=Math.min(st.row,en.row), r1=Math.max(st.row,en.row);
+      var c0=Math.min(st.col,en.col), c1=Math.max(st.col,en.col);
+      var vals=[];
+      for(var r=r0;r<=r1;r++){
+        var line=[];
+        for(var c=c0;c<=c1;c++) line.push(unwrap(dg.getCellValue({ sheet:sheet, col:c, row:r })));
+        vals.push(line);
+      }
+      if(vals.length===1 && vals[0].length===1) return vals[0][0];
+      return SRV.onlyValues(vals);
+    });
+  };
+  ExallyPlugin.prototype.exDatevalue = function(ast, state){
+    return this.runFunction(ast.args, state, this.metadata('EX.DATEVALUE'), function(s){
+      if(isErr(s)) return s;
+      var n = _jsDateValue(txt(flat(s)[0]));
+      return n===null ? err(ErrorType.VALUE) : n;
+    });
+  };
+  ExallyPlugin.prototype.exNumbervalue = function(ast, state){
+    return this.runFunction(ast.args, state, this.metadata('EX.NUMBERVALUE'), function(s, d, g){
+      if(isErr(s)) return s;
+      var n = _jsNumbervalue(txt(flat(s)[0]), optRaw(d), optRaw(g));
+      return n===null ? err(ErrorType.VALUE) : n;
+    });
+  };
+  ExallyPlugin.prototype.exFixed = function(ast, state){
+    return this.runFunction(ast.args, state, this.metadata('EX.FIXED'), function(num, dec, noCommas){
+      if(isErr(num)) return num;
+      var n = toNum(flat(num)[0]);
+      if(n===null) return err(ErrorType.VALUE);
+      var nc = optRaw(noCommas);
+      return _jsFixed(n, (dec===undefined||dec===null) ? 2 : optNum(dec,2), nc===true || nc===1);
+    });
+  };
+  ExallyPlugin.prototype.exAsc = function(ast, state){
+    return this.runFunction(ast.args, state, this.metadata('EX.ASC'), function(s){
+      if(isErr(s)) return s;
+      return _jsAsc(txt(flat(s)[0]));
+    });
+  };
+  ExallyPlugin.prototype.exDbcs = function(ast, state){
+    return this.runFunction(ast.args, state, this.metadata('EX.DBCS'), function(s){
+      if(isErr(s)) return s;
+      return _jsDbcs(txt(flat(s)[0]));
+    });
+  };
+  ExallyPlugin.prototype.exTextbefore = function(ast, state){
+    return this.runFunction(ast.args, state, this.metadata('EX.TEXTBEFORE'), function(t, d, inst, mm, me, inf){
+      if(isErr(t)) return t;
+      return fromJs(_jsTextbefore(txt(flat(t)[0]), txt(flat(d)[0]), optNum(inst,1), optNum(mm,0), optNum(me,0), optRaw(inf)));
+    });
+  };
+  ExallyPlugin.prototype.exTextafter = function(ast, state){
+    return this.runFunction(ast.args, state, this.metadata('EX.TEXTAFTER'), function(t, d, inst, mm, me, inf){
+      if(isErr(t)) return t;
+      return fromJs(_jsTextafter(txt(flat(t)[0]), txt(flat(d)[0]), optNum(inst,1), optNum(mm,0), optNum(me,0), optRaw(inf)));
+    });
+  };
+  // ═══ 第3波P1 ここまで ═══════════════════════════════════════════
+
   var ANY = { argumentType: T.ANY };
   var OPT = { argumentType: T.ANY, optionalArg: true };
   ExallyPlugin.implementedFunctions = {
@@ -1116,7 +1380,20 @@ function registerExallyFunctions(HFns) {
     'EX.XLOOKUP':    { method: 'exXlookup',    parameters: [ANY, ANY, ANY, OPT, OPT, OPT] },
     'EX.FILTER':     { method: 'exFilter',     parameters: [ANY, ANY, OPT],      arrayFunction: true },
     'EX.MATCH':      { method: 'exMatch',      parameters: [ANY, ANY, OPT] },
-    'EX.SUMPRODUCT': { method: 'exSumproduct', parameters: [ANY], repeatLastArgs: 1 }
+    'EX.SUMPRODUCT': { method: 'exSumproduct', parameters: [ANY], repeatLastArgs: 1 },
+    // ★第3波P1(2026-08-01)
+    'EX.CONCAT':      { method: 'exConcat',      parameters: [ANY], repeatLastArgs: 1 },
+    'EX.LOOKUP':      { method: 'exLookup',      parameters: [ANY, ANY, OPT] },
+    'EX.XMATCH':      { method: 'exXmatch',      parameters: [ANY, ANY, OPT, OPT] },
+    //  ★isVolatile=毎回作り直す。参照先は依存グラフに載らないので、これが無いと古い答えが残る(実測)。
+    'EX.INDIRECT':    { method: 'exIndirect',    parameters: [ANY, OPT], isVolatile: true },
+    'EX.DATEVALUE':   { method: 'exDatevalue',   parameters: [ANY] },
+    'EX.NUMBERVALUE': { method: 'exNumbervalue', parameters: [ANY, OPT, OPT] },
+    'EX.FIXED':       { method: 'exFixed',       parameters: [ANY, OPT, OPT] },
+    'EX.ASC':         { method: 'exAsc',         parameters: [ANY] },
+    'EX.DBCS':        { method: 'exDbcs',        parameters: [ANY] },
+    'EX.TEXTBEFORE':  { method: 'exTextbefore',  parameters: [ANY, ANY, OPT, OPT, OPT, OPT] },
+    'EX.TEXTAFTER':   { method: 'exTextafter',   parameters: [ANY, ANY, OPT, OPT, OPT, OPT] }
   };
   var tr = {};
   _PLUGIN_FUNCS.forEach(function(n){ tr['EX.'+n] = n; });

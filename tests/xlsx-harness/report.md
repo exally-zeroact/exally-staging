@@ -12,12 +12,12 @@
 
 | 判定 | 件数 |
 |---|---|
-| 一致 | 253 |
+| 一致 | 306 |
 | 不一致(既知) | 0 |
 | 不一致(新規) | 0 |
 | 未検証 | 0 |
 | 揮発性 | 2 |
-| **合計** | 255 |
+| **合計** | 308 |
 
 ※ 「未検証」は緑ではない。その版の真値がまだ無い、という意味。
 
@@ -68,8 +68,8 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 ## 経路の固定（将来 生HF に落ちたら気付くための錠）
 
 - 独自層(_jsComputeFormula)が答えたケース: **0件**
-- 生HFと本番経路で答えが違うケース: **79件** … この差が消えたら「素通りに落ちた」ということ
-- 独自層の入口: {"jsSetCount":1,"entryPoints":1,"pluginRegistered":true,"pluginCount":11}（1つだけであること）
+- 生HFと本番経路で答えが違うケース: **126件** … この差が消えたら「素通りに落ちた」ということ
+- 独自層の入口: {"jsSetCount":1,"entryPoints":1,"pluginRegistered":true,"pluginCount":22}（1つだけであること）
 
 ## 全ケース
 
@@ -328,3 +328,56 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 | 配列演算 | ARR_sum_if | `=SUM(IF(D1:D6="A",E1:E6,0))` | 1000 | 1000 | 未検証 | #VALUE! | 一致 |  |
 | 配列演算 | ARR_count_if | `=COUNT(IF(D1:D6="A",E1:E6,0))` | 6 | 6 | 未検証 | 0 | 一致 |  |
 | 配列演算 | ARR_count_mul | `=COUNT(C1:C6*E1:E6)` | 6 | 6 | 未検証 | 0 | 一致 |  |
+| CONCAT | CONCAT_range | `=CONCAT(D1:D3)` | ABA | ABA | 未検証 | #NAME? | 一致 |  |
+| CONCAT | CONCAT_mixed | `=CONCAT(B1,"-",A1)` | りんご-1000 | りんご-1000 | 未検証 | #NAME? | 一致 |  |
+| CONCAT | CONCAT_blank | `="["&CONCAT(G1:G3)&"]"` | [00] | [00] | 未検証 | #NAME? | 一致 |  |
+| CONCAT | CONCAT_number_fmt | `=CONCAT(A4)` | 0.1 | 0.1 | 未検証 | #NAME? | 一致 |  |
+| CONCAT | CONCAT_nested | `=LEN(CONCAT(D1:D6))` | 6 | 6 | 未検証 | #NAME? | 一致 |  |
+| LOOKUP | LOOKUP_exact | `=LOOKUP(20,C1:C6,E1:E6)` | 400 | 400 | 未検証 | #NAME? | 一致 |  |
+| LOOKUP | LOOKUP_between | `=LOOKUP(30,C1:C6,E1:E6)` | 400 | 400 | 未検証 | #NAME? | 一致 |  |
+| LOOKUP | LOOKUP_below_all | `=IFERROR(LOOKUP(0,C1:C6,E1:E6),"NA")` | NA | NA | 未検証 | NA | 一致 |  |
+| LOOKUP | LOOKUP_above_all | `=LOOKUP(999,C1:C6,E1:E6)` | 600 | 600 | 未検証 | #NAME? | 一致 |  |
+| LOOKUP | LOOKUP_text | `=LOOKUP("B",{"A","B","C"},{100,200,300})` | 200 | 200 | 未検証 | #NAME? | 一致 |  |
+| LOOKUP | LOOKUP_nested | `=ROUND(LOOKUP(30,C1:C6,E1:E6),0)` | 400 | 400 | 未検証 | #NAME? | 一致 |  |
+| XMATCH | XMATCH_exact | `=XMATCH(20,C1:C6)` | 4 | 4 | 未検証 | #NAME? | 一致 |  |
+| XMATCH | XMATCH_miss | `=IFERROR(XMATCH(30,C1:C6),"NA")` | NA | NA | 未検証 | NA | 一致 |  |
+| XMATCH | XMATCH_next_smaller | `=XMATCH(30,C1:C6,-1)` | 4 | 4 | 未検証 | #NAME? | 一致 |  |
+| XMATCH | XMATCH_next_larger | `=XMATCH(30,C1:C6,1)` | 5 | 5 | 未検証 | #NAME? | 一致 |  |
+| XMATCH | XMATCH_wildcard | `=XMATCH("りん*",B1:B8,2)` | 1 | 1 | 未検証 | #NAME? | 一致 |  |
+| XMATCH | XMATCH_reverse | `=XMATCH("A",D1:D6,0,-1)` | 6 | 6 | 未検証 | #NAME? | 一致 |  |
+| XMATCH | XMATCH_nested | `=INDEX(E1:E6,XMATCH(20,C1:C6))` | 400 | 400 | 未検証 | #NAME? | 一致 |  |
+| INDIRECT | INDIRECT_cell | `=INDIRECT("E1")` | 100 | 100 | 未検証 | #NAME? | 一致 |  |
+| INDIRECT | INDIRECT_from_cell | `=INDIRECT(B12)` | 200 | 200 | 未検証 | #NAME? | 一致 |  |
+| INDIRECT | INDIRECT_range_sum | `=SUM(INDIRECT("E1:E6"))` | 2100 | 2100 | 未検証 | #NAME? | 一致 |  |
+| INDIRECT | INDIRECT_bad | `=IFERROR(INDIRECT("あ"),"NA")` | NA | NA | 未検証 | NA | 一致 |  |
+| INDIRECT | INDIRECT_nested | `=ROUND(SUM(INDIRECT("E1:E6"))/2,0)` | 1050 | 1050 | 未検証 | #NAME? | 一致 |  |
+| DATEVALUE | DATEVALUE_slash | `=DATEVALUE("2026/7/31")` | 46234 | 46234 | 未検証 | #VALUE! | 一致 |  |
+| DATEVALUE | DATEVALUE_hyphen | `=DATEVALUE("2026-07-31")` | 46234 | 46234 | 未検証 | #VALUE! | 一致 |  |
+| DATEVALUE | DATEVALUE_jp | `=IFERROR(DATEVALUE("2026年7月31日"),"NA")` | 46234 | 46234 | 未検証 | NA | 一致 |  |
+| DATEVALUE | DATEVALUE_bad | `=IFERROR(DATEVALUE("あ"),"NA")` | NA | NA | 未検証 | NA | 一致 |  |
+| DATEVALUE | DATEVALUE_nested | `=YEAR(DATEVALUE("2026-07-31"))` | 2026 | 2026 | 未検証 | #VALUE! | 一致 |  |
+| NUMBERVALUE | NUMBERVALUE_plain | `=NUMBERVALUE("1.5")` | 1.5 | 1.5 | 未検証 | #NAME? | 一致 |  |
+| NUMBERVALUE | NUMBERVALUE_sep | `=NUMBERVALUE("1,234.5")` | 1234.5 | 1234.5 | 未検証 | #NAME? | 一致 |  |
+| NUMBERVALUE | NUMBERVALUE_custom | `=NUMBERVALUE("1.234,5",",",".")` | 1234.5 | 1234.5 | 未検証 | #NAME? | 一致 |  |
+| NUMBERVALUE | NUMBERVALUE_bad | `=IFERROR(NUMBERVALUE("あ"),"NA")` | NA | NA | 未検証 | NA | 一致 |  |
+| NUMBERVALUE | NUMBERVALUE_nested | `=SUM(NUMBERVALUE("1,234"),1)` | 1235 | 1235 | 未検証 | #NAME? | 一致 |  |
+| FIXED | FIXED_default | `=FIXED(1234.567)` | 1,234.57 | 1,234.57 | 未検証 | #NAME? | 一致 |  |
+| FIXED | FIXED_digits0 | `=FIXED(1234.5,0)` | 1,235 | 1,235 | 未検証 | #NAME? | 一致 |  |
+| FIXED | FIXED_nocomma | `=FIXED(1234.567,2,TRUE)` | 1234.57 | 1234.57 | 未検証 | #NAME? | 一致 |  |
+| FIXED | FIXED_negative_digits | `=FIXED(1234.5,-2)` | 1,200 | 1,200 | 未検証 | #NAME? | 一致 |  |
+| FIXED | FIXED_is_text | `=LEN(FIXED(1234.5,0))` | 5 | 5 | 未検証 | #NAME? | 一致 |  |
+| ASC | ASC_alnum | `=ASC(B9)` | ABC123 | ABC123 | 未検証 | #NAME? | 一致 |  |
+| ASC | ASC_kana | `=ASC("アイウ")` | ｱｲｳ | ｱｲｳ | 未検証 | #NAME? | 一致 |  |
+| ASC | ASC_mixed | `=ASC("Ａ亜１")` | A亜1 | A亜1 | 未検証 | #NAME? | 一致 |  |
+| DBCS | DBCS_alnum | `=DBCS("ABC123")` | ＡＢＣ１２３ | ＡＢＣ１２３ | 未検証 | #NAME? | 一致 |  |
+| DBCS | DBCS_kana | `=DBCS(B10)` | アイウ | アイウ | 未検証 | #NAME? | 一致 |  |
+| DBCS | DBCS_dakuten | `=DBCS(B11)` | ガギ | ガギ | 未検証 | #NAME? | 一致 |  |
+| DBCS | DBCS_nested | `=LEN(DBCS(B10))` | 3 | 3 | 未検証 | #NAME? | 一致 |  |
+| ASC | ASC_nested | `=LEN(ASC(B9))` | 6 | 6 | 未検証 | #NAME? | 一致 |  |
+| TEXTBEFORE | TEXTBEFORE_first | `=TEXTBEFORE("007-1234","-")` | 007 | 007 | 未検証 | #NAME? | 一致 |  |
+| TEXTAFTER | TEXTAFTER_first | `=TEXTAFTER("007-1234","-")` | 1234 | 1234 | 未検証 | #NAME? | 一致 |  |
+| TEXTBEFORE | TEXTBEFORE_nth | `=TEXTBEFORE("a-b-c","-",2)` | a-b | a-b | 未検証 | #NAME? | 一致 |  |
+| TEXTAFTER | TEXTAFTER_negative | `=TEXTAFTER("a-b-c","-",-1)` | c | c | 未検証 | #NAME? | 一致 |  |
+| TEXTBEFORE | TEXTBEFORE_missing | `=IFERROR(TEXTBEFORE("abc","-"),"NA")` | NA | NA | 未検証 | NA | 一致 |  |
+| TEXTBEFORE | TEXTBEFORE_ifmissing | `=TEXTBEFORE("abc","-",1,0,0,"なし")` | なし | なし | 未検証 | #NAME? | 一致 |  |
+| TEXTAFTER | TEXTAFTER_nested | `=LEN(TEXTAFTER("007-1234","-"))` | 4 | 4 | 未検証 | #NAME? | 一致 |  |

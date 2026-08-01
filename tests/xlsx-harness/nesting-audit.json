@@ -1,10 +1,9 @@
 {
- "overrideCount": 60,
- "pluginCount": 11,
- "measured": 293,
- "brokenCount": 38,
+ "overrideCount": 49,
+ "pluginCount": 22,
+ "measured": 336,
+ "brokenCount": 27,
  "byFunc": {
-  "NUMBERVALUE": 1,
   "RANK": 1,
   "PERCENTILE": 1,
   "QUARTILE": 1,
@@ -15,20 +14,12 @@
   "INTERCEPT": 1,
   "FORECAST": 1,
   "IRR": 1,
-  "DATEVALUE": 1,
-  "INDIRECT": 1,
-  "XMATCH": 1,
-  "LOOKUP": 1,
-  "CONCAT": 1,
-  "FIXED": 1,
   "DOLLAR": 1,
   "YEN": 1,
   "N": 1,
   "TYPE": 1,
   "ENCODEURL": 1,
   "GESTEP": 1,
-  "TEXTBEFORE": 1,
-  "TEXTAFTER": 1,
   "VALUETOTEXT": 1,
   "AGGREGATE": 1,
   "PERMUT": 1,
@@ -38,19 +29,10 @@
   "LEFTB": 1,
   "RIGHTB": 1,
   "MIDB": 1,
-  "ASC": 1,
-  "JIS": 1,
   "DSUM": 1,
   "DCOUNT": 1
  },
  "broken": [
-  {
-   "id": "PROBE_NUMBERVALUE",
-   "func": "NUMBERVALUE",
-   "f": "=NUMBERVALUE(\"1.5\")",
-   "top": "1.5",
-   "nested": "#NAME?"
-  },
   {
    "id": "PROBE_RANK",
    "func": "RANK",
@@ -122,48 +104,6 @@
    "nested": "#NAME?"
   },
   {
-   "id": "PROBE_DATEVALUE",
-   "func": "DATEVALUE",
-   "f": "=DATEVALUE(\"2026-07-31\")",
-   "top": "46234",
-   "nested": "#VALUE!"
-  },
-  {
-   "id": "PROBE_INDIRECT",
-   "func": "INDIRECT",
-   "f": "=INDIRECT(B5)",
-   "top": "#REF!",
-   "nested": "#NAME?"
-  },
-  {
-   "id": "PROBE_XMATCH",
-   "func": "XMATCH",
-   "f": "=XMATCH(20,C1:C6)",
-   "top": "4",
-   "nested": "#NAME?"
-  },
-  {
-   "id": "PROBE_LOOKUP",
-   "func": "LOOKUP",
-   "f": "=LOOKUP(20,C1:C6,E1:E6)",
-   "top": "400",
-   "nested": "#NAME?"
-  },
-  {
-   "id": "PROBE_CONCAT",
-   "func": "CONCAT",
-   "f": "=CONCAT(D1:D3)",
-   "top": "ABA",
-   "nested": "#NAME?"
-  },
-  {
-   "id": "PROBE_FIXED",
-   "func": "FIXED",
-   "f": "=FIXED(A5,2)",
-   "top": "2.67",
-   "nested": "#NAME?"
-  },
-  {
    "id": "PROBE_DOLLAR",
    "func": "DOLLAR",
    "f": "=DOLLAR(A1,0)",
@@ -202,20 +142,6 @@
    "id": "PROBE_GESTEP",
    "func": "GESTEP",
    "f": "=GESTEP(A1,500)",
-   "top": "1",
-   "nested": "#NAME?"
-  },
-  {
-   "id": "PROBE_TEXTBEFORE",
-   "func": "TEXTBEFORE",
-   "f": "=TEXTBEFORE(B5,\"-\")",
-   "top": "A",
-   "nested": "#NAME?"
-  },
-  {
-   "id": "PROBE_TEXTAFTER",
-   "func": "TEXTAFTER",
-   "f": "=TEXTAFTER(B5,\"-\")",
    "top": "1",
    "nested": "#NAME?"
   },
@@ -280,20 +206,6 @@
    "func": "MIDB",
    "f": "=MIDB(B1,1,2)",
    "top": "り",
-   "nested": "#NAME?"
-  },
-  {
-   "id": "PROBE_ASC",
-   "func": "ASC",
-   "f": "=ASC(B3)",
-   "top": "apple",
-   "nested": "#NAME?"
-  },
-  {
-   "id": "PROBE_JIS",
-   "func": "JIS",
-   "f": "=JIS(B3)",
-   "top": "ａｐｐｌｅ",
    "nested": "#NAME?"
   },
   {
