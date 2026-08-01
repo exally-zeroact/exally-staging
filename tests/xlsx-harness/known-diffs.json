@@ -158,5 +158,28 @@
     "measured": "ファイル経由: #VALUE! / #VALUE! / 0 / 0 ・ 画面(グリッド)とExcel直接入力: 97100 / 1000 / 6 / 6",
     "next": "SheetJS CE で動的配列の印を書けるかを調べる。書けないなら xlsx-io 側で xl/worksheets/sheet1.xml に cm 属性とメタデータを足すか、書き出し時に配列式を検出して警告する",
     "design_input": "★同 docs/SPEC_grid_p2_design_inputs.md §3"
+  },
+  "version_scope": {
+    "class": "C",
+    "note": "★『版対応』が今どこまでを担保しているかの正直な線引き。聞かれた時にこの項目をそのまま見せられるように書く。",
+    "golden_source": "実Excel 365 / 16.0.20228.20124（O365HomePremRetail・x64・日本語1041・国別81・小数点'.'・桁区切り','・1900日付系）。★goldenはこの1版だけ。",
+    "verified": [
+      "この1版の実Excelが出した値と、うちのグリッドの答えが 362件中 362件一致（compare.mjs）",
+      "うちが書き出した xlsx を同じ実Excelで開いて再計算し 358/362 一致（差4件は file_roundtrip_known）",
+      "GitHub Pages の実配信を実ブラウザで開いて、製品経路(convertFormula→エンジン)で同じ答えになること"
+    ],
+    "not_verified": [
+      "★Excel 2016 / 2019 / 2021 / Mac / Online の【実機で実行しての突合】は未実施。goldenが無いので compare.mjs はそれらを『未検証』として数える作り(黙って緑にはしない)",
+      "★LibreOffice は参考列であってExcelの真値ではない（週次の別ジョブ・本流は赤にしない）"
+    ],
+    "product_version_selector": {
+      "実測 2026-08-01": "book.html の『📊 365 ▼』は【表示だけ】。localStorage の exally_excel_version に選択を保存し、バッジの文字とモーダルの選択枠を変えるだけで、計算にも xlsx 書き出しにも一切効いていない（getBookVer() の参照は3箇所とも表示用。計算経路 exally-formula.js は版を一度も見ていない）。",
+      "つまり": "『版で関数を出し分けている』のではない。Excel 2016 を選んでも XLOOKUP など新しい関数がそのまま使えてしまい、その式を書き出すと相手のExcelでは開けない/#NAME? になりうる。",
+      "class": "A",
+      "due": "2026-09-30",
+      "判断すること": "(a) 選んだ版で使えない関数を止める/警告する を実装する (b) セレクタ自体を消す (c) 『見た目の目安』と明示する。★どれにするかは製品判断なので指示役に上げる。放置して期限を延ばさない。",
+      "見張り": "tests/xlsx-harness/version-scope.test.mjs（この記述と実装がズレたら赤）"
+    },
+    "how_to_add_a_version": "その環境で pwsh -File tools/golden-excel.ps1 -Init を1回走らせ、出た JSON を golden/ に置く（版がファイル名に入るので既存とは別ファイルになる）。詳しくは golden/RECIPE.md §4。"
   }
 }

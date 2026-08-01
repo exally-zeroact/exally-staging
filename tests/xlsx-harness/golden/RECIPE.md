@@ -74,11 +74,17 @@ pwsh -File tools/golden-excel.ps1
 
 ## 4. 他の版（未検証を埋めたい時）
 
+★**「版対応」が今どこまでを担保しているか**は `known-diffs.json` の `version_scope` に正直に書いてある。
+聞かれたらそこをそのまま見せること（`tests/xlsx-harness/version-scope.test.mjs` が、その記述と実装のズレを赤にする）。
+
 | 版 | 状態 | 埋め方 |
 |---|---|---|
-| Excel 365 (16.0.20228) | **真値** | 済 |
-| Excel 2016 / 2019 / Mac | **未検証** | その環境で `tools/golden-excel.ps1 -Init` を1回走らせて、出た JSON を `golden/` に置く。ファイル名の版が違うので既存とは別ファイルになる |
+| Excel 365 (16.0.20228) | **真値** | 済。★goldenはこの1版だけ |
+| Excel 2016 / 2019 / 2021 / Mac / Online | **未検証（実機で実行しての突合はしていない）** | その環境で `tools/golden-excel.ps1 -Init` を1回走らせて、出た JSON を `golden/` に置く。ファイル名の版が違うので既存とは別ファイルになる |
 | LibreOffice | **未検証** | Linux で `bash tools/golden-libre.sh`（CIの別ジョブ・週次）。★Excelの真値ではない。参考列 |
+
+★注意：`book.html` の「📊 365 ▼」は **今は表示だけ**で、計算にも xlsx 書き出しにも効いていない（2026-08-01 実測）。
+「版で関数を出し分けている」わけではない。扱いをどうするかは `version_scope.product_version_selector`（期限 2026-09-30）。
 
 `golden-excel.ps1` は **pwsh（PowerShell 7）** で動かす。Windows PowerShell 5.1 でも動くが、
 その場合はこのスクリプトを BOM 付きで保存すること（日本語コメントが化けるため）。
