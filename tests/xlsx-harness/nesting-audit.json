@@ -1,10 +1,9 @@
 {
- "overrideCount": 49,
- "pluginCount": 22,
- "measured": 336,
- "brokenCount": 27,
+ "overrideCount": 38,
+ "pluginCount": 32,
+ "measured": 382,
+ "brokenCount": 16,
  "byFunc": {
-  "RANK": 1,
   "PERCENTILE": 1,
   "QUARTILE": 1,
   "MODE": 1,
@@ -14,32 +13,15 @@
   "INTERCEPT": 1,
   "FORECAST": 1,
   "IRR": 1,
-  "DOLLAR": 1,
-  "YEN": 1,
   "N": 1,
-  "TYPE": 1,
-  "ENCODEURL": 1,
   "GESTEP": 1,
-  "VALUETOTEXT": 1,
-  "AGGREGATE": 1,
   "PERMUT": 1,
   "PERMUTATIONA": 1,
   "MDETERM": 1,
-  "LENB": 1,
-  "LEFTB": 1,
-  "RIGHTB": 1,
-  "MIDB": 1,
   "DSUM": 1,
   "DCOUNT": 1
  },
  "broken": [
-  {
-   "id": "PROBE_RANK",
-   "func": "RANK",
-   "f": "=RANK(A1,E1:E6,0)",
-   "top": "#N/A",
-   "nested": "#NAME?"
-  },
   {
    "id": "PROBE_PERCENTILE",
    "func": "PERCENTILE",
@@ -104,20 +86,6 @@
    "nested": "#NAME?"
   },
   {
-   "id": "PROBE_DOLLAR",
-   "func": "DOLLAR",
-   "f": "=DOLLAR(A1,0)",
-   "top": "$1,000",
-   "nested": "#NAME?"
-  },
-  {
-   "id": "PROBE_YEN",
-   "func": "YEN",
-   "f": "=YEN(A1,0)",
-   "top": "¥1,000",
-   "nested": "#NAME?"
-  },
-  {
    "id": "PROBE_N",
    "func": "N",
    "f": "=N(A1)",
@@ -125,38 +93,10 @@
    "nested": "#NAME?"
   },
   {
-   "id": "PROBE_TYPE",
-   "func": "TYPE",
-   "f": "=TYPE(A1)",
-   "top": "1",
-   "nested": "#NAME?"
-  },
-  {
-   "id": "PROBE_ENCODEURL",
-   "func": "ENCODEURL",
-   "f": "=ENCODEURL(\"a b\")",
-   "top": "a%20b",
-   "nested": "#NAME?"
-  },
-  {
    "id": "PROBE_GESTEP",
    "func": "GESTEP",
    "f": "=GESTEP(A1,500)",
    "top": "1",
-   "nested": "#NAME?"
-  },
-  {
-   "id": "PROBE_VALUETOTEXT",
-   "func": "VALUETOTEXT",
-   "f": "=VALUETOTEXT(A1)",
-   "top": "1000",
-   "nested": "#NAME?"
-  },
-  {
-   "id": "PROBE_AGGREGATE",
-   "func": "AGGREGATE",
-   "f": "=AGGREGATE(9,0,E1:E6)",
-   "top": "2100",
    "nested": "#NAME?"
   },
   {
@@ -178,34 +118,6 @@
    "func": "MDETERM",
    "f": "=MDETERM(C1:D2)",
    "top": "NaN",
-   "nested": "#NAME?"
-  },
-  {
-   "id": "PROBE_LENB",
-   "func": "LENB",
-   "f": "=LENB(B1)",
-   "top": "6",
-   "nested": "#NAME?"
-  },
-  {
-   "id": "PROBE_LEFTB",
-   "func": "LEFTB",
-   "f": "=LEFTB(B1,2)",
-   "top": "り",
-   "nested": "#NAME?"
-  },
-  {
-   "id": "PROBE_RIGHTB",
-   "func": "RIGHTB",
-   "f": "=RIGHTB(B1,2)",
-   "top": "ご",
-   "nested": "#NAME?"
-  },
-  {
-   "id": "PROBE_MIDB",
-   "func": "MIDB",
-   "f": "=MIDB(B1,1,2)",
-   "top": "り",
    "nested": "#NAME?"
   },
   {

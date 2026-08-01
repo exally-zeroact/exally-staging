@@ -13,7 +13,7 @@
     "listSep": ",",
     "date1904": false,
     "formulaProperty": ".Formula (US-English) only; .FormulaLocal is NOT used",
-    "caseCount": 306,
+    "caseCount": 362,
     "volatileSkipped": [
       "TODAY_serial",
       "NOW_int_is_today"
@@ -1860,6 +1860,342 @@
       "t": "n",
       "v": 4.0,
       "text": "4"
+    },
+    "DOLLAR_default": {
+      "f": "=DOLLAR(1234.567)",
+      "t": "s",
+      "v": "¥1,235",
+      "text": "¥1,235"
+    },
+    "DOLLAR_digits0": {
+      "f": "=DOLLAR(1234.5,0)",
+      "t": "s",
+      "v": "¥1,235",
+      "text": "¥1,235"
+    },
+    "DOLLAR_digits1": {
+      "f": "=DOLLAR(1234.5,1)",
+      "t": "s",
+      "v": "¥1,234.5",
+      "text": "¥1,234.5"
+    },
+    "DOLLAR_digits2": {
+      "f": "=DOLLAR(1234.567,2)",
+      "t": "s",
+      "v": "¥1,234.57",
+      "text": "¥1,234.57"
+    },
+    "DOLLAR_negative": {
+      "f": "=DOLLAR(-1234.5)",
+      "t": "s",
+      "v": "¥-1,235",
+      "text": "¥-1,235"
+    },
+    "DOLLAR_negative2": {
+      "f": "=DOLLAR(-1234.5,2)",
+      "t": "s",
+      "v": "¥-1,234.50",
+      "text": "¥-1,234.50"
+    },
+    "DOLLAR_neg_digits": {
+      "f": "=DOLLAR(1234.5,-2)",
+      "t": "s",
+      "v": "¥1,200",
+      "text": "¥1,200"
+    },
+    "DOLLAR_nested": {
+      "f": "=LEN(DOLLAR(1000,0))",
+      "t": "n",
+      "v": 6.0,
+      "text": "6"
+    },
+    "TYPE_number": {
+      "f": "=TYPE(A1)",
+      "t": "n",
+      "v": 1.0,
+      "text": "1"
+    },
+    "TYPE_text": {
+      "f": "=TYPE(B1)",
+      "t": "n",
+      "v": 2.0,
+      "text": "2"
+    },
+    "TYPE_logical": {
+      "f": "=TYPE(H1)",
+      "t": "n",
+      "v": 4.0,
+      "text": "4"
+    },
+    "TYPE_error": {
+      "f": "=TYPE(1/0)",
+      "t": "n",
+      "v": 16.0,
+      "text": "16"
+    },
+    "TYPE_array": {
+      "f": "=TYPE({1,2})",
+      "t": "n",
+      "v": 64.0,
+      "text": "64"
+    },
+    "TYPE_nested": {
+      "f": "=TYPE(A1)+TYPE(B1)",
+      "t": "n",
+      "v": 3.0,
+      "text": "3"
+    },
+    "AGG_sum": {
+      "f": "=AGGREGATE(9,0,E1:E6)",
+      "t": "n",
+      "v": 2100.0,
+      "text": "2100"
+    },
+    "AGG_average": {
+      "f": "=AGGREGATE(1,0,E1:E6)",
+      "t": "n",
+      "v": 350.0,
+      "text": "350"
+    },
+    "AGG_max": {
+      "f": "=AGGREGATE(4,0,E1:E6)",
+      "t": "n",
+      "v": 600.0,
+      "text": "600"
+    },
+    "AGG_count": {
+      "f": "=AGGREGATE(2,0,E1:E6)",
+      "t": "n",
+      "v": 6.0,
+      "text": "6"
+    },
+    "AGG_large_k": {
+      "f": "=AGGREGATE(14,0,E1:E6,2)",
+      "t": "n",
+      "v": 500.0,
+      "text": "500"
+    },
+    "AGG_small_k": {
+      "f": "=AGGREGATE(15,0,E1:E6,2)",
+      "t": "n",
+      "v": 200.0,
+      "text": "200"
+    },
+    "AGG_ignore_err": {
+      "f": "=AGGREGATE(9,6,C1:C6)",
+      "t": "n",
+      "v": 186.0,
+      "text": "186"
+    },
+    "AGG_median": {
+      "f": "=AGGREGATE(12,0,E1:E6)",
+      "t": "n",
+      "v": 350.0,
+      "text": "350"
+    },
+    "AGG_nested": {
+      "f": "=ROUND(AGGREGATE(1,0,E1:E6),0)",
+      "t": "n",
+      "v": 350.0,
+      "text": "350"
+    },
+    "LENB_jp": {
+      "f": "=LENB(B1)",
+      "t": "n",
+      "v": 6.0,
+      "text": "6"
+    },
+    "LENB_ascii": {
+      "f": "=LENB(B3)",
+      "t": "n",
+      "v": 5.0,
+      "text": "5"
+    },
+    "LENB_mixed": {
+      "f": "=LENB(B8)",
+      "t": "n",
+      "v": 9.0,
+      "text": "9"
+    },
+    "LENB_halfkana": {
+      "f": "=LENB(B10)",
+      "t": "n",
+      "v": 3.0,
+      "text": "3"
+    },
+    "LENB_nested": {
+      "f": "=LENB(B1)+LENB(B3)",
+      "t": "n",
+      "v": 11.0,
+      "text": "11"
+    },
+    "LEFTB_jp": {
+      "f": "=LEFTB(B1,2)",
+      "t": "s",
+      "v": "り",
+      "text": "り"
+    },
+    "LEFTB_odd": {
+      "f": "=LEFTB(B1,3)",
+      "t": "s",
+      "v": "り ",
+      "text": "り "
+    },
+    "LEFTB_zero": {
+      "f": "=\"[\"&LEFTB(B1,0)&\"]\"",
+      "t": "s",
+      "v": "[]",
+      "text": "[]"
+    },
+    "LEFTB_nested": {
+      "f": "=LEN(LEFTB(B1,4))",
+      "t": "n",
+      "v": 2.0,
+      "text": "2"
+    },
+    "RIGHTB_jp": {
+      "f": "=RIGHTB(B1,2)",
+      "t": "s",
+      "v": "ご",
+      "text": "ご"
+    },
+    "RIGHTB_odd": {
+      "f": "=RIGHTB(B1,3)",
+      "t": "s",
+      "v": " ご",
+      "text": " ご"
+    },
+    "RIGHTB_ascii": {
+      "f": "=RIGHTB(B3,3)",
+      "t": "s",
+      "v": "ple",
+      "text": "ple"
+    },
+    "MIDB_jp": {
+      "f": "=MIDB(B1,3,2)",
+      "t": "s",
+      "v": "ん",
+      "text": "ん"
+    },
+    "MIDB_odd": {
+      "f": "=MIDB(B1,2,2)",
+      "t": "s",
+      "v": "  ",
+      "text": "  "
+    },
+    "MIDB_nested": {
+      "f": "=LEN(MIDB(B1,1,4))",
+      "t": "n",
+      "v": 2.0,
+      "text": "2"
+    },
+    "RANK_desc": {
+      "f": "=RANK(20,C1:C6,0)",
+      "t": "n",
+      "v": 3.0,
+      "text": "3"
+    },
+    "RANK_asc": {
+      "f": "=RANK(20,C1:C6,1)",
+      "t": "n",
+      "v": 4.0,
+      "text": "4"
+    },
+    "RANK_default_order": {
+      "f": "=RANK(20,C1:C6)",
+      "t": "n",
+      "v": 3.0,
+      "text": "3"
+    },
+    "RANK_eq": {
+      "f": "=RANK.EQ(20,C1:C6,0)",
+      "t": "n",
+      "v": 3.0,
+      "text": "3"
+    },
+    "RANK_avg": {
+      "f": "=RANK.AVG(20,C1:C6,0)",
+      "t": "n",
+      "v": 3.0,
+      "text": "3"
+    },
+    "RANK_miss": {
+      "f": "=IFERROR(RANK(30,C1:C6,0),\"NA\")",
+      "t": "s",
+      "v": "NA",
+      "text": "NA"
+    },
+    "RANK_nested": {
+      "f": "=INDEX(E1:E6,RANK(20,C1:C6,1))",
+      "t": "n",
+      "v": 400.0,
+      "text": "400"
+    },
+    "VTT_number": {
+      "f": "=VALUETOTEXT(A1)",
+      "t": "s",
+      "v": "1000",
+      "text": "1000"
+    },
+    "VTT_text": {
+      "f": "=VALUETOTEXT(B1)",
+      "t": "s",
+      "v": "りんご",
+      "text": "りんご"
+    },
+    "VTT_strict": {
+      "f": "=VALUETOTEXT(B1,1)",
+      "t": "s",
+      "v": "\"りんご\"",
+      "text": "\"りんご\""
+    },
+    "VTT_logical": {
+      "f": "=VALUETOTEXT(H1)",
+      "t": "s",
+      "v": "TRUE",
+      "text": "TRUE"
+    },
+    "VTT_nested": {
+      "f": "=LEN(VALUETOTEXT(A1))",
+      "t": "n",
+      "v": 4.0,
+      "text": "4"
+    },
+    "ENC_space": {
+      "f": "=ENCODEURL(\"a b\")",
+      "t": "s",
+      "v": "a%20b",
+      "text": "a%20b"
+    },
+    "ENC_jp": {
+      "f": "=ENCODEURL(B1)",
+      "t": "s",
+      "v": "%E3%82%8A%E3%82%93%E3%81%94",
+      "text": "%E3%82%8A%E3%82%93%E3%81%94"
+    },
+    "ENC_symbols": {
+      "f": "=ENCODEURL(\"a/b?c=1&d\")",
+      "t": "s",
+      "v": "a%2Fb%3Fc%3D1%26d",
+      "text": "a%2Fb%3Fc%3D1%26d"
+    },
+    "ENC_specials": {
+      "f": "=ENCODEURL(\"!'()*-_.~\")",
+      "t": "s",
+      "v": "%21%27%28%29%2A-_.%7E",
+      "text": "%21%27%28%29%2A-_.%7E"
+    },
+    "ENC_nested": {
+      "f": "=LEN(ENCODEURL(\"a b\"))",
+      "t": "n",
+      "v": 5.0,
+      "text": "5"
+    },
+    "AGG_mode": {
+      "f": "=IFERROR(AGGREGATE(13,0,E1:E6),\"NA\")",
+      "t": "s",
+      "v": "NA",
+      "text": "NA"
     }
   },
   "inputProbes": {

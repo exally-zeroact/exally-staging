@@ -35,8 +35,11 @@
     'VALUETOTEXT', 'ARRAYTOTEXT', 'IFS', 'IFNA', 'SWITCH', 'MAXIFS', 'MINIFS',
     'SORT', 'SORTBY', 'UNIQUE', 'FILTER', 'SEQUENCE', 'RANDARRAY',
     'TOCOL', 'TOROW', 'VSTACK', 'HSTACK', 'CHOOSECOLS', 'CHOOSEROWS', 'TAKE', 'DROP', 'EXPAND',
-    'NUMBERVALUE', 'ENCODEURL', 'AGGREGATE', 'FORECAST.LINEAR', 'RANK.EQ', 'PERCENTILE.INC',
+    'NUMBERVALUE', 'ENCODEURL', 'AGGREGATE', 'FORECAST.LINEAR', 'RANK.EQ', 'RANK.AVG', 'PERCENTILE.INC',
     'MODE.SNGL', 'BINOM.DIST'];
+  //  ★RANK.AVG は 2026-08-01(第3波P2)に追加。RANK.EQ は入っていたのに RANK.AVG だけ抜けており、
+  //    書き出したブックを実Excelで開くと その式だけ #NAME? になっていた
+  //    (tools/verify-workbook-excel.ps1 が拾った＝画面のテストだけでは絶対に見つからない類)。
   var XLFN_SET = {};
   XLFN.forEach(function (n) { XLFN_SET[n] = 1; });
   var NEEDS_XLPM = { LET: 1, LAMBDA: 1 };
@@ -48,7 +51,7 @@
    *    Excel自身が「表示名=JIS / 保存名=DBCS」で持っているので、書き出す時に本名へ直す。
    *    エンジン側は convertFormula(exally-formula.js) が同じ変換をしている＝入口と出口の両方で本名に寄せる。
    */
-  var ALIAS = { JIS: 'DBCS' };
+  var ALIAS = { JIS: 'DBCS', YEN: 'DOLLAR' };
 
   /* 式の中の関数名だけを見て接頭辞を付ける。
      ・文字列リテラル("...")の中は触らない

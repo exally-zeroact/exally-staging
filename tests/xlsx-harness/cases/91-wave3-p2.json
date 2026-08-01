@@ -1,0 +1,72 @@
+{
+  "group": "第3波P2（_jsSet → HFプラグインへ移す11関数）",
+  "note": "★真値は実Excel(16.0.20228 / 日本語1041)から取る。推測で期待値を書かない。★各関数に必ず1本『入れ子』を入れる。★LENB系は日本語Excelのバイト数(全角=2)、YEN/DOLLARは通貨書式、AGGREGATEは集計番号とオプションの組み合わせが要点。",
+  "cases": [
+    { "id": "DOLLAR_default",      "func": "DOLLAR",      "f": "=DOLLAR(1234.567)", "why": "★実測: 通貨書式の関数の【本名はDOLLAR】。YENは日本語UIの表示名で、Excel自身が .FormulaLocal(=YEN) ↔ .Formula(=DOLLAR) で相互変換する。★出す通貨記号と既定の桁数は【地域の通貨書式】に従う=日本語環境では ¥ で小数0桁" },
+    { "id": "DOLLAR_digits0",      "func": "DOLLAR",      "f": "=DOLLAR(1234.5,0)" },
+    { "id": "DOLLAR_digits1",      "func": "DOLLAR",      "f": "=DOLLAR(1234.5,1)" },
+    { "id": "DOLLAR_digits2",      "func": "DOLLAR",      "f": "=DOLLAR(1234.567,2)" },
+    { "id": "DOLLAR_negative",     "func": "DOLLAR",      "f": "=DOLLAR(-1234.5)", "why": "★負はマイナス記号か括弧か(実Excelに聞く)" },
+    { "id": "DOLLAR_negative2",    "func": "DOLLAR",      "f": "=DOLLAR(-1234.5,2)" },
+    { "id": "DOLLAR_neg_digits",   "func": "DOLLAR",      "f": "=DOLLAR(1234.5,-2)", "why": "負の桁数" },
+    { "id": "DOLLAR_nested",       "func": "DOLLAR",      "f": "=LEN(DOLLAR(1000,0))", "why": "★入れ子＋文字列で返ること" },
+
+    { "id": "TYPE_number",         "func": "TYPE",        "f": "=TYPE(A1)" },
+    { "id": "TYPE_text",           "func": "TYPE",        "f": "=TYPE(B1)" },
+    { "id": "TYPE_logical",        "func": "TYPE",        "f": "=TYPE(H1)" },
+    { "id": "TYPE_error",          "func": "TYPE",        "f": "=TYPE(1/0)", "why": "エラーは16" },
+    { "id": "TYPE_array",          "func": "TYPE",        "f": "=TYPE({1,2})", "why": "配列は64" },
+    { "id": "TYPE_nested",         "func": "TYPE",        "f": "=TYPE(A1)+TYPE(B1)", "why": "★入れ子" },
+
+    { "id": "AGG_sum",             "func": "AGGREGATE",   "f": "=AGGREGATE(9,0,E1:E6)" },
+    { "id": "AGG_average",         "func": "AGGREGATE",   "f": "=AGGREGATE(1,0,E1:E6)" },
+    { "id": "AGG_max",             "func": "AGGREGATE",   "f": "=AGGREGATE(4,0,E1:E6)" },
+    { "id": "AGG_count",           "func": "AGGREGATE",   "f": "=AGGREGATE(2,0,E1:E6)" },
+    { "id": "AGG_large_k",         "func": "AGGREGATE",   "f": "=AGGREGATE(14,0,E1:E6,2)", "why": "第4引数kを取る集計番号" },
+    { "id": "AGG_small_k",         "func": "AGGREGATE",   "f": "=AGGREGATE(15,0,E1:E6,2)" },
+    { "id": "AGG_ignore_err",      "func": "AGGREGATE",   "f": "=AGGREGATE(9,6,C1:C6)", "why": "オプション6=エラーを無視" },
+    { "id": "AGG_median",          "func": "AGGREGATE",   "f": "=AGGREGATE(12,0,E1:E6)" },
+    { "id": "AGG_nested",          "func": "AGGREGATE",   "f": "=ROUND(AGGREGATE(1,0,E1:E6),0)", "why": "★入れ子" },
+
+    { "id": "LENB_jp",             "func": "LENB",        "f": "=LENB(B1)", "why": "全角は2バイト" },
+    { "id": "LENB_ascii",          "func": "LENB",        "f": "=LENB(B3)" },
+    { "id": "LENB_mixed",          "func": "LENB",        "f": "=LENB(B8)", "why": "全角+空白の混在" },
+    { "id": "LENB_halfkana",       "func": "LENB",        "f": "=LENB(B10)", "why": "★半角カナは1バイトか2バイトか(実Excelに聞く)" },
+    { "id": "LENB_nested",         "func": "LENB",        "f": "=LENB(B1)+LENB(B3)", "why": "★入れ子" },
+
+    { "id": "LEFTB_jp",            "func": "LEFTB",       "f": "=LEFTB(B1,2)" },
+    { "id": "LEFTB_odd",           "func": "LEFTB",       "f": "=LEFTB(B1,3)", "why": "★文字の途中で切れるバイト数の時どうなるか" },
+    { "id": "LEFTB_zero",          "func": "LEFTB",       "f": "=\"[\"&LEFTB(B1,0)&\"]\"" },
+    { "id": "LEFTB_nested",        "func": "LEFTB",       "f": "=LEN(LEFTB(B1,4))", "why": "★入れ子" },
+
+    { "id": "RIGHTB_jp",           "func": "RIGHTB",      "f": "=RIGHTB(B1,2)" },
+    { "id": "RIGHTB_odd",          "func": "RIGHTB",      "f": "=RIGHTB(B1,3)" },
+    { "id": "RIGHTB_ascii",        "func": "RIGHTB",      "f": "=RIGHTB(B3,3)" },
+
+    { "id": "MIDB_jp",             "func": "MIDB",        "f": "=MIDB(B1,3,2)" },
+    { "id": "MIDB_odd",            "func": "MIDB",        "f": "=MIDB(B1,2,2)", "why": "★開始位置が文字の途中" },
+    { "id": "MIDB_nested",         "func": "MIDB",        "f": "=LEN(MIDB(B1,1,4))", "why": "★入れ子" },
+
+    { "id": "RANK_desc",           "func": "RANK",        "f": "=RANK(20,C1:C6,0)", "why": "0=降順(既定)" },
+    { "id": "RANK_asc",            "func": "RANK",        "f": "=RANK(20,C1:C6,1)" },
+    { "id": "RANK_default_order",  "func": "RANK",        "f": "=RANK(20,C1:C6)", "why": "第3引数を省いた時" },
+    { "id": "RANK_eq",             "func": "RANK.EQ",     "f": "=RANK.EQ(20,C1:C6,0)" },
+    { "id": "RANK_avg",            "func": "RANK.AVG",    "f": "=RANK.AVG(20,C1:C6,0)" },
+    { "id": "RANK_miss",           "func": "RANK",        "f": "=IFERROR(RANK(30,C1:C6,0),\"NA\")", "why": "範囲に無い値" },
+    { "id": "RANK_nested",         "func": "RANK",        "f": "=INDEX(E1:E6,RANK(20,C1:C6,1))", "why": "★入れ子" },
+
+    { "id": "VTT_number",          "func": "VALUETOTEXT", "f": "=VALUETOTEXT(A1)" },
+    { "id": "VTT_text",            "func": "VALUETOTEXT", "f": "=VALUETOTEXT(B1)" },
+    { "id": "VTT_strict",          "func": "VALUETOTEXT", "f": "=VALUETOTEXT(B1,1)", "why": "書式1=文字列を引用符で囲む" },
+    { "id": "VTT_logical",         "func": "VALUETOTEXT", "f": "=VALUETOTEXT(H1)" },
+    { "id": "VTT_nested",          "func": "VALUETOTEXT", "f": "=LEN(VALUETOTEXT(A1))", "why": "★入れ子" },
+
+    { "id": "ENC_space",           "func": "ENCODEURL",   "f": "=ENCODEURL(\"a b\")" },
+    { "id": "ENC_jp",              "func": "ENCODEURL",   "f": "=ENCODEURL(B1)", "why": "日本語はUTF-8の%エンコード" },
+    { "id": "ENC_symbols",         "func": "ENCODEURL",   "f": "=ENCODEURL(\"a/b?c=1&d\")", "why": "★どの記号を通してどれを変えるか(実Excelに聞く)" },
+    { "id": "ENC_specials",        "func": "ENCODEURL",   "f": "=ENCODEURL(\"!'()*-_.~\")", "why": "★JSのencodeURIComponentが素通しする記号をExcelがどう扱うか＝推測せず実Excelに聞く" },
+    { "id": "ENC_nested",          "func": "ENCODEURL",   "f": "=LEN(ENCODEURL(\"a b\"))", "why": "★入れ子" },
+
+    { "id": "AGG_mode",            "func": "AGGREGATE",   "f": "=IFERROR(AGGREGATE(13,0,E1:E6),\"NA\")", "why": "★13はMODEか MEDIANか(現行実装は12と13が逆の疑い)" }
+  ]
+}

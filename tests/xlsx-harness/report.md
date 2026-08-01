@@ -12,12 +12,12 @@
 
 | 判定 | 件数 |
 |---|---|
-| 一致 | 306 |
+| 一致 | 362 |
 | 不一致(既知) | 0 |
 | 不一致(新規) | 0 |
 | 未検証 | 0 |
 | 揮発性 | 2 |
-| **合計** | 308 |
+| **合計** | 364 |
 
 ※ 「未検証」は緑ではない。その版の真値がまだ無い、という意味。
 
@@ -68,8 +68,8 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 ## 経路の固定（将来 生HF に落ちたら気付くための錠）
 
 - 独自層(_jsComputeFormula)が答えたケース: **0件**
-- 生HFと本番経路で答えが違うケース: **126件** … この差が消えたら「素通りに落ちた」ということ
-- 独自層の入口: {"jsSetCount":1,"entryPoints":1,"pluginRegistered":true,"pluginCount":22}（1つだけであること）
+- 生HFと本番経路で答えが違うケース: **180件** … この差が消えたら「素通りに落ちた」ということ
+- 独自層の入口: {"jsSetCount":1,"entryPoints":1,"pluginRegistered":true,"pluginCount":32}（1つだけであること）
 
 ## 全ケース
 
@@ -381,3 +381,59 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 | TEXTBEFORE | TEXTBEFORE_missing | `=IFERROR(TEXTBEFORE("abc","-"),"NA")` | NA | NA | 未検証 | NA | 一致 |  |
 | TEXTBEFORE | TEXTBEFORE_ifmissing | `=TEXTBEFORE("abc","-",1,0,0,"なし")` | なし | なし | 未検証 | #NAME? | 一致 |  |
 | TEXTAFTER | TEXTAFTER_nested | `=LEN(TEXTAFTER("007-1234","-"))` | 4 | 4 | 未検証 | #NAME? | 一致 |  |
+| DOLLAR | DOLLAR_default | `=DOLLAR(1234.567)` | ¥1,235 | ¥1,235 | 未検証 | #NAME? | 一致 |  |
+| DOLLAR | DOLLAR_digits0 | `=DOLLAR(1234.5,0)` | ¥1,235 | ¥1,235 | 未検証 | #NAME? | 一致 |  |
+| DOLLAR | DOLLAR_digits1 | `=DOLLAR(1234.5,1)` | ¥1,234.5 | ¥1,234.5 | 未検証 | #NAME? | 一致 |  |
+| DOLLAR | DOLLAR_digits2 | `=DOLLAR(1234.567,2)` | ¥1,234.57 | ¥1,234.57 | 未検証 | #NAME? | 一致 |  |
+| DOLLAR | DOLLAR_negative | `=DOLLAR(-1234.5)` | ¥-1,235 | ¥-1,235 | 未検証 | #NAME? | 一致 |  |
+| DOLLAR | DOLLAR_negative2 | `=DOLLAR(-1234.5,2)` | ¥-1,234.50 | ¥-1,234.50 | 未検証 | #NAME? | 一致 |  |
+| DOLLAR | DOLLAR_neg_digits | `=DOLLAR(1234.5,-2)` | ¥1,200 | ¥1,200 | 未検証 | #NAME? | 一致 |  |
+| DOLLAR | DOLLAR_nested | `=LEN(DOLLAR(1000,0))` | 6 | 6 | 未検証 | #NAME? | 一致 |  |
+| TYPE | TYPE_number | `=TYPE(A1)` | 1 | 1 | 未検証 | #NAME? | 一致 |  |
+| TYPE | TYPE_text | `=TYPE(B1)` | 2 | 2 | 未検証 | #NAME? | 一致 |  |
+| TYPE | TYPE_logical | `=TYPE(H1)` | 4 | 4 | 未検証 | #NAME? | 一致 |  |
+| TYPE | TYPE_error | `=TYPE(1/0)` | 16 | 16 | 未検証 | #NAME? | 一致 |  |
+| TYPE | TYPE_array | `=TYPE({1,2})` | 64 | 64 | 未検証 | #NAME? | 一致 |  |
+| TYPE | TYPE_nested | `=TYPE(A1)+TYPE(B1)` | 3 | 3 | 未検証 | #NAME? | 一致 |  |
+| AGGREGATE | AGG_sum | `=AGGREGATE(9,0,E1:E6)` | 2100 | 2100 | 未検証 | #NAME? | 一致 |  |
+| AGGREGATE | AGG_average | `=AGGREGATE(1,0,E1:E6)` | 350 | 350 | 未検証 | #NAME? | 一致 |  |
+| AGGREGATE | AGG_max | `=AGGREGATE(4,0,E1:E6)` | 600 | 600 | 未検証 | #NAME? | 一致 |  |
+| AGGREGATE | AGG_count | `=AGGREGATE(2,0,E1:E6)` | 6 | 6 | 未検証 | #NAME? | 一致 |  |
+| AGGREGATE | AGG_large_k | `=AGGREGATE(14,0,E1:E6,2)` | 500 | 500 | 未検証 | #NAME? | 一致 |  |
+| AGGREGATE | AGG_small_k | `=AGGREGATE(15,0,E1:E6,2)` | 200 | 200 | 未検証 | #NAME? | 一致 |  |
+| AGGREGATE | AGG_ignore_err | `=AGGREGATE(9,6,C1:C6)` | 186 | 186 | 未検証 | #NAME? | 一致 |  |
+| AGGREGATE | AGG_median | `=AGGREGATE(12,0,E1:E6)` | 350 | 350 | 未検証 | #NAME? | 一致 |  |
+| AGGREGATE | AGG_nested | `=ROUND(AGGREGATE(1,0,E1:E6),0)` | 350 | 350 | 未検証 | #NAME? | 一致 |  |
+| LENB | LENB_jp | `=LENB(B1)` | 6 | 6 | 未検証 | #NAME? | 一致 |  |
+| LENB | LENB_ascii | `=LENB(B3)` | 5 | 5 | 未検証 | #NAME? | 一致 |  |
+| LENB | LENB_mixed | `=LENB(B8)` | 9 | 9 | 未検証 | #NAME? | 一致 |  |
+| LENB | LENB_halfkana | `=LENB(B10)` | 3 | 3 | 未検証 | #NAME? | 一致 |  |
+| LENB | LENB_nested | `=LENB(B1)+LENB(B3)` | 11 | 11 | 未検証 | #NAME? | 一致 |  |
+| LEFTB | LEFTB_jp | `=LEFTB(B1,2)` | り | り | 未検証 | #NAME? | 一致 |  |
+| LEFTB | LEFTB_odd | `=LEFTB(B1,3)` | り  | り  | 未検証 | #NAME? | 一致 |  |
+| LEFTB | LEFTB_zero | `="["&LEFTB(B1,0)&"]"` | [] | [] | 未検証 | #NAME? | 一致 |  |
+| LEFTB | LEFTB_nested | `=LEN(LEFTB(B1,4))` | 2 | 2 | 未検証 | #NAME? | 一致 |  |
+| RIGHTB | RIGHTB_jp | `=RIGHTB(B1,2)` | ご | ご | 未検証 | #NAME? | 一致 |  |
+| RIGHTB | RIGHTB_odd | `=RIGHTB(B1,3)` |  ご |  ご | 未検証 | #NAME? | 一致 |  |
+| RIGHTB | RIGHTB_ascii | `=RIGHTB(B3,3)` | ple | ple | 未検証 | #NAME? | 一致 |  |
+| MIDB | MIDB_jp | `=MIDB(B1,3,2)` | ん | ん | 未検証 | #NAME? | 一致 |  |
+| MIDB | MIDB_odd | `=MIDB(B1,2,2)` |    |    | 未検証 | #NAME? | 一致 |  |
+| MIDB | MIDB_nested | `=LEN(MIDB(B1,1,4))` | 2 | 2 | 未検証 | #NAME? | 一致 |  |
+| RANK | RANK_desc | `=RANK(20,C1:C6,0)` | 3 | 3 | 未検証 | #NAME? | 一致 |  |
+| RANK | RANK_asc | `=RANK(20,C1:C6,1)` | 4 | 4 | 未検証 | #NAME? | 一致 |  |
+| RANK | RANK_default_order | `=RANK(20,C1:C6)` | 3 | 3 | 未検証 | #NAME? | 一致 |  |
+| RANK.EQ | RANK_eq | `=RANK.EQ(20,C1:C6,0)` | 3 | 3 | 未検証 | #NAME? | 一致 |  |
+| RANK.AVG | RANK_avg | `=RANK.AVG(20,C1:C6,0)` | 3 | 3 | 未検証 | #NAME? | 一致 |  |
+| RANK | RANK_miss | `=IFERROR(RANK(30,C1:C6,0),"NA")` | NA | NA | 未検証 | NA | 一致 |  |
+| RANK | RANK_nested | `=INDEX(E1:E6,RANK(20,C1:C6,1))` | 400 | 400 | 未検証 | #NAME? | 一致 |  |
+| VALUETOTEXT | VTT_number | `=VALUETOTEXT(A1)` | 1000 | 1000 | 未検証 | #NAME? | 一致 |  |
+| VALUETOTEXT | VTT_text | `=VALUETOTEXT(B1)` | りんご | りんご | 未検証 | #NAME? | 一致 |  |
+| VALUETOTEXT | VTT_strict | `=VALUETOTEXT(B1,1)` | "りんご" | "りんご" | 未検証 | #NAME? | 一致 |  |
+| VALUETOTEXT | VTT_logical | `=VALUETOTEXT(H1)` | TRUE | TRUE | 未検証 | #NAME? | 一致 |  |
+| VALUETOTEXT | VTT_nested | `=LEN(VALUETOTEXT(A1))` | 4 | 4 | 未検証 | #NAME? | 一致 |  |
+| ENCODEURL | ENC_space | `=ENCODEURL("a b")` | a%20b | a%20b | 未検証 | #NAME? | 一致 |  |
+| ENCODEURL | ENC_jp | `=ENCODEURL(B1)` | %E3%82%8A%E3%82%93%E3%81%94 | %E3%82%8A%E3%82%93%E3%81%94 | 未検証 | #NAME? | 一致 |  |
+| ENCODEURL | ENC_symbols | `=ENCODEURL("a/b?c=1&d")` | a%2Fb%3Fc%3D1%26d | a%2Fb%3Fc%3D1%26d | 未検証 | #NAME? | 一致 |  |
+| ENCODEURL | ENC_specials | `=ENCODEURL("!'()*-_.~")` | %21%27%28%29%2A-_.%7E | %21%27%28%29%2A-_.%7E | 未検証 | #NAME? | 一致 |  |
+| ENCODEURL | ENC_nested | `=LEN(ENCODEURL("a b"))` | 5 | 5 | 未検証 | #NAME? | 一致 |  |
+| AGGREGATE | AGG_mode | `=IFERROR(AGGREGATE(13,0,E1:E6),"NA")` | NA | NA | 未検証 | NA | 一致 |  |

@@ -1,22 +1,16 @@
 {
  "note": "★入れ子で答えが変わる式の上限。増えたらCIが赤になる。減らしたら締め直す。",
- "max": 27,
+ "max": 16,
  "measuredAt": "(実行時)",
  "funcs": [
-  "AGGREGATE",
   "DCOUNT",
-  "DOLLAR",
   "DSUM",
-  "ENCODEURL",
   "FORECAST",
   "GESTEP",
   "INTERCEPT",
   "IRR",
   "KURT",
-  "LEFTB",
-  "LENB",
   "MDETERM",
-  "MIDB",
   "MODE",
   "N",
   "PERCENTILE",
@@ -24,11 +18,6 @@
   "PERMUT",
   "PERMUTATIONA",
   "QUARTILE",
-  "RANK",
-  "RIGHTB",
-  "TRIMMEAN",
-  "TYPE",
-  "VALUETOTEXT",
-  "YEN"
+  "TRIMMEAN"
  ]
 }
