@@ -1,9 +1,14 @@
 name: CI
 
-# exally-staging は本番exallyのミラー(テスト環境)。
-#  以前は「キャッシュバスターの貼り忘れガード」だけを回していて、
-#  機能テスト一式(tests/run.js)はどこのCIでも回っていなかった
-#  (「本番リポジトリのCIが持つ」と書いてあったが、本番exallyのci.ymlも同じ内容だった)。その穴を塞ぐ。
+# Exally（ハブ・台帳・集計・ブック）と 給与(kyuyo/) を1つのワークフローで回す。
+#  ・統合前の2リポジトリのCIを【そのまま並べた】もの。実行方式も内容も変えていない。
+#  ・kyuyo/ は payslip-app の内部レイアウトをそのまま持ち込んでいるので、相対パスは無改変で通る。
+#
+# ★このリポジトリ(exally-staging)は本番exallyの鏡＝テスト環境。本番CIとの違いは2つだけ:
+#   ① Pages配信ガード(tests/pages-hosting.test.mjs) … サブパス配信で壊れる書き方と
+#      本番倉庫への誤接続を止める。stagingにしか無い事情なのでstagingにだけ在る。
+#   ② LibreOffice 参照ジョブ … 「別の版」の答えを参考に取る週次ジョブ(本流は赤にしない)。
+#   どちらも【テストの厚み】であって、本番に無い画面や機能ではない。
 on:
   push:
     branches: [main]
@@ -20,29 +25,63 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
+      # ★依存は「使う前」に入れる。CIは毎回まっさらな環境で走るので、
+      #   ローカルで緑でも node_modules が無ければ jsdom を使うテストが SKIP になり、
+      #   テスト側は「SKIPを緑と呼ばない」作りなので赤になる（その振る舞いが正しい）。
+      - name: Install test deps (jsdom / jsqr)
+        run: npm install --no-audit --no-fund
+
+      # ── Exally 由来（据置） ──
       - name: Cache-buster stamp guard (貼り忘れ検知・コードより先に見る)
         run: node scripts/stamp-build.mjs --check
-
       - name: Stamp tool tests (ハッシュが決定論か=CRLF/LF・OS差でブレないか)
         run: node tests/stamp.test.mjs
-
-      - name: 依存を入れる(jsdom / supabase-js)
-        run: npm ci
-
-      - name: 機能テスト一式
+      # ↓ tests/run.js にも入っているが、赤くなった時にどれで落ちたか一目で分かるよう先に単独で出す
+      - name: ★Pages配信ガード (href="/…" 等の絶対パス・本番倉庫への誤接続を止める)
+        run: node tests/pages-hosting.test.mjs
+      - name: ★Pages配信ガード (わざと壊して赤になるかの自己確認・7通り)
+        run: node tests/pages-hosting.test.mjs --self-test
+      - name: Exally tests (共有データ/集計/台帳→実績値/横断集計/ハブUI/xlsxハーネス/Pages配信ガード)
         run: node tests/run.js
+      - name: CI coverage guard (CIから黙って外れているテストが無いか=除外は理由と戻す条件つきのみ)
+        run: node tests/ci-coverage.test.mjs
 
-      # ↓ tests/run.js の中にも入っているが、赤くなった時にどれで落ちたか一目で分かるよう分けて出す
-      - name: 版対応 検証ハーネス(Excelの真値と突合)
-        run: node tests/xlsx-harness/compare.mjs
-
-      - name: 版対応 検証ハーネス(★わざと壊して赤になるかの自己確認)
-        run: node tests/xlsx-harness/compare.mjs --self-test
-
-      - name: ★入れ子で壊れる式が増えていないか(独自層に純粋な関数を足したら赤)
-        run: node tests/xlsx-harness/nesting-audit.mjs --probe --check
+      # ── 給与(kyuyo/) 由来（据置） ──
+      - name: Payroll unit tests (依存なし・実数リテラル+回帰)
+        run: node kyuyo/tests/run.js
+      - name: Payroll integration (jsdomで本物のapp.jsを読み配線/UI/状態/描画)
+        run: node kyuyo/tests/integration.mjs
+      - name: Payroll full-feature real-data (給与全パターン)
+        run: node kyuyo/tests/payroll-patterns.mjs
+      - name: Payroll UI smoke (全ボタンをクリックしてJS例外0)
+        run: node kyuyo/tests/ui-smoke.mjs
+      - name: Payroll cloud sync (保存層・Supabaseモック)
+        run: node kyuyo/tests/cloud-sync.mjs
+      - name: Payroll pagination (1000件超が黙って欠落しない)
+        run: node kyuyo/tests/pagination.test.mjs
+      - name: Payroll meisai store (Web明細 公開一覧/削除時リンク失効)
+        run: node kyuyo/tests/meisai-store.mjs
+      - name: Payroll QR (復号)
+        run: node kyuyo/tests/qr.test.mjs
+      - name: Payroll 年末調整 (Web申告/計算)
+        run: node kyuyo/tests/nencho-web-declaration.test.js && node kyuyo/tests/nencho-compute.test.mjs
+      - name: Golden freeze guard (移設前の真値と入力fixtureが作り直されていないか)
+        run: node kyuyo/tests/golden-immutable.test.mjs
+      - name: Headless guard (lib/ がDOM・通信・非決定性に依存しない)
+        run: node kyuyo/scripts/verify-headless.mjs
+      - name: Ops golden parity (★1円一致★ 移設前ゴールデン vs ops/payroll.monthly)
+        run: node kyuyo/tests/ops-golden-parity.test.mjs
+      - name: Ops statutory (官公値の実数リテラル・Excel同一ソース・テストAPI非露出)
+        run: node kyuyo/tests/ops-payroll-monthly.test.mjs
+      - name: Law switchpoints (健保R7→R8/支援金2026-04/雇用保険年度/最賃年度の境界前後)
+        run: node kyuyo/tests/law-switchpoints.test.mjs
+      - name: Periods golden (期間分割K2が移設前と一致)
+        run: node kyuyo/tests/periods-golden.test.mjs
+      - name: Fixture reproducibility (入力fixtureが生成スクリプトと一致するか)
+        run: node kyuyo/scripts/make-input-fixture.mjs --check && node kyuyo/scripts/make-periods-fixture.mjs --check
+      - name: Statutory drift guard (lib == 中央statutory)
+        run: node kyuyo/scripts/verify-statutory.mjs
 
   # LibreOffice は「別の版」であって Excel の真値ではないので、本流とは分ける。
   #  ここが落ちても上の test ジョブ(=リリース判断)は赤にしない。
@@ -55,8 +94,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-      - run: npm ci
+      - run: npm install --no-audit --no-fund
       # ubuntu-24.04 のランナー画像から LibreOffice は削除されているので自分で入れる
       - name: LibreOffice Calc を入れる
         run: sudo apt-get update && sudo apt-get install -y libreoffice-calc

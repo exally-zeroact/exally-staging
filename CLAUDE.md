@@ -127,3 +127,12 @@ Exallyのコードを触るときのみ適用。
 - `C:\Users\zeroa\zeroact-memory\projects\exally\decisions.md`
 - `C:\Users\zeroa\zeroact-memory\projects\exally\tasks.md`
 - `C:\Users\zeroa\zeroact-memory\projects\exally\rules.md`
+
+## CIから外しているテスト（1本だけ・機械で見張っている）
+- `kyuyo/tests/exally-login.test.mjs` … item C（メール確認ON前提のsignup分岐）は payslip-app の
+  **テスト線のみ**の機能。本番の `js/exally-login.js` には意図的に未展開で、統合時に本番のログイン
+  挙動を変えないため共通部品は本番版を据え置いた。よって対象機能がこのツリーに無い。
+  **戻す条件＝item C を本番へ展開する時（＝SMTPを設定してメール確認をONにする時）。**
+  その時に `js/exally-login.js` を item C 版へ差し替え、このテストをCIへ戻す。
+- 除外を増やすと `tests/ci-coverage.test.mjs` が赤になる（理由と戻す条件が無い除外も赤）。
+  CIから黙って外れたテストが生まれない仕組み。

@@ -8,8 +8,12 @@
 import { createClient } from '@supabase/supabase-js';
 import fs from 'fs'; import path from 'path';
 
-const URL = 'https://tnfwipbgfgjaymlszeid.supabase.co';
-const ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRuZndpcGJnZmdqYXltbHN6ZWlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1Nzk4MzQsImV4cCI6MjA5NzE1NTgzNH0.zhKPLSlW4zxsdjsXNvqDHvtP3wBqp-EKaxbjqLGW_ek';
+// ★接続先は【このリポジトリの js/supa-config.js】から取る(直書きをやめた・2026-08-01)★
+//   直書きだと、本番からスナップショットを持ってきたテストリポジトリで走らせた時に
+//   本番倉庫を触ってしまう。リポジトリ由来にすれば 本番repo→本番 / stagingのrepo→DB-test にしかならない。
+import { repoSupa } from './repo-supa.mjs';
+const { url: URL, key: ANON } = repoSupa();
+console.log('接続先(このリポジトリの js/supa-config.js 由来): ' + URL);
 const TEST_EMAIL = 'exally.supoort+e0test@gmail.com';
 const CRED_FILE = process.env.EXALLY_TEST_CRED || path.join(process.env.TEMP || '/tmp', 'exally-e0-test-cred.json');
 

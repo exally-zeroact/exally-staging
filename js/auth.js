@@ -7,34 +7,28 @@
   'use strict';
   var hasSupa = !!(global.SUPA && global.SUPA.url && global.SUPA.key && global.supabase);
 
-  var st = document.createElement('style');
-  st.textContent = '#auth-overlay{position:fixed;inset:0;z-index:1000;background:linear-gradient(160deg,#EAF6EF,#F0FAF4);display:none;align-items:center;justify-content:center;padding:20px;font-family:"Noto Sans JP",sans-serif;}'
-    + '.auth-card{width:100%;max-width:360px;background:#fff;border:1px solid #d4eae0;border-radius:18px;box-shadow:0 10px 36px rgba(30,60,40,.12);padding:26px 22px;}'
-    + '.auth-logo{font-family:\'DM Mono\',monospace;font-size:30px;font-weight:500;letter-spacing:-0.5px;color:#52B788;text-align:center;margin-bottom:10px;}'
-    + '.auth-card p.lead{font-size:12px;color:#7aa08c;text-align:center;margin:8px 0 16px;line-height:1.7;}'
-    + '.auth-card input{width:100%;padding:12px 12px;margin-bottom:10px;border:1.5px solid #d4eae0;border-radius:10px;font-size:16px;color:#1a4a2e;-webkit-appearance:none;}'
-    + '.auth-card input:focus{outline:none;border-color:#52B788;}'
-    + '#auth-msg{font-size:12px;min-height:16px;margin:2px 0 10px;text-align:center;}'
-    + '.auth-card .b1{width:100%;padding:12px;border:none;border-radius:10px;background:#3D9E72;color:#fff;font-size:15px;font-weight:700;cursor:pointer;}'
-    + '.auth-card .b2{width:100%;padding:11px;margin-top:8px;border:1.5px solid #d4eae0;border-radius:10px;background:#fff;color:#3D6B53;font-size:14px;font-weight:700;cursor:pointer;}';
-  document.head.appendChild(st);
-
-  var ov = document.createElement('div'); ov.id = 'auth-overlay';
-  ov.innerHTML = '<div class="auth-card"><div class="auth-logo">Exally</div>'
-    + '<p class="lead">ログインすると、どの端末でも同じ内容で使えます。<br>給料明細アプリと同じメール・パスワードです。</p>'
-    + '<input id="auth-email" type="email" placeholder="メールアドレス" autocomplete="username">'
-    + '<input id="auth-pw" type="password" placeholder="パスワード（6文字以上）" autocomplete="current-password">'
-    + '<div id="auth-msg"></div>'
-    + '<button class="b1" id="auth-login" type="button">ログイン</button>'
-    + '<button class="b2" id="auth-signup" type="button">新規登録（はじめての方）</button></div>';
-  document.body.appendChild(ov);
+  // ログイン画面は全アプリ共通の部品(js/exally-login.js)。見た目も文言もそこが一次情報。
+  var LOGIN = null;
+  var ov = null;
+  function mountLogin(sbForLogin) {
+    if (LOGIN) return LOGIN;
+    LOGIN = global.ExallyLogin.mount({
+      app: 'ホーム',
+      sb: sbForLogin,
+      note: '売上管理・代行請求・給料明細も、同じメールとパスワードで入れます。',
+      onLogin: function (user) { afterLogin((user && user.email) || ''); }
+    });
+    ov = LOGIN.el;
+    return LOGIN;
+  }
 
   function $(id) { return document.getElementById(id); }
   // ★中身(.app)はログインが済むまで hidden のまま＝未ログインで画面を見せない
-  function show() { ov.style.display = 'flex'; var a = $('app'); if (a) a.hidden = true; }
-  function hide() { ov.style.display = 'none'; var a = $('app'); if (a) a.hidden = false; }
-  function msg(t, err) { var m = $('auth-msg'); if (!m) return; m.textContent = t || ''; m.style.color = err ? '#C0392B' : '#3D6B53'; }
+  function show() { if (LOGIN) LOGIN.show(); var a = $('app'); if (a) a.hidden = true; }
+  function hide() { if (LOGIN) LOGIN.hide(); var a = $('app'); if (a) a.hidden = false; }
+  function msg(t, err) { if (err && LOGIN) LOGIN.error(t || ''); }
   function jpErr(s) {
+    if (global.ExallyLogin) return global.ExallyLogin.friendly({ message: s });
     s = String(s || '');
     if (/Invalid login/i.test(s)) return 'メールかパスワードが違います';
     if (/already registered|User already/i.test(s)) return 'このメールは登録済みです。ログインしてください';
@@ -44,9 +38,18 @@
     return s;
   }
 
-  if (!hasSupa) { show(); msg('この端末では接続設定が読み込めませんでした', true); return; }
+  var NG = function () {
+    return Promise.resolve({ error: { message: '接続設定が読み込めませんでした' } });
+  };
+  if (!hasSupa) {
+    mountLogin({ auth: { signInWithPassword: NG, signUp: NG } });
+    show();
+    msg('この端末では接続設定が読み込めませんでした', true);
+    return;
+  }
 
   var sb = global.supabase.createClient(global.SUPA.url, global.SUPA.key);
+  mountLogin(sb);
   var APP = 'suite';
   var curEmail = '';
 
@@ -61,10 +64,10 @@
 
   function showLock() {
     var m = (global.Access && global.Access.lockMessage) ? global.Access.lockMessage() : { title: 'このアカウントは現在ご利用いただけません', body: '' };
-    ov.innerHTML = '<div class="auth-card"><div class="auth-logo">Exally</div>'
-      + '<p class="lead" style="color:#92500A;font-weight:700;margin:8px 0 14px">' + m.title + '</p>'
-      + (m.body ? '<p class="lead" style="margin-top:-8px">' + m.body + '</p>' : '')
-      + '<button class="b2" id="auth-lock-out" type="button">別のアカウントでログイン</button></div>';
+    ov.innerHTML = '<div class="login-card"><div class="login-logo">Exally <span>エクサリー</span></div>'
+      + '<div class="login-mid" style="color:#92500A;font-weight:700">' + m.title + '</div>'
+      + (m.body ? '<div class="login-note">' + m.body + '</div>' : '')
+      + '<button class="login-btn login-btn-sub" style="margin-top:14px" id="auth-lock-out" type="button">別のアカウントでログイン</button></div>';
     show();
     var lo = $('auth-lock-out'); if (lo) lo.onclick = function () { sb.auth.signOut().then(function () { location.reload(); }); };
   }
@@ -89,27 +92,6 @@
       });
     }).catch(function (e) { msg(jpErr(e && e.message), true); });
   }
-
-  $('auth-login').onclick = function () {
-    var e = $('auth-email').value.trim(), p = $('auth-pw').value;
-    if (!e || !p) { msg('メールとパスワードを入力してください', true); return; }
-    msg('ログイン中...');
-    sb.auth.signInWithPassword({ email: e, password: p }).then(function (r) {
-      if (r.error) msg(jpErr(r.error.message), true); else afterLogin(e);
-    });
-  };
-  $('auth-signup').onclick = function () {
-    var e = $('auth-email').value.trim(), p = $('auth-pw').value;
-    if (!e) { msg('メールアドレスを入力してください', true); return; }
-    if (p.length < 6) { msg('パスワードは6文字以上にしてください', true); return; }
-    msg('登録中...');
-    sb.auth.signUp({ email: e, password: p }).then(function (r) {
-      if (r.error) msg(jpErr(r.error.message), true);
-      else if (!r.data || !r.data.session) msg('確認メールを送りました。メールのリンクを開いてからログインしてください');
-      else afterLogin(e);
-    });
-  };
-  $('auth-pw').addEventListener('keydown', function (ev) { if (ev.key === 'Enter') $('auth-login').click(); });
 
   // 起動時: セッションがあればそのまま、無ければログイン画面
   sb.auth.getSession().then(function (r) {

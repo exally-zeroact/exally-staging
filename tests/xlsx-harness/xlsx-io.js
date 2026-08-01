@@ -9,12 +9,12 @@
  *
  *  ★UIには繋いでいない。book.html の saveXlsx() は今もスタブのまま(今回は触らない)。
  *
- *  依存: SheetJS CE 0.20.3(リポジトリ同梱の xlsx.full.min.js)
+ *  依存: SheetJS CE 0.20.3(リポジトリ同梱の lib/xlsx.full.min.js)
  *  対応: Node / ブラウザ 両方
  */
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) {
-    module.exports = factory(require('../../xlsx.full.min.js'));
+    module.exports = factory(require('../../lib/xlsx.full.min.js'));
   } else {
     root.XlsxIO = factory(root.XLSX);
   }

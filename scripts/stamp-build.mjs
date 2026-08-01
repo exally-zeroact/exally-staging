@@ -21,15 +21,23 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 // '.' = リポジトリ直下の .js も対象。book.html が読む exally-formula.js / hyperformula.full.min.js 等が
 //   ここに居るため（グリッドをハブから使えるようにした 2026-07-29）。
-const ASSET_DIRS = ['.', 'js', 'lib', 'css'];
+// kyuyo/ = 給与アプリ(payslip-app から統合)。1リポジトリになったので版は【全体で1つ】にする。
+const ASSET_DIRS = ['.', 'js', 'lib', 'css', 'kyuyo/js', 'kyuyo/lib', 'kyuyo/css', 'kyuyo/ops'];
 // 対象 = ローカルの js|lib|css/ 配下、または直下の .js/.css。
 //   直下は「/ を含まない」ので https://... の外部CDNには当たらない。
-const ASSET_RE = /((?:src|href)=")((?:js|lib|css)\/[^"?\s]+\.(?:js|css)|[^"?\s\/:]+\.(?:js|css))(\?v=[^"]*)?(")/g;
+// 対象 = js|lib|css|ops 配下（kyuyo/ からの `../js/...` も拾う）、または直下の .js/.css。
+//   先頭の `../` は任意。https://... の外部CDNには当たらない（`//` を含まないため）。
+const ASSET_RE = /((?:src|href)=")((?:\.\.\/)?(?:js|lib|css|ops)\/[^"?\s]+\.(?:js|css)|[^"?\s\/:]+\.(?:js|css))(\?v=[^"]*)?(")/g;
 
 // 対象HTML = リポジトリ直下の *.html を全部（貼り忘れに強い。
 //   js/|lib/|css/ を参照していないHTMLは正規表現に当たらないので無害）
 function htmlFiles() {
-  return fs.readdirSync(ROOT).filter(f => /\.html$/i.test(f)).sort();
+  const out = fs.readdirSync(ROOT).filter(f => /\.html$/i.test(f)).map(f => f);
+  const sub = path.join(ROOT, 'kyuyo');
+  if (fs.existsSync(sub)) {
+    for (const f of fs.readdirSync(sub)) if (/\.html$/i.test(f)) out.push('kyuyo/' + f);
+  }
+  return out.sort();
 }
 
 // 全ローカルアセットの内容から決定論的な短いハッシュ(8桁)を作る。ファイル名でソート=順序非依存。

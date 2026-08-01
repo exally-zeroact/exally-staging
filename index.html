@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@500&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/hub.css?v=5d8c0b39">
+<link rel="stylesheet" href="css/hub.css?v=ec74f395">
 
 </head>
 <body>
@@ -29,10 +29,10 @@
   <section id="scr-hub" class="scr active">
     <p class="greet">こんにちは。今日やることは？</p>
     <div class="tiles">
-      <a class="tile" id="tile-payslip" href="https://exally-zeroact.github.io/payslip-app-test/" target="_blank" rel="noopener">
+      <a class="tile" id="tile-payslip" href="kyuyo/">
         <span class="tile-ic">💰</span>
-        <span class="tile-t">給料明細</span>
-        <span class="tile-d">Kyually</span>
+        <span class="tile-t">給与</span>
+        <span class="tile-d">明細の作成・配布</span>
         <span class="tile-go">開く →</span>
       </a>
       <button class="tile" id="tile-ledger" type="button" data-go="scr-ledger">
@@ -52,18 +52,7 @@
         <span class="tile-t">共有データ</span>
         <span class="tile-d">会社・人・取引先</span>
         <span class="tile-go">開く →</span>
-      </button>      <a class="tile" id="tile-seikyu" href="seikyusyo.html">
-        <span class="tile-ic">🧾</span>
-        <span class="tile-t">請求書</span>
-        <span class="tile-d">会社情報は入れ済み</span>
-        <span class="tile-go">開く →</span>
-      </a>
-      <a class="tile" id="tile-mitsumori" href="mitsumoriyo.html">
-        <span class="tile-ic">📋</span>
-        <span class="tile-t">見積書</span>
-        <span class="tile-d">会社情報は入れ済み</span>
-        <span class="tile-go">開く →</span>
-      </a>
+      </button>
       <!-- 表(ブック)=自由に表を組みたい人向け。普段の入力は台帳(聞いて選ぶ)が本筋なので、位置づけを一言だけ添える -->
       <a class="tile" id="tile-book" href="book.html">
         <span class="tile-ic">📗</span>
@@ -71,7 +60,6 @@
         <span class="tile-d">自分で表を組みたい時に</span>
         <span class="tile-go">開く →</span>
       </a>
-
     </div>
   </section>
 
@@ -297,15 +285,16 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supa-config.js?v=5d8c0b39"></script>
-<script src="lib/access.js?v=5d8c0b39"></script>
-<script src="lib/aggregate.js?v=5d8c0b39"></script>
-<script src="lib/periods.js?v=5d8c0b39"></script>
-<script src="lib/ledger-agg.js?v=5d8c0b39"></script>
-<script src="lib/cross-agg.js?v=5d8c0b39"></script>
-<script src="js/suite-data.js?v=5d8c0b39"></script>
-<script src="js/hub.js?v=5d8c0b39"></script>
-<script src="js/ledger.js?v=5d8c0b39"></script>
-<script src="js/auth.js?v=5d8c0b39"></script>
+<script src="js/supa-config.js?v=ec74f395"></script>
+<script src="lib/access.js?v=ec74f395"></script>
+<script src="lib/aggregate.js?v=ec74f395"></script>
+<script src="lib/periods.js?v=ec74f395"></script>
+<script src="lib/ledger-source.js?v=ec74f395"></script>
+<script src="lib/cross-agg.js?v=ec74f395"></script>
+<script src="js/suite-data.js?v=ec74f395"></script>
+<script src="js/hub.js?v=ec74f395"></script>
+<script src="js/ledger.js?v=ec74f395"></script>
+<script src="js/exally-login.js?v=ec74f395"></script>
+<script src="js/auth.js?v=ec74f395"></script>
 </body>
 </html>

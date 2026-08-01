@@ -100,26 +100,33 @@ T('0. ★中身(.app)は最初 hidden＝未ログインで画面を見せない'
 doc.getElementById('app').hidden = false;   // 以降はログイン済みとして描画を見る
 
 /* ═══ 1. ハブ ═══ */
-T('1. ハブが出る・タイルは7つ(請求書/見積を足した)', () => {
+T('1. ハブが出る・タイルは5つ(給与/日次台帳/集計/共有データ/表)', () => {
   ok(doc.getElementById('scr-hub').classList.contains('active'), 'ハブが表示されていない');
-  ok(doc.querySelectorAll('#scr-hub .tile').length === 7, 'タイル数=' + doc.querySelectorAll('#scr-hub .tile').length);
+  ok(doc.querySelectorAll('#scr-hub .tile').length === 5, 'タイル数=' + doc.querySelectorAll('#scr-hub .tile').length);
 });
-T('1. 給料明細タイルは働くKyuallyへ繋がる(本物の行き先が1つある)', () => {
+// 2026-08-01 統合: 給与は別サイト(payslip-app-olive)ではなく【同一オリジンの kyuyo/】になった。
+//   同一オリジンであることが「ログイン1回で両方使える」の条件そのものなので、そこを見張る。
+// ★2026-08-01 staging: href は【相対】であること。ここは GitHub Pages のサブパス配信
+//   (https://exally-zeroact.github.io/exally-staging/)なので、'/kyuyo/' と書くと
+//   github.io の直下を指してしまい 404 になる。相対なら本番(ルート配信)でも同じ場所を指す＝両方で正しい。
+//   機械での見張りは tests/no-absolute-paths.test.mjs（配信物全体）。ここは意味(同一オリジン)を見る。
+T('1. ★給与タイルは同一オリジンの kyuyo/ へ繋がる(別サイトへ飛ばさない・相対)', () => {
   const a = doc.getElementById('tile-payslip');
+  ok(a, '給与タイルが無い');
   ok(a.tagName === 'A', 'リンクでない');
-  // staging(テスト環境)の給与タイルはテスト版Kyually(payslip-app-test)を指す＝本番URLでなくこちらが正
-  ok(a.getAttribute('href') === 'https://exally-zeroact.github.io/payslip-app-test/', 'href=' + a.getAttribute('href'));
-  ok(a.getAttribute('target') === '_blank' && /noopener/.test(a.getAttribute('rel') || ''), '別タブ/noopenerでない');
+  ok(a.getAttribute('href') === 'kyuyo/', 'href=' + a.getAttribute('href') + ' (相対 kyuyo/ であること)');
+  ok(!/^https?:/.test(a.getAttribute('href')), '外部URLになっている(別オリジン=ログインが分かれる)');
+  ok(!a.getAttribute('target'), '別タブで開く指定が残っている(同一サイト内なので不要)');
 });
-T('1. ★請求書・見積のタイルがあり、それぞれのページを開く', () => {
-  const pairs = [['tile-seikyu','seikyusyo.html','請求書'], ['tile-mitsumori','mitsumoriyo.html','見積']];
-  pairs.forEach(([id, href, label]) => {
-    const t = doc.getElementById(id);
-    ok(t, label + 'のタイルが無い');
-    ok(t.tagName === 'A', label + ': リンクでない');
-    ok(t.getAttribute('href') === href, label + ': href=' + t.getAttribute('href'));
-    ok(!/^https?:/.test(t.getAttribute('href')), label + ': 絶対URLになっている');
+// 2026-08-01 統合: 請求書/見積の旧ページは削除した。無い物は見せない＝タイルも消す。
+//   「消したページへのリンクが戻ってくる」＝404を配るので、逆向きに見張る。
+T('1. ★削除した旧ページ(請求書/見積/旧トップ/テンプレ)へのリンクがハブに無い', () => {
+  const html = doc.getElementById('scr-hub').innerHTML;
+  ['seikyusyo.html', 'mitsumoriyo.html', 'home.html', 'template.html', 'kyuuryoumeisai.html'].forEach(f => {
+    ok(!new RegExp(f.replace('.', '\.')).test(html), 'ハブに ' + f + ' へのリンクが残っている');
   });
+  ok(!doc.getElementById('tile-seikyu'), '請求書タイルが残っている');
+  ok(!doc.getElementById('tile-mitsumori'), '見積タイルが残っている');
 });
 T('1. ★撤去したお試し画面(chat.html)へのタイルは無い', () => {
   ok(!/chat.html/.test(doc.getElementById('scr-hub').innerHTML), 'ハブから chat.html へ行ける');

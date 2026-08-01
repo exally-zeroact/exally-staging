@@ -92,7 +92,7 @@ pwsh -File tools/golden-excel.ps1
 | 入手元 | <https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js> |
 | バイト数 | 951,904 |
 | **sha256** | `cc015130aa8521e7f088f88898eba949ccdcbfb38df0bd129b44b7273c3a6f41` |
-| 置き場所 | リポジトリ直下 `xlsx.full.min.js` |
+| 置き場所 | `lib/xlsx.full.min.js`（共有ライブラリの置き場。`kyuyo/` からは `../lib/...` で参照＝スタンプ対象の形） |
 
 以前は `cdn.sheetjs.com/xlsx-latest/...` を読んでいた＝**版が勝手に動く**指定だった。
 版検証をやるのにライブラリが浮動では意味が薄いので固定した。
@@ -100,7 +100,7 @@ pwsh -File tools/golden-excel.ps1
 差し替える時は sha256 も必ず更新する（版番号とバイト数だけでは中身の入れ替わりに気付けない）。
 
 ```bash
-sha256sum xlsx.full.min.js
+sha256sum lib/xlsx.full.min.js
 ```
 
 ## 6. `_xlfn.` の一覧をどう作ったか
