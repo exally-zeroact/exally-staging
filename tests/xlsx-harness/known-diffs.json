@@ -207,5 +207,31 @@
       }
     },
     "how_to_add_a_version": "その環境で pwsh -File tools/golden-excel.ps1 -Init を1回走らせ、出た JSON を golden/ に置く（版がファイル名に入るので既存とは別ファイルになる）。詳しくは golden/RECIPE.md §4。"
+  },
+  "grid_excel_export_estimate": {
+    "class": "A",
+    "due": "2026-09-30",
+    "note": "★グリッド(book.html)は今 Excel に保存できない。saveXlsx() が alert のプレースホルダ。給与(/kyuyo/)は別経路で出力できているので、穴が空いているのは表(book.html)だけ。",
+    "見積り 2026-08-01": "約5.5時間(0.8日)。★実装はGO待ち。",
+    "流用できる(作り直し不要)": [
+      "tests/xlsx-harness/xlsx-io.js(159行)は既にUMDでブラウザ対応(root.XlsxIO = factory(root.XLSX))。ヘッダに『P2でグリッドが呼ぶ時に lib/ へ移す』と最初から書いてある＝テスト専用の作りは入っていない。",
+      "この2日で作った難所が全部この中にある: _xlfn.の付与 / 別名の本名化(JIS→DBCS・YEN→DOLLAR) / LET・LAMBDAのように壊れたファイルを作る式で書き出しを止める仕組み。実Excelで開いて 358/362 一致まで確認済み。"
+    ],
+    "足りない物(実測)": {
+      "1_データの形": "グリッドは sheets[i].data['r,c']={v,f,d,…}、xlsx-io は {sheets:[{name,cells:{'A1':{f,v,t}}}]}。変換の cellAddr(r,c) は book.html に既にある → アダプタ約30行",
+      "2_SheetJS未読込": "book.html は lib/xlsx.full.min.js(約950KB)を読み込んでいない。グリッドの初期表示を重くしないため【初回保存時の遅延読み込み】にすべき → 約15行",
+      "3_ダウンロード経路が無い": "book.html に Blob / createObjectURL / download= が0件 → 約10行",
+      "4_書式": "★実測: 同梱SheetJS CE 0.20.3 で書けるのは【表示形式(z)・セル結合(!merges)・列幅(!cols)】まで。太字/色/罫線(スタイル)は書けない(往復で消えるのを実測)。グリッドは numFmt/color/bgColor/bold/italic/border/align/fontSize を持つので、v1は見た目の一部が落ちる。★落ちる事を書き出し時に伝える。",
+      "5_動的配列": "★metadata.xml は正しい形で書かれている(XLDAPR・fDynamic=1・cellMetadata)。欠けているのはセルの cm=\"1\" 属性だけ…と思ったが、【cm を注入しても実Excelでスピルしなかった】(実測)。原因は別にあり、1属性では直らない。→ v1は『配列を返す式が◯件あります。Excelでは1セル分の値になります』と警告して回避する。file_roundtrip_known は開いたままにする。"
+    },
+    "内訳(時間)": {
+      "xlsx-io.js を tests/ から lib/ へ移す＋3テストのパス修正＋stamp": "0.5h",
+      "アダプタ(グリッド→book形。表示形式・結合・列幅を含む)": "1.5h",
+      "SheetJS の遅延読み込み＋ダウンロード": "0.5h",
+      "書き出し時の警告(配列式・書式が落ちる・版)": "0.5h ※(a-lite)の警告面と共用",
+      "テスト(アダプタ単体／jsdomで書き出しスモーク／実Excelで開く確認)": "1.5h",
+      "実Excel確認＋実配信の実ブラウザ＋CI": "1h"
+    },
+    "別枠(不確実・GO不要)": "動的配列を本当にスピルさせる。cm属性だけでは直らないと実測済みなので、原因の調査から要る。3〜6h以上・見通し不確実。v1は警告で回避することを勧める。"
   }
 }
