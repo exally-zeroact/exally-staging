@@ -1,5 +1,5 @@
 /* hub.css — Exally スイートの器(E1)
- * ブランド: 地 #F0FAF4 / ミント #52B788 / 濃ミント #3D9E72 / 文字 #1A4A2E
+ * ブランド: 地 #F0FAF4 / ミント #52B788 / 濃ミント #3D9E72 / 文字 #2E7D54
  * ロゴ=DM Mono / 本文=Noto Sans JP。★CSS変数は使わない(直接hex)★
  * モバイル前提: 1画面ずつ・大きなタップ・親指が届く下部タブ。
  */
@@ -7,7 +7,7 @@
 html, body { margin: 0; padding: 0; }
 body {
   font-family: 'Noto Sans JP', system-ui, -apple-system, sans-serif;
-  background: #F0FAF4; color: #1A4A2E;
+  background: #F0FAF4; color: #2E7D54;
   -webkit-text-size-adjust: 100%;
 }
 button, input, select { font-family: inherit; font-size: 16px; } /* 16px=iOSで拡大されない */
@@ -39,7 +39,7 @@ button, input, select { font-family: inherit; font-size: 16px; } /* 16px=iOSで�
 .tile {
   display: block; text-align: left; text-decoration: none;
   background: #ffffff; border: 1px solid #D4EAE0; border-radius: 16px;
-  padding: 16px 14px 14px; cursor: pointer; color: #1A4A2E;
+  padding: 16px 14px 14px; cursor: pointer; color: #2E7D54;
   min-height: 132px; position: relative; width: 100%;
   box-shadow: 0 2px 8px rgba(30,60,40,.05);
 }
@@ -73,7 +73,7 @@ button, input, select { font-family: inherit; font-size: 16px; } /* 16px=iOSで�
 .fld label { display: block; font-size: 12px; color: #3D6B53; font-weight: 700; margin-bottom: 5px; }
 .fld input, .fld select {
   width: 100%; padding: 11px 12px; border: 1.5px solid #D4EAE0; border-radius: 10px;
-  color: #1A4A2E; background: #ffffff; -webkit-appearance: none;
+  color: #2E7D54; background: #ffffff; -webkit-appearance: none;
 }
 .fld input::placeholder { color: #B7CFC3; }   /* 記入例は薄いグレーで(邪魔しない) */
 .fld input:focus, .fld select:focus { outline: none; border-color: #52B788; }
@@ -91,7 +91,7 @@ button, input, select { font-family: inherit; font-size: 16px; } /* 16px=iOSで�
 .chip {
   display: inline-flex; align-items: center; gap: 6px;
   background: #E8F6EE; border: 1px solid #C6E6D5; border-radius: 999px;
-  padding: 6px 8px 6px 12px; font-size: 13px; color: #1A4A2E;
+  padding: 6px 8px 6px 12px; font-size: 13px; color: #2E7D54;
 }
 .chip-x { border: none; background: none; color: #7AA08C; cursor: pointer; font-size: 15px; line-height: 1; padding: 0 3px; }
 .chip-add { display: flex; gap: 8px; }
@@ -102,7 +102,7 @@ button, input, select { font-family: inherit; font-size: 16px; } /* 16px=iOSで�
 .row {
   display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
   padding: 14px 4px; border: none; border-bottom: 1px solid #E4F1EA;
-  background: none; cursor: pointer; color: #1A4A2E;
+  background: none; cursor: pointer; color: #2E7D54;
 }
 .row-main { flex: 1; min-width: 0; }
 /* ★display:block が無いと、名称と住所が同じ行に繋がって1つの文字列に見える(実機で確認) */
@@ -119,11 +119,11 @@ button, input, select { font-family: inherit; font-size: 16px; } /* 16px=iOSで�
 
 /* ── 集計 ── */
 .agg-ctl { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
-.agg-ctl select { flex: 0 0 auto; width: auto; padding: 10px 12px; border: 1.5px solid #D4EAE0; border-radius: 10px; background: #fff; color: #1A4A2E; }
+.agg-ctl select { flex: 0 0 auto; width: auto; padding: 10px 12px; border: 1.5px solid #D4EAE0; border-radius: 10px; background: #fff; color: #2E7D54; }
 .agg-range { font-size: 12px; color: #7AA08C; margin-bottom: 14px; }
 .agg-custom { display: none; gap: 8px; margin-bottom: 12px; }
 .agg-custom.on { display: flex; }
-.agg-custom input { flex: 1; padding: 10px; border: 1.5px solid #D4EAE0; border-radius: 10px; color: #1A4A2E; }
+.agg-custom input { flex: 1; padding: 10px; border: 1.5px solid #D4EAE0; border-radius: 10px; color: #2E7D54; }
 .agg-head, .agg-row {
   display: grid; grid-template-columns: 1fr 52px 96px; gap: 8px; align-items: center;
   padding: 10px 2px; border-bottom: 1px solid #E4F1EA;
@@ -167,7 +167,7 @@ button, input, select { font-family: inherit; font-size: 16px; } /* 16px=iOSで�
 /* ── トースト ── */
 .toast {
   position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%);
-  background: #1A4A2E; color: #fff; font-size: 13px; line-height: 1.6;
+  background: #2E7D54; color: #fff; font-size: 13px; line-height: 1.6;
   padding: 12px 18px; border-radius: 12px; max-width: 88%; z-index: 50;
   box-shadow: 0 6px 20px rgba(30,60,40,.25); display: none;
 }
@@ -187,7 +187,7 @@ button, input, select { font-family: inherit; font-size: 16px; } /* 16px=iOSで�
 .lg-card-h { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .lg-name { font-size: 15px; font-weight: 700; }
 .lg-card-b { margin: 8px 0 12px; }
-.lg-sum { display: block; font-family: 'DM Mono', ui-monospace, monospace; font-size: 15px; color: #1A4A2E; }
+.lg-sum { display: block; font-family: 'DM Mono', ui-monospace, monospace; font-size: 15px; color: #2E7D54; }
 .lg-sep { color: #B7CFC3; margin: 0 5px; }
 .lg-rows { display: block; font-size: 11px; color: #7AA08C; margin-top: 3px; }
 .lg-none { font-size: 13px; color: #B7CFC3; }
@@ -224,7 +224,7 @@ button, input, select { font-family: inherit; font-size: 16px; } /* 16px=iOSで�
 .x-total .x-m { font-size: 15px; }
 
 /* ── モーダル ── */
-.mo { position: fixed; inset: 0; z-index: 60; background: rgba(26,74,46,.35); display: none; align-items: flex-end; justify-content: center; }
+.mo { position: fixed; inset: 0; z-index: 60; background: rgba(46,125,84,.35); display: none; align-items: flex-end; justify-content: center; }
 .mo.on { display: flex; }
 .mo-card { width: 100%; max-width: 640px; max-height: 82vh; overflow-y: auto; background: #ffffff; border-radius: 18px 18px 0 0; padding: 18px 16px calc(18px + env(safe-area-inset-bottom)); }
 .mo-h { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
