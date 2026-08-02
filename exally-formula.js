@@ -1109,7 +1109,8 @@ function _resolveHFParts(ns) {
     T: pick('FunctionArgumentType'),
     SRV: pick('SimpleRangeValue'),
     CellError: pick('CellError'),
-    ErrorType: pick('ErrorType')
+    ErrorType: pick('ErrorType'),
+    ArraySize: pick('ArraySize')   // ★配列を返す関数が「出力の大きさ」を申告するのに要る(R19)
   };
 }
 
@@ -1121,6 +1122,7 @@ function registerExallyFunctions(HFns) {
   var T = P.T;
   var SRV = P.SRV;
   var CellError = P.CellError, ErrorType = P.ErrorType;
+  var ArraySize = P.ArraySize;   // ★無くても動く(その場合は素の配列関数だけ従来どおり)。R19の申告に使う
   if(!FunctionPlugin || !T || !SRV || !CellError || !ErrorType) return false;
 
   function err(t){ return new CellError(t); }
@@ -1140,7 +1142,34 @@ function registerExallyFunctions(HFns) {
     if(typeof v==='string' && v.trim()!=='' && !isNaN(v)) return parseFloat(v);
     return null;
   }
-  function col(arr){ return SRV.onlyValues(arr.map(function(v){ return [v]; })); }
+  //  縦1列の配列として返す。
+  //  ★中身が空の時は配列を作らずスカラー 0 を返す。理由は2つ:
+  //    (1) SimpleRangeValue.onlyValues([]) は TypeError で落ちる(実測。=SORT(空範囲) で踏んだ)
+  //    (2) 実Excelの =SORT(空範囲) / =UNIQUE(空範囲) は 0 を返す(実測 2026-08-02)
+  function col(arr){
+    if(!arr.length) return 0;
+    return SRV.onlyValues(arr.map(function(v){ return [v]; }));
+  }
+  /* ★★R19: 配列を返す関数は「出力が何行何列になるか」を HyperFormula に申告しないと、
+   *   素の =SORT(A1:A10) が #VALUE!(Cell range not allowed) になる。
+   *   包んだ形(=SUM(SORT(...)))だけは動くので、入れ子のケースしか無かったハーネスでは見えなかった。
+   *   実測(2026-08-02): 申告を足すと通り、しかも隣のセルへ正しく展開(スピル)される。
+   *   展開先に既にデータがあると HF は #SPILL! を返して既存データを守る(Excelと同じ)。
+   *   ここは「入力の範囲の高さ＝出力の高さ」で申告する(SORT/UNIQUE/FILTERはいずれも縦1列を返すため)。
+   *   ★大きさが読めない時は 1x1 と申告する＝スカラー扱いになるだけで、黙って違う数字は出ない。 */
+  function rangeHeight(argAst){
+    try {
+      if(argAst && argAst.type === 'CELL_RANGE' && argAst.start && argAst.end){
+        return Math.abs(argAst.end.row - argAst.start.row) + 1;
+      }
+    } catch(e){}
+    return 1;
+  }
+  function sizeFromFirstArg(ast){
+    if(!ArraySize) return null;
+    var args = (ast && ast.args) || [];
+    return new ArraySize(1, rangeHeight(args[0]));
+  }
   function esc(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
   function wildRe(pat){
     var out='';
@@ -1162,6 +1191,10 @@ function registerExallyFunctions(HFns) {
   //  FunctionPlugin は ES のクラス。ES5の apply では継承できない
   //  (実測: Class constructors cannot be invoked without 'new')
   var ExallyPlugin = class ExallyPlugin extends FunctionPlugin {};
+
+  //  ★配列を返す関数の「出力の大きさ」。SORT/UNIQUE/FILTER はいずれも
+  //    第1引数の範囲と同じ高さの縦1列を返すので、1つの実装で足りる。
+  ExallyPlugin.prototype.exArraySize = function(ast){ return sizeFromFirstArg(ast) || new ArraySize(1,1); };
 
   ExallyPlugin.prototype.exSort = function(ast, state){
     return this.runFunction(ast.args, state, this.metadata('EX.SORT'), function(range, idx, order){
@@ -1538,15 +1571,16 @@ function registerExallyFunctions(HFns) {
   var ANY = { argumentType: T.ANY };
   var OPT = { argumentType: T.ANY, optionalArg: true };
   ExallyPlugin.implementedFunctions = {
-    'EX.SORT':       { method: 'exSort',       parameters: [ANY, OPT, OPT, OPT], arrayFunction: true },
-    'EX.UNIQUE':     { method: 'exUnique',     parameters: [ANY, OPT, OPT],      arrayFunction: true },
+    //  ★arraySizeMethod = 出力の大きさの申告(R19)。これが無いと素の =SORT(A1:A10) が #VALUE! になる。
+    'EX.SORT':       { method: 'exSort',       parameters: [ANY, OPT, OPT, OPT], arrayFunction: true, arraySizeMethod: 'exArraySize' },
+    'EX.UNIQUE':     { method: 'exUnique',     parameters: [ANY, OPT, OPT],      arrayFunction: true, arraySizeMethod: 'exArraySize' },
     'EX.TEXT':       { method: 'exText',       parameters: [ANY, ANY] },
     'EX.TEXTJOIN':   { method: 'exTextjoin',   parameters: [ANY, ANY, ANY], repeatLastArgs: 1 },
     'EX.INT':        { method: 'exInt',        parameters: [ANY] },
     'EX.MOD':        { method: 'exMod',        parameters: [ANY, ANY] },
     'EX.VALUE':      { method: 'exValue',      parameters: [ANY] },
     'EX.XLOOKUP':    { method: 'exXlookup',    parameters: [ANY, ANY, ANY, OPT, OPT, OPT] },
-    'EX.FILTER':     { method: 'exFilter',     parameters: [ANY, ANY, OPT],      arrayFunction: true },
+    'EX.FILTER':     { method: 'exFilter',     parameters: [ANY, ANY, OPT],      arrayFunction: true, arraySizeMethod: 'exArraySize' },
     'EX.MATCH':      { method: 'exMatch',      parameters: [ANY, ANY, OPT] },
     'EX.SUMPRODUCT': { method: 'exSumproduct', parameters: [ANY], repeatLastArgs: 1 },
     // ★第3波P1(2026-08-01)

@@ -19,6 +19,7 @@ const FILES = [
   ['pages-hosting.test.mjs', '--self-test'],  // ★わざと壊して赤になるかの自己確認(7通り)
   // P1② 版対応 検証ハーネス
   'xlsx-harness/roundtrip.test.mjs',        // 数式入りxlsxの往復(SheetJS・★新関数の _xlfn.)
+  'xlsx-harness/bare-form.test.mjs',   // ★「客が最初に書く形」のケースが無い関数を赤にする(R19の再発防止)
   'xlsx-harness/alias.test.mjs',            // ★日本語UI名→本名(JIS→DBCS / YEN→DOLLAR。入口=エンジン/出口=書き出し)
   'xlsx-harness/xlfn-coverage.test.mjs',    // ★書き出す関数名が分類済みか(_xlfn.の付け忘れを止める)
   'xlsx-harness/version-scope.test.mjs',    // ★「版対応はここまで」の記述と実装がズレたら赤

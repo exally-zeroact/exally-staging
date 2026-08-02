@@ -11,7 +11,8 @@
     "wave2b_2026-08-01": "SUMPRODUCT 2件を解消。原因はHFの既定で範囲どうしの計算が配列にならないことで、buildEmpty の useArrayArithmetic:true で解決(版上げ不要)。配列演算のケース8件を新設し全て一致。一致 243→253 / 既知 2→0",
     "wave3_p1_2026-08-01": "第3波P1。CONCAT/LOOKUP/XMATCH/INDIRECT/DATEVALUE/NUMBERVALUE/FIXED/ASC/DBCS(旧JIS)/TEXTBEFORE/TEXTAFTER の11関数を _jsSet から HFプラグインへ移した(入れ子でも効く)。ケース53件を新設し全て一致。一致 253→306 / 既知 0 / 入れ子で壊れる式 38→27。★INDIRECT は isVolatile:true が必須と実測で判明(付けないと参照先を書き換えても古い答えが残る)。★半角→全角の本名は DBCS で、JIS は日本語UIの表示名。JIS のまま xlsx に書くと Excel が #NAME? にするので convertFormula で DBCS に直す",
     "wave3_p2_2026-08-01": "第3波P2。DOLLAR(旧YEN)/TYPE/AGGREGATE/LENB/LEFTB/RIGHTB/MIDB/RANK(.EQ/.AVG)/VALUETOTEXT/ENCODEURL を _jsSet から HFプラグインへ。ケース56件を新設し全て一致。一致 306→362 / 既知 0 / 入れ子で壊れる式 27→16。★実測で分かった事: (a)通貨書式の関数の本名は DOLLAR で YEN は日本語UIの表示名(Excel自身が .FormulaLocal↔.Formula で相互変換する)。日本語環境の DOLLAR は ¥・小数0桁・負はマイナス記号で、旧 _jsDollar は $ ・括弧・小数2桁で全部違っていた。 (b)AGGREGATE の 12=MEDIAN / 13=MODE.SNGL が旧実装では逆だった。 (c)LENB は半角カナを1バイトと数える。LEFTB/RIGHTB/MIDB は2バイト文字を途中で切るとその半分が【空白1個】になる(消えるのではない)。 (d)ENCODEURL は JS の encodeURIComponent が素通しする ! ' ( ) * ~ も変換する。 (e)VALUETOTEXT の第2引数(0=簡潔/1=厳密)を旧実装は無視して常に引用符を付けていた。",
-    "grid_excel_export_2026-08-02": "グリッド(book.html)の「Excelに保存」を実装。saveXlsx() の alert プレースホルダを廃止し、lib/xlsx-io.js(ハーネスと同じ1本・tests/から lib/ へ移設)＋新設 lib/grid-xlsx.js に繋いだ。SheetJS(930KB)は初回保存時の遅延読み込み。実Excelで開いて13項目一致(式・再計算値・表示形式・列幅・セル結合・XLOOKUP)。★実装中に実Excelで2つ踏んだ: (1) writeBook が表示形式(z)を運んでおらず、画面の「54,000」がファイルでは「54000」になっていた (2) readBook も z を落としていた。両方直してテストで固定。"
+    "grid_excel_export_2026-08-02": "グリッド(book.html)の「Excelに保存」を実装。saveXlsx() の alert プレースホルダを廃止し、lib/xlsx-io.js(ハーネスと同じ1本・tests/から lib/ へ移設)＋新設 lib/grid-xlsx.js に繋いだ。SheetJS(930KB)は初回保存時の遅延読み込み。実Excelで開いて13項目一致(式・再計算値・表示形式・列幅・セル結合・XLOOKUP)。★実装中に実Excelで2つ踏んだ: (1) writeBook が表示形式(z)を運んでおらず、画面の「54,000」がファイルでは「54000」になっていた (2) readBook も z を落としていた。両方直してテストで固定。",
+    "r19_bare_array_2026-08-02": "R19解決。素の =SORT(範囲) / =UNIQUE / =FILTER が #VALUE!(Cell range not allowed) になっていた原因は、配列を返すプラグイン関数が【出力の大きさを HyperFormula に申告していなかった】こと(arraySizeMethod)。★スパイクで実測: 申告を足すと通り、しかも隣のセルへ正しく展開(スピル)される。展開先に既にデータがある場合は HF が #SPILL! を返して既存データを守る(Excelと同じ)。版上げ・別ライブラリ・自前展開はいずれも不要だった。併せて col() が空配列で TypeError を投げていたのを修正(実Excelの =SORT(空範囲) は 0)。ケース9件を新設(素の形6件＋TRIM/DATE/EOMONTHの素の形3件)。一致 362→371。"
   },
   "roots": {
     "R11_input_parse": "セルに打ち込んだ『桁区切り付きの数』『日付に見える文字』を、Excel は数値/日付に解釈するがグリッドは文字列のまま持つ",
@@ -20,7 +21,8 @@
     "R15_no_spill": "★うちのグリッドはスピル(配列が隣のセルへ溢れる)に未対応。Excelでは =C1:C6*E1:E6 が6セルを占めるが、うちは1セルに左上の値だけを出す。★左上の値そのものはExcelと一致することを実測済み(ARR_* ケース)。溢れる範囲の見た目だけが違う",
     "R16_file_array_legacy": "★SheetJSが書き出したxlsxをExcelで開くと、配列を返す式が『旧来の解釈(暗黙の交差)』になる。Excelの動的配列として扱わせる印(セルの cm 属性とメタデータ)をSheetJSが書いていないため。グリッドの画面では正しいのに、落としたファイルをExcelで開くと違う値になる=『Excel落とし』の忠実さの問題",
     "R18_aggregate_scope": "★AGGREGATE は集計番号 1〜17 に対応。18/19(PERCENTILE.EXC/QUARTILE.EXC)は未対応で #VALUE! を返す＝黙って近い値を出さない。使いたくなった時に真値ケースを足してから実装する",
-    "R19_bare_array_functions": "★★素の =SORT(範囲) / =UNIQUE(範囲) / =FILTER(範囲,条件) がグリッドで #VALUE!(Cell range not allowed)になる。包んだ形(=SUM(SORT(...)) 等)なら動く。ハーネスのSORT/UNIQUE/FILTERのケースは【全部包んだ形】で、素の形のケースが1件も無かったため、この穴が見えていなかった(2026-08-02 実機で発見)。★一番自然な書き方(=SORT(A1:A10))が動かない＝実務で最初に踏む。配列演算(=B2:B3*2)はエラーにならず左上の値を出す(R15_no_spill どおり)ので、エラーになるのはプラグインの配列関数だけ。"
+    "R19_bare_array_functions": "★解決済(2026-08-02)。配列を返すプラグイン関数は arraySizeMethod で出力の大きさを申告しないと、素の呼び出しが #VALUE! になる。包んだ形(=SUM(SORT(...)))だけは動くので、入れ子のケースしか無かったハーネスでは見えなかった。★再発防止: tests/xlsx-harness/bare-form.test.mjs が「素の形のケースが無い関数」を赤にする。",
+    "R20_case_shape_bias": "★テストのケースは『客が最初に書く形』から作る。包んだ形・入れ子は後から足す。P1/P2で入れ子ばかり直した副作用で、ケースも入れ子ばかりになり、一番自然な書き方(=SORT(A1:A10))が壊れていることに一致362という数字では気づけなかった(R19)。見張りは bare-form.test.mjs。例外は理由必須(今は揮発性の TODAY / NOW の2つだけ)。"
   },
   "nesting_pending": {
     "class": "A",
@@ -257,6 +259,7 @@
       "=SEQUENCE(3)": "#NAME!（そもそも登録されていない）"
     },
     "次にやること": "①ハーネスに『素の配列関数』のケースを足す(真値先行) ②スピルしないならせめて左上の値を返す(配列演算と同じ振る舞い)ようにする ③SEQUENCE等の未登録も洗い出す。★指示役の判断待ち(第3波P3より先にやる価値がある)。",
-    "別件": "exSort は空の範囲を渡されると SimpleRangeValue.onlyValues([]) で TypeError を投げる(実測)。エラー値を返すべき所で例外になっている。②と同時に直す。"
+    "別件": "exSort は空の範囲を渡されると SimpleRangeValue.onlyValues([]) で TypeError を投げる(実測)。エラー値を返すべき所で例外になっている。②と同時に直す。",
+    "status": "★解決 2026-08-02。arraySizeMethod の追加で素の呼び出しが動くようになった。グリッドの表示は左上の値(スピルの表示は R15_no_spill のまま未対応)だが、#VALUE! ではなくなった。書き出し時は「配列を返す式が◯件あります」と警告する(HFの isCellPartOfArray で判定)。"
   }
 }

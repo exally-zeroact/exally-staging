@@ -1097,6 +1097,9 @@ box-shadow:0 8px 28px rgba(30,60,40,0.22);
 #toast.warn .toast-h { display:block; font-weight:800; font-size:14px; margin-bottom:6px; color:#8A5A00; }
 #toast.warn ul { margin:0; padding-left:1.1em; }
 #toast.warn li { margin:4px 0; }
+/* 補足の1行（版セレクタは保存に効かない、など）。本文より小さく薄く。 */
+#toast.warn .toast-n { display:block; margin-top:10px; padding-top:8px; border-top:1px solid #EEE6C8;
+  font-size:12px; color:#6E7B74; line-height:1.6; }
 
 /* 数式バー fx アイコン */
 #fx-icon {
@@ -1144,12 +1147,12 @@ background:#FFE066 !important;
 }
 </style>
 
-<script src="hyperformula.full.min.js?v=2e78243c"></script>
+<script src="hyperformula.full.min.js?v=d13825de"></script>
 
-<script src="exally-formula.js?v=2e78243c"></script>
+<script src="exally-formula.js?v=d13825de"></script>
 <!-- グリッド→xlsx の変換と「落ちる物」の警告(純関数・軽い)。SheetJS本体(930KB)と lib/xlsx-io.js は
      初回の「Excelに保存」で初めて読み込む＝グリッドの表示を重くしない -->
-<script src="lib/grid-xlsx.js?v=2e78243c"></script>
+<script src="lib/grid-xlsx.js?v=d13825de"></script>
 
 <script>
 /* ===== canvas-formula-engine.js (inlined) ===== */
@@ -5902,6 +5905,12 @@ function doWrite(){
  *  ★SheetJS(930KB)は重いので、初回の保存で初めて読み込む（グリッドの表示を遅くしない）。
  *  ★落ちる物は黙って落とさず、何が起きるかをセル番地つきで出す。
  */
+/*  ★このボタンはヘッダで「📊 365 ▼」の真横にある。客はそれを見て
+ *  「選んだ版に合わせて保存される」と読む。ところが今の版セレクタは表示だけで、
+ *  保存は版を一切見ていない（台帳 version_scope）。誤解させたままにしないので、
+ *  保存のたびに1行そのことを出す。
+ *  ★(a-lite)＝「選んだ版で動かない関数を警告する」を入れたら、この1行は消すこと。 */
+var VER_NOTE = '※Excelの版（📊）は保存内容に影響しません。どの版でも同じファイルが出ます。';
 var _xlsxLoading = null;
 function _assetVer(){
   // 既に貼られている stamp 済みのURLから ?v= を借りる（遅延読み込みでもキャッシュが古くならない）
@@ -5927,10 +5936,14 @@ function _ensureXlsx(){
   return _xlsxLoading;
 }
 // 配列を返す式か（＝Excelではスピルするが、うちのグリッドは1セル分しか出さない）
+//  ★HyperFormula 自身に聞く(isCellPartOfArray)。getCellValue は展開後の左上のスカラーを返すので、
+//    値だけ見ても配列かどうかは分からない（2026-08-02 R19 の修正後に実測して判明）。
 function _isArrayFormula(sheetIdx, r, c){
   try {
-    var v = hf.getCellValue({ sheet: _hfSid(sheetIdx), row: r, col: c });
-    return Array.isArray(v) || (v && typeof v === 'object' && typeof v.data !== 'undefined');
+    var addr = { sheet: _hfSid(sheetIdx), row: r, col: c };
+    if (typeof hf.isCellPartOfArray === 'function' && hf.isCellPartOfArray(addr)) return true;
+    var v = hf.getCellValue(addr);
+    return Array.isArray(v) || !!(v && typeof v === 'object' && typeof v.data !== 'undefined');
   } catch(e){ return false; }
 }
 function saveXlsx(){
@@ -5950,10 +5963,12 @@ function saveXlsx(){
       //   長い文章なので「読ませる用」の見た目(白地・濃い文字・左揃え)にする。
       var esc1 = function(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
       var html = '<span class="toast-h">⚠️ 保存しました。ただしExcelに入らない物があります</span><ul>'
-        + warns.map(function(w){ return '<li>' + esc1(w.msg) + '</li>'; }).join('') + '</ul>';
+        + warns.map(function(w){ return '<li>' + esc1(w.msg) + '</li>'; }).join('') + '</ul>'
+        + '<span class="toast-n">' + VER_NOTE + '</span>';
       showToast(html, 14000, 'warn');
     } else {
-      showToast('✅ Excelファイルを保存しました', 2500);
+      showToast('<span class="toast-h">✅ Excelファイルを保存しました</span>'
+        + '<span class="toast-n">' + VER_NOTE + '</span>', 5000, 'warn');
     }
   }).catch(function(e){
     // ★「保存しました」と嘘をつかない

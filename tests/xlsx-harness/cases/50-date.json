@@ -2,43 +2,176 @@
   "group": "日付",
   "note": "日付を返す式は *1 を付けてシリアル値(数値)で比較する。★serial 61以降のみ使用=1900年閏年バグ域を踏まない。TODAY/NOW は揮発性のため golden 突合の対象外(volatile)。",
   "cases": [
-    { "id": "DATE_basic",         "func": "DATE",     "f": "=DATE(2026,7,31)*1" },
-    { "id": "DATE_month_over",    "func": "DATE",     "f": "=DATE(2026,13,1)*1" },
-    { "id": "DATE_day_over",      "func": "DATE",     "f": "=DATE(2026,1,32)*1" },
-    { "id": "DATE_leap_2024",     "func": "DATE",     "f": "=DATE(2024,2,29)*1" },
-    { "id": "DATE_diff_days",     "func": "DATE",     "f": "=DATE(2026,7,31)-DATE(2026,7,1)" },
-
-    { "id": "TODAY_serial",       "func": "TODAY",    "f": "=TODAY()*1", "volatile": true, "volatileCheck": "todaySerial" },
-    { "id": "NOW_int_is_today",   "func": "NOW",      "f": "=INT(NOW())-TODAY()", "volatile": true, "volatileCheck": "zero" },
-
-    { "id": "YEAR_cell",          "func": "YEAR",     "f": "=YEAR(F5)" },
-    { "id": "YEAR_expr",          "func": "YEAR",     "f": "=YEAR(DATE(2000,3,1))" },
-    { "id": "YEAR_old",           "func": "YEAR",     "f": "=YEAR(F6)" },
-
-    { "id": "MONTH_cell",         "func": "MONTH",    "f": "=MONTH(F5)" },
-    { "id": "MONTH_jan",          "func": "MONTH",    "f": "=MONTH(F1)" },
-    { "id": "MONTH_expr",         "func": "MONTH",    "f": "=MONTH(DATE(2026,12,1))" },
-
-    { "id": "DAY_cell",           "func": "DAY",      "f": "=DAY(F5)" },
-    { "id": "DAY_month_end",      "func": "DAY",      "f": "=DAY(F3)" },
-    { "id": "DAY_ymd_combo",      "func": "DAY",      "f": "=YEAR(F5)*10000+MONTH(F5)*100+DAY(F5)" },
-
-    { "id": "EOMONTH_0",          "func": "EOMONTH",  "f": "=EOMONTH(F2,0)*1" },
-    { "id": "EOMONTH_plus1",      "func": "EOMONTH",  "f": "=EOMONTH(F1,1)*1" },
-    { "id": "EOMONTH_minus1",     "func": "EOMONTH",  "f": "=EOMONTH(F3,-1)*1" },
-    { "id": "EOMONTH_leap",       "func": "EOMONTH",  "f": "=EOMONTH(DATE(2024,2,1),0)*1" },
-    { "id": "EOMONTH_year_over",  "func": "EOMONTH",  "f": "=EOMONTH(DATE(2026,12,15),1)*1" },
-
-    { "id": "DATEDIF_Y",          "func": "DATEDIF",  "f": "=DATEDIF(DATE(2000,3,1),DATE(2026,2,28),\"Y\")" },
-    { "id": "DATEDIF_Y_after",    "func": "DATEDIF",  "f": "=DATEDIF(DATE(2000,3,1),DATE(2026,3,1),\"Y\")" },
-    { "id": "DATEDIF_M",          "func": "DATEDIF",  "f": "=DATEDIF(DATE(2026,1,31),DATE(2026,3,30),\"M\")" },
-    { "id": "DATEDIF_D",          "func": "DATEDIF",  "f": "=DATEDIF(F1,F5,\"D\")" },
-    { "id": "DATEDIF_MD",         "func": "DATEDIF",  "f": "=DATEDIF(DATE(2026,1,31),DATE(2026,3,30),\"MD\")" },
-    { "id": "DATEDIF_YM",         "func": "DATEDIF",  "f": "=DATEDIF(DATE(2000,3,1),DATE(2026,2,28),\"YM\")" },
-
-    { "id": "WEEKDAY_default",    "func": "WEEKDAY",  "f": "=WEEKDAY(F5)" },
-    { "id": "WEEKDAY_type2",      "func": "WEEKDAY",  "f": "=WEEKDAY(F5,2)" },
-    { "id": "WEEKDAY_type3",      "func": "WEEKDAY",  "f": "=WEEKDAY(F5,3)" },
-    { "id": "WEEKDAY_sunday",     "func": "WEEKDAY",  "f": "=WEEKDAY(F4,2)" }
+    {
+      "id": "DATE_bare",
+      "func": "DATE",
+      "f": "=DATE(2026,7,31)",
+      "why": "★素の呼び出し（今までは *1 を付けた形だけだった）"
+    },
+    {
+      "id": "EOMONTH_bare",
+      "func": "EOMONTH",
+      "f": "=EOMONTH(F2,0)",
+      "why": "★素の呼び出し（今までは *1 を付けた形だけだった）"
+    },
+    {
+      "id": "DATE_basic",
+      "func": "DATE",
+      "f": "=DATE(2026,7,31)*1"
+    },
+    {
+      "id": "DATE_month_over",
+      "func": "DATE",
+      "f": "=DATE(2026,13,1)*1"
+    },
+    {
+      "id": "DATE_day_over",
+      "func": "DATE",
+      "f": "=DATE(2026,1,32)*1"
+    },
+    {
+      "id": "DATE_leap_2024",
+      "func": "DATE",
+      "f": "=DATE(2024,2,29)*1"
+    },
+    {
+      "id": "DATE_diff_days",
+      "func": "DATE",
+      "f": "=DATE(2026,7,31)-DATE(2026,7,1)"
+    },
+    {
+      "id": "TODAY_serial",
+      "func": "TODAY",
+      "f": "=TODAY()*1",
+      "volatile": true,
+      "volatileCheck": "todaySerial"
+    },
+    {
+      "id": "NOW_int_is_today",
+      "func": "NOW",
+      "f": "=INT(NOW())-TODAY()",
+      "volatile": true,
+      "volatileCheck": "zero"
+    },
+    {
+      "id": "YEAR_cell",
+      "func": "YEAR",
+      "f": "=YEAR(F5)"
+    },
+    {
+      "id": "YEAR_expr",
+      "func": "YEAR",
+      "f": "=YEAR(DATE(2000,3,1))"
+    },
+    {
+      "id": "YEAR_old",
+      "func": "YEAR",
+      "f": "=YEAR(F6)"
+    },
+    {
+      "id": "MONTH_cell",
+      "func": "MONTH",
+      "f": "=MONTH(F5)"
+    },
+    {
+      "id": "MONTH_jan",
+      "func": "MONTH",
+      "f": "=MONTH(F1)"
+    },
+    {
+      "id": "MONTH_expr",
+      "func": "MONTH",
+      "f": "=MONTH(DATE(2026,12,1))"
+    },
+    {
+      "id": "DAY_cell",
+      "func": "DAY",
+      "f": "=DAY(F5)"
+    },
+    {
+      "id": "DAY_month_end",
+      "func": "DAY",
+      "f": "=DAY(F3)"
+    },
+    {
+      "id": "DAY_ymd_combo",
+      "func": "DAY",
+      "f": "=YEAR(F5)*10000+MONTH(F5)*100+DAY(F5)"
+    },
+    {
+      "id": "EOMONTH_0",
+      "func": "EOMONTH",
+      "f": "=EOMONTH(F2,0)*1"
+    },
+    {
+      "id": "EOMONTH_plus1",
+      "func": "EOMONTH",
+      "f": "=EOMONTH(F1,1)*1"
+    },
+    {
+      "id": "EOMONTH_minus1",
+      "func": "EOMONTH",
+      "f": "=EOMONTH(F3,-1)*1"
+    },
+    {
+      "id": "EOMONTH_leap",
+      "func": "EOMONTH",
+      "f": "=EOMONTH(DATE(2024,2,1),0)*1"
+    },
+    {
+      "id": "EOMONTH_year_over",
+      "func": "EOMONTH",
+      "f": "=EOMONTH(DATE(2026,12,15),1)*1"
+    },
+    {
+      "id": "DATEDIF_Y",
+      "func": "DATEDIF",
+      "f": "=DATEDIF(DATE(2000,3,1),DATE(2026,2,28),\"Y\")"
+    },
+    {
+      "id": "DATEDIF_Y_after",
+      "func": "DATEDIF",
+      "f": "=DATEDIF(DATE(2000,3,1),DATE(2026,3,1),\"Y\")"
+    },
+    {
+      "id": "DATEDIF_M",
+      "func": "DATEDIF",
+      "f": "=DATEDIF(DATE(2026,1,31),DATE(2026,3,30),\"M\")"
+    },
+    {
+      "id": "DATEDIF_D",
+      "func": "DATEDIF",
+      "f": "=DATEDIF(F1,F5,\"D\")"
+    },
+    {
+      "id": "DATEDIF_MD",
+      "func": "DATEDIF",
+      "f": "=DATEDIF(DATE(2026,1,31),DATE(2026,3,30),\"MD\")"
+    },
+    {
+      "id": "DATEDIF_YM",
+      "func": "DATEDIF",
+      "f": "=DATEDIF(DATE(2000,3,1),DATE(2026,2,28),\"YM\")"
+    },
+    {
+      "id": "WEEKDAY_default",
+      "func": "WEEKDAY",
+      "f": "=WEEKDAY(F5)"
+    },
+    {
+      "id": "WEEKDAY_type2",
+      "func": "WEEKDAY",
+      "f": "=WEEKDAY(F5,2)"
+    },
+    {
+      "id": "WEEKDAY_type3",
+      "func": "WEEKDAY",
+      "f": "=WEEKDAY(F5,3)"
+    },
+    {
+      "id": "WEEKDAY_sunday",
+      "func": "WEEKDAY",
+      "f": "=WEEKDAY(F4,2)"
+    }
   ]
 }

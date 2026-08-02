@@ -13,7 +13,7 @@
     "listSep": ",",
     "date1904": false,
     "formulaProperty": ".Formula (US-English) only; .FormulaLocal is NOT used",
-    "caseCount": 362,
+    "caseCount": 371,
     "volatileSkipped": [
       "TODAY_serial",
       "NOW_int_is_today"
@@ -807,6 +807,18 @@
       "v": 400.0,
       "text": "400"
     },
+    "DATE_bare": {
+      "f": "=DATE(2026,7,31)",
+      "t": "n",
+      "v": 46234.0,
+      "text": "#######"
+    },
+    "EOMONTH_bare": {
+      "f": "=EOMONTH(F2,0)",
+      "t": "n",
+      "v": 46081.0,
+      "text": "46081"
+    },
     "DATE_basic": {
       "f": "=DATE(2026,7,31)*1",
       "t": "n",
@@ -980,6 +992,12 @@
       "t": "n",
       "v": 3.0,
       "text": "3"
+    },
+    "TRIM_bare": {
+      "f": "=TRIM(B4)",
+      "t": "s",
+      "v": "pad",
+      "text": "pad"
     },
     "TEXT_thousands": {
       "f": "=TEXT(1234.5,\"#,##0\")",
@@ -1370,6 +1388,42 @@
       "t": "s",
       "v": "0|0",
       "text": "0|0"
+    },
+    "SORT_bare": {
+      "f": "=SORT(E1:E6)",
+      "t": "n",
+      "v": 100.0,
+      "text": "100"
+    },
+    "UNIQUE_bare": {
+      "f": "=UNIQUE(D1:D6)",
+      "t": "s",
+      "v": "A",
+      "text": "A"
+    },
+    "FILTER_bare": {
+      "f": "=FILTER(E1:E6,D1:D6=\"A\")",
+      "t": "n",
+      "v": 100.0,
+      "text": "100"
+    },
+    "SORT_empty": {
+      "f": "=SORT(Z1:Z3)",
+      "t": "n",
+      "v": 0.0,
+      "text": "0"
+    },
+    "UNIQUE_empty": {
+      "f": "=UNIQUE(Z1:Z3)",
+      "t": "n",
+      "v": 0.0,
+      "text": "0"
+    },
+    "FILTER_nomatch": {
+      "f": "=IFERROR(FILTER(E1:E6,E1:E6>9999),\"NA\")",
+      "t": "s",
+      "v": "NA",
+      "text": "NA"
     },
     "SORT_nested_sum": {
       "f": "=SUM(SORT(E1:E6))",

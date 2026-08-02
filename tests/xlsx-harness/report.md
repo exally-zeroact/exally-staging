@@ -12,12 +12,12 @@
 
 | 判定 | 件数 |
 |---|---|
-| 一致 | 362 |
+| 一致 | 371 |
 | 不一致(既知) | 0 |
 | 不一致(新規) | 0 |
 | 未検証 | 0 |
 | 揮発性 | 2 |
-| **合計** | 364 |
+| **合計** | 373 |
 
 ※ 「未検証」は緑ではない。その版の真値がまだ無い、という意味。
 
@@ -68,7 +68,7 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 ## 経路の固定（将来 生HF に落ちたら気付くための錠）
 
 - 独自層(_jsComputeFormula)が答えたケース: **0件**
-- 生HFと本番経路で答えが違うケース: **180件** … この差が消えたら「素通りに落ちた」ということ
+- 生HFと本番経路で答えが違うケース: **184件** … この差が消えたら「素通りに落ちた」ということ
 - 独自層の入口: {"jsSetCount":1,"entryPoints":1,"pluginRegistered":true,"pluginCount":32}（1つだけであること）
 
 ## 全ケース
@@ -206,6 +206,8 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 | MATCH | MATCH_nested_wild | `=INDEX(E1:E6,MATCH("りん*",B1:B8,0))` | 100 | 100 | 未検証 | #N/A | 一致 |  |
 | INDEX | INDEX_MATCH_combo | `=INDEX(E1:E6,MATCH(20,C1:C6,0))` | 400 | 400 | 未検証 | 400 | 一致 |  |
 | INDEX | INDEX_MATCH_text | `=INDEX(E1:E6,MATCH("C",D1:D6,0))` | 400 | 400 | 未検証 | 400 | 一致 |  |
+| DATE | DATE_bare | `=DATE(2026,7,31)` | 46234 | 46234 | 未検証 | 46234 | 一致 |  |
+| EOMONTH | EOMONTH_bare | `=EOMONTH(F2,0)` | 46081 | 46081 | 未検証 | 46081 | 一致 |  |
 | DATE | DATE_basic | `=DATE(2026,7,31)*1` | 46234 | 46234 | 未検証 | 46234 | 一致 |  |
 | DATE | DATE_month_over | `=DATE(2026,13,1)*1` | 46388 | 46388 | 未検証 | 46388 | 一致 |  |
 | DATE | DATE_day_over | `=DATE(2026,1,32)*1` | 46054 | 46054 | 未検証 | 46054 | 一致 |  |
@@ -235,6 +237,7 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 | WEEKDAY | WEEKDAY_type2 | `=WEEKDAY(F5,2)` | 5 | 5 | 未検証 | 5 | 一致 |  |
 | WEEKDAY | WEEKDAY_type3 | `=WEEKDAY(F5,3)` | 4 | 4 | 未検証 | 4 | 一致 |  |
 | WEEKDAY | WEEKDAY_sunday | `=WEEKDAY(F4,2)` | 3 | 3 | 未検証 | 3 | 一致 |  |
+| TRIM | TRIM_bare | `=TRIM(B4)` | pad | pad | 未検証 | pad | 一致 |  |
 | TEXT | TEXT_thousands | `=TEXT(1234.5,"#,##0")` | 1,235 | 1,235 | 未検証 | 1235,##0 | 一致 |  |
 | TEXT | TEXT_thousands_dec | `=TEXT(1234.567,"#,##0.00")` | 1,234.57 | 1,234.57 | 未検証 | 1235,##0.00 | 一致 |  |
 | TEXT | TEXT_percent | `=TEXT(0.1235,"0.0%")` | 12.4% | 12.4% | 未検証 | 0.1% | 一致 |  |
@@ -300,6 +303,12 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 | TEXTJOIN | TEXTJOIN_keep | `=TEXTJOIN("\|",FALSE,G1:G3)` | \|0\|0 | \|0\|0 | 未検証 | #NAME? | 一致 |  |
 | TEXTJOIN | TEXTJOIN_nums | `=TEXTJOIN(",",TRUE,E1:E6)` | 100,200,300,400,500,600 | 100,200,300,400,500,600 | 未検証 | #NAME? | 一致 |  |
 | TEXTJOIN | TEXTJOIN_blank_skip | `=TEXTJOIN("\|",TRUE,G1:G3)` | 0\|0 | 0\|0 | 未検証 | #NAME? | 一致 |  |
+| SORT | SORT_bare | `=SORT(E1:E6)` | 100 | 100 | 未検証 | #NAME? | 一致 |  |
+| UNIQUE | UNIQUE_bare | `=UNIQUE(D1:D6)` | A | A | 未検証 | #NAME? | 一致 |  |
+| FILTER | FILTER_bare | `=FILTER(E1:E6,D1:D6="A")` | 100 | 100 | 未検証 | 100 | 一致 |  |
+| SORT | SORT_empty | `=SORT(Z1:Z3)` | 0 | 0 | 未検証 | #NAME? | 一致 |  |
+| UNIQUE | UNIQUE_empty | `=UNIQUE(Z1:Z3)` | 0 | 0 | 未検証 | #NAME? | 一致 |  |
+| FILTER | FILTER_nomatch | `=IFERROR(FILTER(E1:E6,E1:E6>9999),"NA")` | NA | NA | 未検証 | NA | 一致 |  |
 | SORT | SORT_nested_sum | `=SUM(SORT(E1:E6))` | 2100 | 2100 | 未検証 | #NAME? | 一致 |  |
 | SORT | SORT_nested_index2 | `=INDEX(SORT(E1:E6,1,-1),2)` | 500 | 500 | 未検証 | #NAME? | 一致 |  |
 | UNIQUE | UNIQUE_nested_sum | `=SUM(UNIQUE(E1:E6))` | 2100 | 2100 | 未検証 | #NAME? | 一致 |  |
