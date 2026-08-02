@@ -14,11 +14,12 @@
     "grid_excel_export_2026-08-02": "グリッド(book.html)の「Excelに保存」を実装。saveXlsx() の alert プレースホルダを廃止し、lib/xlsx-io.js(ハーネスと同じ1本・tests/から lib/ へ移設)＋新設 lib/grid-xlsx.js に繋いだ。SheetJS(930KB)は初回保存時の遅延読み込み。実Excelで開いて13項目一致(式・再計算値・表示形式・列幅・セル結合・XLOOKUP)。★実装中に実Excelで2つ踏んだ: (1) writeBook が表示形式(z)を運んでおらず、画面の「54,000」がファイルでは「54000」になっていた (2) readBook も z を落としていた。両方直してテストで固定。",
     "r19_bare_array_2026-08-02": "R19解決。素の =SORT(範囲) / =UNIQUE / =FILTER が #VALUE!(Cell range not allowed) になっていた原因は、配列を返すプラグイン関数が【出力の大きさを HyperFormula に申告していなかった】こと(arraySizeMethod)。★スパイクで実測: 申告を足すと通り、しかも隣のセルへ正しく展開(スピル)される。展開先に既にデータがある場合は HF が #SPILL! を返して既存データを守る(Excelと同じ)。版上げ・別ライブラリ・自前展開はいずれも不要だった。併せて col() が空配列で TypeError を投げていたのを修正(実Excelの =SORT(空範囲) は 0)。ケース9件を新設(素の形6件＋TRIM/DATE/EOMONTHの素の形3件)。一致 362→371。",
     "a_lite_2026-08-02": "(a-lite)実装。lib/excel-version.js を新設し、『その式は相手のExcelで動くか』を警告するようにした。★止めない・警告だけ・セル番地つき。出す場所は2つ: 式を書いた時(setCellFormula経由) と Excel書き出しの直前。①Excelにそもそも無い関数23個は【版に関係なく常時】警告(365の客でも #NAME? になるため。★こちらが本体) ②公式の版マーカーがある関数は選んだ版に連動(登録済みは14個)。★版マーカーが無い関数は『どの版にもある』扱い＝誤警告を出さない方に倒す。Mac/Onlineは365扱い。実測: Excel365ではハーネスの全373ケースで警告0件(誤警告ゼロ)。同期ガード tests/excel-version.test.mjs が、関数の本数が分類時点(412個)から変わったらCIを赤にする。★わざと表から抜く/本数をずらす の3通りで実際に赤くなることを確認済み。併せて『保存時に※版は影響しませんの1行を出す』暫定対処は廃止(役目が終わったため)。",
-    "cleanup_2026-08-02": "本番の掃除。削除済み5枚の残骸12本を本番(abcc812)とstagingの両方から削除し、絶対パス3件(hub.htmlの/kyuyo/・chat.htmlの/・kyuyo/index.htmlの/)を相対に直した。★tests/no-duplicate-libs.test.mjs を新設＝同じ名前の.jsが配信物に2箇所以上あったら赤。法定データ(社保/最賃/雇用保険/所得税/賞与/割増/年末調整/住民税)は【例外を認めず】無条件で赤。★テスト先行で、掃除の前に実際に赤くなることを確認してから消した。その時 auth.js も引っかかったが js/auth.js(ハブ)と kyuyo/js/auth.js(給与)は名前が同じだけの別物なので理由つきで例外に載せた。本番の実配信で12本とも404・絶対パス0件・全アセット98件で200以外0件を確認。"
+    "cleanup_2026-08-02": "本番の掃除。削除済み5枚の残骸12本を本番(abcc812)とstagingの両方から削除し、絶対パス3件(hub.htmlの/kyuyo/・chat.htmlの/・kyuyo/index.htmlの/)を相対に直した。★tests/no-duplicate-libs.test.mjs を新設＝同じ名前の.jsが配信物に2箇所以上あったら赤。法定データ(社保/最賃/雇用保険/所得税/賞与/割増/年末調整/住民税)は【例外を認めず】無条件で赤。★テスト先行で、掃除の前に実際に赤くなることを確認してから消した。その時 auth.js も引っかかったが js/auth.js(ハブ)と kyuyo/js/auth.js(給与)は名前が同じだけの別物なので理由つきで例外に載せた。本番の実配信で12本とも404・絶対パス0件・全アセット98件で200以外0件を確認。",
+    "wave3_p3_2026-08-02": "第3波P3。MODE/TRIMMEAN/PERCENTRANK/KURT/INTERCEPT/FORECAST(+.LINEAR)/IRR/PERMUT/PERMUTATIONA/MDETERM/GESTEP(+MODE.SNGL) を _jsSet から HFプラグインへ。★この11関数は【ケースが1件も無かった】ので真値から作った(32件・素の形と入れ子の両方)。一致 371→403 / 入れ子で壊れる式 16→5。★旧実装は IRR と KURT の答えを小数4桁で丸めていた(実測: IRR 0.1532 vs 実Excel 0.15322137877181552)。プラグインでは丸めない＝そこも直った。★xlfn-coverage と excel-version の同期ガードが両方とも発火した。実Excelに聞き直した結果、PERMUTATIONA だけ _xlfn. が要ると判明(他10個は不要)。登録関数は 412→425 に増えたので本数の記録も更新。実Excelで書き出しブック再計算 399/403(差4件は既存の file_roundtrip_known)。"
   },
   "roots": {
     "R11_input_parse": "セルに打ち込んだ『桁区切り付きの数』『日付に見える文字』を、Excel は数値/日付に解釈するがグリッドは文字列のまま持つ",
-    "R14_nesting_pending": "★独自層(_jsSet)に残っている関数は、式の一番外側でしか効かない。入れ子で使われると HyperFormula の答えに戻る。実測で16関数が該当(第3波P1で38→27、P2で27→16。tests/xlsx-harness/nesting-audit.mjs)。HFプラグインへ移せば直る",
+    "R14_nesting_pending": "★独自層(_jsSet)に残っている関数は、式の一番外側でしか効かない。入れ子で使われると HyperFormula の答えに戻る。実測で【5関数】が該当(P1で38→27、P2で27→16、P3で16→5)。残り5つは『版上げで不要になる可能性』枠と同じ物。",
     "R17_indirect_scope": "★INDIRECT はプラグイン化したが、対応するのは【同じシートのA1形式】のみ。'Sheet1!A1' と R1C1形式(第2引数FALSE)は #REF! を返す＝黙って違う数字を出さない。他シート参照はシート名→IDの解決にHyperFormulaの非公開クラスが要り、版が変わると壊れるため入れていない(版対応が目的のこの作りでは内部APIに寄りかからない)",
     "R15_no_spill": "★うちのグリッドはスピル(配列が隣のセルへ溢れる)に未対応。Excelでは =C1:C6*E1:E6 が6セルを占めるが、うちは1セルに左上の値だけを出す。★左上の値そのものはExcelと一致することを実測済み(ARR_* ケース)。溢れる範囲の見た目だけが違う",
     "R16_file_array_legacy": "★SheetJSが書き出したxlsxをExcelで開くと、配列を返す式が『旧来の解釈(暗黙の交差)』になる。Excelの動的配列として扱わせる印(セルの cm 属性とメタデータ)をSheetJSが書いていないため。グリッドの画面では正しいのに、落としたファイルをExcelで開くと違う値になる=『Excel落とし』の忠実さの問題",
@@ -30,44 +31,16 @@
   "nesting_pending": {
     "class": "A",
     "due": "2026-09-30",
-    "count": 16,
-    "note": "★第3波。下の関数はまだ _jsSet 側にあり、入れ子で使われると答えが変わる。nesting-audit.mjs の件数が baseline を超えたらCIが赤になる(黙って増やせない)。優先順位は『中小の実務で出る頻度 x 黙って違う値になる危険 x お金に効くか』で付けた。★P1(38->27)とP2(27->16)は 2026-08-01 に片付け済み。",
+    "count": 5,
+    "note": "★残り5つ(PERCENTILE/QUARTILE/N/DSUM/DCOUNT)だけ。これは『版上げで不要になる可能性』枠と完全に一致する。判断日 2026-09-30。P1(38→27)/P2(27→16)/P3(16→5) は 2026-08-01〜02 に片付け済み。",
     "funcs": [
       "PERCENTILE",
       "QUARTILE",
-      "MODE",
-      "TRIMMEAN",
-      "PERCENTRANK",
-      "KURT",
-      "INTERCEPT",
-      "FORECAST",
-      "IRR",
       "N",
-      "GESTEP",
-      "PERMUT",
-      "PERMUTATIONA",
-      "MDETERM",
       "DSUM",
       "DCOUNT"
     ],
     "priority": {
-      "P3_後回し": {
-        "due": "2026-11-30",
-        "funcs": [
-          "MODE",
-          "TRIMMEAN",
-          "PERCENTRANK",
-          "KURT",
-          "INTERCEPT",
-          "FORECAST",
-          "IRR",
-          "PERMUT",
-          "PERMUTATIONA",
-          "MDETERM",
-          "GESTEP"
-        ],
-        "根拠": "統計・行列・確率系。中小の事務では実質使われない。IRRだけは財務で出るが投資判断の場面に限られる"
-      },
       "版上げで不要になる可能性": {
         "status": "★版を上げないと決めたので、この5つは【誰も直さないまま残る】",
         "判断日": "2026-09-30",
@@ -116,6 +89,24 @@
         ],
         "根拠": "YEN/DOLLARはTEXTで代替されがち。LENB系は固定長の帳票で使う人だけ。RANKは営業成績など用途が限られる。AGGREGATEは使う人は使うが少数",
         "status": "★完了 2026-08-01。11関数すべてHFプラグインへ移し、入れ子でも正しくなった。真値ケース56件を新設し全て一致。"
+      },
+      "P3_完了_2026-08-02": {
+        "due": "2026-11-30",
+        "funcs": [
+          "MODE",
+          "TRIMMEAN",
+          "PERCENTRANK",
+          "KURT",
+          "INTERCEPT",
+          "FORECAST",
+          "IRR",
+          "PERMUT",
+          "PERMUTATIONA",
+          "MDETERM",
+          "GESTEP"
+        ],
+        "根拠": "統計・行列・確率系。中小の事務では実質使われない。IRRだけは財務で出るが投資判断の場面に限られる",
+        "status": "★完了 2026-08-02。11関数すべてHFプラグインへ移し、入れ子でも正しくなった。真値ケース32件を新設し全て一致。"
       }
     },
     "version_upgrade_finding": "HyperFormula 3.3.0 を実際に入れて全ケースを回した結果: 一致243/既知2/新規0 は変わらず(良くも悪くもならない)、入れ子の壊れは 38→33 に減る。ただし★SUMPRODUCT の配列演算は 2.6.1 / 2.7.1 / 3.3.0 のどれでも直らない(実測)。版上げは SUMPRODUCT の解決にはならない"

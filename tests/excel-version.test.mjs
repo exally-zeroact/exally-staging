@@ -32,8 +32,12 @@ function registeredNames() {
   return names;
 }
 /* ★実Excelに聞いて分類した時点の関数の本数。
-   HFを版上げしたり関数を足したりすると変わる＝その時は実Excelに聞き直して表を作り直す。 */
-const CLASSIFIED_COUNT = 412;
+   HFを版上げしたり関数を足したりすると変わる＝その時は実Excelに聞き直して表を作り直す。
+   ・2026-08-01: 412個（実Excel 16.0.20228 に COM で1つずつ問い合わせ）
+   ・2026-08-02: 425個（第3波P3で MODE/TRIMMEAN/PERCENTRANK/KURT/INTERCEPT/FORECAST(+.LINEAR)/
+     IRR/PERMUT/PERMUTATIONA/MDETERM/GESTEP/MODE.SNGL の13個を登録した分。
+     13個とも実Excelにある関数なので NOT_IN_EXCEL は増えていない＝実Excelで書き出しブックを開いて確認済み）。 */
+const CLASSIFIED_COUNT = 425;
 
 let pass = 0, fail = 0;
 const T = (n, fn) => { try { fn(); pass++; console.log('  ✓ ' + n); } catch (e) { fail++; console.log('  ✗ ' + n + ' — ' + e.message); } };

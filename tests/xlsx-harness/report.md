@@ -12,12 +12,12 @@
 
 | 判定 | 件数 |
 |---|---|
-| 一致 | 371 |
+| 一致 | 403 |
 | 不一致(既知) | 0 |
 | 不一致(新規) | 0 |
 | 未検証 | 0 |
 | 揮発性 | 2 |
-| **合計** | 373 |
+| **合計** | 405 |
 
 ※ 「未検証」は緑ではない。その版の真値がまだ無い、という意味。
 
@@ -68,8 +68,8 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 ## 経路の固定（将来 生HF に落ちたら気付くための錠）
 
 - 独自層(_jsComputeFormula)が答えたケース: **0件**
-- 生HFと本番経路で答えが違うケース: **184件** … この差が消えたら「素通りに落ちた」ということ
-- 独自層の入口: {"jsSetCount":1,"entryPoints":1,"pluginRegistered":true,"pluginCount":32}（1つだけであること）
+- 生HFと本番経路で答えが違うケース: **215件** … この差が消えたら「素通りに落ちた」ということ
+- 独自層の入口: {"jsSetCount":1,"entryPoints":1,"pluginRegistered":true,"pluginCount":43}（1つだけであること）
 
 ## 全ケース
 
@@ -446,3 +446,35 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 | ENCODEURL | ENC_specials | `=ENCODEURL("!'()*-_.~")` | %21%27%28%29%2A-_.%7E | %21%27%28%29%2A-_.%7E | 未検証 | #NAME? | 一致 |  |
 | ENCODEURL | ENC_nested | `=LEN(ENCODEURL("a b"))` | 5 | 5 | 未検証 | #NAME? | 一致 |  |
 | AGGREGATE | AGG_mode | `=IFERROR(AGGREGATE(13,0,E1:E6),"NA")` | NA | NA | 未検証 | NA | 一致 |  |
+| MODE | MODE_bare | `=MODE(I1:I6)` | 4 | 4 | 未検証 | #NAME? | 一致 |  |
+| MODE | MODE_none | `=IFERROR(MODE(C1:C6),"NA")` | NA | NA | 未検証 | NA | 一致 |  |
+| MODE.SNGL | MODE_sngl | `=MODE.SNGL(I1:I6)` | 4 | 4 | 未検証 | #NAME? | 一致 |  |
+| MODE | MODE_nested | `=ROUND(MODE(I1:I6),0)` | 4 | 4 | 未検証 | #NAME? | 一致 |  |
+| TRIMMEAN | TRIMMEAN_bare | `=TRIMMEAN(I1:I6,0.4)` | 4.25 | 4.25 | 未検証 | #NAME? | 一致 |  |
+| TRIMMEAN | TRIMMEAN_zero | `=TRIMMEAN(I1:I6,0)` | 4.66666666666667 | 4.666666666666667 | 未検証 | #NAME? | 一致 |  |
+| TRIMMEAN | TRIMMEAN_nested | `=ROUND(TRIMMEAN(I1:I6,0.4),2)` | 4.25 | 4.25 | 未検証 | #NAME? | 一致 |  |
+| PERCENTRANK | PERCENTRANK_bare | `=PERCENTRANK(I1:I6,4)` | 0.2 | 0.2 | 未検証 | #NAME? | 一致 |  |
+| PERCENTRANK | PERCENTRANK_top | `=PERCENTRANK(I1:I6,9)` | 1 | 1 | 未検証 | #NAME? | 一致 |  |
+| PERCENTRANK | PERCENTRANK_sig | `=PERCENTRANK(I1:I6,4,5)` | 0.2 | 0.2 | 未検証 | #NAME? | 一致 |  |
+| PERCENTRANK | PERCENTRANK_nested | `=ROUND(PERCENTRANK(I1:I6,4)*100,0)` | 20 | 20 | 未検証 | #NAME? | 一致 |  |
+| KURT | KURT_bare | `=KURT(I1:I6)` | 3.20791195716835 | 3.2079119571683474 | 未検証 | #NAME? | 一致 |  |
+| KURT | KURT_nested | `=ROUND(KURT(I1:I6),4)` | 3.2079 | 3.2079 | 未検証 | #NAME? | 一致 |  |
+| INTERCEPT | INTERCEPT_bare | `=INTERCEPT(E1:E6,C1:C6)` | 213.3608815427 | 213.36088154269973 | 未検証 | #NAME? | 一致 |  |
+| INTERCEPT | INTERCEPT_nested | `=ROUND(INTERCEPT(E1:E6,C1:C6),4)` | 213.3609 | 213.3609 | 未検証 | #NAME? | 一致 |  |
+| FORECAST | FORECAST_bare | `=FORECAST(30,E1:E6,C1:C6)` | 345.592286501377 | 345.59228650137743 | 未検証 | #NAME? | 一致 |  |
+| FORECAST.LINEAR | FORECAST_linear | `=FORECAST.LINEAR(30,E1:E6,C1:C6)` | 345.592286501377 | 345.59228650137743 | 未検証 | #NAME? | 一致 |  |
+| FORECAST | FORECAST_nested | `=ROUND(FORECAST(30,E1:E6,C1:C6),2)` | 345.59 | 345.59 | 未検証 | #NAME? | 一致 |  |
+| IRR | IRR_bare | `=IRR(J1:J5)` | 0.153221378771815 | 0.15322137877181552 | 未検証 | #NAME? | 一致 |  |
+| IRR | IRR_guess | `=IRR(J1:J5,0.2)` | 0.153221378771815 | 0.15322137876909325 | 未検証 | #NAME? | 一致 |  |
+| IRR | IRR_nested | `=ROUND(IRR(J1:J5)*100,2)` | 15.32 | 15.32 | 未検証 | #NAME? | 一致 |  |
+| PERMUT | PERMUT_bare | `=PERMUT(6,3)` | 120 | 120 | 未検証 | #NAME? | 一致 |  |
+| PERMUT | PERMUT_k0 | `=PERMUT(6,0)` | 1 | 1 | 未検証 | #NAME? | 一致 |  |
+| PERMUT | PERMUT_nested | `=PERMUT(6,3)/6` | 20 | 20 | 未検証 | #NAME? | 一致 |  |
+| PERMUTATIONA | PERMUTATIONA_bare | `=PERMUTATIONA(6,3)` | 216 | 216 | 未検証 | #NAME? | 一致 |  |
+| PERMUTATIONA | PERMUTATIONA_nested | `=PERMUTATIONA(6,3)/6` | 36 | 36 | 未検証 | #NAME? | 一致 |  |
+| MDETERM | MDETERM_bare | `=MDETERM(K1:L2)` | -2 | -2 | 未検証 | #NAME? | 一致 |  |
+| MDETERM | MDETERM_nested | `=ROUND(MDETERM(K1:L2),0)` | -2 | -2 | 未検証 | #NAME? | 一致 |  |
+| GESTEP | GESTEP_bare | `=GESTEP(5,4)` | 1 | 1 | 未検証 | #NAME? | 一致 |  |
+| GESTEP | GESTEP_below | `=GESTEP(3,4)` | 0 | 0 | 未検証 | #NAME? | 一致 |  |
+| GESTEP | GESTEP_nostep | `=GESTEP(5)` | 1 | 1 | 未検証 | #NAME? | 一致 |  |
+| GESTEP | GESTEP_nested | `=SUM(GESTEP(5,4),GESTEP(3,4))` | 1 | 1 | 未検証 | #NAME? | 一致 |  |

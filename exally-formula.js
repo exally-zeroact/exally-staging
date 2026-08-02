@@ -870,15 +870,19 @@ function _jsComputeFormula(sheet, v) {
   //  ★1つの関数は1箇所でだけ定義する（両方に居たら compare.mjs が赤にする）。
   //  ★第3波P2(2026-08-01)で さらに11関数をここから外して HFプラグインへ移した:
   //    DOLLAR(旧YEN) / TYPE / AGGREGATE / LENB / LEFTB / RIGHTB / MIDB / RANK / VALUETOTEXT / ENCODEURL
+  //  ★第3波P3(2026-08-02)で さらに11関数をここから外して HFプラグインへ移した:
+  //    MODE / TRIMMEAN / PERCENTRANK / KURT / INTERCEPT / FORECAST / IRR /
+  //    PERMUT / PERMUTATIONA / MDETERM / GESTEP
+  //  ★残る5つ(PERCENTILE/QUARTILE/N/DSUM/DCOUNT)は「版上げで不要になる可能性」枠。判断日 2026-09-30。
   var _jsSet = {PERCENTILE:1,QUARTILE:1,
-    MODE:1,TRIMMEAN:1,PERCENTRANK:1,KURT:1,INTERCEPT:1,FORECAST:1,IRR:1,XIRR:1,
+    XIRR:1,
     DATESTRING:1,OFFSET:1,
     N:1,
-    CONVERT:1,GESTEP:1,
+    CONVERT:1,
     DSUM:1,DAVERAGE:1,DCOUNT:1,DCOUNTA:1,DMAX:1,DMIN:1,DPRODUCT:1,
     DGET:1,DSTDEV:1,DSTDEVP:1,DVAR:1,DVARP:1,
-    LINEST:1,PERMUT:1,PERMUTATIONA:1,BINOM:1,FREQUENCY:1,
-    MDETERM:1,REDUCE:1,SCAN:1,MAP:1,MAKEARRAY:1,ISOMITTED:1};
+    LINEST:1,BINOM:1,FREQUENCY:1,
+    REDUCE:1,SCAN:1,MAP:1,MAKEARRAY:1,ISOMITTED:1};
   if(!_jsSet[_fnBase]) return null; // JS非対象 → HFへ
 
   var f = v.slice(1).trim().toUpperCase();
@@ -1088,9 +1092,12 @@ var _PLUGIN_FUNCS = ['SORT','UNIQUE','TEXT','TEXTJOIN','INT','MOD','VALUE','XLOO
   // ★第3波P1(2026-08-01)
   'CONCAT','LOOKUP','XMATCH','INDIRECT','DATEVALUE','NUMBERVALUE','FIXED','ASC','DBCS','TEXTBEFORE','TEXTAFTER',
   // ★第3波P2(2026-08-01)  ※YEN は DOLLAR の日本語UI表示名なので登録しない(convertFormula で寄せる)
-  'DOLLAR','TYPE','AGGREGATE','LENB','LEFTB','RIGHTB','MIDB','RANK','VALUETOTEXT','ENCODEURL'];
+  'DOLLAR','TYPE','AGGREGATE','LENB','LEFTB','RIGHTB','MIDB','RANK','VALUETOTEXT','ENCODEURL',
+  // ★第3波P3(2026-08-02) 統計・財務・行列
+  'MODE','TRIMMEAN','PERCENTRANK','KURT','INTERCEPT','FORECAST','IRR','PERMUT','PERMUTATIONA','MDETERM','GESTEP'];
 // 名前に「.」が入る別名は翻訳表だけ足す(内部名は EX.RANKEQ / EX.RANKAVG)
-var _PLUGIN_ALIAS = { 'EX.RANKEQ': 'RANK.EQ', 'EX.RANKAVG': 'RANK.AVG' };
+var _PLUGIN_ALIAS = { 'EX.RANKEQ': 'RANK.EQ', 'EX.RANKAVG': 'RANK.AVG',
+  'EX.MODESNGL': 'MODE.SNGL', 'EX.FORECASTLINEAR': 'FORECAST.LINEAR' };
 var _pluginRegistered = false;
 
 // 渡された物がクラス(HyperFormula)でも名前空間({HyperFormula, FunctionPlugin, ...})でも動くようにする。
@@ -1568,6 +1575,95 @@ function registerExallyFunctions(HFns) {
   };
   // ═══ 第3波P2 ここまで ═══════════════════════════════════════════
 
+  // ═══ 第3波P3(2026-08-02) ここから ═══════════════════════════════
+  //  統計・財務・行列。真値は tests/xlsx-harness/cases/92-wave3-p3.json ＋ 実Excel(16.0.20228)。
+  //  ★旧 _jsSet 側は答えを丸めていた(IRRとKURTを小数4桁で切っていた)。プラグインでは丸めない。
+  function nums(v){ return flat(v).map(toNum).filter(function(x){ return x!==null && isFinite(x); }); }
+  //  範囲を「行の配列」として取り出す(MDETERM は縦横の形が要る)
+  function grid2d(v){
+    if(v && typeof v==='object' && v.data) return v.data.map(function(row){ return row.map(function(x){ return toNum(unwrap(x)); }); });
+    if(Array.isArray(v)) return v.map(function(row){ return (Array.isArray(row)?row:[row]).map(function(x){ return toNum(unwrap(x)); }); });
+    return [[toNum(unwrap(v))]];
+  }
+  //  引数1つ(範囲)を取り、数値の並びを渡して1つの値を返す関数の共通形
+  function statFn(name, key, calc){
+    ExallyPlugin.prototype[name] = function(ast, state){
+      return this.runFunction(ast.args, state, this.metadata(key), function(range, a2, a3){
+        var A = flat(range);
+        var e = firstErr(A); if(e) return e;
+        var arr = nums(range);
+        if(!arr.length) return err(ErrorType.NUM);
+        return fromJs(calc(arr, a2, a3));
+      });
+    };
+  }
+  statFn('exMode', 'EX.MODE', function(arr){ return _jsMode(arr); });
+  statFn('exModeSngl', 'EX.MODESNGL', function(arr){ return _jsMode(arr); });
+  statFn('exKurt', 'EX.KURT', function(arr){ return _jsKurt(arr); });
+  statFn('exTrimmean', 'EX.TRIMMEAN', function(arr, pct){
+    var p = optNum(pct, 0);
+    if(p < 0 || p >= 1) return '#NUM!';
+    return _jsTrimmean(arr, p);
+  });
+  statFn('exPercentrank', 'EX.PERCENTRANK', function(arr, x, sig){
+    var v = optNum(x, null);
+    if(v===null) return '#N/A';
+    return _jsPercentrank(arr, v, (sig===undefined||sig===null) ? undefined : optNum(sig, 3));
+  });
+  statFn('exIrr', 'EX.IRR', function(arr, guess){
+    return _jsIrr(arr, (guess===undefined||guess===null) ? undefined : optNum(guess, 0.1));
+  });
+  //  ys と xs の2範囲を取る物
+  function twoRangeFn(name, key, calc){
+    ExallyPlugin.prototype[name] = function(ast, state){
+      return this.runFunction(ast.args, state, this.metadata(key), function(a, b, c){
+        var e = firstErr(flat(a)) || firstErr(flat(b)) || (c!==undefined && c!==null ? firstErr(flat(c)) : null);
+        if(e) return e;
+        return fromJs(calc(a, b, c));
+      });
+    };
+  }
+  twoRangeFn('exIntercept', 'EX.INTERCEPT', function(ys, xs){
+    var Y = nums(ys), X = nums(xs);
+    if(Y.length !== X.length || !Y.length) return '#N/A';
+    return _jsIntercept(Y, X);
+  });
+  twoRangeFn('exForecast', 'EX.FORECAST', function(x, ys, xs){
+    var v = toNum(flat(x)[0]); if(v===null) return '#VALUE!';
+    var Y = nums(ys), X = nums(xs);
+    if(Y.length !== X.length || !Y.length) return '#N/A';
+    return _jsForecast(v, Y, X);
+  });
+  twoRangeFn('exMdeterm', 'EX.MDETERM', function(m){
+    var g = grid2d(m);
+    if(!g.length || g.some(function(r){ return r.length !== g.length || r.some(function(x){ return x===null; }); })) return '#VALUE!';
+    return _jsMdeterm(g);
+  });
+  //  数を2つ取る物
+  function twoNumFn(name, key, calc){
+    ExallyPlugin.prototype[name] = function(ast, state){
+      return this.runFunction(ast.args, state, this.metadata(key), function(a, b){
+        if(isErr(a)) return a;
+        var n = toNum(flat(a)[0]);
+        var k = (b===undefined||b===null) ? null : toNum(flat(b)[0]);
+        if(n===null) return err(ErrorType.VALUE);
+        return fromJs(calc(n, k));
+      });
+    };
+  }
+  twoNumFn('exPermut', 'EX.PERMUT', function(n, k){
+    if(k===null || n<0 || k<0 || k>n) return '#NUM!';
+    return _jsPermut(Math.trunc(n), Math.trunc(k));
+  });
+  twoNumFn('exPermutationa', 'EX.PERMUTATIONA', function(n, k){
+    if(k===null || n<0 || k<0) return '#NUM!';
+    return _jsPermutationa(Math.trunc(n), Math.trunc(k));
+  });
+  twoNumFn('exGestep', 'EX.GESTEP', function(n, step){
+    return _jsGestep(n, step===null ? 0 : step);   // ★しきい値を省いたら0（実Excelで =GESTEP(5) が 1 なのを確認）
+  });
+  // ═══ 第3波P3 ここまで ═══════════════════════════════════════════
+
   var ANY = { argumentType: T.ANY };
   var OPT = { argumentType: T.ANY, optionalArg: true };
   ExallyPlugin.implementedFunctions = {
@@ -1610,7 +1706,21 @@ function registerExallyFunctions(HFns) {
     'EX.RANKEQ':      { method: 'exRankEq',      parameters: [ANY, ANY, OPT] },
     'EX.RANKAVG':     { method: 'exRankAvg',     parameters: [ANY, ANY, OPT] },
     'EX.VALUETOTEXT': { method: 'exValuetotext', parameters: [ANY, OPT], doesNotNeedArgumentsToBeComputed: true },
-    'EX.ENCODEURL':   { method: 'exEncodeurl',   parameters: [ANY] }
+    'EX.ENCODEURL':   { method: 'exEncodeurl',   parameters: [ANY] },
+    // ★第3波P3(2026-08-02) 統計・財務・行列
+    'EX.MODE':         { method: 'exMode',         parameters: [ANY] },
+    'EX.MODESNGL':     { method: 'exModeSngl',     parameters: [ANY] },
+    'EX.TRIMMEAN':     { method: 'exTrimmean',     parameters: [ANY, ANY] },
+    'EX.PERCENTRANK':  { method: 'exPercentrank',  parameters: [ANY, ANY, OPT] },
+    'EX.KURT':         { method: 'exKurt',         parameters: [ANY] },
+    'EX.INTERCEPT':    { method: 'exIntercept',    parameters: [ANY, ANY] },
+    'EX.FORECAST':     { method: 'exForecast',     parameters: [ANY, ANY, ANY] },
+    'EX.FORECASTLINEAR': { method: 'exForecast',   parameters: [ANY, ANY, ANY] },   // FORECAST.LINEAR は同じ物の新しい名前
+    'EX.IRR':          { method: 'exIrr',          parameters: [ANY, OPT] },
+    'EX.PERMUT':       { method: 'exPermut',       parameters: [ANY, ANY] },
+    'EX.PERMUTATIONA': { method: 'exPermutationa', parameters: [ANY, ANY] },
+    'EX.MDETERM':      { method: 'exMdeterm',      parameters: [ANY] },
+    'EX.GESTEP':       { method: 'exGestep',       parameters: [ANY, OPT] }
   };
   var tr = {};
   _PLUGIN_FUNCS.forEach(function(n){ tr['EX.'+n] = n; });

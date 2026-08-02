@@ -1,0 +1,48 @@
+{
+  "group": "第3波P3（_jsSet → HFプラグインへ移す11関数）",
+  "note": "★これまでケースが1件も無かった11関数。真値は実Excel(16.0.20228 / 日本語1041)から取る。★各関数に必ず『素の形』と『入れ子』の両方を入れる(bare-form.test.mjs の決まり)。入力は I1:I6(統計・同じ値を混ぜてある) / J1:J5(現金の出入り) / K1:L2(2x2行列) をこの波で追加した。",
+  "cases": [
+    { "id": "MODE_bare",           "func": "MODE",         "f": "=MODE(I1:I6)", "why": "★素の形。最も多く出る値" },
+    { "id": "MODE_none",           "func": "MODE",         "f": "=IFERROR(MODE(C1:C6),\"NA\")", "why": "重複が無い時" },
+    { "id": "MODE_sngl",           "func": "MODE.SNGL",    "f": "=MODE.SNGL(I1:I6)" },
+    { "id": "MODE_nested",         "func": "MODE",         "f": "=ROUND(MODE(I1:I6),0)", "why": "★入れ子" },
+
+    { "id": "TRIMMEAN_bare",       "func": "TRIMMEAN",     "f": "=TRIMMEAN(I1:I6,0.4)", "why": "★素の形。上下を切り落とした平均" },
+    { "id": "TRIMMEAN_zero",       "func": "TRIMMEAN",     "f": "=TRIMMEAN(I1:I6,0)", "why": "0なら普通の平均と同じか" },
+    { "id": "TRIMMEAN_nested",     "func": "TRIMMEAN",     "f": "=ROUND(TRIMMEAN(I1:I6,0.4),2)", "why": "★入れ子" },
+
+    { "id": "PERCENTRANK_bare",    "func": "PERCENTRANK",  "f": "=PERCENTRANK(I1:I6,4)", "why": "★素の形" },
+    { "id": "PERCENTRANK_top",     "func": "PERCENTRANK",  "f": "=PERCENTRANK(I1:I6,9)", "why": "最大値は1になるか" },
+    { "id": "PERCENTRANK_sig",     "func": "PERCENTRANK",  "f": "=PERCENTRANK(I1:I6,4,5)", "why": "有効桁の指定" },
+    { "id": "PERCENTRANK_nested",  "func": "PERCENTRANK",  "f": "=ROUND(PERCENTRANK(I1:I6,4)*100,0)", "why": "★入れ子" },
+
+    { "id": "KURT_bare",           "func": "KURT",         "f": "=KURT(I1:I6)", "why": "★素の形（尖り具合）" },
+    { "id": "KURT_nested",         "func": "KURT",         "f": "=ROUND(KURT(I1:I6),4)", "why": "★入れ子" },
+
+    { "id": "INTERCEPT_bare",      "func": "INTERCEPT",    "f": "=INTERCEPT(E1:E6,C1:C6)", "why": "★素の形（切片）" },
+    { "id": "INTERCEPT_nested",    "func": "INTERCEPT",    "f": "=ROUND(INTERCEPT(E1:E6,C1:C6),4)", "why": "★入れ子" },
+
+    { "id": "FORECAST_bare",       "func": "FORECAST",     "f": "=FORECAST(30,E1:E6,C1:C6)", "why": "★素の形（予測）" },
+    { "id": "FORECAST_linear",     "func": "FORECAST.LINEAR", "f": "=FORECAST.LINEAR(30,E1:E6,C1:C6)", "why": "新しい名前も同じ答えか" },
+    { "id": "FORECAST_nested",     "func": "FORECAST",     "f": "=ROUND(FORECAST(30,E1:E6,C1:C6),2)", "why": "★入れ子" },
+
+    { "id": "IRR_bare",            "func": "IRR",          "f": "=IRR(J1:J5)", "why": "★素の形（内部収益率）" },
+    { "id": "IRR_guess",           "func": "IRR",          "f": "=IRR(J1:J5,0.2)", "why": "推測値を渡した時" },
+    { "id": "IRR_nested",          "func": "IRR",          "f": "=ROUND(IRR(J1:J5)*100,2)", "why": "★入れ子（％にする）" },
+
+    { "id": "PERMUT_bare",         "func": "PERMUT",       "f": "=PERMUT(6,3)", "why": "★素の形（並べ方の数）" },
+    { "id": "PERMUT_k0",           "func": "PERMUT",       "f": "=PERMUT(6,0)" },
+    { "id": "PERMUT_nested",       "func": "PERMUT",       "f": "=PERMUT(6,3)/6", "why": "★入れ子" },
+
+    { "id": "PERMUTATIONA_bare",   "func": "PERMUTATIONA", "f": "=PERMUTATIONA(6,3)", "why": "★素の形（重複を許す並べ方）" },
+    { "id": "PERMUTATIONA_nested", "func": "PERMUTATIONA", "f": "=PERMUTATIONA(6,3)/6", "why": "★入れ子" },
+
+    { "id": "MDETERM_bare",        "func": "MDETERM",      "f": "=MDETERM(K1:L2)", "why": "★素の形（2x2の行列式）" },
+    { "id": "MDETERM_nested",      "func": "MDETERM",      "f": "=ROUND(MDETERM(K1:L2),0)", "why": "★入れ子" },
+
+    { "id": "GESTEP_bare",         "func": "GESTEP",       "f": "=GESTEP(5,4)", "why": "★素の形（しきい値以上なら1）" },
+    { "id": "GESTEP_below",        "func": "GESTEP",       "f": "=GESTEP(3,4)" },
+    { "id": "GESTEP_nostep",       "func": "GESTEP",       "f": "=GESTEP(5)", "why": "しきい値を省いた時（0とみなすか）" },
+    { "id": "GESTEP_nested",       "func": "GESTEP",       "f": "=SUM(GESTEP(5,4),GESTEP(3,4))", "why": "★入れ子" }
+  ]
+}

@@ -13,7 +13,7 @@
     "listSep": ",",
     "date1904": false,
     "formulaProperty": ".Formula (US-English) only; .FormulaLocal is NOT used",
-    "caseCount": 371,
+    "caseCount": 403,
     "volatileSkipped": [
       "TODAY_serial",
       "NOW_int_is_today"
@@ -2250,6 +2250,198 @@
       "t": "s",
       "v": "NA",
       "text": "NA"
+    },
+    "MODE_bare": {
+      "f": "=MODE(I1:I6)",
+      "t": "n",
+      "v": 4.0,
+      "text": "4"
+    },
+    "MODE_none": {
+      "f": "=IFERROR(MODE(C1:C6),\"NA\")",
+      "t": "s",
+      "v": "NA",
+      "text": "NA"
+    },
+    "MODE_sngl": {
+      "f": "=MODE.SNGL(I1:I6)",
+      "t": "n",
+      "v": 4.0,
+      "text": "4"
+    },
+    "MODE_nested": {
+      "f": "=ROUND(MODE(I1:I6),0)",
+      "t": "n",
+      "v": 4.0,
+      "text": "4"
+    },
+    "TRIMMEAN_bare": {
+      "f": "=TRIMMEAN(I1:I6,0.4)",
+      "t": "n",
+      "v": 4.25,
+      "text": "4.25"
+    },
+    "TRIMMEAN_zero": {
+      "f": "=TRIMMEAN(I1:I6,0)",
+      "t": "n",
+      "v": 4.666666666666667,
+      "text": "4.666667"
+    },
+    "TRIMMEAN_nested": {
+      "f": "=ROUND(TRIMMEAN(I1:I6,0.4),2)",
+      "t": "n",
+      "v": 4.25,
+      "text": "4.25"
+    },
+    "PERCENTRANK_bare": {
+      "f": "=PERCENTRANK(I1:I6,4)",
+      "t": "n",
+      "v": 0.2,
+      "text": "0.2"
+    },
+    "PERCENTRANK_top": {
+      "f": "=PERCENTRANK(I1:I6,9)",
+      "t": "n",
+      "v": 1.0,
+      "text": "1"
+    },
+    "PERCENTRANK_sig": {
+      "f": "=PERCENTRANK(I1:I6,4,5)",
+      "t": "n",
+      "v": 0.2,
+      "text": "0.2"
+    },
+    "PERCENTRANK_nested": {
+      "f": "=ROUND(PERCENTRANK(I1:I6,4)*100,0)",
+      "t": "n",
+      "v": 20.0,
+      "text": "20"
+    },
+    "KURT_bare": {
+      "f": "=KURT(I1:I6)",
+      "t": "n",
+      "v": 3.2079119571683474,
+      "text": "3.207912"
+    },
+    "KURT_nested": {
+      "f": "=ROUND(KURT(I1:I6),4)",
+      "t": "n",
+      "v": 3.2079,
+      "text": "3.2079"
+    },
+    "INTERCEPT_bare": {
+      "f": "=INTERCEPT(E1:E6,C1:C6)",
+      "t": "n",
+      "v": 213.36088154269973,
+      "text": "213.3609"
+    },
+    "INTERCEPT_nested": {
+      "f": "=ROUND(INTERCEPT(E1:E6,C1:C6),4)",
+      "t": "n",
+      "v": 213.3609,
+      "text": "213.3609"
+    },
+    "FORECAST_bare": {
+      "f": "=FORECAST(30,E1:E6,C1:C6)",
+      "t": "n",
+      "v": 345.59228650137743,
+      "text": "345.5923"
+    },
+    "FORECAST_linear": {
+      "f": "=FORECAST.LINEAR(30,E1:E6,C1:C6)",
+      "t": "n",
+      "v": 345.59228650137743,
+      "text": "345.5923"
+    },
+    "FORECAST_nested": {
+      "f": "=ROUND(FORECAST(30,E1:E6,C1:C6),2)",
+      "t": "n",
+      "v": 345.59,
+      "text": "345.59"
+    },
+    "IRR_bare": {
+      "f": "=IRR(J1:J5)",
+      "t": "n",
+      "v": 0.15322137877181552,
+      "text": "15%"
+    },
+    "IRR_guess": {
+      "f": "=IRR(J1:J5,0.2)",
+      "t": "n",
+      "v": 0.15322137876909325,
+      "text": "15%"
+    },
+    "IRR_nested": {
+      "f": "=ROUND(IRR(J1:J5)*100,2)",
+      "t": "n",
+      "v": 15.32,
+      "text": "15.32"
+    },
+    "PERMUT_bare": {
+      "f": "=PERMUT(6,3)",
+      "t": "n",
+      "v": 120.0,
+      "text": "120"
+    },
+    "PERMUT_k0": {
+      "f": "=PERMUT(6,0)",
+      "t": "n",
+      "v": 1.0,
+      "text": "1"
+    },
+    "PERMUT_nested": {
+      "f": "=PERMUT(6,3)/6",
+      "t": "n",
+      "v": 20.0,
+      "text": "20"
+    },
+    "PERMUTATIONA_bare": {
+      "f": "=PERMUTATIONA(6,3)",
+      "t": "n",
+      "v": 216.0,
+      "text": "216"
+    },
+    "PERMUTATIONA_nested": {
+      "f": "=PERMUTATIONA(6,3)/6",
+      "t": "n",
+      "v": 36.0,
+      "text": "36"
+    },
+    "MDETERM_bare": {
+      "f": "=MDETERM(K1:L2)",
+      "t": "n",
+      "v": -2.0,
+      "text": "-2"
+    },
+    "MDETERM_nested": {
+      "f": "=ROUND(MDETERM(K1:L2),0)",
+      "t": "n",
+      "v": -2.0,
+      "text": "-2"
+    },
+    "GESTEP_bare": {
+      "f": "=GESTEP(5,4)",
+      "t": "n",
+      "v": 1.0,
+      "text": "1"
+    },
+    "GESTEP_below": {
+      "f": "=GESTEP(3,4)",
+      "t": "n",
+      "v": 0.0,
+      "text": "0"
+    },
+    "GESTEP_nostep": {
+      "f": "=GESTEP(5)",
+      "t": "n",
+      "v": 1.0,
+      "text": "1"
+    },
+    "GESTEP_nested": {
+      "f": "=SUM(GESTEP(5,4),GESTEP(3,4))",
+      "t": "n",
+      "v": 1.0,
+      "text": "1"
     }
   },
   "inputProbes": {

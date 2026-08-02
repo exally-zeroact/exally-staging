@@ -1,23 +1,12 @@
 {
- "overrideCount": 38,
- "pluginCount": 32,
- "measured": 391,
- "brokenCount": 16,
+ "overrideCount": 27,
+ "pluginCount": 43,
+ "measured": 412,
+ "brokenCount": 5,
  "byFunc": {
   "PERCENTILE": 1,
   "QUARTILE": 1,
-  "MODE": 1,
-  "TRIMMEAN": 1,
-  "PERCENTRANK": 1,
-  "KURT": 1,
-  "INTERCEPT": 1,
-  "FORECAST": 1,
-  "IRR": 1,
   "N": 1,
-  "GESTEP": 1,
-  "PERMUT": 1,
-  "PERMUTATIONA": 1,
-  "MDETERM": 1,
   "DSUM": 1,
   "DCOUNT": 1
  },
@@ -37,87 +26,10 @@
    "nested": "#NAME?"
   },
   {
-   "id": "PROBE_MODE",
-   "func": "MODE",
-   "f": "=MODE(D1:D6)",
-   "top": "#N/A",
-   "nested": "#NAME?"
-  },
-  {
-   "id": "PROBE_TRIMMEAN",
-   "func": "TRIMMEAN",
-   "f": "=TRIMMEAN(E1:E6,0.2)",
-   "top": "350",
-   "nested": "#NAME?"
-  },
-  {
-   "id": "PROBE_PERCENTRANK",
-   "func": "PERCENTRANK",
-   "f": "=PERCENTRANK(E1:E6,300)",
-   "top": "0.4",
-   "nested": "#NAME?"
-  },
-  {
-   "id": "PROBE_KURT",
-   "func": "KURT",
-   "f": "=KURT(E1:E6)",
-   "top": "-1.2",
-   "nested": "#NAME?"
-  },
-  {
-   "id": "PROBE_INTERCEPT",
-   "func": "INTERCEPT",
-   "f": "=INTERCEPT(E1:E6,C1:C6)",
-   "top": "213.36088154269973",
-   "nested": "#NAME?"
-  },
-  {
-   "id": "PROBE_FORECAST",
-   "func": "FORECAST",
-   "f": "=FORECAST(30,E1:E6,C1:C6)",
-   "top": "345.59228650137743",
-   "nested": "#NAME?"
-  },
-  {
-   "id": "PROBE_IRR",
-   "func": "IRR",
-   "f": "=IRR(A1:A6)",
-   "top": "32147133462.1133",
-   "nested": "#NAME?"
-  },
-  {
    "id": "PROBE_N",
    "func": "N",
    "f": "=N(A1)",
    "top": "1000",
-   "nested": "#NAME?"
-  },
-  {
-   "id": "PROBE_GESTEP",
-   "func": "GESTEP",
-   "f": "=GESTEP(A1,500)",
-   "top": "1",
-   "nested": "#NAME?"
-  },
-  {
-   "id": "PROBE_PERMUT",
-   "func": "PERMUT",
-   "f": "=PERMUT(5,2)",
-   "top": "20",
-   "nested": "#NAME?"
-  },
-  {
-   "id": "PROBE_PERMUTATIONA",
-   "func": "PERMUTATIONA",
-   "f": "=PERMUTATIONA(5,2)",
-   "top": "25",
-   "nested": "#NAME?"
-  },
-  {
-   "id": "PROBE_MDETERM",
-   "func": "MDETERM",
-   "f": "=MDETERM(C1:D2)",
-   "top": "NaN",
    "nested": "#NAME?"
   },
   {
