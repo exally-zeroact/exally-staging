@@ -44,6 +44,8 @@ jobs:
         run: node tests/pages-hosting.test.mjs --self-test
       - name: Exally tests (共有データ/集計/台帳→実績値/横断集計/ハブUI/xlsxハーネス/Pages配信ガード)
         run: node tests/run.js
+      - name: ★重複ガード (同じ物が2箇所に無いか・法定データは例外なし)
+        run: node tests/no-duplicate-libs.test.mjs
       - name: CI coverage guard (CIから黙って外れているテストが無いか=除外は理由と戻す条件つきのみ)
         run: node tests/ci-coverage.test.mjs
 

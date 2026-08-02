@@ -82,10 +82,12 @@ T('② ★計算そのものが版で変わるようになったら台帳を書�
       + '台帳は「計算そのものは版を見ない」のまま。どちらが正しいか決めて揃えること。');
   }
 });
-T('② 「まだ決めていない」ことに期限と選択肢が書いてある', () => {
+T('② 未決なら期限つき／決着済みなら「何に決めたか」が書いてある（宙ぶらりんを許さない）', () => {
   const s = VS.product_version_selector;
-  if (!s.due) throw new Error('due（期限）が無い');
-  if (!s['判断すること'] || s['判断すること'].length < 20) throw new Error('判断すること（選択肢）が書かれていない');
+  const closed = /閉じた|完了|決着/.test(s.status || '');
+  if (!closed && !s.due) throw new Error('まだ決めていないのに due（期限）が無い');
+  if (closed && !/(a)|警告/.test(s.status || '')) throw new Error('決着済みなのに「何に決めたか」が書かれていない');
+  if (!s['判断すること'] || s['判断すること'].length < 20) throw new Error('判断すること（選択肢と結論）が書かれていない');
 });
 T('版を足す手順が書いてある（次の人が同じ事を調べ直さない）', () => {
   if (!VS.how_to_add_a_version) throw new Error('how_to_add_a_version が無い');

@@ -49,18 +49,9 @@ const EXCEPTIONS = {
     restoreWhen: '配信を Vercel へ移す時（最終形のURL集約＝自前ドメインを貼る時）。'
       + 'その時この例外を消して、実際にチャットが通ることを実配信で確かめる。',
   },
-  'statutory-hydrate.js': {
-    what: '本番SupabaseのURL＋anon鍵',
-    reason: '削除した5枚(請求書/見積/旧トップ/テンプレ/旧給与明細)が読んでいたファイルの残骸で、'
-      + '今はどのHTMLからも読み込まれていない＝実行されない死にファイル。'
-      + '本番 exally にも同じ物が同じように残っている（statutory-hydrate.js のほか、'
-      + 'koyohoken-ritsu.js / kyuuryoumeisai-data.js / payslip-mint-*.js / payslip-preview.js /'
-      + ' quiz.js / rouki-ritsu.js / saitei-chingin.js / shakaihoken-hyo.js / shotokuzei-hyou.js /'
-      + ' shouhizei-ritsu.js の計12本）。'
-      + 'staging だけで消すと本番との差になり、次の合わせ直しで復活する＝直したことにならない。',
-    restoreWhen: '本番 exally の掃除（2026-08-08 予定）で12本まとめて削除する時。'
-      + '本番と staging を同時に消して、この例外も消す。',
-  },
+  //  ★statutory-hydrate.js の例外は 2026-08-02 に消した。
+  //    削除済み5枚の残骸12本を本番(abcc812)とstagingの両方から実際に削除したため。
+  //    本番の実配信でも12本とも404になっていることを確認済み。
   'kyuyo/scripts/verify-statutory.mjs': {
     what: '中央statutory(法定データ)の読取URL',
     reason: 'statutory は健保料率・最賃・所得税表などの法定データで、全国で1つの表。'
