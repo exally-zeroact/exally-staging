@@ -443,5 +443,84 @@ T('★介護保険料率は lib からしか取らない（app側にフォール
   //   代わりに tests/no-hardcoded-statutory.test.mjs が「app側に率の数字が書かれていたら赤」で守る。
 });
 
+/* ★契約(オペレーション)経由の配線（2026-08-03・docs/SPEC_engine_grid_contract_v0.md）
+   lib が緑でも「ボタンがそこを通っているか」は別。実際に #b-xlsx を押して確かめる。 */
+T('★「Excelに保存(月次)」が契約経由で通る（registry→engine→cells が実際にファイルへ）', () => {
+  ok(win.OpRegistry, 'OpRegistry が読めている');
+  ok(win.OpPayrollMonthly, 'OpPayrollMonthly が読めている');
+  const A = win.__PAYSLIP_TEST;
+  // 既定のサンプル状態で押す（客が最初に触る形）
+  A.state.month = A.state.month || '2026-06';
+  const calls = [];
+  const alerts = [];
+  const realDl = win.PayslipXlsx.downloadSheets;
+  const realAlert = win.alert;
+  win.PayslipXlsx.downloadSheets = (sheets, opts) => { calls.push({ sheets, opts }); return true; };
+  win.alert = (m) => alerts.push(String(m));
+  try {
+    const btn = win.document.getElementById('b-xlsx');
+    ok(btn, '#b-xlsx がある');
+    btn.click();
+  } finally { win.PayslipXlsx.downloadSheets = realDl; win.alert = realAlert; }
+  if (alerts.length) throw new Error('検証で弾かれました（既定の状態が契約を通らない）: ' + alerts[0].slice(0, 200));
+  eq(calls.length, 1, 'ファイル書き出しが1回呼ばれた');
+  ok(/^給与明細_\d{4}-\d{2}\.xlsx$/.test(calls[0].opts.filename), 'ファイル名: ' + calls[0].opts.filename);
+  ok(calls[0].sheets.length >= 2, 'シートが集計＋人数ぶんある: ' + calls[0].sheets.length);
+  eq(calls[0].sheets[0].name, '集計', '1枚目は集計');
+  // ★レジストリに実際に登録された＝契約を通った証拠
+  ok(win.OpRegistry.has('payroll.monthly'), 'レジストリに payroll.monthly が登録されている');
+});
+
+T('★検証NGなら【ファイルを作らず】どこが悪いか言う（0円の明細を出さない）', () => {
+  const A = win.__PAYSLIP_TEST;
+  const calls = [];
+  const realDl = win.PayslipXlsx.downloadSheets;
+  const keepPref = A.state.employees[0].pref;
+  win.PayslipXlsx.downloadSheets = (s, o) => { calls.push(o); return true; };
+  let shown = '';
+  try {
+    A.state.employees[0].pref = 'atlantis';        // ★契約が弾く値（都道府県のenum外）
+    win.document.getElementById('b-xlsx').click();
+    // uiAlert は window.alert ではなく自前のモーダル。実際に画面へ出た文を読む。
+    const body = win.document.querySelector('.ui-modal-ov .ui-modal-b');
+    shown = body ? body.textContent : '';
+    const ov = win.document.querySelector('.ui-modal-ov');
+    if (ov && ov.parentNode) ov.parentNode.removeChild(ov);   // 後のテストに残さない
+  } finally {
+    A.state.employees[0].pref = keepPref;
+    win.PayslipXlsx.downloadSheets = realDl;
+  }
+  eq(calls.length, 0, '★ファイルを作っていない');
+  ok(shown, '理由を画面に出している');
+  ok(/employees\[0\]\.pref/.test(shown), '★どこが悪いか(path)を客に言えている: ' + shown.slice(0, 140));
+});
+
+T('★provenance が出典と確認日を持つ（オフラインの内蔵値でも空にしない）', () => {
+  const op = win.OpRegistry.get('payroll.monthly');
+  const A = win.__PAYSLIP_TEST;
+  const res = op.engine({ month: A.state.month, company: A.state.company, employees: A.state.employees, otHistory: {}, options: {} });
+  const st = res.provenance.statutory;
+  for (const k of ['kenko', 'kaigo', 'kosei', 'koyo', 'saitei']) {
+    ok(st[k], k + ' が provenance に無い');
+    eq(st[k].origin, 'builtin', k + ': 中央から取っていないので builtin');
+    ok(st[k].source_url, '★' + k + ': 出典URLが空');
+    ok(st[k].verified_at || st[k].note, '★' + k + ': 確認日も理由も無い（黙って空にしない）');
+  }
+  eq(st.kenko.verified_at, '2026-08-03', '健保: 一次情報を開いた日');
+  eq(st.koyo.verified_at, '2026-08-03', '雇用保険: 一次情報を開いた日');
+  ok(st.saitei.verified_at === null && /未確認|一部のみ/.test(st.saitei.note || ''), '★最賃: 開いていないので日付を書かず、理由を書いている');
+});
+
+T('★中央(statutory)から取れた時は、中央の出典・確認日で上書きされる', () => {
+  const op = win.OpRegistry.get('payroll.monthly');
+  const A = win.__PAYSLIP_TEST;
+  const src = { 'koyo:2026': { source_url: 'https://example.gov/central', verified_at: '2026-07-31' } };
+  const res = op.engine({ month: '2026-06', company: A.state.company, employees: A.state.employees, otHistory: {}, options: { statutorySource: src } });
+  const k = res.provenance.statutory.koyo;
+  eq(k.origin, 'central', '中央由来と分かる');
+  eq(k.source_url, 'https://example.gov/central', '中央の出典');
+  eq(k.verified_at, '2026-07-31', '中央の確認日');
+});
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

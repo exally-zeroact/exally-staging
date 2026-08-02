@@ -10,6 +10,32 @@
   function PM(){ return (typeof PayrollMonthly!=='undefined')?PayrollMonthly:(typeof window!=='undefined'&&window.PayrollMonthly); }
   function PW(){ return (typeof PayrollWarnings!=='undefined')?PayrollWarnings:(typeof window!=='undefined'&&window.PayrollWarnings); }
   function ctxOf(){ return { company: state.company, month: state.month, otHist: state._otHist }; }
+
+  /* ══ 契約(オペレーション)の入口 ══════════════════════════════════════
+   *  設計: docs/SPEC_engine_grid_contract_v0.md
+   *  ★業務の答えを出すのはオペだけ。面(この app.js)がやるのは
+   *    「自分の形 → inputs への詰め替え」と「返ってきた物の見せ方・ファイル書き出し」だけ。
+   *    ★面では1円も計算しない。
+   *  ★呼ばれていない契約は「有る」と言わない — tests/op-boundary.test.mjs が
+   *    「ops配下とテストの外から最低1箇所呼ばれているか」を見ている。
+   */
+  var _statSource = {};   // 中央(statutory)から流し込んだ行の出典・確認日。provenance に載せる
+  function opPayrollMonthly(){
+    var R = (typeof OpRegistry !== 'undefined') ? OpRegistry : (window && window.OpRegistry);
+    if(!R) return null;
+    if(!R.has('payroll.monthly')){
+      var o = (typeof OpPayrollMonthly !== 'undefined') ? OpPayrollMonthly : (window && window.OpPayrollMonthly);
+      if(!o) return null;
+      R.register(o);
+    }
+    return R.get('payroll.monthly');
+  }
+  // 画面の状態 → オペの inputs（詰め替えるだけ。判定も計算もしない）
+  function payrollInputs(emps){
+    return { month: state.month, company: state.company, employees: emps,
+      otHistory: state._otHist || {}, options: { statutorySource: _statSource } };
+  }
+
   var num=function(v){ return PM().num(v); }; // 数値化は lib/payroll-monthly.js へ移設(単一定義)
   var yen=function(n){return '¥'+Math.round(n).toLocaleString('ja-JP');};
   var fmtN=function(v){var n=num(v);return n?n.toLocaleString('ja-JP'):(v===0||v==='0'?'0':'');};
@@ -2906,10 +2932,28 @@
     var _fitT; window.addEventListener('resize',function(){ if(!$('#scr-print')||!$('#scr-print').classList.contains('active'))return; clearTimeout(_fitT); _fitT=setTimeout(fitPreview,120); });
     $('#b-xlsx').addEventListener('click',function(){ if(!window.PayslipXlsx)return; markOutput(); var v=$('#p-emp').value; var emps=(v==='__all')?state.employees.filter(function(e){return isActiveInMonth(e,state.month);}):[state.employees[+v]];
       var isBonus=state.printMode==='bonus'; // 印刷の月次/賞与トグルに合わせる(賞与で月次が出る不具合を修正)
+      // ★月次は契約(オペレーション)経由で出す。セルを決めるのはエンジン側だけ＝画面とファイルがズレようがない。
+      //   賞与はまだオペ化していないので従来の道（オペ化したらここも契約経由にする）。
+      if(!isBonus && exportMonthlyViaOp(emps)) return;
       var people=isBonus?buildBonusPeople(emps):buildPeople(emps);
       var lbl=(isBonus?bonusMonthLabel():monthLabel()).replace(/ /g,'');
       var fn=isBonus?('賞与明細_'+bonusYmOf()+'.xlsx'):('給与明細_'+state.month+'.xlsx');
       PayslipXlsx.download(people, {company:state.company.name, monthLabel:lbl, filename:fn}); });
+    // ★契約経由の月次Excel。面の仕事は「詰め替え」と「ファイルに書く」だけ。
+    //   検証NGなら【ファイルを作らず】どこが悪いかをその場で言う（0円の明細を出さない）。
+    function exportMonthlyViaOp(emps){
+      var op=opPayrollMonthly(); if(!op) return false;               // 読めていなければ従来の道
+      var res=op.engine(payrollInputs(emps));
+      if(res.errors && res.errors.length){
+        uiAlert('入力に問題があるためExcelを作りませんでした。\n\n'
+          + res.errors.slice(0,5).map(function(e){ return '・'+e.path+'：'+e.message; }).join('\n')
+          + (res.errors.length>5?('\n…ほか'+(res.errors.length-5)+'件'):''));
+        return true;                                                 // ★止めた（従来の道へは落とさない）
+      }
+      var out=op.excel.export(res); if(!out) return false;
+      PayslipXlsx.downloadSheets(out.sheets, { filename: out.filename });
+      return true;
+    }
     // Web明細で公開(従業員向け配布・アクセスコード方式)
     $('#b-webpub').addEventListener('click',function(){ markOutput(); publishMeisaiNow(state.printMode==='bonus'); });
     $('#webmeisai-card').addEventListener('click',function(e){
@@ -3117,6 +3161,8 @@
     return Store.getStatutory().then(function(rows){
       if(!rows||!rows.length) return false; // 空=フォールバック
       var sh=SHH(), sa=SAI(), kh=KH(), applied=0;
+      // ★どの kind:year を中央のどの出典で上書きしたかを控える（provenance で客に出す）
+      rows.forEach(function(r){ if(r&&r.kind) _statSource[r.kind+':'+r.year]={ source_url:r.source_url||null, verified_at:r.verified_at||null }; });
       // 数値表libのbare参照(index.htmlで先にロード済み・calc.js等は同一オブジェクト参照なので変異が伝播)
       var dn=(typeof ShotokuzeiDensan!=='undefined'?ShotokuzeiDensan:window.ShotokuzeiDensan);
       var hi=(typeof ShotokuzeiHei!=='undefined'?ShotokuzeiHei:window.ShotokuzeiHei);

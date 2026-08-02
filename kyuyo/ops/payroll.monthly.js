@@ -18,13 +18,13 @@
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = factory(require('../lib/op-contract.js'), require('../lib/payroll-monthly.js'),
       require('../lib/payroll-warnings.js'), require('../lib/payslip-xlsx.js'), require('../lib/shakaihoken-hyo.js'),
-      require('../lib/koyo-hoken.js'), require('../lib/saitei-chingin.js'));
+      require('../lib/koyo-hoken.js'), require('../lib/saitei-chingin.js'), require('../lib/statutory-meta.js'));
   } else {
     root.OpPayrollMonthly = factory(root.OpContract, root.PayrollMonthly, root.PayrollWarnings, root.PayslipXlsx,
       (typeof SHAKAIHOKEN_HYO !== 'undefined' ? SHAKAIHOKEN_HYO : root.SHAKAIHOKEN_HYO), root.KoyoHoken,
-      (typeof SAITEI_CHINGIN !== 'undefined' ? SAITEI_CHINGIN : root.SAITEI_CHINGIN));
+      (typeof SAITEI_CHINGIN !== 'undefined' ? SAITEI_CHINGIN : root.SAITEI_CHINGIN), root.StatutoryMeta);
   }
-})(typeof self !== 'undefined' ? self : this, function (OpContract, PM, PW, Xlsx, SHH, KoyoHoken, SAI) {
+})(typeof self !== 'undefined' ? self : this, function (OpContract, PM, PW, Xlsx, SHH, KoyoHoken, SAI, SMeta) {
   'use strict';
 
   var VERSION = '1.0.0';
@@ -127,16 +127,37 @@
   }
 
   // 実行時に「どの年度のどの率が実際に選ばれたか」を記録する（版切替が効いているかを出力で確かめられるように）
-  function statutorySnapshot(ctx, employees) {
+  // その kind の値が【どこから来て・いつ確かめた物か】を返す。
+  //  中央(Supabase statutory)から流し込まれた時は、面が渡してくれた中央の source_url/verified_at を使う。
+  //  流し込まれていない(オフライン等)時は内蔵値＝lib/statutory-meta.js の出典と確認日を使う。
+  //  ★どちらの場合も空にしない。「オフラインで内蔵値を使った時こそ出典を聞かれる」ため。
+  function originOf(kind, year, src) {
+    var key = kind + ':' + year;
+    var central = src && src[key];
+    if (central) {
+      return { origin: 'central', source_url: central.source_url || null, verified_at: central.verified_at || null,
+        note: central.source_url ? null : '中央の行に出典URLが入っていません' };
+    }
+    var m = SMeta && SMeta.get ? SMeta.get(kind, year) : null;
+    if (!m) return { origin: 'builtin', source_url: null, verified_at: null, note: '内蔵値・出典未登録(lib/statutory-meta.js に無い)' };
+    return { origin: 'builtin', source_url: m.source_url || null, verified_at: m.verified_at || null,
+      note: m.verified_at ? null : (m.note || '内蔵値・確認日は未記録') };
+  }
+
+  function statutorySnapshot(ctx, employees, statutorySource) {
     var ym = ctx.month;
+    var src = statutorySource || {};
+    var shahoY = SHH && SHH.shahoYearOf ? SHH.shahoYearOf(ym) : null;
+    var koyoY = KoyoHoken && KoyoHoken.employYearOfYm ? KoyoHoken.employYearOfYm(ym) : null;
+    var saiY = SAI && SAI.saiteiNendoOf ? SAI.saiteiNendoOf(ym) : null;
     var pref = (employees && employees[0] && employees[0].pref) || 'tokyo';
     var snap = { ym: ym };
-    if (SHH && SHH.getKenko) { var k = SHH.getKenko(pref, ym); snap.kenko = { pref: pref, nendo: k.nendo, jugyoin: k.jugyoin, stale: !!k.stale }; }
-    if (SHH && SHH.getKaigo) { var g = SHH.getKaigo(ym); snap.kaigo = { total: g.total, jugyoin: g.jugyoin, stale: !!g.stale }; }
-    if (SHH && SHH.getShienkin) snap.shienkin = { jugyoin: SHH.getShienkin(ym) };
-    if (SHH && SHH.KOSEI_NENKIN_RITSU_JUGYOIN != null) snap.kosei = { jugyoin: SHH.KOSEI_NENKIN_RITSU_JUGYOIN };
-    if (KoyoHoken && KoyoHoken.employRate) snap.koyo = { gyoshu: (ctx.company || {}).gyoshu || 'ippan', rate: KoyoHoken.employRate((ctx.company || {}).gyoshu, KoyoHoken.employYearOfYm(ym)), fy: KoyoHoken.employYearOfYm(ym) };
-    if (SAI && SAI.getChingin) snap.saitei = { pref: pref, chingin: SAI.getChingin(pref), nendo: SAI.NENDO, stale: SAI.saiteiStale ? SAI.saiteiStale(ym) : false };
+    if (SHH && SHH.getKenko) { var k = SHH.getKenko(pref, ym); snap.kenko = Object.assign({ pref: pref, nendo: k.nendo, jugyoin: k.jugyoin, stale: !!k.stale }, originOf('shakaihoken', shahoY, src)); }
+    if (SHH && SHH.getKaigo) { var g = SHH.getKaigo(ym); snap.kaigo = Object.assign({ total: g.total, jugyoin: g.jugyoin, stale: !!g.stale }, originOf('shakaihoken', shahoY, src)); }
+    if (SHH && SHH.getShienkin) snap.shienkin = Object.assign({ jugyoin: SHH.getShienkin(ym) }, originOf('shakaihoken', shahoY, src));
+    if (SHH && SHH.KOSEI_NENKIN_RITSU_JUGYOIN != null) snap.kosei = Object.assign({ jugyoin: SHH.KOSEI_NENKIN_RITSU_JUGYOIN }, originOf('shakaihoken', shahoY, src));
+    if (KoyoHoken && KoyoHoken.employRate) snap.koyo = { gyoshu: (ctx.company || {}).gyoshu || 'ippan', rate: KoyoHoken.employRate((ctx.company || {}).gyoshu, KoyoHoken.employYearOfYm(ym)), fy: KoyoHoken.employYearOfYm(ym) }; snap.koyo = Object.assign(snap.koyo, originOf('koyo', koyoY, src));
+    if (SAI && SAI.getChingin) snap.saitei = Object.assign({ pref: pref, chingin: SAI.getChingin(pref), nendo: SAI.NENDO, stale: SAI.saiteiStale ? SAI.saiteiStale(ym) : false }, originOf('saitei_chingin', saiY, src));
     return snap;
   }
 
@@ -205,7 +226,7 @@
         'lib/warimashi.js', 'lib/shotokuzei-densan.js', 'lib/shotokuzei-hei.js', 'lib/zaiseki.js', 'lib/juminzei.js',
         'lib/holidays.js', 'lib/shiharai-chosho.js', 'lib/pay-rule.js', 'lib/payslip-xlsx.js'],
       law: LAW,
-      statutory: statutorySnapshot(ctx, inputs.employees),
+      statutory: statutorySnapshot(ctx, inputs.employees, (inputs.options || {}).statutorySource),
       watch: LAW.tekiyoKakudai.watch, // ★未反映の法改正を毎回出力して見えるようにする
     };
 
@@ -227,7 +248,9 @@
         return { sheets: result.cells.sheets, filename: result.cells._opts.filename, opts: result.cells._opts };
       },
     },
-    tests: ['tests/ops-payroll-monthly.test.mjs', 'tests/ops-golden-parity.test.mjs', 'tests/law-switchpoints.test.mjs', 'tests/op-contract.test.js'],
+    tests: ['tests/ops-payroll-monthly.test.mjs', 'tests/ops-golden-parity.test.mjs', 'tests/law-switchpoints.test.mjs', 'tests/op-contract.test.js',
+      'tests/ops-app-parity.test.mjs',        // ★今のapp.jsの道と、このオペの道が同じ物を作るか
+      'tests/statutory-freshness.test.mjs'],  // ★provenanceの出典・確認日が値と合っているか(指紋)
   });
 
   op.monthLabelOf = monthLabelOf;

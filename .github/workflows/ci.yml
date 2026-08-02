@@ -52,6 +52,12 @@ jobs:
         run: node tests/api-claude.test.mjs
       - name: ★法定値の直書きガード (率・額が説明文に固定されていないか)
         run: node tests/no-hardcoded-statutory.test.mjs && node tests/no-hardcoded-statutory.test.mjs --self-test
+      - name: ★契約v0 (レジストリ / 契約の線=呼ばれているか・面を呼び返していないか)
+        run: node tests/op-registry.test.mjs && node tests/op-boundary.test.mjs && node tests/op-boundary.test.mjs --self-test
+      - name: ★法定データの出典・確認日・指紋 (率を変えたら確認日が自己失効する)
+        run: node kyuyo/tests/statutory-freshness.test.mjs && node kyuyo/tests/statutory-freshness.test.mjs --self-test
+      - name: ★app.jsの道とオペの道が同じ物を作るか (新旧AOA完全一致)
+        run: node kyuyo/tests/ops-app-parity.test.mjs
       - name: CI coverage guard (CIから黙って外れているテストが無いか=除外は理由と戻す条件つきのみ)
         run: node tests/ci-coverage.test.mjs
 

@@ -513,8 +513,10 @@
   };
 
   // 中央の法定データ(statutory テーブル)を取得。全アプリ共通・anon読取可。localやDB無しは[]=libのハードコードで動く(フォールバック)。
+  // ★出典(source_url)と確認日(verified_at)も取る。表にあるのに取っていなかった＝
+  //   「なぜその金額か」を客に言えるようにするため（provenance）。2026-08-03
   Store.getStatutory = function(){
-    if(hasSupa){ return fetchAllQ(function(a,b){ return sb.from('statutory').select('kind,year,data',{count:'exact'}).range(a,b); }).then(function(r){ return r.data||[]; }).catch(function(){ return []; }); }
+    if(hasSupa){ return fetchAllQ(function(a,b){ return sb.from('statutory').select('kind,year,data,source_url,verified_at',{count:'exact'}).range(a,b); }).then(function(r){ return r.data||[]; }).catch(function(){ return []; }); }
     return Promise.resolve([]);
   };
 

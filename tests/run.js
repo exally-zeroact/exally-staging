@@ -25,6 +25,9 @@ const FILES = [
   'api-claude.test.mjs',        // ★チャットが客に言う基準数値(実数リテラル・NaN混入検知)
   'no-hardcoded-statutory.test.mjs',      // ★法定の率・額を配信物の文に直書きさせない(説明文だけ年度で取り残される事故)
   ['no-hardcoded-statutory.test.mjs', '--self-test'], // ★わざと壊して赤になるか＋誤検知が出ないか
+  'op-registry.test.mjs',       // ★契約の入口(二重登録は投げる)
+  'op-boundary.test.mjs',       // ★契約の線(⑤呼ばれているか/⑧面を呼び返していないか/provenance必須)
+  ['op-boundary.test.mjs', '--self-test'],
   // P1② 版対応 検証ハーネス
   'xlsx-harness/roundtrip.test.mjs',        // 数式入りxlsxの往復(SheetJS・★新関数の _xlfn.)
   'xlsx-harness/bare-form.test.mjs',   // ★「客が最初に書く形」のケースが無い関数を赤にする(R19の再発防止)
