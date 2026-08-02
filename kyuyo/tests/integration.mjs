@@ -413,5 +413,35 @@ T('② 回帰: 従来の逆向き警告(社保オフ→加入かも)は残って
   eq(A.shahoKanyuWarn(e), '', '週所定空なら②は出さない(逆向き警告は別途shahoOffWarnが担当)');
 });
 
+/* ★画面の説明文が lib の値から組み立てられているか（2026-08-02）
+   計算は lib から取れているのに、ヘルプの文だけ「令和8は引下げ：一般0.50%…」と数字が固定されていた。
+   計算が正しいまま【説明文だけ】翌年度に取り残される形。客が読むのはこの文なので、計算と同じ重さがある。
+   ここでは「文に今の実数が出るか」だけでなく、★libの値をわざと変えて文が追随するか★まで見る。
+   （文字列を書き写しただけの実装は、この2本目で必ず落ちる） */
+T('★雇用保険の説明文が lib から組み立てられている（実数＋わざと変えて追随するか）', () => {
+  const A = win.__PAYSLIP_TEST, KH = win.KoyoHoken;
+  ok(typeof A.koyoRateNote === 'function', 'koyoRateNote が露出している');
+  const y = KH.LATEST;
+  eq(A.koyoRateNote(), '令和' + (y - 2018) + 'は引下げ：一般0.50%・建設/農林0.60%', '令和8年度の実数（一般5.0/1000・建設農林6.0/1000）');
+  const keep = KH.RATES[y];
+  try {
+    KH.RATES[y] = { ippan: 0.0075, kensetsu: 0.0085, norin: 0.0095 };   // ★わざと別の値にする
+    eq(A.koyoRateNote(), '令和' + (y - 2018) + 'は引上げ：一般0.75%・建設0.85%・農林0.95%',
+      'libを変えたら文も変わる＝文が数字を持っていない');
+  } finally { KH.RATES[y] = keep; }
+  eq(A.koyoRateNote(), '令和' + (y - 2018) + 'は引下げ：一般0.50%・建設/農林0.60%', '戻したら元に戻る');
+});
+
+T('★介護保険料率は lib からしか取らない（app側にフォールバックの数字を持たない）', () => {
+  const A = win.__PAYSLIP_TEST;
+  ok(typeof A.kaigoRateOf === 'function', 'kaigoRateOf が露出している');
+  eq(A.kaigoRateOf('2026-08'), 0.0081, '令和8年度 1.62%の折半');
+  eq(A.kaigoRateOf('2025-08'), 0.00795, '令和7年度 1.59%の折半');
+  // ★「libが読めない時に古い率へ黙って落ちない」は、ここでは確かめられない。
+  //   lib が `const SHAKAIHOKEN_HYO` でscriptスコープに束縛されるため、テストから外せないため
+  //   （window に付いていない＝差し替えられない）。
+  //   代わりに tests/no-hardcoded-statutory.test.mjs が「app側に率の数字が書かれていたら赤」で守る。
+});
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

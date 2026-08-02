@@ -174,7 +174,7 @@
     commute:{ t:'💡 通勤手当（非課税）', b:'通勤手当は一定額まで所得税が<b>非課税</b>です。\n\n● <b>公共交通（電車・バス）</b>…月15万円まで非課税。\n● <b>マイカー等</b>…片道距離で月額が決まる（2km未満は全額課税〜95km以上66,400円・国税庁No.2585 令和8年4月〜）。\n\n限度を超えた分は課税されます。※所得税の非課税であって、社会保険・雇用保険では全額が算定基礎に入ります。' },
     legalkojo:{ t:'💡 法定控除（健保・厚年・雇用・所得税・住民税）', b:'給料から天引きする法律上の控除です。原則はかかりますが、<b>使わないものは外せます</b>（タップでオフ）。\n\n● 役員（労働者でない）→ <b>雇用保険は対象外</b>＝外す\n● 社会保険に未加入のパート → 健保・厚年を外す\n● 乙欄/別途納付など → 所得税を外す\n\n外すとその控除は計算しません（課税のもとからも引きません）。最終判断は会社で。' },
     warimashiBasis:{ t:'💡 割増の「基礎」に入れる手当', b:'残業代の単価を計算する“もとの賃金”です。手当の<b>名前でなく実態</b>で決めます（労基法37条5項・規則21条）。\n\n<b>外せる手当（限定列挙の7種）</b>…家族・通勤・別居・子女教育・住宅・臨時・1か月超ごとの手当。ただし<b>実態が伴う場合だけ</b>。\n● 例：住宅手当が「全員に一律定額」→ 住宅費用に応じていない＝<b>基礎に入れる</b>。\n● 例：通勤手当・扶養人数で変わる家族手当→ <b>外せる</b>。\n\n上記以外の手当は原則すべて基礎に入ります。タップで含む/外すを切替えできます。' },
-    koyoGyoshu:{ t:'💡 雇用保険の業種', b:'業種で雇用保険の料率が変わります。\n\n● 一般の事業／建設・農林水産・清酒製造（高め）。\n● 雇用保険は<b>通勤手当も含む賃金総額</b>に料率を掛けます。\n● <b>料率は対象月の年度で自動</b>（令和8は引下げ：一般0.50%・建設/農林0.60%）。' },
+    koyoGyoshu:{ t:'💡 雇用保険の業種', b:'業種で雇用保険の料率が変わります。\n\n● 一般の事業／建設・農林水産・清酒製造（高め）。\n● 雇用保険は<b>通勤手当も含む賃金総額</b>に料率を掛けます。\n● <b>料率は対象月の年度で自動</b>（'+koyoRateNote()+'）。' },
     paymentDays:{ t:'💡 支払基礎日数の数え方', b:'社会保険の<b>定時決定（毎年4〜6月）</b>で「支払基礎日数17日以上の月」を平均して標準報酬を決めます。その日数の数え方です。\n\n● 年金機構の一般扱い＝<b>月給は暦日数／日給・時給は出勤日数</b>。\n● 会社の運用に合わせて変更できます（暦日数／所定労働日数／出勤日数）。' },
     kekkin:{ t:'💡 欠勤控除の計算', b:'月給は<b>日給月給制（欠勤分を控除）が標準</b>です（民法624条 ノーワーク・ノーペイ）。\n\n● 10日欠勤すれば10日分減ります。1日あたり＝<b>月給÷分母×欠勤日数</b>。\n● 分母＝月平均所定労働日数（既定）／当月の暦日数／当月の所定労働日数 から選べます。\n● 役員等で減額しない場合のみ「<b>完全月給制</b>」に。\n● 時給・日給は元々 日数・時間で按分されます。' },
     daikyu:{ t:'💡 代休・振替休日の使い分け', b:'<b>振替休日</b>＝事前に休日と労働日を入れ替え。その出勤は<b>通常労働（割増なし）</b>。割増の「法定休日」に入れず、ふつうの労働時間に入れてください（週40時間を超えた分だけ時間外1.25倍）。\n\n<b>代休</b>＝先に休日労働→後で別の日に休む。休日労働は<b>割増あり</b>（法定休日1.35倍／所定休日は時間外1.25倍）。休む日は入力の「代休取得」へ。\n\n代休で休む日を無給にするか（日給制向け）有給にするか（月給は相殺）は会社規程によります。「代休で休んだ日を出勤から差し引く」をオンにすると出勤から控除します。' },
@@ -211,6 +211,27 @@
   var EMPLOY_GYOSHU=[['ippan','一般の事業'],['kensetsu','建設の事業'],['norin','農林水産・清酒製造']];
   // 雇用保険料率は lib/koyo-hoken.js を単一ソースに(年度別・労働保険年度4月切替・厚労省照合済)。app側は薄いラッパで委譲。
   function KH(){ return (typeof KoyoHoken!=='undefined')?KoyoHoken:(window&&window.KoyoHoken); }
+  // ★雇用保険の料率説明は lib の値から組み立てる（数字を文に書かない）。
+  //   直書きすると、計算は正しいのに【画面の説明文だけ】が翌年度に取り残される。客が読むのはこの文。
+  //   守り: tests/no-hardcoded-statutory.test.mjs が、配信物への法定値の直書きを赤にする。
+  function koyoRateNote(){
+    var k=KH(); if(!k||!k.RATES) return '料率は対象月の年度で自動';
+    var y=k.LATEST, now=k.RATES[y], prev=k.RATES[y-1];
+    if(!now) return '料率は対象月の年度で自動';
+    var pct=function(v){ return (v*100).toFixed(2)+'%'; };
+    var dir = !prev ? '' : (now.ippan<prev.ippan?'は引下げ':(now.ippan>prev.ippan?'は引上げ':'は据置'));
+    var others = (now.kensetsu===now.norin) ? '建設/農林'+pct(now.kensetsu)
+      : '建設'+pct(now.kensetsu)+'・農林'+pct(now.norin);
+    return '令和'+(y-2018)+dir+'：一般'+pct(now.ippan)+'・'+others;
+  }
+  // ★介護保険料率は lib(shakaihoken-hyo) が唯一の真実源。app側に数字を持たない。
+  //   以前は lib が無い時に「その時の年度の率」を書き写した数字へ黙って落ちていた＝年度が変わると【静かに】間違える。
+  //   読めないなら止める（間違った控除額を客に見せるより、止まった方が安全）。
+  function kaigoRateOf(ym){
+    var s=SHH();
+    if(!s||!s.getKaigo) throw new Error('社会保険料率(lib/shakaihoken-hyo.js)が読み込まれていません');
+    return s.getKaigo(ym).jugyoin;
+  }
   function employRateOf(code,year){ return PM().employRateOf(code, year, ctxOf()); }
 
   // ライブラリは const SHAKAIHOKEN_HYO 定義で window に付かない→bare参照で取得
@@ -467,7 +488,7 @@
       h+=ruleItemHTML('warimashiRate','割増の率','残業・休日・深夜','warimashi',rr); }
     if(on.koyoGyoshu){
       var gopts=EMPLOY_GYOSHU.map(function(g){return '<option value="'+g[0]+'"'+(c.gyoshu===g[0]?' selected':'')+'>'+esc(g[1])+'（労'+(employRateOf(g[0])*100).toFixed(2)+'%）</option>';}).join('');
-      h+=ruleItemHTML('koyoGyoshu','雇用保険の業種','一般/建設/農林','koyoGyoshu','<select class="cr-sel" data-cf="gyoshu">'+gopts+'</select><div class="ri-note">建設・農林水産・清酒製造は料率が高め。雇用保険は通勤手当も含む賃金総額に掛けます。<b>料率は対象月の年度で自動</b>（令和8は引下げ：一般0.50%・建設/農林0.60%）。</div>'); }
+      h+=ruleItemHTML('koyoGyoshu','雇用保険の業種','一般/建設/農林','koyoGyoshu','<select class="cr-sel" data-cf="gyoshu">'+gopts+'</select><div class="ri-note">建設・農林水産・清酒製造は料率が高め。雇用保険は通勤手当も含む賃金総額に掛けます。<b>料率は対象月の年度で自動</b>（'+koyoRateNote()+'）。</div>'); }
     if(on.paymentDays){
       var pm=c.paymentDaysMethod||'';
       var pmo=[['','自動（月給=暦日数 / 日給・時給=出勤日数）'],['calendar','暦日数（毎月その月の日数）'],['scheduled','所定労働日数（欠勤は差引）'],['worked','出勤日数']]
@@ -1405,7 +1426,7 @@
   function bonusEntry(e){ var b=state.bonus||(state.bonus={payYm:'',payDay:'',byEmp:{}}); if(!b.byEmp)b.byEmp={}; if(!b.byEmp[e.id])b.byEmp[e.id]={amount:'',prevAfter:'',ytd:''};
     var en=b.byEmp[e.id]; if(!en.addShikyu)en.addShikyu=[]; if(!en.addKojo)en.addKojo=[]; return en; } // addShikyu=追加支給[{label,value,hikazei}]・addKojo=任意控除[{label,value}]
   function computeBonus(e){
-    var SZl=SZ(), S=SHH(), ym=bonusYmOf(), en=bonusEntry(e);
+    var SZl=SZ(), ym=bonusYmOf(), en=bonusEntry(e);
     var bonus=num(en.amount), prevMap=state._bonusPrev||{};
     // 追加支給: 課税分は賞与額に合算して社保/源泉の基準に(賞与性の支給=標準賞与額に含む)。非課税分は表示のみ(手取りには加算)。任意控除は手取りから差引。
     var addShikyu=(en.addShikyu||[]).map(function(it){ return { label:it.label, value:num(it.value), hikazei:!!it.hikazei }; });
@@ -1420,7 +1441,7 @@
     var hasKaigo=(window.PayrollCalc&&PayrollCalc.isKaigoTarget)?PayrollCalc.isKaigoTarget(e.birthYmd,ym):false;
     // 健保573万上限用の既往賞与累計(標準賞与額)。手入力があれば優先、無ければ当年度(4-3月)の保存済み賞与から自動集計。
     var ytdMap=state._bonusYtd||{}; var manualYtd=(en.ytd!=null&&en.ytd!==''); var ytdVal=manualYtd?num(en.ytd):num(ytdMap[e.id]);
-    var si=SZl?SZl.calcBonusSI({ bonus:base, healthRate:prefRate(e.pref,ym), kaigoRate:(S&&S.getKaigo)?S.getKaigo(ym).jugyoin:0.00795, hasKaigo:hasKaigo, employRate:employRateOf((state.company||{}).gyoshu, employYearOfYm(ym)), ytdKenpoBonus:ytdVal }):{total:0,health:0,pension:0,kaigo:0,employ:0,hyojun:0,kenpoBase:0,koseiBase:0};
+    var si=SZl?SZl.calcBonusSI({ bonus:base, healthRate:prefRate(e.pref,ym), kaigoRate:kaigoRateOf(ym), hasKaigo:hasKaigo, employRate:employRateOf((state.company||{}).gyoshu, employYearOfYm(ym)), ytdKenpoBonus:ytdVal }):{total:0,health:0,pension:0,kaigo:0,employ:0,hyojun:0,kenpoBase:0,koseiBase:0};
     // 産休/育休の賞与社保免除(産休=賞与月末が産休中/育休=連続1か月超)。日付未設定=従来(workStatusで全免除)。雇用保険は実支払×率で残す。
     var bonusExempt=false;
     if(e.workStatus==='sankyu'||e.workStatus==='ikukyu'){
@@ -3024,7 +3045,7 @@
   /* 統合テスト用API。★本番ブラウザには露出しない（jsdomのときだけ）★=RC1対策の自動統合テスト(tests/integration.mjs)の入口。 */
   try{ if(typeof navigator!=='undefined' && /jsdom/i.test(navigator.userAgent||'')){
     window.__PAYSLIP_TEST={ compute:compute, defEmp:defEmp, mergeEmp:mergeEmp, state:state, buildDailyData:buildDailyData, dailySlipDoc:dailySlipDoc, shimePeriods:shimePeriods, shimeSplit:shimeSplit,
-      saveMonthlyPayslips:saveMonthlyPayslips, ensurePayRule:ensurePayRule, minWageInfo:minWageInfo, isInMinWage:isInMinWage, minWageTeate:minWageTeate, setConfirm:setConfirm, renderInput:renderInput, renderInputTableHTML:renderInputTableHTML, effShukkin:effShukkin, onboardSteps:onboardSteps, renderEmpMaster:renderEmpMaster, filterEmpSearch:filterEmpSearch, labelInputsA11y:labelInputsA11y, computeBonus:computeBonus, bonusEntry:bonusEntry, nenAggregate:nenAggregate, confirmedRecs:confirmedRecs, loadBonusYtd:loadBonusYtd, nenchoWizardHTML:nenchoWizardHTML, nenStore:nenStore, nenDeclBannerHTML:nenDeclBannerHTML, makePayPattern:makePayPattern, applyPayPattern:applyPayPattern, openBulkPatternApply:openBulkPatternApply, applyEmpProfile:applyEmpProfile, empProfileStripHTML:empProfileStripHTML, importEmpProfile:importEmpProfile, qrSvg:qrSvg, itemSuggestOptions:itemSuggestOptions, itemSuggestHTML:itemSuggestHTML, bonusItemSuggestOptions:bonusItemSuggestOptions, bonusItemSuggestHTML:bonusItemSuggestHTML, santeiKisoRow:santeiKisoRow, santeiRows:santeiRows, santeiAoa:santeiAoa, stType:stType, stLabel:stLabel, santeiRule:santeiRule, gekkakuTh:gekkakuTh, shahoBasisOf:shahoBasisOf, bonusHarauRows:bonusHarauRows, bonusHarauAoa:bonusHarauAoa, gekkakuRows:gekkakuRows, gekkakuAoa:gekkakuAoa, ymAddLocal:ymAddLocal, extractCity:extractCity, gyoyoRows:gyoyoRows, gyoyoMeisaiAoa:gyoyoMeisaiAoa, gyoyoSoukatsuAoa:gyoyoSoukatsuAoa, roudouRows:roudouRows, roudouSummary:roudouSummary, roudouAoa:roudouAoa, roudouFYof:roudouFYof, ymdPlus1:ymdPlus1, shikakuRows:shikakuRows, shikakuAoa:shikakuAoa, fuyoBuckets:fuyoBuckets, nenCompute:nenCompute, nenGensenHTML:nenGensenHTML, nenGensenDoc:nenGensenDoc, applyMigrationRows:applyMigrationRows, buildEmpFromRow:buildEmpFromRow, prevYmOf:prevYmOf, applyLedgerToEmployees:applyLedgerToEmployees, importLedgerForMonth:importLedgerForMonth, payRuleCtx:payRuleCtx, monthYmdRange:monthYmdRange, shahoKanyuWarn:shahoKanyuWarn, fullTimeWeeklyH:fullTimeWeeklyH, shoteiMonthlyWage:shoteiMonthlyWage, empWarnings:empWarnings, laborLimitItems:laborLimitItems, prorateNote:prorateNote, buildPeople:buildPeople, ctxOf:ctxOf }; }
+      saveMonthlyPayslips:saveMonthlyPayslips, ensurePayRule:ensurePayRule, minWageInfo:minWageInfo, isInMinWage:isInMinWage, minWageTeate:minWageTeate, setConfirm:setConfirm, renderInput:renderInput, renderInputTableHTML:renderInputTableHTML, effShukkin:effShukkin, onboardSteps:onboardSteps, renderEmpMaster:renderEmpMaster, filterEmpSearch:filterEmpSearch, labelInputsA11y:labelInputsA11y, computeBonus:computeBonus, bonusEntry:bonusEntry, nenAggregate:nenAggregate, confirmedRecs:confirmedRecs, loadBonusYtd:loadBonusYtd, nenchoWizardHTML:nenchoWizardHTML, nenStore:nenStore, nenDeclBannerHTML:nenDeclBannerHTML, makePayPattern:makePayPattern, applyPayPattern:applyPayPattern, openBulkPatternApply:openBulkPatternApply, applyEmpProfile:applyEmpProfile, empProfileStripHTML:empProfileStripHTML, importEmpProfile:importEmpProfile, qrSvg:qrSvg, itemSuggestOptions:itemSuggestOptions, itemSuggestHTML:itemSuggestHTML, bonusItemSuggestOptions:bonusItemSuggestOptions, bonusItemSuggestHTML:bonusItemSuggestHTML, santeiKisoRow:santeiKisoRow, santeiRows:santeiRows, santeiAoa:santeiAoa, stType:stType, stLabel:stLabel, santeiRule:santeiRule, gekkakuTh:gekkakuTh, shahoBasisOf:shahoBasisOf, bonusHarauRows:bonusHarauRows, bonusHarauAoa:bonusHarauAoa, gekkakuRows:gekkakuRows, gekkakuAoa:gekkakuAoa, ymAddLocal:ymAddLocal, extractCity:extractCity, gyoyoRows:gyoyoRows, gyoyoMeisaiAoa:gyoyoMeisaiAoa, gyoyoSoukatsuAoa:gyoyoSoukatsuAoa, roudouRows:roudouRows, roudouSummary:roudouSummary, roudouAoa:roudouAoa, roudouFYof:roudouFYof, ymdPlus1:ymdPlus1, shikakuRows:shikakuRows, shikakuAoa:shikakuAoa, fuyoBuckets:fuyoBuckets, nenCompute:nenCompute, nenGensenHTML:nenGensenHTML, nenGensenDoc:nenGensenDoc, applyMigrationRows:applyMigrationRows, buildEmpFromRow:buildEmpFromRow, prevYmOf:prevYmOf, applyLedgerToEmployees:applyLedgerToEmployees, importLedgerForMonth:importLedgerForMonth, payRuleCtx:payRuleCtx, monthYmdRange:monthYmdRange, shahoKanyuWarn:shahoKanyuWarn, fullTimeWeeklyH:fullTimeWeeklyH, shoteiMonthlyWage:shoteiMonthlyWage, empWarnings:empWarnings, laborLimitItems:laborLimitItems, prorateNote:prorateNote, buildPeople:buildPeople, ctxOf:ctxOf, koyoRateNote:koyoRateNote, kaigoRateOf:kaigoRateOf }; }
   }catch(e){}
   /* ---------- 永続化(localStorage既定・window.SUPA設定でSupabaseにも保存) ---------- */
   var PKEY='payslip_state_v1';

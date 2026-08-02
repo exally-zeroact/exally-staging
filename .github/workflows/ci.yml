@@ -50,6 +50,8 @@ jobs:
         run: node tests/refs-resolve.test.mjs && node tests/refs-resolve.test.mjs --self-test
       - name: ★チャットAPIの基準数値 (実数リテラル・NaNが静かに入らないか)
         run: node tests/api-claude.test.mjs
+      - name: ★法定値の直書きガード (率・額が説明文に固定されていないか)
+        run: node tests/no-hardcoded-statutory.test.mjs && node tests/no-hardcoded-statutory.test.mjs --self-test
       - name: CI coverage guard (CIから黙って外れているテストが無いか=除外は理由と戻す条件つきのみ)
         run: node tests/ci-coverage.test.mjs
 

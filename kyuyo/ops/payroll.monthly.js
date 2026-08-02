@@ -67,18 +67,26 @@
   ];
 
   // ── 法令の根拠（★領域ごとに年度が違う。1枚の札で貼らない） ──
+  // ★率は lib から組み立てる。文に数字を書くと、計算が正しいまま【説明文だけ】年度で取り残される。
+  //   守り: tests/no-hardcoded-statutory.test.mjs が配信物への法定値の直書きを赤にする。
+  var pctOf = function (v, d) { return (v * 100).toFixed(d == null ? 2 : d).replace(/\.?0+$/, '') + '%'; };
+  var LAW_KOSEI_PCT = pctOf(SHH.KOSEI_NENKIN_RITSU_TOTAL, 1);           // 厚年 全体率（平成29年9月〜固定）
+  var LAW_KAIGO_PCT = pctOf(SHH.getKaigo('2026-06').total, 2);          // 介護 全体率（社保年度=3月起算）
+  var LAW_SHIENKIN_PCT = pctOf(SHH.SHIENKIN_TOTAL_FROM_2026_04, 2);     // 子育て支援金 全体率
+  var LAW_KOYO_Y = KoyoHoken.LATEST;
+  var LAW_KOYO_PER1000 = String(Math.round(KoyoHoken.RATES[LAW_KOYO_Y].ippan * 1000 * 10) / 10); // 告示の書き方(◯/1000)
   var LAW = {
     incomeTax: { basis: '所得税法（電算機計算の特例・別表）', nendo: '令和8年分(2026)', appliedBy: 'payYm の年',
       source: 'https://www.nta.go.jp/taxes/shiraberu/taxanswer/gensen/2502.htm' },
     shahoKenko: { basis: '健康保険法', nendo: '令和8年度（2026年3月分〜）', appliedBy: '社保年度=3月起算', pref: '都道府県別',
       source: 'https://www.kyoukaikenpo.or.jp/about/business/insurance_rate/rate_prefectures/r08/index.html' },
-    shahoKosei: { basis: '厚生年金保険法', nendo: '平成29年9月分〜 18.3% 固定', appliedBy: '—',
+    shahoKosei: { basis: '厚生年金保険法', nendo: '平成29年9月分〜 ' + LAW_KOSEI_PCT + ' 固定', appliedBy: '—',
       source: 'https://www.kyoukaikenpo.or.jp/assets/R8_13tokyo.pdf' },
-    kaigo: { basis: '介護保険法', nendo: '令和8年度 1.62%（全国一律・40〜64歳）', appliedBy: '社保年度=3月起算',
+    kaigo: { basis: '介護保険法', nendo: '令和8年度 ' + LAW_KAIGO_PCT + '（全国一律・40〜64歳）', appliedBy: '社保年度=3月起算',
       source: 'https://www.kyoukaikenpo.or.jp/about/business/insurance_rate/002/index.html' },
-    shienkin: { basis: '子ども・子育て支援法（子ども・子育て支援金）', nendo: '2026-04〜 0.23%（労使折半）', appliedBy: 'ym>=2026-04',
+    shienkin: { basis: '子ども・子育て支援法（子ども・子育て支援金）', nendo: '2026-04〜 ' + LAW_SHIENKIN_PCT + '（労使折半）', appliedBy: 'ym>=2026-04',
       source: 'https://www.cfa.go.jp/policies/kodomokosodateshienkinseido' },
-    koyo: { basis: '雇用保険法', nendo: '令和8年度（2026-04〜2027-03）一般 労働者負担 5/1000', appliedBy: '労働保険年度=4月起算',
+    koyo: { basis: '雇用保険法', nendo: '令和' + (LAW_KOYO_Y - 2018) + '年度（' + LAW_KOYO_Y + '-04〜' + (LAW_KOYO_Y + 1) + '-03）一般 労働者負担 ' + LAW_KOYO_PER1000 + '/1000', appliedBy: '労働保険年度=4月起算',
       source: 'https://jsite.mhlw.go.jp/yamagata-roudoukyoku/koyouhoken-20260316.html' },
     saiteiChingin: { basis: '最低賃金法', nendo: '令和7年度（2025-10-03 発効）', appliedBy: '最賃年度=10月起算',
       source: 'https://www.mhlw.go.jp/content/11200000/001571192.pdf',
