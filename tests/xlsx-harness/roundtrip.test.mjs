@@ -11,7 +11,7 @@ import { createRequire } from 'node:module';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..', '..');
 const require = createRequire(pathToFileURL(path.join(ROOT, 'package.json')));
-const XlsxIO = require(path.join(__dirname, 'xlsx-io.js'));
+const XlsxIO = require(path.join(__dirname, '..', '..', 'lib', 'xlsx-io.js'));
 
 let pass = 0, fail = 0;
 const T = (name, fn) => { try { fn(); pass++; console.log('  ok   ' + name); } catch (e) { fail++; console.log('  NG   ' + name + '\n       ' + e.message); } };

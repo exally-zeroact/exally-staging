@@ -9,7 +9,7 @@ import { loadCases } from './run-exally.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(pathToFileURL(path.join(__dirname, '..', '..', 'package.json')));
-const XlsxIO = require(path.join(__dirname, 'xlsx-io.js'));
+const XlsxIO = require(path.join(__dirname, '..', '..', 'lib', 'xlsx-io.js'));
 
 const outPath = process.argv[2];
 if (!outPath) { console.error('使い方: node build-libre-input.mjs <出力.xlsx>'); process.exit(1); }

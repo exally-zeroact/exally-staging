@@ -13,6 +13,7 @@ const FILES = [
   'ledger-source.test.js',  // E2 台帳→期間の実績値(ctx)
   'cross-agg.test.js',      // E5 横断集計(事業別のまとめ)
   'hub-ui.mjs',             // E1 UI 全ボタン(jsdom)
+  'grid-xlsx.test.mjs',     // ★グリッド→xlsx の変換と「落ちる物」の警告(+ toHFVal との同期)
   // ★staging(GitHub Pages のサブパス配信)で壊れる書き方＋本番倉庫への誤接続を止める恒久ガード
   'pages-hosting.test.mjs',
   ['pages-hosting.test.mjs', '--self-test'],  // ★わざと壊して赤になるかの自己確認(7通り)

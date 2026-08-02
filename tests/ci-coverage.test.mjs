@@ -44,7 +44,7 @@ const NOT_TESTS = {
   'tests/xlsx-harness/build-libre-input.mjs': 'LibreOffice入力を作る手動ツール',
   'tests/xlsx-harness/collect-libre.mjs': 'LibreOfficeの結果を集める手動ツール',
   'tests/xlsx-harness/run-exally.mjs': 'ハーネスの実行部品（compare.mjs から使う）',
-  'tests/xlsx-harness/xlsx-io.js': 'ハーネスの入出力部品（テストではない）',
+  
 };
 
 let pass = 0, fail = 0;

@@ -20,7 +20,7 @@ import { fileURLToPath } from 'node:url';
 const require = createRequire(import.meta.url);
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const F = require(path.join(ROOT, 'exally-formula.js'));
-const IO = require(path.join(ROOT, 'tests/xlsx-harness/xlsx-io.js'));
+const IO = require(path.join(ROOT, 'lib/xlsx-io.js'));
 
 let pass = 0, fail = 0;
 function T(n, fn) { try { fn(); pass++; console.log('  ✓ ' + n); } catch (e) { fail++; console.log('  ✗ ' + n + ' — ' + (e && e.message)); } }

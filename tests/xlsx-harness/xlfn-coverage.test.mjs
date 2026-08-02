@@ -25,7 +25,7 @@ import { createRequire } from 'node:module';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..', '..');
 const require = createRequire(pathToFileURL(path.join(ROOT, 'package.json')));
-const IO = require(path.join(__dirname, 'xlsx-io.js'));
+const IO = require(path.join(__dirname, '..', '..', 'lib', 'xlsx-io.js'));
 const LEG = JSON.parse(fs.readFileSync(path.join(__dirname, 'xlfn-legacy.json'), 'utf8'));
 
 let pass = 0, fail = 0;

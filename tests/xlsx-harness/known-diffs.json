@@ -10,7 +10,8 @@
     "wave2_2026-08-01": "SORT / UNIQUE / FILTERの第3引数 / MATCHワイルドカード / TEXT入れ子 ＝12件。加えて TEXT・TEXTJOIN・INT・MOD・VALUE・XLOOKUP を HFプラグインへ移し、入れ子でも効くようにした。一致 221→243",
     "wave2b_2026-08-01": "SUMPRODUCT 2件を解消。原因はHFの既定で範囲どうしの計算が配列にならないことで、buildEmpty の useArrayArithmetic:true で解決(版上げ不要)。配列演算のケース8件を新設し全て一致。一致 243→253 / 既知 2→0",
     "wave3_p1_2026-08-01": "第3波P1。CONCAT/LOOKUP/XMATCH/INDIRECT/DATEVALUE/NUMBERVALUE/FIXED/ASC/DBCS(旧JIS)/TEXTBEFORE/TEXTAFTER の11関数を _jsSet から HFプラグインへ移した(入れ子でも効く)。ケース53件を新設し全て一致。一致 253→306 / 既知 0 / 入れ子で壊れる式 38→27。★INDIRECT は isVolatile:true が必須と実測で判明(付けないと参照先を書き換えても古い答えが残る)。★半角→全角の本名は DBCS で、JIS は日本語UIの表示名。JIS のまま xlsx に書くと Excel が #NAME? にするので convertFormula で DBCS に直す",
-    "wave3_p2_2026-08-01": "第3波P2。DOLLAR(旧YEN)/TYPE/AGGREGATE/LENB/LEFTB/RIGHTB/MIDB/RANK(.EQ/.AVG)/VALUETOTEXT/ENCODEURL を _jsSet から HFプラグインへ。ケース56件を新設し全て一致。一致 306→362 / 既知 0 / 入れ子で壊れる式 27→16。★実測で分かった事: (a)通貨書式の関数の本名は DOLLAR で YEN は日本語UIの表示名(Excel自身が .FormulaLocal↔.Formula で相互変換する)。日本語環境の DOLLAR は ¥・小数0桁・負はマイナス記号で、旧 _jsDollar は $ ・括弧・小数2桁で全部違っていた。 (b)AGGREGATE の 12=MEDIAN / 13=MODE.SNGL が旧実装では逆だった。 (c)LENB は半角カナを1バイトと数える。LEFTB/RIGHTB/MIDB は2バイト文字を途中で切るとその半分が【空白1個】になる(消えるのではない)。 (d)ENCODEURL は JS の encodeURIComponent が素通しする ! ' ( ) * ~ も変換する。 (e)VALUETOTEXT の第2引数(0=簡潔/1=厳密)を旧実装は無視して常に引用符を付けていた。"
+    "wave3_p2_2026-08-01": "第3波P2。DOLLAR(旧YEN)/TYPE/AGGREGATE/LENB/LEFTB/RIGHTB/MIDB/RANK(.EQ/.AVG)/VALUETOTEXT/ENCODEURL を _jsSet から HFプラグインへ。ケース56件を新設し全て一致。一致 306→362 / 既知 0 / 入れ子で壊れる式 27→16。★実測で分かった事: (a)通貨書式の関数の本名は DOLLAR で YEN は日本語UIの表示名(Excel自身が .FormulaLocal↔.Formula で相互変換する)。日本語環境の DOLLAR は ¥・小数0桁・負はマイナス記号で、旧 _jsDollar は $ ・括弧・小数2桁で全部違っていた。 (b)AGGREGATE の 12=MEDIAN / 13=MODE.SNGL が旧実装では逆だった。 (c)LENB は半角カナを1バイトと数える。LEFTB/RIGHTB/MIDB は2バイト文字を途中で切るとその半分が【空白1個】になる(消えるのではない)。 (d)ENCODEURL は JS の encodeURIComponent が素通しする ! ' ( ) * ~ も変換する。 (e)VALUETOTEXT の第2引数(0=簡潔/1=厳密)を旧実装は無視して常に引用符を付けていた。",
+    "grid_excel_export_2026-08-02": "グリッド(book.html)の「Excelに保存」を実装。saveXlsx() の alert プレースホルダを廃止し、lib/xlsx-io.js(ハーネスと同じ1本・tests/から lib/ へ移設)＋新設 lib/grid-xlsx.js に繋いだ。SheetJS(930KB)は初回保存時の遅延読み込み。実Excelで開いて13項目一致(式・再計算値・表示形式・列幅・セル結合・XLOOKUP)。★実装中に実Excelで2つ踏んだ: (1) writeBook が表示形式(z)を運んでおらず、画面の「54,000」がファイルでは「54000」になっていた (2) readBook も z を落としていた。両方直してテストで固定。"
   },
   "roots": {
     "R11_input_parse": "セルに打ち込んだ『桁区切り付きの数』『日付に見える文字』を、Excel は数値/日付に解釈するがグリッドは文字列のまま持つ",
@@ -18,7 +19,8 @@
     "R17_indirect_scope": "★INDIRECT はプラグイン化したが、対応するのは【同じシートのA1形式】のみ。'Sheet1!A1' と R1C1形式(第2引数FALSE)は #REF! を返す＝黙って違う数字を出さない。他シート参照はシート名→IDの解決にHyperFormulaの非公開クラスが要り、版が変わると壊れるため入れていない(版対応が目的のこの作りでは内部APIに寄りかからない)",
     "R15_no_spill": "★うちのグリッドはスピル(配列が隣のセルへ溢れる)に未対応。Excelでは =C1:C6*E1:E6 が6セルを占めるが、うちは1セルに左上の値だけを出す。★左上の値そのものはExcelと一致することを実測済み(ARR_* ケース)。溢れる範囲の見た目だけが違う",
     "R16_file_array_legacy": "★SheetJSが書き出したxlsxをExcelで開くと、配列を返す式が『旧来の解釈(暗黙の交差)』になる。Excelの動的配列として扱わせる印(セルの cm 属性とメタデータ)をSheetJSが書いていないため。グリッドの画面では正しいのに、落としたファイルをExcelで開くと違う値になる=『Excel落とし』の忠実さの問題",
-    "R18_aggregate_scope": "★AGGREGATE は集計番号 1〜17 に対応。18/19(PERCENTILE.EXC/QUARTILE.EXC)は未対応で #VALUE! を返す＝黙って近い値を出さない。使いたくなった時に真値ケースを足してから実装する"
+    "R18_aggregate_scope": "★AGGREGATE は集計番号 1〜17 に対応。18/19(PERCENTILE.EXC/QUARTILE.EXC)は未対応で #VALUE! を返す＝黙って近い値を出さない。使いたくなった時に真値ケースを足してから実装する",
+    "R19_bare_array_functions": "★★素の =SORT(範囲) / =UNIQUE(範囲) / =FILTER(範囲,条件) がグリッドで #VALUE!(Cell range not allowed)になる。包んだ形(=SUM(SORT(...)) 等)なら動く。ハーネスのSORT/UNIQUE/FILTERのケースは【全部包んだ形】で、素の形のケースが1件も無かったため、この穴が見えていなかった(2026-08-02 実機で発見)。★一番自然な書き方(=SORT(A1:A10))が動かない＝実務で最初に踏む。配列演算(=B2:B3*2)はエラーにならず左上の値を出す(R15_no_spill どおり)ので、エラーになるのはプラグインの配列関数だけ。"
   },
   "nesting_pending": {
     "class": "A",
@@ -157,7 +159,8 @@
     ],
     "measured": "ファイル経由: #VALUE! / #VALUE! / 0 / 0 ・ 画面(グリッド)とExcel直接入力: 97100 / 1000 / 6 / 6",
     "next": "SheetJS CE で動的配列の印を書けるかを調べる。書けないなら xlsx-io 側で xl/worksheets/sheet1.xml に cm 属性とメタデータを足すか、書き出し時に配列式を検出して警告する",
-    "design_input": "★同 docs/SPEC_grid_p2_design_inputs.md §3"
+    "design_input": "★同 docs/SPEC_grid_p2_design_inputs.md §3",
+    "grid_export_2026-08-02": "グリッドのExcel保存を繋いだ。★動的配列は直っていないので、書き出し時に「配列を返す式が◯件あります。Excelでは1セル分の値になります(セル番地)」と警告する方式にした(止めない)。cm属性を注入してもスピルしないと実測済みで、原因調査にはGOが出ていない。"
   },
   "version_scope": {
     "class": "C",
@@ -206,7 +209,11 @@
         ]
       }
     },
-    "how_to_add_a_version": "その環境で pwsh -File tools/golden-excel.ps1 -Init を1回走らせ、出た JSON を golden/ に置く（版がファイル名に入るので既存とは別ファイルになる）。詳しくは golden/RECIPE.md §4。"
+    "how_to_add_a_version": "その環境で pwsh -File tools/golden-excel.ps1 -Init を1回走らせ、出た JSON を golden/ に置く（版がファイル名に入るので既存とは別ファイルになる）。詳しくは golden/RECIPE.md §4。",
+    "書き出しライブラリの見直し": {
+      "判断日": "2026-09-30（版上げ判断と同じ日）",
+      "論点": "同梱SheetJS CE 0.20.3 は太字・文字色・背景色・罫線を書けない(実測)。「Excelに落とす」を売りにする以上いつか効いてくる。exceljs 等に替えれば書式は書けるが、★_xlfn. の付与・別名の本名化(JIS→DBCS/YEN→DOLLAR)・壊れたファイルを作る式で止める仕組みを作り直す必要があるかを要確認。★調べるのは9/30。今は何もしない。"
+    }
   },
   "grid_excel_export_estimate": {
     "class": "A",
@@ -232,6 +239,24 @@
       "テスト(アダプタ単体／jsdomで書き出しスモーク／実Excelで開く確認)": "1.5h",
       "実Excel確認＋実配信の実ブラウザ＋CI": "1h"
     },
-    "別枠(不確実・GO不要)": "動的配列を本当にスピルさせる。cm属性だけでは直らないと実測済みなので、原因の調査から要る。3〜6h以上・見通し不確実。v1は警告で回避することを勧める。"
+    "別枠(不確実・GO不要)": "動的配列を本当にスピルさせる。cm属性だけでは直らないと実測済みなので、原因の調査から要る。3〜6h以上・見通し不確実。v1は警告で回避することを勧める。",
+    "status": "★完了 2026-08-02。見積り5.5h→実績もほぼ同じ。tools/verify-grid-export-excel.ps1 で実Excel突合を毎回できるようにした。"
+  },
+  "bare_array_functions": {
+    "class": "A",
+    "due": "2026-09-30",
+    "root": "R19_bare_array_functions",
+    "money_impact": true,
+    "measured 2026-08-02": {
+      "=SORT(B2:B3)": "#VALUE!(Cell range not allowed.)  ← Excelはスピルする",
+      "=UNIQUE(B2:B3)": "#VALUE!",
+      "=FILTER(B2:B3,B2:B3>0)": "#VALUE!",
+      "=SORT({3,1,2})": "#VALUE!",
+      "=SUM(SORT(B2:B3))": "23000（包めば動く）",
+      "=B2:B3*2": "30000（左上だけ。エラーにはならない）",
+      "=SEQUENCE(3)": "#NAME!（そもそも登録されていない）"
+    },
+    "次にやること": "①ハーネスに『素の配列関数』のケースを足す(真値先行) ②スピルしないならせめて左上の値を返す(配列演算と同じ振る舞い)ようにする ③SEQUENCE等の未登録も洗い出す。★指示役の判断待ち(第3波P3より先にやる価値がある)。",
+    "別件": "exSort は空の範囲を渡されると SimpleRangeValue.onlyValues([]) で TypeError を投げる(実測)。エラー値を返すべき所で例外になっている。②と同時に直す。"
   }
 }

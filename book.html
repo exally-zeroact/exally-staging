@@ -1078,6 +1078,25 @@ white-space:pre-line;
 }
 #toast b { color:#FFE066; font-weight:700; }
 #toast.show { opacity:1; }
+/* ★警告(長い文章を読ませる用)。濃い緑＋白文字＋半透明は、下のグリッドが透けて読みにくい。
+   紙のように白地・濃い文字にして、行頭を揃える(中央寄せをやめる)。左の橙帯で警告と分かる。 */
+#toast.warn {
+background:#fff;
+color:#1A4A2E;
+border:1px solid #E6D9A8;
+border-left:5px solid #E5A100;
+text-align:left;
+font-size:14px;
+font-weight:500;
+line-height:1.8;
+padding:16px 20px;
+max-width:min(560px,88vw);
+box-shadow:0 8px 28px rgba(30,60,40,0.22);
+}
+#toast.warn b { color:#8A5A00; }
+#toast.warn .toast-h { display:block; font-weight:800; font-size:14px; margin-bottom:6px; color:#8A5A00; }
+#toast.warn ul { margin:0; padding-left:1.1em; }
+#toast.warn li { margin:4px 0; }
 
 /* 数式バー fx アイコン */
 #fx-icon {
@@ -1125,9 +1144,12 @@ background:#FFE066 !important;
 }
 </style>
 
-<script src="hyperformula.full.min.js?v=94355a1d"></script>
+<script src="hyperformula.full.min.js?v=c7b2b4d3"></script>
 
-<script src="exally-formula.js?v=94355a1d"></script>
+<script src="exally-formula.js?v=c7b2b4d3"></script>
+<!-- グリッド→xlsx の変換と「落ちる物」の警告(純関数・軽い)。SheetJS本体(930KB)と lib/xlsx-io.js は
+     初回の「Excelに保存」で初めて読み込む＝グリッドの表示を重くしない -->
+<script src="lib/grid-xlsx.js?v=c7b2b4d3"></script>
 
 <script>
 /* ===== canvas-formula-engine.js (inlined) ===== */
@@ -2530,6 +2552,7 @@ function detectTimePattern(values){
     <button class="book-header-nav-item" onclick="location.href='chat.html?tab=settings'" title="設定">⚙️</button>
   </nav>
   <div style="display:flex;align-items:center;gap:6px;">
+    <button onclick="saveXlsx()" style="background:#52B788;border:1px solid #52B788;color:#fff;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px;" title="Excelファイル(.xlsx)として保存">💾 Excelに保存</button>
     <button onclick="openBookVerModal()" style="background:#F0FAF4;border:1px solid #C8ECD8;color:#3D9E72;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px;" title="Excelバージョン切替">📊 <span id="bookVerLabel">365</span> ▼</button>
   </div>
 </div>
@@ -3812,10 +3835,15 @@ function bindEvents(){
     render();
   });
   // showToast関数（他の場所でも使えるようグローバル）
-  window.showToast=function(msg, duration){
+  //  第3引数 kind='warn' で「読ませる用」の見た目にする。
+  //  ★普段の短い知らせ(濃い緑・中央寄せ)は、長い警告文だと読みにくい
+  //    (半透明で下のグリッドが透ける＋中央寄せで行頭が揃わない)ため。
+  window.showToast=function(msg, duration, kind){
     var t=document.getElementById('toast');
     if(!t) return;
     t.innerHTML=msg;
+    t.className='';                       // 前回の種類を残さない
+    if(kind) t.classList.add(kind);
     t.classList.add('show');
     clearTimeout(t._hideTimer);
     t._hideTimer=setTimeout(function(){ t.classList.remove('show'); }, duration||3000);
@@ -5868,7 +5896,70 @@ function doWrite(){
   }
 }
 
-function saveXlsx(){ alert('💾 Excelダウンロード（SheetJS連携で実装予定）'); }
+/* ===== Excelに保存 =========================================================
+ *  書き出しの中身は lib/xlsx-io.js（ハーネスと同じ1本＝_xlfn.の付与・JIS→DBCS・YEN→DOLLAR、
+ *  壊れたファイルを作る式で止める仕組みが入っている）。グリッドの形への変換は lib/grid-xlsx.js。
+ *  ★SheetJS(930KB)は重いので、初回の保存で初めて読み込む（グリッドの表示を遅くしない）。
+ *  ★落ちる物は黙って落とさず、何が起きるかをセル番地つきで出す。
+ */
+var _xlsxLoading = null;
+function _assetVer(){
+  // 既に貼られている stamp 済みのURLから ?v= を借りる（遅延読み込みでもキャッシュが古くならない）
+  var s = document.querySelector('script[src*="exally-formula.js"]');
+  var m = s && s.getAttribute('src').match(/\?v=([0-9a-f]+)/);
+  return m ? ('?v=' + m[1]) : '';
+}
+function _loadScript(src){
+  return new Promise(function(res, rej){
+    var el = document.createElement('script');
+    el.src = src; el.onload = res; el.onerror = function(){ rej(new Error(src + ' を読み込めません')); };
+    document.head.appendChild(el);
+  });
+}
+function _ensureXlsx(){
+  if (window.XlsxIO && window.XLSX) return Promise.resolve();
+  if (_xlsxLoading) return _xlsxLoading;
+  var v = _assetVer();
+  // ★順番が要る: xlsx-io.js は読み込まれた瞬間に XLSX を掴むので、SheetJS が先。
+  _xlsxLoading = _loadScript('lib/xlsx.full.min.js' + v).then(function(){
+    return _loadScript('lib/xlsx-io.js' + v);
+  });
+  return _xlsxLoading;
+}
+// 配列を返す式か（＝Excelではスピルするが、うちのグリッドは1セル分しか出さない）
+function _isArrayFormula(sheetIdx, r, c){
+  try {
+    var v = hf.getCellValue({ sheet: _hfSid(sheetIdx), row: r, col: c });
+    return Array.isArray(v) || (v && typeof v === 'object' && typeof v.data !== 'undefined');
+  } catch(e){ return false; }
+}
+function saveXlsx(){
+  if (typeof GridXlsx === 'undefined') { showToast('保存の部品が読み込まれていません', 3000); return; }
+  showToast('Excelファイルを作っています…', 1500);
+  _ensureXlsx().then(function(){
+    var warns = GridXlsx.exportWarnings(sheets, { isArrayFormula: _isArrayFormula });
+    var buf = XlsxIO.writeBook(GridXlsx.gridToBook(sheets));
+    var blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = (sheets[0] && sheets[0].name ? sheets[0].name : 'book') + '.xlsx';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+    if (warns.length) {
+      // ★止めない。落ちる物を具体的に伝えるだけ（客が自分で直せる形にする）
+      //   長い文章なので「読ませる用」の見た目(白地・濃い文字・左揃え)にする。
+      var esc1 = function(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+      var html = '<span class="toast-h">⚠️ 保存しました。ただしExcelに入らない物があります</span><ul>'
+        + warns.map(function(w){ return '<li>' + esc1(w.msg) + '</li>'; }).join('') + '</ul>';
+      showToast(html, 14000, 'warn');
+    } else {
+      showToast('✅ Excelファイルを保存しました', 2500);
+    }
+  }).catch(function(e){
+    // ★「保存しました」と嘘をつかない
+    showToast('❌ 保存できませんでした：' + (e && e.message ? e.message : e), 8000);
+  });
+}
 
 // ===== モバイル AI インライン/ポップアップ =====
 var popupVisible = false;
