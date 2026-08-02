@@ -160,7 +160,8 @@
       SHH: (typeof SHAKAIHOKEN_HYO !== 'undefined') ? SHAKAIHOKEN_HYO : window.SHAKAIHOKEN_HYO,
       SAI: (typeof SAITEI_CHINGIN !== 'undefined') ? SAITEI_CHINGIN : window.SAITEI_CHINGIN,
       KOYO: window.KoyoHoken, D: window.ShotokuzeiDensan, H: window.ShotokuzeiHei,
-      NI: window.ShotokuzeiNichi, SZ: window.ShoyoZei, N: window.Nenmatsu, WM: window.Warimashi
+      NI: window.ShotokuzeiNichi, SZ: window.ShoyoZei, N: window.Nenmatsu, WM: window.Warimashi,
+      SHZ: window.ShouhizeiRitsu
     };
   }
 

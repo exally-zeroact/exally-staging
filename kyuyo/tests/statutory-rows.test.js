@@ -11,8 +11,9 @@ var NI = require('../lib/shotokuzei-nichi.js');
 var SZ = require('../lib/shoyo-zei.js');
 var N = require('../lib/nenmatsu.js');
 var WM = require('../lib/warimashi.js');
+var SHZ = require('../lib/shouhizei-ritsu.js');
 
-var rows = SR.buildStatutoryRows({ SHH: SHH, SAI: SAI, KOYO: KOYO, D: D, H: H, NI: NI, SZ: SZ, N: N, WM: WM });
+var rows = SR.buildStatutoryRows({ SHH: SHH, SAI: SAI, KOYO: KOYO, D: D, H: H, NI: NI, SZ: SZ, N: N, WM: WM, SHZ: SHZ });
 
 T('buildStatutoryRows: 13行・想定の(kind,year)を網羅', function () {
   eq(rows.length, 13, '行数');
@@ -48,7 +49,7 @@ T('最賃: todofuken/全国平均/年度をlibから写す', function () {
 });
 
 T('diffRows: 未収録=new / 一致=same / 相違=changed を判定', function () {
-  var desired = SR.buildStatutoryRows({ SHH: SHH, SAI: SAI, KOYO: KOYO, D: D, H: H, NI: NI, SZ: SZ, N: N, WM: WM });
+  var desired = SR.buildStatutoryRows({ SHH: SHH, SAI: SAI, KOYO: KOYO, D: D, H: H, NI: NI, SZ: SZ, N: N, WM: WM, SHZ: SHZ });
   // 中央が空 → 全行 new
   var allNew = SR.diffRows(desired, []);
   ok(allNew.every(function (d) { return d.status === 'new'; }), '空中央=全new');

@@ -42,6 +42,7 @@ const STATUTORY = [
   'warimashi.js',         // 割増率
   'nenmatsu.js',          // 年末調整
   'juminzei.js',          // 住民税
+  'shouhizei-ritsu.js',   // 消費税（★2026-08-02: 直下の写しを消して kyuyo/lib/ に1本化した）
   'statutory-rows.js',    // 中央statutoryへ入れる行の生成
 ];
 

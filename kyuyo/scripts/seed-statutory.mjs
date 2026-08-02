@@ -14,6 +14,7 @@ const NI = require('../lib/shotokuzei-nichi.js');
 const SZ = require('../lib/shoyo-zei.js');
 const N = require('../lib/nenmatsu.js');
 const WM = require('../lib/warimashi.js');
+const SHZ = require('../lib/shouhizei-ritsu.js');
 const { buildStatutoryRows } = require('../lib/statutory-rows.js');
 
 // ★書き込み先は【このリポジトリ自身の接続設定】から導く（ホスト直書きをやめた・2026-08-01）★
@@ -37,7 +38,7 @@ console.log('書き込み先(このリポジトリの js/supa-config.js 由来):
 const c = new pg.Client({ host: 'db.' + REF + '.supabase.co', port: 5432, user: 'postgres', password: process.env.SUPA_DB_PW, database: 'postgres', ssl: { rejectUnauthorized: false }, connectionTimeoutMillis: 15000 });
 
 // ★行生成は lib/statutory-rows.js に集約(seedとadmin.htmlで単一ソース・二重持ち禁止)★
-const rows = buildStatutoryRows({ SHH, SAI, KOYO, D, H, NI, SZ, N, WM });
+const rows = buildStatutoryRows({ SHH, SAI, KOYO, D, H, NI, SZ, N, WM, SHZ });
 
 const run = async () => {
   await c.connect();

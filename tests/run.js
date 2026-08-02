@@ -20,6 +20,9 @@ const FILES = [
   // ★staging(GitHub Pages のサブパス配信)で壊れる書き方＋本番倉庫への誤接続を止める恒久ガード
   'pages-hosting.test.mjs',
   ['pages-hosting.test.mjs', '--self-test'],  // ★わざと壊して赤になるかの自己確認(7通り)
+  'refs-resolve.test.mjs',      // ★読んでいるファイルが実在するか(require/importも参照として数える)
+  ['refs-resolve.test.mjs', '--self-test'], // ★わざと壊して赤になるかの自己確認
+  'api-claude.test.mjs',        // ★チャットが客に言う基準数値(実数リテラル・NaN混入検知)
   // P1② 版対応 検証ハーネス
   'xlsx-harness/roundtrip.test.mjs',        // 数式入りxlsxの往復(SheetJS・★新関数の _xlfn.)
   'xlsx-harness/bare-form.test.mjs',   // ★「客が最初に書く形」のケースが無い関数を赤にする(R19の再発防止)

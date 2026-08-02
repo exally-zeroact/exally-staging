@@ -1,7 +1,12 @@
 const Anthropic = require('@anthropic-ai/sdk');
-const SHAKAIHOKEN_HYO = require('../shakaihoken-hyo.js');
-const KOYOHOKEN_RITSU  = require('../koyohoken-ritsu.js');
-const SHOUHIZEI_RITSU  = require('../shouhizei-ritsu.js');
+// ★法定の数値は kyuyo/lib/ の本体を読む（写しを作らない）。
+//   2026-08-02: リポジトリ直下に写しを置いていて、掃除でそれを消した時にここが
+//   MODULE_NOT_FOUND になり /api/claude が毎回500（＝チャットが全部落ちた）。
+//   本体を直接読めば、消しても場所が変わっても同じ所を指す。
+//   参照が生きているかは tests/refs-resolve.test.mjs がCIで見張っている。
+const SHAKAIHOKEN_HYO = require('../kyuyo/lib/shakaihoken-hyo.js');
+const KOYO_HOKEN      = require('../kyuyo/lib/koyo-hoken.js');
+const SHOUHIZEI_RITSU = require('../kyuyo/lib/shouhizei-ritsu.js');
 
 const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -96,13 +101,26 @@ Excelバージョン別（365/2024/2021/2019/2016/Mac/Online/なし）に合わ�
 
 - TSVのセル区切りは必ずタブ文字（\\t）を使う・縦棒（|）は絶対に使わない
 - TSVの数式セルはExcelで動く形式（=SUM(B2:B10) など）で記載する
-- セル幅・書式は貼り付け後に手動調整が必要な旨を末尾に添える
+- セル幅・書式は貼り付け後に手動調整が必要な旨を末尾に添える`;
 
-【税務・給与計算の基準数値（2025年度）】
-- 健康保険料率（東京）: ${(SHAKAIHOKEN_HYO.KENKO_RITSU.tokyo.jugyoin*100).toFixed(3)}%（労使折半・${SHAKAIHOKEN_HYO.NENDO}）
-- 厚生年金保険料率: ${(SHAKAIHOKEN_HYO.KOSEI_NENKIN_RITSU_JUGYOIN*100).toFixed(2)}%（労使折半・全国一律）
-- 雇用保険料率: ${(KOYOHOKEN_RITSU.jugyoin.ippan*100).toFixed(2)}%（${KOYOHOKEN_RITSU.NENDO}）
-- 消費税: ${(SHOUHIZEI_RITSU.hyojun*100).toFixed(0)}%（標準）/ ${(SHOUHIZEI_RITSU.keigen*100).toFixed(0)}%（軽減）`;
+// ===== 税務・給与の基準数値（kyuyo/lib の本体から・年度は対象月で自己選択） =====
+//  ・健保/介護は社保年度（3月起算）、雇用保険は労働保険年度（4月起算）で切り替わる。
+//  ・呼び出しの【たびに】組み立てる＝年度をまたいでも古い値を返さない
+//    （関数が温まったまま年度が変わる、を避ける）。
+function buildStatutoryPrompt(ymArg) {
+  const ym = ymArg || new Date().toISOString().slice(0, 7);  // 'YYYY-MM'
+  const kenko = SHAKAIHOKEN_HYO.getKenko('tokyo', ym);       // {jugyoin, nendo}
+  const koyoYear = KOYO_HOKEN.employYearOfYm(ym);
+  const koyoRate = KOYO_HOKEN.employRate('ippan', koyoYear);
+  const koyoNendo = '令和' + (koyoYear - 2018) + '年度';
+  return `
+
+【税務・給与計算の基準数値】
+- 健康保険料率（東京）: ${(kenko.jugyoin * 100).toFixed(3)}%（従業員負担・労使折半・${kenko.nendo}）
+- 厚生年金保険料率: ${(SHAKAIHOKEN_HYO.KOSEI_NENKIN_RITSU_JUGYOIN * 100).toFixed(2)}%（従業員負担・労使折半・全国一律）
+- 雇用保険料率: ${(koyoRate * 100).toFixed(2)}%（従業員負担・一般の事業・${koyoNendo}）
+- 消費税: ${(SHOUHIZEI_RITSU.hyojun * 100).toFixed(0)}%（標準）/ ${(SHOUHIZEI_RITSU.keigen * 100).toFixed(0)}%（軽減）`;
+}
 
 // ===== 動的プロンプト生成 =====
 function buildDynamicPrompt(versionInfo) {
@@ -196,7 +214,7 @@ ${EXALLY_UNSUPPORTED.pending.join(', ')}
 4. 将来対応予定なら「※Exally内で対応予定」を添える（具体的な時期は書かない）
 `;
 
-  return SYSTEM_PROMPT_BASE + groupRule + commonRule;
+  return SYSTEM_PROMPT_BASE + buildStatutoryPrompt() + groupRule + commonRule;
 }
 
 module.exports = async (req, res) => {
@@ -265,3 +283,10 @@ module.exports = async (req, res) => {
     return res.status(200).json({ text: errorText, tsv: '' });
   }
 };
+
+// ★テスト用の窓（tests/api-claude.test.mjs が使う）。
+//   Vercel は module.exports を「関数として呼ぶ」だけなので、
+//   関数に付け足したこのプロパティは本番の挙動を1ミリも変えない。
+//   なぜ要るか: 基準数値が黙って NaN / undefined になっても、画面は普通に出てしまう。
+//   機械が数値そのものを見るための口。
+module.exports.__buildStatutoryPrompt = buildStatutoryPrompt;
