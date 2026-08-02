@@ -212,3 +212,51 @@ tests/op-boundary.test.mjs（新設）
 - オペが複数月・複数社をまたぐ時の形（v0は**1社1ヶ月**に固定）
 - グリッドの `=PAYROLL.MONTHLY(...)` が**複数セルに展開**される時の見え方
   （★R15_no_spill：うちのグリッドはまだスピルの表示に未対応。`result.cells` の見せ方は P2 のグリッド作り直しと同時に決める）
+
+---
+
+## 9. 実装見積り（★2026-08-02・承認をもらってから実物を読んで出した）
+
+指示役が足した2点を含む。**合計 8.0h（1日強）**。内訳と「何が緑になったら終わりか」を必ずセットで書く。
+
+### 9.0 先に：測って分かった前提
+
+| 測った物 | 結果 |
+|---|---|
+| `kyuyo/lib/op-contract.js` | 119行。`defineOperation` が **検証NG→`value:null`＋errors** を既に強制 |
+| `kyuyo/ops/payroll.monthly.js` | 235行。`provenance` に `op/version/engines(13本)/law/statutory/watch` を**既に返している** |
+| ★`provenance` に足りない物 | **出典URLと確認日**。`LAW.*.source` にURLはあるが、**実際に使った年度の値**に紐づいていない |
+| ★中央 statutory の取り出し | `Store.getStatutory` の select が **`kind,year,data` だけ**。`source_url` / `verified_at` は**表にあるのに読んでいない** |
+| ★内蔵値(オフライン時)の確認日 | **どこにも機械可読で無い**（libのコメントに文章であるだけ）→ 9.3の注意点 |
+| 呼ぶ側の候補 | `kyuyo/js/app.js` の **`#b-xlsx`（給与明細Excel出力）**。今は `buildPeople(emps)` → `PayslipXlsx.download(people, opts)` |
+| ★その候補が良い理由 | `download()` の中身は **`shukeiAOA` ＋ 人ごとの `meishiAOA`** ＝ **オペの `result.cells` と同じ物**。だから**新旧のAOAが完全一致するか**を機械で比べられる＝「通した」を証明できる |
+
+### 9.1 内訳
+
+| # | やる事 | 時間 | 備考 |
+|---|---|---|---|
+| 1 | `lib/op-registry.js`（register/get/list・二重登録は投げる）＋その単体テスト | **1.0h** | 新規1ファイル・小さい |
+| 2 | `tests/op-boundary.test.mjs`（守り方1〜4） | **1.5h** | ★守り方1は**今日作った `no-hardcoded-statutory` をそのまま流用**、守り方3は `no-duplicate-libs` 流用。新規は「op.tests がCIで実際に回っているか」と「provenance を返さない engine を受け付けない」の2本 |
+| 3 | ★(b) `provenance` に**出典URLと確認日** | **2.5h** | `Store.getStatutory` の select に2列追加／どのkind・yearをどの中央行で上書きしたかを保持／`provenance.statutory[kind]` に `{origin:'central'|'builtin', source_url, verified_at}`／中央あり・なしの両方でテスト |
+| 4 | ★(a) **実際に1箇所から呼ぶ**（`#b-xlsx` をオペ経由へ） | **2.0h** | inputs詰め替え → `OpRegistry.get('payroll.monthly').engine(inputs)` → `result.cells.sheets` を `downloadSheets`。★新旧AOA完全一致テストつき |
+| 5 | 実ブラウザ確認・再スタンプ・CI・報告 | **1.0h** | 実UIで `#b-xlsx` を実際に押してファイルが出る所まで |
+|  | **合計** | **8.0h** | |
+
+### 9.2 ★完了条件（これが全部緑になったら終わり。1つでも欠けたら未完）
+
+1. `op-registry` の単体テストが緑（同じidの二重登録が**投げる**ことまで）
+2. `op-boundary.test.mjs` が緑、かつ **わざと壊して赤になるのを実測**（self-test）
+3. ★**新旧一致テスト**：`buildPeople→download` が作るAOA と `op.engine().cells` が**完全一致**（1セルでも違えば赤）
+4. ★**provenance テスト**：中央から取れた時は `source_url` と `verified_at` が入る／取れない時は `origin:'builtin'` と分かる。**どちらの場合も空にならない**
+5. ★**「呼ばれている」ことの機械確認**：`ops/*.js` の各オペが、テスト・ops配下**以外**の実コードから最低1箇所呼ばれていること。呼ばれていなければ赤。
+   → **呼ばれていない契約を「有る」と言わない**を、今度は型にする（エンジン層が緑のまま誰も呼んでいなかった今の状態を、v0で繰り返さないため）
+6. 既存が1つも赤くならない：`tests/run.js` 全緑／`ci-coverage` 緑／給与556緑／統合緑／**UI全ボタンで例外0**
+7. 実ブラウザで `#b-xlsx` を押して Excel が出る・consoleエラー0
+
+### 9.3 ★正直に言っておく不確実な所（見積りに含めた／含めていない）
+
+- **含めた**：`buildPeople` と オペの `personOf` は別々に書かれている。金額は `ops-golden-parity` が1円一致を保証済みだが、**AOAの一致は誰も確かめていない**。差が出たら**寄せる作業が +1〜2h**（オペ側が正・app側を捨てる方向で寄せる）。
+- **★含めていない（判断が要る）**：**内蔵値の「確認日」がどこにも記録されていない**。中央から取れた行は `verified_at` を返せるが、オフライン/中央未投入時に返す内蔵値は、確認日を**捏造できない**。
+  v0では `verified_at: null, note:'内蔵値・確認日は未記録'` と**正直に返す**案にする。
+  各libに確認日を1行入れて回るなら **+1.5h**（8本）。**どちらにするかは指示役の判断**。
+- **含めていない**：グリッド `=PAYROLL.MONTHLY(...)` からの呼び出し。6章「作らない物」のとおり v0 の外。`result.cells` の見せ方は R15_no_spill と一緒に決める。
