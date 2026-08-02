@@ -1147,12 +1147,13 @@ background:#FFE066 !important;
 }
 </style>
 
-<script src="hyperformula.full.min.js?v=d13825de"></script>
+<script src="hyperformula.full.min.js?v=72b6121a"></script>
 
-<script src="exally-formula.js?v=d13825de"></script>
+<script src="exally-formula.js?v=72b6121a"></script>
 <!-- グリッド→xlsx の変換と「落ちる物」の警告(純関数・軽い)。SheetJS本体(930KB)と lib/xlsx-io.js は
      初回の「Excelに保存」で初めて読み込む＝グリッドの表示を重くしない -->
-<script src="lib/grid-xlsx.js?v=d13825de"></script>
+<script src="lib/grid-xlsx.js?v=72b6121a"></script>
+<script src="lib/excel-version.js?v=72b6121a"></script>
 
 <script>
 /* ===== canvas-formula-engine.js (inlined) ===== */
@@ -3376,6 +3377,8 @@ function setCell(r,c,v,noUndo){
     var hfResult = setCellFormula(activeSheet, r, c, v);
     if(hfResult !== null){ d = hfResult; }
     else if(v && v[0]==='='){ d = evalFormula(v, r, c); }
+    // ★書いた式が「相手のExcelで動くか」をその場で伝える。止めない・書けたまま。
+    _warnExcelCompat(v, r, c);
   }
   // 既存の書式プロパティを保持してv/f/dのみ更新
   var existing = sheets[activeSheet].data[key] || {};
@@ -5905,12 +5908,25 @@ function doWrite(){
  *  ★SheetJS(930KB)は重いので、初回の保存で初めて読み込む（グリッドの表示を遅くしない）。
  *  ★落ちる物は黙って落とさず、何が起きるかをセル番地つきで出す。
  */
-/*  ★このボタンはヘッダで「📊 365 ▼」の真横にある。客はそれを見て
- *  「選んだ版に合わせて保存される」と読む。ところが今の版セレクタは表示だけで、
- *  保存は版を一切見ていない（台帳 version_scope）。誤解させたままにしないので、
- *  保存のたびに1行そのことを出す。
- *  ★(a-lite)＝「選んだ版で動かない関数を警告する」を入れたら、この1行は消すこと。 */
-var VER_NOTE = '※Excelの版（📊）は保存内容に影響しません。どの版でも同じファイルが出ます。';
+/* ★式を書いた時に「相手のExcelで動くか」を伝える。
+ *   ・Excelに無い関数        … 版に関係なく必ず出す（365の客でも #NAME? になるため。★こちらが本体）
+ *   ・選んだ版にまだ無い関数  … 右上の 📊 で選んだ版に連動
+ *   ★止めない。書けたまま、知らせるだけ。同じ関数を続けて書いた時に出し続けない。 */
+var _lastCompatKey = '';
+function _warnExcelCompat(formula, r, c){
+  if (typeof ExcelVersion === 'undefined') return;
+  if (!formula || String(formula).charAt(0) !== '=') return;
+  var ws = ExcelVersion.checkFormula(formula, getBookVer());
+  if (!ws.length) { _lastCompatKey = ''; return; }
+  var key = ws.map(function(w){ return w.kind + ':' + w.name; }).join(',') + '@' + cellAddr(r, c);
+  if (key === _lastCompatKey) return;          // 同じセルの同じ指摘は繰り返さない
+  _lastCompatKey = key;
+  var esc2 = function(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+  showToast('<span class="toast-h">⚠️ ' + cellAddr(r, c) + ' の式は、Excelで開くと動きません</span><ul>'
+    + ws.map(function(w){ return '<li>' + esc2(w.msg) + '</li>'; }).join('') + '</ul>'
+    + '<span class="toast-n">この画面では計算できています。書いたままで大丈夫です。</span>', 9000, 'warn');
+}
+
 var _xlsxLoading = null;
 function _assetVer(){
   // 既に貼られている stamp 済みのURLから ?v= を借りる（遅延読み込みでもキャッシュが古くならない）
@@ -5950,7 +5966,13 @@ function saveXlsx(){
   if (typeof GridXlsx === 'undefined') { showToast('保存の部品が読み込まれていません', 3000); return; }
   showToast('Excelファイルを作っています…', 1500);
   _ensureXlsx().then(function(){
-    var warns = GridXlsx.exportWarnings(sheets, { isArrayFormula: _isArrayFormula });
+    // ★「相手のExcelで動くか」も書き出しの直前に出す（Excelに無い関数＋選んだ版に無い関数）
+    var verWarns = (typeof ExcelVersion !== 'undefined')
+      ? ExcelVersion.checkBook(sheets, getBookVer()).map(function (w) {
+          return { kind: w.kind, cells: w.cells, msg: w.msg + '：' + GridXlsx.listCells(w.cells) };
+        })
+      : [];
+    var warns = verWarns.concat(GridXlsx.exportWarnings(sheets, { isArrayFormula: _isArrayFormula }));
     var buf = XlsxIO.writeBook(GridXlsx.gridToBook(sheets));
     var blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     var url = URL.createObjectURL(blob);
@@ -5962,13 +5984,13 @@ function saveXlsx(){
       // ★止めない。落ちる物を具体的に伝えるだけ（客が自分で直せる形にする）
       //   長い文章なので「読ませる用」の見た目(白地・濃い文字・左揃え)にする。
       var esc1 = function(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
-      var html = '<span class="toast-h">⚠️ 保存しました。ただしExcelに入らない物があります</span><ul>'
+      var html = '<span class="toast-h">⚠️ 保存しました。ただしExcelで開くと違う所があります</span><ul>'
         + warns.map(function(w){ return '<li>' + esc1(w.msg) + '</li>'; }).join('') + '</ul>'
-        + '<span class="toast-n">' + VER_NOTE + '</span>';
+        + '<span class="toast-n">対象は「' + (ExcelVersion.VER_LBL[getBookVer()] || getBookVer())
+        + '」で見ています（右上の 📊 で変えられます）。</span>';
       showToast(html, 14000, 'warn');
     } else {
-      showToast('<span class="toast-h">✅ Excelファイルを保存しました</span>'
-        + '<span class="toast-n">' + VER_NOTE + '</span>', 5000, 'warn');
+      showToast('✅ Excelファイルを保存しました', 2500);
     }
   }).catch(function(e){
     // ★「保存しました」と嘘をつかない

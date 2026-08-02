@@ -48,34 +48,38 @@ T('① 「実機で突合していない版がある」ことが明記されて�
   }
 });
 
-// ── ② 版セレクタが計算に効いているか ──
+// ── ② 版セレクタが何かに効いているか ──
+//   ★2026-08-02 (a-lite) で「飾り」ではなくなった。今は【警告】に効く（計算そのものは今も版を見ない）。
+//   台帳の記述と実装が【どちら向きにズレても】赤にする、という趣旨は変えていない。
 const book = fs.readFileSync(path.join(ROOT, 'book.html'), 'utf8');
 const formula = fs.readFileSync(path.join(ROOT, 'exally-formula.js'), 'utf8');
 const KEY = 'exally_excel_version';
-// 表示以外で版を読んでいるか＝計算/書き出し側が版を見ているか
+// 計算そのものが版を見ているか（＝答えが版で変わるか）
 const engineReadsVersion = new RegExp(KEY).test(formula) || /getBookVer\s*\(\s*\)/.test(formula);
-// book.html 側で getBookVer() を使っている関数名を拾う（表示用3つだけのはず）
-const uiOnlyFns = ['getBookVer', 'updateBookVerBadge', 'openBookVerModal'];
+// 表示用の3箇所を超えて版を読んでいるか（＝警告など、表示以外の用途に使っているか）
+const UI_ONLY_CALLS = 3;   // getBookVer本体 / updateBookVerBadge / openBookVerModal
 const callSites = (book.match(/getBookVer\s*\(\s*\)/g) || []).length;
+const usedBeyondUI = callSites > UI_ONLY_CALLS;
 
-const claimsCosmetic = VS.product_version_selector
-  && /表示だけ/.test(VS.product_version_selector['実測 2026-08-01'] || '');
+const s = VS.product_version_selector || {};
+const claimsWarnOnly = /警告/.test(s['実測 2026-08-02(a-lite実装後)'] || '');
+const claimsCosmetic = /表示だけ/.test(s['実測 2026-08-02(a-lite実装後)'] || '');
 
-T('② 版セレクタの実態（表示だけ／計算に効く）と台帳の記述が一致している', () => {
+T('② 版セレクタの実態と台帳の記述が一致している（どちら向きのズレも赤）', () => {
   if (!VS.product_version_selector) throw new Error('version_scope.product_version_selector が無い');
-  if (engineReadsVersion && claimsCosmetic) {
-    throw new Error('計算側(exally-formula.js)が版を見るようになっているのに、台帳は「表示だけ」のまま。'
-      + '実装したなら台帳を更新すること。');
+  if (usedBeyondUI && claimsCosmetic) {
+    throw new Error('版を表示以外(' + callSites + '箇所)で使っているのに、台帳は「表示だけ」のまま。台帳を更新すること。');
   }
-  if (!engineReadsVersion && !claimsCosmetic) {
-    throw new Error('計算側は版を見ていない（＝表示だけ）のに、台帳がそう書いていない。');
+  if (!usedBeyondUI && claimsWarnOnly) {
+    throw new Error('台帳は「警告に効く」と書いているのに、版を表示用の' + UI_ONLY_CALLS + '箇所でしか読んでいない。'
+      + '実装が外れたか、台帳が先走っている。');
   }
 });
-T('② 版セレクタの参照箇所が表示用だけ（増えていたら実装が入った合図）', () => {
-  if (!claimsCosmetic) return;   // 出し分けを実装したらこの検査は意味がなくなる
-  if (callSites > uiOnlyFns.length) {
-    throw new Error('getBookVer() の参照が ' + callSites + ' 箇所ある（表示用は ' + uiOnlyFns.length + ' 箇所）。'
-      + '計算や書き出しで使い始めたなら台帳の version_scope を更新すること。');
+T('② ★計算そのものが版で変わるようになったら台帳を書き直す（今は変わらないはず）', () => {
+  const claimsCalcUnchanged = /計算そのものは今も版を見ない/.test(s['実測 2026-08-02(a-lite実装後)'] || '');
+  if (engineReadsVersion && claimsCalcUnchanged) {
+    throw new Error('計算側(exally-formula.js)が版を見るようになっているのに、'
+      + '台帳は「計算そのものは版を見ない」のまま。どちらが正しいか決めて揃えること。');
   }
 });
 T('② 「まだ決めていない」ことに期限と選択肢が書いてある', () => {
@@ -89,7 +93,8 @@ T('版を足す手順が書いてある（次の人が同じ事を調べ直さ�
 
 console.log('\n── 実測 ──');
 console.log('  golden: ' + goldens.length + '本 (' + goldens.join(', ') + ')');
-console.log('  計算側が版を見ているか: ' + (engineReadsVersion ? 'はい' : 'いいえ（＝版セレクタは表示だけ）'));
+console.log('  計算そのものが版で変わるか: ' + (engineReadsVersion ? '★はい' : 'いいえ（答えは版によらず同じ）'));
+console.log('  版セレクタの用途: ' + (usedBeyondUI ? '★警告に効いている(' + callSites + '箇所で参照)' : '表示だけ'));
 console.log('  getBookVer() の参照: ' + callSites + '箇所');
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
