@@ -54,6 +54,8 @@ jobs:
         run: node tests/no-hardcoded-statutory.test.mjs && node tests/no-hardcoded-statutory.test.mjs --self-test
       - name: ★契約v0 (レジストリ / 契約の線=呼ばれているか・面を呼び返していないか)
         run: node tests/op-registry.test.mjs && node tests/op-boundary.test.mjs && node tests/op-boundary.test.mjs --self-test
+      - name: ★最低賃金 47県が公式の実額と一致 (前科のある行・1円単位)
+        run: node kyuyo/tests/saitei-official.test.mjs
       - name: ★法定データの出典・確認日・指紋 (率を変えたら確認日が自己失効する)
         run: node kyuyo/tests/statutory-freshness.test.mjs && node kyuyo/tests/statutory-freshness.test.mjs --self-test
       - name: ★app.jsの道とオペの道が同じ物を作るか (新旧AOA完全一致)

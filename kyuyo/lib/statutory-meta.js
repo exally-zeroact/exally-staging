@@ -97,12 +97,20 @@
 
     /* ── ★以下は 2026-08-03 に一次情報を開いていない＝確認日を書かない ── */
     'saitei_chingin:2025': {
-      verified_at: null,
-      source_url: 'https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/koyou_roudou/roudoukijun/minimumichiran/',
+      verified_at: '2026-08-03',
+      source_url: 'https://www.mhlw.go.jp/content/11200000/001571192.pdf',
       fingerprint: '49975691',
-      note: '★一部のみ: 一覧ページは開き「令和7年度の額が現行」であることは確認したが、'
-        + '47県の金額はPDF(001571192.pdf)側にあり機械で読めなかった＝金額は突き合わせていない。'
-        + '令和8年度は目安答申のみで実額未確定＝未収録（推測値を入れない）。',
+      note: '厚労省『令和7年度地域別最低賃金全国一覧』PDFを pdftotext でテキスト化し、'
+        + '★47県すべての額と全国加重平均1121円を1件ずつ突き合わせた（不一致0）。'
+        + '並び順(都道府県コード順)は、同PDF本文の「北海道 1,075 …／青 森 1,029 …」の並びと、'
+        + '東京1226(令和7年10月3日)・大阪1177(10月16日)・北海道1075(10月4日)・青森(11月21日)を'
+        + '各労働局ページで別途確認して裏を取った。'
+        + '★真値は kyuyo/tests/fixtures/saitei-official-r7.json に固定し、'
+        + 'kyuyo/tests/saitei-official.test.mjs が毎回CIで突き合わせる（人が打ち直していない）。'
+        + '★この行は2026-07-10に47県中38県が誤値だった前科があるため、機械で示せる形にした。'
+        + '令和8年度は目安答申のみで実額未確定＝未収録（推測値を入れない）。'
+        + '★未解決: 発効日は令和7年10月3日〜令和8年3月31日に順次で、10月中に発効しない県が27ある。'
+        + 'lib の saiteiNendoOf は全県10月一律で切り替えるため、発効前の月に新しい額を使う＝誤警告の可能性（判断待ち）。',
     },
     'shotokuzei_densan:2025': { verified_at: null, source_url: 'https://www.nta.go.jp/users/gensen/', fingerprint: '2e37e55a', note: '★未確認: 令和7年分の電算機特例パラメータ(扶養控除/給与所得控除/基礎控除)は今回開いていない。' },
     'shotokuzei_densan:2026': { verified_at: null, source_url: 'https://www.nta.go.jp/users/gensen/2026kaisei/index.htm', fingerprint: '17488f72', note: '★未確認: 令和8年分の電算機特例パラメータと税額の算式は今回開いていない。' },

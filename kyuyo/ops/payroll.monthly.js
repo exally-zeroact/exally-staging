@@ -140,8 +140,10 @@
     }
     var m = SMeta && SMeta.get ? SMeta.get(kind, year) : null;
     if (!m) return { origin: 'builtin', source_url: null, verified_at: null, note: '内蔵値・出典未登録(lib/statutory-meta.js に無い)' };
+    // ★note は確認日の有無にかかわらず必ず出す。「何をどこまで確かめたか」「何が未確認か」は
+    //   日付が入っていても言うべき事だから（例: 最賃は47県を突き合わせたが発効日の扱いが未解決）。
     return { origin: 'builtin', source_url: m.source_url || null, verified_at: m.verified_at || null,
-      note: m.verified_at ? null : (m.note || '内蔵値・確認日は未記録') };
+      note: m.note || (m.verified_at ? null : '内蔵値・確認日は未記録') };
   }
 
   function statutorySnapshot(ctx, employees, statutorySource) {
