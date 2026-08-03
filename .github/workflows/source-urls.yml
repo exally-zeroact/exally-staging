@@ -1,0 +1,26 @@
+name: 出典URLの死活（週1・手動）
+
+# ★通常のCI(ci.yml)には入れない。理由:
+#   ・外部の官公庁サイトに毎回13本叩くと、向こうの都合(メンテ・混雑・レート制限)でCIが赤くなる。
+#     それは「うちのコードが壊れた」ではないのに push が止まり、業務が止まる。
+#   ・自分のせいでない理由で赤が出ると、人は赤を無視するようになる。それが一番まずい
+#     （本物の赤も見なくなる）。
+#   だから【別ワークフロー】で週1＋手動。落ちても push は止まらない。
+#   見つかった404は実行ログに一覧で出る＝指示役が見て中央 statutory を直す。
+#   ★この道具は読むだけ（anon GET）。中央へ書く経路は無い。
+
+on:
+  schedule:
+    - cron: '0 0 * * 1'      # 毎週月曜 00:00 UTC = 日本時間 月曜9時
+  workflow_dispatch:          # 手動でも回せる
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: ★中央statutoryの出典URLが全部生きているか（404なら赤・ただしCIは止めない）
+        run: node kyuyo/scripts/check-source-urls.mjs

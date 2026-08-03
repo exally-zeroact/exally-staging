@@ -56,6 +56,8 @@ jobs:
         run: node tests/op-registry.test.mjs && node tests/op-boundary.test.mjs && node tests/op-boundary.test.mjs --self-test
       - name: ★最低賃金 47県が公式の実額と一致 (前科のある行・1円単位)
         run: node kyuyo/tests/saitei-official.test.mjs
+      - name: ★最低賃金を県ごとの発効日で判定 (誤警告ゼロ＋本物の割れを見逃さない)
+        run: node kyuyo/tests/saitei-hatsuko.test.mjs
       - name: ★法定データの出典・確認日・指紋 (率を変えたら確認日が自己失効する)
         run: node kyuyo/tests/statutory-freshness.test.mjs && node kyuyo/tests/statutory-freshness.test.mjs --self-test
       - name: ★app.jsの道とオペの道が同じ物を作るか (新旧AOA完全一致)
@@ -96,6 +98,8 @@ jobs:
         run: node kyuyo/tests/periods-golden.test.mjs
       - name: Fixture reproducibility (入力fixtureが生成スクリプトと一致するか)
         run: node kyuyo/scripts/make-input-fixture.mjs --check && node kyuyo/scripts/make-periods-fixture.mjs --check
+      - name: ★中央statutoryの写しが最新か (出典/確認日/指紋・最賃47県。手書きを2箇所に残さない)
+        run: node kyuyo/scripts/pull-statutory.mjs --check
       - name: Statutory drift guard (lib == 中央statutory)
         run: node kyuyo/scripts/verify-statutory.mjs
 

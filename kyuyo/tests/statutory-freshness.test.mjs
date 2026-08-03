@@ -1,20 +1,18 @@
-/* statutory-freshness.test.mjs — ★確認日が自己失効する仕掛け★
+/* statutory-freshness.test.mjs — ★lib が持つ法定値が、中央 statutory とズレていないこと★
  *
- * なぜ必要か（2026-08-03 の指摘）:
- *   出典URLと確認日を lib に持たせても、★率を変えた人が日付を更新し忘れれば静かに嘘になる。★
- *   「文だけ取り残される」の日付版。手で書いた日付は、手で守っても必ず腐る。
+ * 立て付け（2026-08-03に組み替え）:
+ *   ・出典(source_url)・確認日(verified_at)・指紋(fingerprint) は【中央が唯一の正】。
+ *     lib 側は scripts/pull-statutory.mjs が中央から作った lib/statutory-central.generated.js。
+ *     ★人が直すのは中央だけ。lib にも手書きすると2箇所に手書きが残り、どちらを触っても片方が腐る。
+ *   ・ここでは【lib が持つ値】から指紋を作り直し、中央由来の指紋と突き合わせる。
+ *     違えば「値が中央とズレている」＝★赤★。
+ *     （率を変えた人が中央を直していない／中央を直したのに lib を作り直していない、の両方を拾う）
  *
- * やること:
- *   ① 法定の値そのものから【指紋】を作り直す（値の抜き出しは buildStatutoryRows と同じ1本を使う）
- *   ② lib/statutory-meta.js に記録された指紋と違えば ★赤★
- *      →「率を変えたのに確認日を更新していません」と、前の指紋・今の指紋を出す
- *   ③ 確認日が入っている物は、出典URLも必ず入っていること（日付だけの主張を許さない）
- *   ④ 確認日が無い物は、何が未確認かの note があること（黙って空にしない）
- *
- * ★率を1つ変えたら赤になることは、--self-test で毎回確かめる（人の記憶に頼らない）。
+ * ★ネットワークは使わない。中央の写し(generated)と lib を突き合わせるだけ＝CIで安定して回る。
+ *   生きた中央との突き合わせは scripts/verify-statutory.mjs と scripts/pull-statutory.mjs --check が担当。
  *
  * 使い方: node tests/statutory-freshness.test.mjs
- *         node tests/statutory-freshness.test.mjs --self-test
+ *         node tests/statutory-freshness.test.mjs --self-test   ← わざとズラして赤になるか
  */
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -41,15 +39,15 @@ const libs = {
 let pass = 0, fail = 0;
 const T = (n, fn) => { try { fn(); pass++; console.log('  ✓ ' + n); } catch (e) { fail++; console.log('  ✗ ' + n + ' — ' + (e && e.message)); } };
 
-/* ★純関数：行とメタから「指紋が合っているか」を返す。self-testで作り物を通せる。 */
-export function checkFingerprints(rows, meta) {
+/* ★純関数: lib由来の行と、中央由来のメタを突き合わせる。self-testで作り物を通せる。 */
+export function checkAgainstCentral(rows, getMeta) {
   const bad = [];
   for (const r of rows) {
     const key = r.kind + ':' + r.year;
-    const m = meta[key];
-    if (!m) { bad.push({ key, kind: 'メタが無い', now: SM.fingerprintOf(r.data) }); continue; }
+    const m = getMeta(r.kind, r.year);
+    if (!m) { bad.push({ key, why: '中央にこの行が無い（中央へ入れるか、libから消す）', now: SM.fingerprintOf(r.data) }); continue; }
     const now = SM.fingerprintOf(r.data);
-    if (m.fingerprint !== now) bad.push({ key, kind: '指紋が違う', was: m.fingerprint, now: now, verified_at: m.verified_at });
+    if (m.fingerprint !== now) bad.push({ key, why: '値が中央とズレている', central: m.fingerprint, lib: now, verified_at: m.verified_at });
   }
   return bad;
 }
@@ -58,43 +56,65 @@ const rows = SR.buildStatutoryRows(libs);
 
 /* ══ self-test ═══════════════════════════════════════════════════════ */
 if (process.argv.includes('--self-test')) {
-  console.log('\n[statutory-freshness --self-test] わざと率を変えて赤になるか');
+  console.log('\n[statutory-freshness --self-test] わざとズラして赤になるか');
 
-  T('今の実物は指紋が合っている（前提）', () => {
-    const bad = checkFingerprints(rows, SM.META);
+  T('今の実物はズレていない（前提）', () => {
+    const bad = checkAgainstCentral(rows, SM.get);
     if (bad.length) throw new Error('前提が崩れています: ' + JSON.stringify(bad));
   });
 
-  T('★率を1つ変えたら赤になる（雇用保険 一般 0.005 → 0.006）', () => {
+  T('★lib の率を1つ変えたら赤（雇用保険 一般 0.005 → 0.006）', () => {
     const keep = libs.KOYO.RATES[2026].ippan;
     try {
       libs.KOYO.RATES[2026].ippan = 0.006;
-      const bad = checkFingerprints(SR.buildStatutoryRows(libs), SM.META);
-      const hit = bad.filter(b => b.key === 'koyo:2026');
-      if (!hit.length) throw new Error('率を変えたのに赤になりません＝日付が自己失効しない');
+      const bad = checkAgainstCentral(SR.buildStatutoryRows(libs), SM.get);
+      if (!bad.filter(b => b.key === 'koyo:2026').length) throw new Error('赤になっていない');
     } finally { libs.KOYO.RATES[2026].ippan = keep; }
   });
 
-  T('★健保を1県だけ変えても赤になる（東京 9.85% → 9.86%）', () => {
+  T('★健保を1県だけ変えても赤（東京 9.85% → 9.86%）', () => {
     const keep = libs.SHH.KENKO_2026.tokyo;
     try {
       libs.SHH.KENKO_2026.tokyo = 0.0986;
-      const bad = checkFingerprints(SR.buildStatutoryRows(libs), SM.META);
-      if (!bad.filter(b => b.key === 'shakaihoken:2026').length) throw new Error('1県の変更を拾えていません');
+      const bad = checkAgainstCentral(SR.buildStatutoryRows(libs), SM.get);
+      if (!bad.filter(b => b.key === 'shakaihoken:2026').length) throw new Error('赤になっていない');
     } finally { libs.SHH.KENKO_2026.tokyo = keep; }
   });
 
-  T('★最低賃金を1県だけ変えても赤になる', () => {
+  T('★最賃を1県だけ変えても赤', () => {
     const keep = libs.SAI.todofuken.tokyo.chingin;
     try {
       libs.SAI.todofuken.tokyo.chingin = 1227;
-      const bad = checkFingerprints(SR.buildStatutoryRows(libs), SM.META);
-      if (!bad.filter(b => b.key === 'saitei_chingin:2025').length) throw new Error('1県の変更を拾えていません');
+      const bad = checkAgainstCentral(SR.buildStatutoryRows(libs), SM.get);
+      if (!bad.filter(b => b.key === 'saitei_chingin:2025').length) throw new Error('赤になっていない');
     } finally { libs.SAI.todofuken.tokyo.chingin = keep; }
   });
 
+  T('★★発効日を1県だけ変えても赤（判定に直結する）', () => {
+    const keep = libs.SAI.todofuken.akita.hatsuko;
+    try {
+      libs.SAI.todofuken.akita.hatsuko = '2025-10-01';
+      const bad = checkAgainstCentral(SR.buildStatutoryRows(libs), SM.get);
+      if (!bad.filter(b => b.key === 'saitei_chingin:2025').length) throw new Error('★発効日のズレを拾えていない');
+    } finally { libs.SAI.todofuken.akita.hatsuko = keep; }
+  });
+
+  T('★前年額を1県だけ変えても赤（発効前の判定に効く）', () => {
+    const keep = libs.SAI.todofuken.gunma.prev;
+    try {
+      libs.SAI.todofuken.gunma.prev = 900;
+      const bad = checkAgainstCentral(SR.buildStatutoryRows(libs), SM.get);
+      if (!bad.filter(b => b.key === 'saitei_chingin:2025').length) throw new Error('前年額のズレを拾えていない');
+    } finally { libs.SAI.todofuken.gunma.prev = keep; }
+  });
+
+  T('中央にその行が無ければ赤（libだけ増やしても通さない）', () => {
+    const bad = checkAgainstCentral([{ kind: 'nazo', year: 2099, data: { a: 1 } }], SM.get);
+    if (bad.length !== 1) throw new Error('赤になっていない');
+  });
+
   T('元に戻したら緑に戻る（テストが状態を壊していない）', () => {
-    const bad = checkFingerprints(SR.buildStatutoryRows(libs), SM.META);
+    const bad = checkAgainstCentral(SR.buildStatutoryRows(libs), SM.get);
     if (bad.length) throw new Error('戻っていません: ' + JSON.stringify(bad));
   });
 
@@ -103,54 +123,51 @@ if (process.argv.includes('--self-test')) {
 }
 
 /* ══ 本番 ═══════════════════════════════════════════════════════════ */
-console.log('\n[statutory-freshness] 法定データの出典・確認日・指紋');
+console.log('\n[statutory-freshness] lib の法定値が中央 statutory とズレていないか');
 
-const bad = checkFingerprints(rows, SM.META);
-
-T('★値を変えたのに確認日を更新していない、が無い（指紋一致）', () => {
+T('★lib の値が中央とズレていない（指紋一致）', () => {
+  const bad = checkAgainstCentral(rows, SM.get);
   if (bad.length) {
-    throw new Error('法定の値と記録された指紋が合いません:\n'
-      + bad.map(b => '   - ' + b.key + '  ' + b.kind + '  前=' + (b.was || '(無し)') + '  今=' + b.now
-        + (b.verified_at ? '  記録された確認日=' + b.verified_at : '')).join('\n')
-      + '\n   → ★率を変えたのに確認日を更新していません。'
-      + '\n     一次情報を実際に開いて突き合わせ、lib/statutory-meta.js の verified_at と fingerprint を打ち直してください。'
-      + '\n     ★開いていないなら verified_at:null のまま note に何が未確認かを書くこと（見ていない物に日付を書かない）。');
+    throw new Error('中央と合いません:\n'
+      + bad.map(b => '   - ' + b.key + '  ' + b.why + (b.central ? '  中央=' + b.central + ' lib=' + b.lib : '')
+        + (b.verified_at ? '  中央の確認日=' + b.verified_at : '')).join('\n')
+      + '\n   → ★人が直すのは中央だけ。中央を直したら node scripts/pull-statutory.mjs --write で lib を作り直す。'
+      + '\n     lib を手で直すと、中央と2箇所に手書きが残って必ず腐ります。');
   }
 });
 
-T('確認日がある物は、出典URLも必ずある（日付だけの主張を許さない）', () => {
+T('★出典URLと確認日が全行に入っている（中央から来ている）', () => {
+  const ng = [];
   for (const k of SM.keys()) {
-    const m = SM.META[k];
-    if (m.verified_at && !m.source_url) throw new Error(k + ': 確認日はあるのに出典URLが無い');
-    if (m.verified_at && !/^\d{4}-\d{2}-\d{2}$/.test(m.verified_at)) throw new Error(k + ': 確認日の形が YYYY-MM-DD でない');
+    const p = k.split(':'); const m = SM.get(p[0], +p[1]);
+    if (!m.source_url) ng.push(k + ': 出典URLが空');
+    if (!m.verified_at) ng.push(k + ': 確認日が空');
+    else if (!/^\d{4}-\d{2}-\d{2}$/.test(m.verified_at)) ng.push(k + ': 確認日の形が YYYY-MM-DD でない (' + m.verified_at + ')');
   }
+  if (ng.length) throw new Error('中央の行に足りない物があります:\n' + ng.map(x => '   - ' + x).join('\n'));
 });
 
-T('確認日が無い物は、何が未確認かが書いてある（黙って空にしない）', () => {
-  for (const k of SM.keys()) {
-    const m = SM.META[k];
-    if (!m.verified_at && !(m.note && m.note.length > 5)) throw new Error(k + ': 未確認なのに理由が書いていない');
-  }
-});
-
-T('メタと行が1対1（増やした行にメタを付け忘れていない・消した行のメタが残っていない）', () => {
+T('中央の行と lib の行が1対1（増えても減っても気づける）', () => {
   const rowKeys = rows.map(r => r.kind + ':' + r.year).sort();
   const metaKeys = SM.keys();
   const missing = rowKeys.filter(k => metaKeys.indexOf(k) < 0);
   const extra = metaKeys.filter(k => rowKeys.indexOf(k) < 0);
   if (missing.length || extra.length) {
-    throw new Error('メタ不整合: 付け忘れ=' + (missing.join(', ') || 'なし') + ' / 余り=' + (extra.join(', ') || 'なし'));
+    throw new Error('不整合: libにあって中央に無い=' + (missing.join(', ') || 'なし') + ' / 中央にあってlibに無い=' + (extra.join(', ') || 'なし'));
   }
 });
 
 T('検査が空振りしていない（行を実際に作れている）', () => {
   if (rows.length < 10) throw new Error('行が少なすぎます: ' + rows.length);
+  if (!SM.keys().length) throw new Error('中央の写しが空です（scripts/pull-statutory.mjs を走らせてください）');
 });
 
-const verified = SM.keys().filter(k => SM.META[k].verified_at);
 console.log('\n── 実測 ──');
-console.log('  法定の行: ' + rows.length + '件 / 確認日あり ' + verified.length + '件 / 未確認 ' + (SM.keys().length - verified.length) + '件');
-verified.forEach(k => console.log('   ✔ ' + k + '  ' + SM.META[k].verified_at + '  ' + SM.META[k].source_url));
+console.log('  法定の行: ' + rows.length + '件（中央の写しと1対1・指紋一致）');
+SM.keys().forEach(k => {
+  const p = k.split(':'); const m = SM.get(p[0], +p[1]);
+  console.log('   ' + k.padEnd(24) + ' ' + m.verified_at + '  ' + String(m.source_url).slice(0, 62));
+});
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

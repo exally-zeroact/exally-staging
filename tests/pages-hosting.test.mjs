@@ -62,6 +62,24 @@ const EXCEPTIONS = {
     restoreWhen: 'DB-test の statutory に本番と同じ行を入れた時。'
       + 'その時 js/supa-config.js 由来（tests/repo-supa.mjs と同じやり方）に切り替える。',
   },
+  'kyuyo/scripts/check-source-urls.mjs': {
+    what: '中央statutory(法定データ)の読取URL',
+    reason: '★2026-08-03 新設。中央が持つ出典URLを叩いて、まだ生きているかを見る道具。'
+      + '中央の source_url を読む必要があるので中央そのものを見る（verify-statutory と同じ理由・同じ表）。'
+      + 'anon の GET だけ＝ここから書く経路は無い。'
+      + '★通常CIには入れず、週1＋手動の別ワークフロー(.github/workflows/source-urls.yml)で回す'
+      + '（外部サイトの都合でCIが赤くなると、自分のせいでない赤で push が止まり、赤が信用されなくなるため）。',
+    restoreWhen: 'verify-statutory.mjs と同じ。DB-test の statutory に本番と同じ行を入れた時に、'
+      + 'まとめて js/supa-config.js 由来へ切り替える。',
+  },
+  'kyuyo/scripts/pull-statutory.mjs': {
+    what: '中央statutory(法定データ)の読取URL',
+    reason: '★2026-08-03 新設。出典・確認日・指紋と最賃47県を【中央から機械で作り直す】道具。'
+      + '中央を唯一の正にするため、中央そのものを読む必要がある（verify-statutory と同じ理由・同じ表）。'
+      + 'anon の GET だけ＝ここから書く経路は無い。中央へ書くのは seed-statutory.mjs（DBパスワードが要る）だけ。',
+    restoreWhen: 'verify-statutory.mjs と同じ。DB-test の statutory に本番と同じ行を入れた時に、'
+      + '両方まとめて js/supa-config.js 由来へ切り替える。',
+  },
 };
 
 /* 検査しない物（配信されないか、絶対パスが正しい物）。ここも理由つきで明示する。 */

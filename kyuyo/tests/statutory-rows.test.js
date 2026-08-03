@@ -43,7 +43,12 @@ T('社保: 2026は令和8健保表(KENKO_2026)・支援金あり / 2025は総額
 
 T('最賃: todofuken/全国平均/年度をlibから写す', function () {
   var r = rows.filter(function (x) { return x.kind === 'saitei_chingin'; })[0];
-  eq(SR.stableStr(r.data.todofuken), SR.stableStr(SAI.todofuken), '47県');
+  // ★中央は発効日を和暦で持ち、lib は判定に使うのでISOで持つ。形の違いは saiteiForCentral が吸収する。
+  //   値そのものは中央が唯一の正（scripts/pull-statutory.mjs が lib へ機械で書き戻す）。
+  eq(SR.stableStr(r.data.todofuken), SR.stableStr(SR.saiteiForCentral(SAI)), '47県(名前と額)');
+  eq(Object.keys(r.data.todofuken).length, 47, '47県そろっている');
+  eq(r.data.todofuken.tokyo.hatsuko, '令和7年10月3日', '★発効日は中央の書き方(和暦)で送る');
+  eq(r.data.todofuken.tokyo.prev, 1163, '前年額も送る');
   eq(r.data.zenkoku_heikin, SAI.ZENKOKU_HEIKIN, '全国平均');
   eq(r.data.nendo, SAI.NENDO, '年度');
 });

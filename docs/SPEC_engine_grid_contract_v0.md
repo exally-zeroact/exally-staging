@@ -330,3 +330,24 @@ tests/op-boundary.test.mjs（新設）
 理由：契約経由に変えても客が受け取るファイルは1セルも変わらない（`ops-app-parity` が69シート完全一致で毎回見ている）。
 機械で言えることは言い切っているので、残るのは **実機で1回開いて見る** だけ。
 それが済んだら `exally`（本番）へ同じ内容を1コミットで反映する。**それ以外の追加条件は付けない**（付けると staging に溜まる）。
+
+
+---
+
+## 12. ★法定データの出典・確認日・指紋は「中央 statutory 表」が唯一の正（2026-08-03 決定）
+
+> **人が直すのは中央 statutory だけ。lib 側の写し（`kyuyo/lib/statutory-central.generated.js` と `saitei-chingin.js` の47県）は `scripts/pull-statutory.mjs` が機械で作り直す。★lib を手で直さない。★**
+
+理由：出典・確認日を lib にも手書きすると、中央と lib の**2箇所に手書きが残り、どちらを触っても片方が腐る**（＝確認日が静かに嘘になる）。
+ズレていないことは `scripts/pull-statutory.mjs --check`（CI・中央と突き合わせ）と
+`kyuyo/tests/statutory-freshness.test.mjs`（CI・ネット不要／指紋で突き合わせ）の2本で見張る。
+lib が持つ「人の覚え書き（何をどこまで確かめたか）」だけは `statutory-meta.js` の `NOTES` に残す ―― **値でも日付でもないので中央と競合しない**。
+
+### 12.1 発効日の書き方（★次に中央を読む人へ）
+
+> **中央 statutory は発効日を【和暦】で持つ（例 `令和8年3月31日`）。一次情報の表記を落とさないため。
+> 使う側が ISO（`2026-03-31`）へ直す。★自前の変換を書かない。★ `SAITEI_CHINGIN.toIsoHatsuko` / `toWarekiHatsuko` の1箇所だけを使う。**
+
+理由：日付の判定（発効前か後か）は文字列比較でやるので ISO でないと壊れる。
+変換が2箇所以上に生えると、そこからドリフトが生まれる（和暦の元号加算をどこかで間違える）。
+両方向は `kyuyo/tests/integration.mjs`（中央の形で hydrate して ISO で入ることを実測）で固定してある。

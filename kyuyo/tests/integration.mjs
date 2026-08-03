@@ -506,11 +506,32 @@ T('★provenance が出典と確認日を持つ（オフラインの内蔵値で
     ok(st[k].source_url, '★' + k + ': 出典URLが空');
     ok(st[k].verified_at || st[k].note, '★' + k + ': 確認日も理由も無い（黙って空にしない）');
   }
-  eq(st.kenko.verified_at, '2026-08-03', '健保: 一次情報を開いた日');
-  eq(st.koyo.verified_at, '2026-08-03', '雇用保険: 一次情報を開いた日');
+  // ★確認日は【中央 statutory が唯一の正】。lib は中央から作った写しを返す（手書きしない）。
+  eq(st.kenko.verified_at, '2026-08-03', '健保: 中央が持つ確認日');
+  eq(st.koyo.verified_at, '2026-08-03', '雇用保険: 中央が持つ確認日');
   // ★最賃は 2026-08-03 に47県すべてを一次情報(厚労省PDF)と突き合わせたので確認日が入る
-  eq(st.saitei.verified_at, '2026-08-03', '最賃: 47県を突き合わせた日');
-  ok(/47県すべて/.test(st.saitei.note || ''), '最賃: 何をどこまで確かめたかが note に書いてある');
+  eq(st.saitei.verified_at, '2026-08-03', '最賃: 中央が持つ確認日（指示役が2026-08-03に更新）');
+  ok(/47県/.test(st.saitei.note || ''), '最賃: 何をどこまで確かめたかが note に書いてある');
+});
+
+T('★中央から取り込んでも発効日・前年額を落とさない（和暦→ISOに直して入る）', () => {
+  // const 定義の lib は window に付かない＝bare参照で取る（payslip の決まり）
+  const SAI = win.eval('typeof SAITEI_CHINGIN !== "undefined" ? SAITEI_CHINGIN : null');
+  ok(SAI, 'SAITEI_CHINGIN が読めている');
+  const keep = JSON.parse(JSON.stringify(SAI.todofuken));
+  try {
+    // 中央が返す形（発効日は和暦）で流し込む
+    const central = {};
+    Object.keys(keep).forEach(k => {
+      const p = keep[k];
+      central[k] = { name: p.name, chingin: p.chingin, prev: p.prev, hatsuko: SAI.toWarekiHatsuko(p.hatsuko) };
+    });
+    SAI.hydrate({ todofuken: central, zenkoku_heikin: 1121 });
+    eq(SAI.todofuken.akita.hatsuko, '2026-03-31', '★発効日がISOで入る（和暦のままだと日付比較が壊れる）');
+    eq(SAI.todofuken.akita.prev, 951, '★前年額が落ちていない');
+    eq(SAI.todofuken.akita.chingin, 1031, '額が落ちていない');
+    eq(SAI.monthSplit('akita', '2026-03').split, true, '取り込み後も月内で分かれる判定が効く');
+  } finally { SAI.todofuken = keep; }
 });
 
 T('★中央(statutory)から取れた時は、中央の出典・確認日で上書きされる', () => {

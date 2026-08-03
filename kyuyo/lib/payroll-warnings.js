@@ -58,7 +58,14 @@
   function minWageInfo(e, ctx) {
     if (!e || e.payType === '役員' || e.employmentType === 'contractor' || (e.workStatus && e.workStatus !== 'normal')) return null;
     var S = SAI(); if (!S || !S.getChingin) return null;
-    var mw = S.getChingin(e.pref); if (!mw) return null;
+    // ★最賃は「発効日以降の労働」に効く。県ごとに発効日が違うので、対象月×県で額を選ぶ。
+    //   月の途中で発効する月は額が2つある＝丸めずに両方持つ（丸めるとどちらでも嘘になる）。
+    var sp = S.monthSplit ? S.monthSplit(e.pref, YM(ctx)) : null;
+    var mw, split = null;
+    if (sp && sp.split) { mw = sp.after; split = { hatsukoYmd: sp.hatsukoYmd, before: sp.before, after: sp.after }; }
+    else if (sp) { mw = sp.chingin; }
+    else { mw = S.getChingin(e.pref); }
+    if (!mw) return null;
     var co = C(ctx);
     var ah = (e.annualHolidays != null && e.annualHolidays !== '') ? e.annualHolidays : co.annualHolidays;
     var dwh = num((e.dailyWorkH != null && e.dailyWorkH !== '') ? e.dailyWorkH : co.dailyWorkH) + num((e.dailyWorkM != null && e.dailyWorkM !== '') ? e.dailyWorkM : co.dailyWorkM) / 60;
@@ -76,11 +83,32 @@
     // 減額の特例(最賃法7条・労働局長許可): 障害者/試用期間/認定職業訓練/軽易業務/断続的労働。許可された減額率(%)で最賃を下げて判定。
     //  減額後最賃=最賃×(1−率)を円未満切り上げ(労働者有利・記入要領)。率は会社が許可どおり入力。
     var reduce = Math.max(0, Math.min(100, num(e.minWageReduce)));
-    var effMw = reduce > 0 ? Math.ceil(mw * (100 - reduce) / 100) : mw;
-    return { hourly: hourly, minWage: mw, effMinWage: effMw, reduce: reduce, prefName: ((S.todofuken || {})[e.pref] || {}).name || '', ok: (hourly === 0 || hourly >= effMw), teate: teate, stale: (S.saiteiStale ? S.saiteiStale(YM(ctx)) : false) };
+    var eff = function (v) { return reduce > 0 ? Math.ceil(v * (100 - reduce) / 100) : v; };
+    var effMw = eff(mw);
+    var okNow = (hourly === 0 || hourly >= effMw);
+    if (split) {
+      split.effBefore = eff(split.before); split.effAfter = eff(split.after);
+      // 発効前の額も上回っていなければ「その月ずっと割れ」。上回っているなら「発効後の日だけ要確認」。
+      split.underBefore = !(hourly === 0 || hourly >= split.effBefore);
+      split.ambiguous = !split.underBefore && !okNow;    // 旧額はクリア・新額は未達＝日で分かれる
+    }
+    return { hourly: hourly, minWage: mw, effMinWage: effMw, reduce: reduce, prefName: ((S.todofuken || {})[e.pref] || {}).name || '', ok: okNow, teate: teate, split: split, stale: (S.saiteiStale ? S.saiteiStale(YM(ctx)) : false) };
   }
   // 最賃割れのtooltip/説明文(表ビューの⚠とカードのバナーで文面を統一)。製品方針=黄色・非ブロック・具体的に伝える。
-  function mwWarnText(mw) { var v = (mw.reduce > 0) ? mw.effMinWage : mw.minWage, sfx = (mw.reduce > 0) ? '（減額特例' + fmtN(mw.reduce) + '%後）' : ''; return '最低賃金（' + esc(mw.prefName) + '：時給' + fmtN(v) + '円' + sfx + '）を下回っています（約' + fmtN(mw.hourly) + '円）'; }
+  function mwWarnText(mw) {
+    var sfx = (mw.reduce > 0) ? '（減額特例' + fmtN(mw.reduce) + '%後）' : '';
+    var sp = mw.split;
+    // ★月の途中で最賃が上がる月。日ごとの勤務時間が無い時は丸めず、両方の額と発効日を出して確かめてもらう。
+    if (sp && sp.ambiguous) {
+      var d = String(sp.hatsukoYmd).split('-');
+      return esc(mw.prefName) + 'は' + d[0] + '年' + (+d[1]) + '月' + (+d[2]) + '日から時給'
+        + fmtN(mw.reduce > 0 ? sp.effAfter : sp.after) + '円（それまでは' + fmtN(mw.reduce > 0 ? sp.effBefore : sp.before) + '円）'
+        + sfx + '。この月は日で分かれます（約' + fmtN(mw.hourly) + '円）。'
+        + (+d[1]) + '月' + (+d[2]) + '日以降の勤務を確かめてください';   // ★呼ぶ側が「。」を付けるので、ここでは付けない
+    }
+    var v = (mw.reduce > 0) ? mw.effMinWage : mw.minWage;
+    return '最低賃金（' + esc(mw.prefName) + '：時給' + fmtN(v) + '円' + sfx + '）を下回っています（約' + fmtN(mw.hourly) + '円）';
+  }
 
   // ── ② 保障給（労基27条） ──
   // 出来高払制の保障給チェック(労基法27条)。完全歩合で保障(時給/日給の下限 or 固定給)が一切ない=27条違反の恐れ。役員/休業中は対象外。返り{ok} ok=false=無保障。
