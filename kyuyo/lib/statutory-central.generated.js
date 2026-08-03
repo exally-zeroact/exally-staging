@@ -17,7 +17,7 @@
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
   var META = {
-    'koyo:2025': { source_url: "https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/koyouhoken_ryouritsu.html", verified_at: "2026-07-08", fingerprint: '36dc8e47' },
+    'koyo:2025': { source_url: "https://www.mhlw.go.jp/content/001401966.pdf", verified_at: "2026-08-04", fingerprint: '36dc8e47' },
     'koyo:2026': { source_url: "https://jsite.mhlw.go.jp/aichi-hellowork/list/okazaki/news/koyouhokennryouR08.html", verified_at: "2026-08-03", fingerprint: 'd7ad3a44' },
     'nenmatsu:2026': { source_url: "https://www.nta.go.jp/users/gensen/2026kaisei/index.htm", verified_at: "2026-07-09", fingerprint: '4f3b1829' },
     'saitei_chingin:2025': { source_url: "https://www.mhlw.go.jp/content/11200000/001571192.pdf", verified_at: "2026-08-03", fingerprint: '5566dc03' },
@@ -29,7 +29,7 @@
     'shotokuzei_nichi:2026': { source_url: "https://www.nta.go.jp/publication/pamph/gensen/zeigakuhyo2026/data/08-14.pdf", verified_at: "2026-07-13", fingerprint: '02bdb081' },
     'shouhizei:2019': { source_url: "https://www.nta.go.jp/taxes/shiraberu/taxanswer/shohi/6101.htm", verified_at: "2026-08-03", fingerprint: '4a4d2a88' },
     'shoyo:2026': { source_url: "https://www.nta.go.jp/publication/pamph/gensen/zeigakuhyo2026/03.htm", verified_at: "2026-07-09", fingerprint: '8c199970' },
-    'warimashi:2023': { source_url: "https://www.mhlw.go.jp/hourei/doc/kouji/K060000-A5.pdf", verified_at: "2026-07-09", fingerprint: '0423f4c3' },
+    'warimashi:2023': { source_url: "https://jsite.mhlw.go.jp/wakayama-roudoukyoku/newpage_00470.html", verified_at: "2026-08-04", fingerprint: '0423f4c3' },
   };
   return { META: META };
 });
