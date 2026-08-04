@@ -57,11 +57,17 @@
   /* ★ファイルの渡し口は js/file-out.js の1本だけ（種類を正しく付ける／iPhoneは共有シート）。
      XLSX.writeFile は使わない＝あれは種類を octet-stream で落とすので、
      iPhone に Excel が入っていても「開けないファイル」になる（2026-08-04 実機で判明）。 */
+  // ★lib は headless（画面に触らない）＝ここで alert を出さない。
+  //   知らせ方は面(UI)が決める。setErrorReporter で受け口を渡してもらう。
+  var _report = null;
+  function setErrorReporter(fn){ _report = (typeof fn === 'function') ? fn : null; }
+  function report(msg){ if(_report) _report(msg); }
+
   function deliverBook(wb, filename){
     var FO = (typeof window !== 'undefined' && window.FileOut) || (typeof globalThis !== 'undefined' && globalThis.FileOut);
-    if(!FO){ if(typeof alert !== 'undefined') alert('ファイルの受け渡し部品(js/file-out.js)が読み込まれていません'); return false; }
+    if(!FO){ report('ファイルの受け渡し部品(js/file-out.js)が読み込まれていません'); return false; }
     var bytes = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-    FO.deliver(bytes, filename).catch(function(e){ if(typeof alert !== 'undefined') alert('ファイルを渡せませんでした：' + ((e && e.message) || e)); });
+    FO.deliver(bytes, filename).catch(function(e){ report('ファイルを渡せませんでした：' + ((e && e.message) || e)); });
     return true;
   }
 
@@ -117,6 +123,6 @@
     (sheets||[]).forEach(function(sh){ var s=XLSX.utils.aoa_to_sheet(sh.aoa); if(sh.cols)s['!cols']=sh.cols; if(sh.merges)s['!merges']=sh.merges; XLSX.utils.book_append_sheet(wb, s, sheetName(sh.name||'Sheet', used)); });
     return deliverBook(wb, opts.filename||'帳票.xlsx'); }
 
-  return { shukeiAOA: shukeiAOA, meishiAOA: meishiAOA, sheetName: sheetName, download: download,
+  return { setErrorReporter: setErrorReporter, shukeiAOA: shukeiAOA, meishiAOA: meishiAOA, sheetName: sheetName, download: download,
     shakaiListAOA: shakaiListAOA, deptSummaryAOA: deptSummaryAOA, chinginDaichoSheets: chinginDaichoSheets, downloadSheets: downloadSheets };
 });

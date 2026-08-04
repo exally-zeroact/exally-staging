@@ -2533,6 +2533,8 @@
   }
   // ★ファイルの渡し口は js/file-out.js の1本だけ。種類は拡張子から必ず決まる（octet-stream にしない）。
   //   iPhone では共有シートが出て「Excelで開く」が並ぶ。PC等は今までどおり落ちる。
+  // ★lib は画面に触らない（headless）。知らせ方はここ(面)が決める＝受け口を渡す。
+  if(window.PayslipXlsx && PayslipXlsx.setErrorReporter) PayslipXlsx.setErrorReporter(function(msg){ uiAlert(msg); });
   function dlBytes(bytes, filename, type){
     if(!window.FileOut){ uiAlert('ファイルの受け渡し部品(js/file-out.js)が読み込まれていません'); return; }
     window.FileOut.deliver(bytes, filename, type?{type:type}:undefined)
