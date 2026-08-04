@@ -92,6 +92,8 @@ jobs:
         run: node kyuyo/tests/golden-immutable.test.mjs
       - name: Headless guard (lib/ がDOM・通信・非決定性に依存しない)
         run: node kyuyo/scripts/verify-headless.mjs
+      - name: ★源泉区分(204条) 選べるのに算式が無い区分を残さない＋実数1円一致
+        run: node kyuyo/tests/gensen-kubun.test.mjs && node kyuyo/tests/gensen-kubun.test.mjs --self-test
       - name: ★契約が実データの書き方を受け取れるか (画面の選択肢を機械で突き合わせ)
         run: node kyuyo/tests/ops-real-values.test.mjs
       - name: Ops golden parity (★1円一致★ 移設前ゴールデン vs ops/payroll.monthly)

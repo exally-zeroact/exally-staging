@@ -261,7 +261,15 @@
     // ★K3 業務委託=204条掲載報酬の源泉(区分該当時のみ)。対象額=支給合計(税込・安全側)。非該当(代行)は0=控除ゼロ維持。
     var contractorGensen = 0;
     // ★源泉の対象額=課税支給のみ(非課税の通勤等 hikazei:true は除外・住宅手当など課税手当は対象)。taxableTotalで課税支給を単一ソース化。
-    if (e.employmentType === 'contractor') { var _SC = SC(); if (_SC) { var _payG = Calc().taxableTotal(shikyu); contractorGensen = _SC.gensenFor(e.houshuKubun, _payG, { monthlySalary: 0 }); } }
+    if (e.employmentType === 'contractor') {
+      var _SC = SC();
+      if (_SC) {
+        var _payG = Calc().taxableTotal(shikyu);
+        // ★ホステス等(204条1項6号)は「5,000円×計算期間の日数」を引く＝日数が要る。出勤日数を渡す。
+        //   日数が0なら lib 側が0を返す（控除0で多く引く方に倒さない）。
+        contractorGensen = _SC.gensenFor(e.houshuKubun, _payG, { monthlySalary: 0, days: effShukkin(e, ctx) });
+      }
+    }
     var r = Calc().computePayslip({ shikyu: shikyu, birthYmd: e.birthYmd, payYm: month, fuyou: effFuyou, taxClass: effTaxClass, heiTaxAmount: heiAmt, residentTax: residentTaxOf(e, ctx), healthRate: prefRate(e.pref, month), employRate: employRateOf(coK.gyoshu, null, ctx), hyojunBase: e.hyojunBase, apply: apply, extraKojo: e.extraKojo, shahoMonth: _shMonth, shahoMult: _shMult, employmentType: e.employmentType, contractorGensen: contractorGensen });
     if (e.employmentType !== 'contractor') applyNenchoAdj(e, r, ctx); // 年末調整の過不足を反映(業務委託=年調なし=対象外)
     return r;

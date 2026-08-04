@@ -179,23 +179,33 @@ T('源泉区分が未設定・空でも通る（既定＝非該当）', () => {
   }
 });
 
-T('★算式が無い区分（昔のデータ）は、源泉0で計算したことを provenance に必ず出す', () => {
-  const r = run([emp({ name: '原稿料の人', employmentType: '業務委託', houshuKubun: 'genkou' })]);
-  if (r.errors && r.errors.length) throw new Error('昔のデータが弾かれた（お金を止めてしまう）: ' + r.errors[0].message);
-  const list = r.provenance && r.provenance.gensenNoFormula;
-  if (!list || !list.length) throw new Error('★源泉0で計算したことが provenance に出ていない＝黙って引かないのと同じ');
-  if (list[0].houshuKubun !== 'genkou') throw new Error('中身が違う: ' + JSON.stringify(list[0]));
-  // ★お金は変えていない（0のまま）＝移設前と同じ。ippan へ寄せるかどうかは判断待ち。
+/* ★2026-08-04 判断: 'genkou'(原稿料) は ippan(一般・士業) と同じ算式に寄せた。
+   国税庁 No.2795（100万円以下=支払額×10.21%）。引き忘れは払う側(会社)の義務違反のため。
+   ＝以前は源泉0だったが、今は引く。ゴールデンとの差は ops-golden-parity の INTENDED に明記してある。 */
+T('★昔のデータ genkou(原稿料) も、今はちゃんと源泉を引く', () => {
+  const r = run([Object.assign(emp({ name: '原稿料の人', employmentType: '業務委託', base: '300000', houshuKubun: 'genkou' }),
+    { shikyu: [{ label: '基本給', value: '300000' }] })]);
+  if (r.errors && r.errors.length) throw new Error('弾かれた: ' + r.errors[0].message);
   const p = r.cells._people[0];
-  const g = (p.kojo || []).filter(x => /源泉/.test(x.label)).length;
-  if (g !== 0) throw new Error('★勝手に源泉を引き始めている（お金を黙って変えない）');
+  const g = (p.kojo || []).filter(x => /源泉/.test(x.label)).reduce((a, x) => a + Number(x.value || 0), 0);
+  if (g !== 30630) throw new Error('月30万の源泉が違う: 期待 30630 実際 ' + g);
+  const list = (r.provenance && r.provenance.gensenNoFormula) || [];
+  if (list.length) throw new Error('算式がある区分なので出てはいけない: ' + JSON.stringify(list));
 });
 
-T('正しい区分の人は provenance に出ない（空振りしていない）', () => {
-  const r = run([emp({ employmentType: '業務委託', houshuKubun: 'ippan' })]);
-  const list = (r.provenance && r.provenance.gensenNoFormula) || [];
-  if (list.length) throw new Error('出てはいけない: ' + JSON.stringify(list));
+T('★選べる区分すべてに算式があるので、いま「源泉0で計算した」人は出ない', () => {
+  const SC = require_(path.join(ROOT, 'lib/shiharai-chosho.js'));
+  for (const k of SC.KUBUN_ORDER) {
+    const r = run([emp({ employmentType: '業務委託', houshuKubun: k, kintai: [{ label: '出勤日数', value: '20' }] })]);
+    const list = (r.provenance && r.provenance.gensenNoFormula) || [];
+    if (list.length) throw new Error(k + ' で出てしまった: ' + JSON.stringify(list));
+  }
 });
+
+/* ★provenance.gensenNoFormula は「二重の網」として残してある。
+   今は契約(enum)が【もっと手前で】弾くので、通常はここに何も出ない（上のテストで確認済み）。
+   区分の一覧に算式の無い物が入り込む事故は tests/gensen-kubun.test.mjs が
+   「選べるのに算式が無い区分」として赤にする（わざと足して赤になるのも確認済み）。 */
 
 console.log('\n── 実測 ──');
 console.log('  アプリが作る値: ' + Object.entries(APP_VALUES).map(([k, v]) => k + '=' + v.join('/')).join('  '));
