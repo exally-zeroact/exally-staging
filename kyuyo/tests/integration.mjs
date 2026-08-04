@@ -545,5 +545,46 @@ T('★中央(statutory)から取れた時は、中央の出典・確認日で上
   eq(k.verified_at, '2026-07-31', '中央の確認日');
 });
 
+/* ★失敗した時に、客が必ず気づけること（2026-08-04）
+   lib は画面に触らない＝符号(code)を返すだけ。日本語にして見せるのは面の仕事。
+   ★「押したのに何も起きない」が一番悪い。だからここで固定する。 */
+T('★渡し口が居ない時、Excelボタンは【黙って終わらない】（画面に理由が出る）', () => {
+  const A = win.__PAYSLIP_TEST;
+  const X = win.PayslipXlsx;
+  ok(X && X.setFileOut, 'setFileOut がある（面から渡す形になっている）');
+  const keep = win.FileOut;
+  let shown = '';
+  try {
+    X.setFileOut(null);                                  // ★渡し口が読み込めなかった状態を作る
+    win.document.getElementById('b-xlsx').click();
+    const body = win.document.querySelector('.ui-modal-ov .ui-modal-b');
+    shown = body ? body.textContent : '';
+    const ov = win.document.querySelector('.ui-modal-ov');
+    if (ov && ov.parentNode) ov.parentNode.removeChild(ov);
+  } finally { X.setFileOut(keep); }
+  ok(shown, '★画面に何か出ている（黙って終わっていない）');
+  ok(/ファイルを渡す部品/.test(shown), '面が決めた日本語が出ている: ' + shown.slice(0, 80));
+});
+
+T('★lib は文言を持たない（符号だけを返す）', () => {
+  const X = win.PayslipXlsx;
+  const got = [];
+  const keepFo = win.FileOut, keepRep = null;
+  X.setErrorReporter(function (e) { got.push(e); });
+  try {
+    X.setFileOut(null);
+    X.downloadSheets([{ name: 'A', aoa: [[1]] }], { filename: 'a.xlsx' });   // ★投げない＝catch不要
+  } finally { X.setFileOut(keepFo); }
+  eq(got.length, 1, '1回だけ知らせた');
+  eq(got[0].code, 'NO_FILE_OUT', '★符号で知らせている');
+  ok(!/ファイル|読み込め/.test(JSON.stringify(got[0])), '★lib が日本語の文言を持っていない: ' + JSON.stringify(got[0]));
+  // 面の受け口を戻す（他のテストに影響させない）
+  X.setErrorReporter(function (err) {
+    const code = (err && err.code) || 'DELIVER_FAILED';
+    win.__PAYSLIP_TEST && null;
+    return code;
+  });
+});
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

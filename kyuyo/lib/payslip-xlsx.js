@@ -57,23 +57,38 @@
   /* ★ファイルの渡し口は js/file-out.js の1本だけ（種類を正しく付ける／iPhoneは共有シート）。
      XLSX.writeFile は使わない＝あれは種類を octet-stream で落とすので、
      iPhone に Excel が入っていても「開けないファイル」になる（2026-08-04 実機で判明）。 */
-  // ★lib は headless（画面に触らない）＝ここで alert を出さない。
-  //   知らせ方は面(UI)が決める。setErrorReporter で受け口を渡してもらう。
-  var _report = null;
+  /* ★lib は headless（画面にも通信にも依存しない）。だから:
+   *   ・alert を出さない（画面の部品）
+   *   ・window を見に行かない（渡し口は面から【渡してもらう】＝setFileOut）
+   *   ・★文言を持たない。★ 起きた事を【符号(code)】で知らせ、日本語は面(app.js)が決める。
+   *   ・失敗は黙って false にせず、★必ず知らせる＋失敗として返す★
+   *     （押したのに何も起きない、が一番悪い）
+   * 符号: XLSX_NOT_LOADED / NO_FILE_OUT / DELIVER_FAILED
+   */
+  var _report = null, _fileOut = null;
   function setErrorReporter(fn){ _report = (typeof fn === 'function') ? fn : null; }
-  function report(msg){ if(_report) _report(msg); }
+  function setFileOut(fo){ _fileOut = (fo && typeof fo.deliver === 'function') ? fo : null; }
+  //  返りは必ず Promise<{ok:boolean, code?}>。★投げない。★
+  //   投げると、呼ぶ側が1箇所でも catch を忘れた瞬間に
+  //   「画面には理由が出ているのに console に赤いエラーが残る」状態になる（実測 2026-08-04）。
+  //   失敗は【値として返す】＋【符号で知らせる】の2本立てにする。
+  function fail(code, error){
+    if(_report) _report({ code: code, error: error || null });
+    return Promise.resolve({ ok: false, code: code });
+  }
 
   function deliverBook(wb, filename){
-    var FO = (typeof window !== 'undefined' && window.FileOut) || (typeof globalThis !== 'undefined' && globalThis.FileOut);
-    if(!FO){ report('ファイルの受け渡し部品(js/file-out.js)が読み込まれていません'); return false; }
+    if(typeof XLSX === 'undefined') return fail('XLSX_NOT_LOADED');
+    if(!_fileOut) return fail('NO_FILE_OUT');
     var bytes = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-    FO.deliver(bytes, filename).catch(function(e){ report('ファイルを渡せませんでした：' + ((e && e.message) || e)); });
-    return true;
+    return _fileOut.deliver(bytes, filename)
+      .then(function(r){ return { ok: true, how: r && r.how }; })
+      .catch(function(e){ return fail('DELIVER_FAILED', e); });
   }
 
   function download(people, opts){
     opts=opts||{};
-    if(typeof XLSX==='undefined'){ if(typeof alert!=='undefined') alert('Excel機能の読み込みに失敗しました（通信環境をご確認ください）'); return false; }
+    if(typeof XLSX==='undefined') return fail('XLSX_NOT_LOADED');
     var wb=XLSX.utils.book_new(), used={};
     var sk=shukeiAOA(people,opts), ss=XLSX.utils.aoa_to_sheet(sk.aoa); ss['!cols']=sk.cols; ss['!merges']=sk.merges; XLSX.utils.book_append_sheet(wb, ss, '集計');
     people.forEach(function(p){ var m=meishiAOA(p,opts), s=XLSX.utils.aoa_to_sheet(m.aoa); s['!cols']=m.cols; s['!merges']=m.merges; XLSX.utils.book_append_sheet(wb, s, sheetName(p.name, used)); });
@@ -118,11 +133,11 @@
     return sheets; }
   // 汎用: シート配列(name/aoa/cols/merges)を1ブックに書き出す
   function downloadSheets(sheets, opts){ opts=opts||{};
-    if(typeof XLSX==='undefined'){ if(typeof alert!=='undefined') alert('Excel機能の読み込みに失敗しました'); return false; }
+    if(typeof XLSX==='undefined') return fail('XLSX_NOT_LOADED');
     var wb=XLSX.utils.book_new(), used={};
     (sheets||[]).forEach(function(sh){ var s=XLSX.utils.aoa_to_sheet(sh.aoa); if(sh.cols)s['!cols']=sh.cols; if(sh.merges)s['!merges']=sh.merges; XLSX.utils.book_append_sheet(wb, s, sheetName(sh.name||'Sheet', used)); });
     return deliverBook(wb, opts.filename||'帳票.xlsx'); }
 
-  return { setErrorReporter: setErrorReporter, shukeiAOA: shukeiAOA, meishiAOA: meishiAOA, sheetName: sheetName, download: download,
+  return { setErrorReporter: setErrorReporter, setFileOut: setFileOut, shukeiAOA: shukeiAOA, meishiAOA: meishiAOA, sheetName: sheetName, download: download,
     shakaiListAOA: shakaiListAOA, deptSummaryAOA: deptSummaryAOA, chinginDaichoSheets: chinginDaichoSheets, downloadSheets: downloadSheets };
 });

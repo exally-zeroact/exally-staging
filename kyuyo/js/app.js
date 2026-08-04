@@ -2533,8 +2533,23 @@
   }
   // ★ファイルの渡し口は js/file-out.js の1本だけ。種類は拡張子から必ず決まる（octet-stream にしない）。
   //   iPhone では共有シートが出て「Excelで開く」が並ぶ。PC等は今までどおり落ちる。
-  // ★lib は画面に触らない（headless）。知らせ方はここ(面)が決める＝受け口を渡す。
-  if(window.PayslipXlsx && PayslipXlsx.setErrorReporter) PayslipXlsx.setErrorReporter(function(msg){ uiAlert(msg); });
+  /* ★lib は画面にも通信にも触らない（headless）。だから面(ここ)が2つ渡す:
+   *   ① 渡し口(FileOut)そのもの ② 失敗を客に知らせるやり方
+   * ★文言はここで決める。lib は符号(code)しか知らない。
+   * ★押したのに何も起きない、を作らない＝失敗は必ず画面に出す。 */
+  var XLSX_OUT_MSG = {
+    XLSX_NOT_LOADED: 'Excel機能を読み込めませんでした。通信環境をご確認のうえ、もう一度お試しください。',
+    NO_FILE_OUT: 'ファイルを渡す部品を読み込めませんでした。ページを開き直してからもう一度お試しください。',
+    DELIVER_FAILED: 'ファイルを渡せませんでした。もう一度お試しください。',
+  };
+  if(window.PayslipXlsx){
+    if(PayslipXlsx.setFileOut) PayslipXlsx.setFileOut(window.FileOut);
+    if(PayslipXlsx.setErrorReporter) PayslipXlsx.setErrorReporter(function(err){
+      var code=(err&&err.code)||'DELIVER_FAILED';
+      var detail=(err&&err.error&&err.error.message)?('\n（' + err.error.message + '）'):'';
+      uiAlert((XLSX_OUT_MSG[code]||XLSX_OUT_MSG.DELIVER_FAILED)+detail);
+    });
+  }
   function dlBytes(bytes, filename, type){
     if(!window.FileOut){ uiAlert('ファイルの受け渡し部品(js/file-out.js)が読み込まれていません'); return; }
     window.FileOut.deliver(bytes, filename, type?{type:type}:undefined)
