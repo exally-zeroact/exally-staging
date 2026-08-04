@@ -54,14 +54,24 @@
     var base=s, n=2; used=used||{}; while(used[s]){ s=base.slice(0,28)+'_'+(n++); } used[s]=true; return s;
   }
 
+  /* ★ファイルの渡し口は js/file-out.js の1本だけ（種類を正しく付ける／iPhoneは共有シート）。
+     XLSX.writeFile は使わない＝あれは種類を octet-stream で落とすので、
+     iPhone に Excel が入っていても「開けないファイル」になる（2026-08-04 実機で判明）。 */
+  function deliverBook(wb, filename){
+    var FO = (typeof window !== 'undefined' && window.FileOut) || (typeof globalThis !== 'undefined' && globalThis.FileOut);
+    if(!FO){ if(typeof alert !== 'undefined') alert('ファイルの受け渡し部品(js/file-out.js)が読み込まれていません'); return false; }
+    var bytes = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    FO.deliver(bytes, filename).catch(function(e){ if(typeof alert !== 'undefined') alert('ファイルを渡せませんでした：' + ((e && e.message) || e)); });
+    return true;
+  }
+
   function download(people, opts){
     opts=opts||{};
     if(typeof XLSX==='undefined'){ if(typeof alert!=='undefined') alert('Excel機能の読み込みに失敗しました（通信環境をご確認ください）'); return false; }
     var wb=XLSX.utils.book_new(), used={};
     var sk=shukeiAOA(people,opts), ss=XLSX.utils.aoa_to_sheet(sk.aoa); ss['!cols']=sk.cols; ss['!merges']=sk.merges; XLSX.utils.book_append_sheet(wb, ss, '集計');
     people.forEach(function(p){ var m=meishiAOA(p,opts), s=XLSX.utils.aoa_to_sheet(m.aoa); s['!cols']=m.cols; s['!merges']=m.merges; XLSX.utils.book_append_sheet(wb, s, sheetName(p.name, used)); });
-    XLSX.writeFile(wb, opts.filename||'給与明細.xlsx');
-    return true;
+    return deliverBook(wb, opts.filename||'給与明細.xlsx');
   }
 
   // ── 帳票(社保一覧・部署別集計・賃金台帳) ──
@@ -105,7 +115,7 @@
     if(typeof XLSX==='undefined'){ if(typeof alert!=='undefined') alert('Excel機能の読み込みに失敗しました'); return false; }
     var wb=XLSX.utils.book_new(), used={};
     (sheets||[]).forEach(function(sh){ var s=XLSX.utils.aoa_to_sheet(sh.aoa); if(sh.cols)s['!cols']=sh.cols; if(sh.merges)s['!merges']=sh.merges; XLSX.utils.book_append_sheet(wb, s, sheetName(sh.name||'Sheet', used)); });
-    XLSX.writeFile(wb, opts.filename||'帳票.xlsx'); return true; }
+    return deliverBook(wb, opts.filename||'帳票.xlsx'); }
 
   return { shukeiAOA: shukeiAOA, meishiAOA: meishiAOA, sheetName: sheetName, download: download,
     shakaiListAOA: shakaiListAOA, deptSummaryAOA: deptSummaryAOA, chinginDaichoSheets: chinginDaichoSheets, downloadSheets: downloadSheets };

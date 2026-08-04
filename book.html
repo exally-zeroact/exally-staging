@@ -1147,13 +1147,14 @@ background:#FFE066 !important;
 }
 </style>
 
-<script src="hyperformula.full.min.js?v=d93c97dc"></script>
+<script src="hyperformula.full.min.js?v=e3970a6e"></script>
 
-<script src="exally-formula.js?v=d93c97dc"></script>
+<script src="exally-formula.js?v=e3970a6e"></script>
 <!-- グリッド→xlsx の変換と「落ちる物」の警告(純関数・軽い)。SheetJS本体(930KB)と lib/xlsx-io.js は
      初回の「Excelに保存」で初めて読み込む＝グリッドの表示を重くしない -->
-<script src="lib/grid-xlsx.js?v=d93c97dc"></script>
-<script src="lib/excel-version.js?v=d93c97dc"></script>
+<script src="js/file-out.js?v=e3970a6e"></script>
+<script src="lib/grid-xlsx.js?v=e3970a6e"></script>
+<script src="lib/excel-version.js?v=e3970a6e"></script>
 
 <script>
 /* ===== canvas-formula-engine.js (inlined) ===== */
@@ -5974,12 +5975,10 @@ function saveXlsx(){
       : [];
     var warns = verWarns.concat(GridXlsx.exportWarnings(sheets, { isArrayFormula: _isArrayFormula }));
     var buf = XlsxIO.writeBook(GridXlsx.gridToBook(sheets));
-    var blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement('a');
-    a.href = url; a.download = (sheets[0] && sheets[0].name ? sheets[0].name : 'book') + '.xlsx';
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+    // ★ファイルの渡し口は js/file-out.js の1本だけ。種類を正しく付け、iPhoneでは共有シートを出す
+    //   （出さないと「Excelで開く」が並ばない＝客はファイルを開けない。2026-08-04 実機で判明）。
+    FileOut.deliver(buf, (sheets[0] && sheets[0].name ? sheets[0].name : 'book') + '.xlsx')
+      .catch(function(err){ showToast('ファイルを渡せませんでした：' + ((err && err.message) || err), 4000, 'warn'); });
     if (warns.length) {
       // ★止めない。落ちる物を具体的に伝えるだけ（客が自分で直せる形にする）
       //   長い文章なので「読ませる用」の見た目(白地・濃い文字・左揃え)にする。

@@ -848,7 +848,7 @@
       if(sb.excluded&&sb.excluded.length) body+='<div class="exinfo">✓ '+sb.excluded.map(function(x){return labels[x];}).join('・')+'は支払基礎日数が'+th+'日未満のため<b>ルール上この月を計算から外しました</b>（あなたのミスではありません）。残りの月の平均で算定します。</div>';
       if(mode==='teiji') body+='<div style="text-align:right;margin-top:2px"><span class="sh-refetch" data-refetch="1" style="font-size:12px;color:#3D9E72;text-decoration:underline;cursor:pointer">過去の4〜6月から自動入力</span></div>';
       if(mode==='zuiji'){
-        body+='<div class="zk-inp"><div class="frow"><div class="flabel">変動があった月<span class="hint2">昇給・降給した月</span></div><input type="month" class="finput sh-henko" value="'+attr(s.henkoYm)+'"></div>'
+        body+='<div class="zk-inp"><div class="frow"><div class="flabel">変動があった月<span class="hint2">昇給・降給した月</span></div><input type="hidden" data-ym class="finput sh-henko" value="'+attr(s.henkoYm)+'"></div>'
           +'<div class="frow"><div class="flabel">従前の標準報酬月額<span class="hint2">円・変動前</span><span class="help-i" data-help="toukyu">💡</span></div><input class="finput num sh-prevhyojun" value="'+attr(s.prevHyojun)+'" placeholder="200000"></div>'
           +'<div class="nw-row" style="margin:2px 0 6px"><div class="nw-q">固定的賃金（基本給・手当など）が変わりましたか？<div class="nw-help">昇給・降給・手当の新設/廃止など。残業だけの増減は含みません。</div></div><div class="nw-in">'+ynPill('shfixed','1',!!s.fixedChanged)+'</div></div></div>';
         body+='<div class="zk-box">'+zuijiJudgeHTML(e)+'</div>';
@@ -1500,7 +1500,7 @@
     var b=state.bonus||{}, ym=bonusYmOf(), pm=prevYmOf(ym);
     var head='<div class="card" style="padding:12px;margin-bottom:10px">'
       +'<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">'
-      +'<label style="font-size:12px;color:#2E7D54;font-weight:700">賞与支給月 <input type="month" class="finput finput-sm" data-bn="payYm" value="'+attr(ym)+'"></label>'
+      +'<label style="font-size:12px;color:#2E7D54;font-weight:700">賞与支給月 <input type="hidden" data-ym class="finput finput-sm" data-bn="payYm" value="'+attr(ym)+'"></label>'
       +'<label style="font-size:12px;color:#2E7D54;font-weight:700">支給日 <input class="finput finput-sm" data-bn="payDay" value="'+attr(b.payDay)+'" placeholder="例 12月10日" style="width:110px"></label>'
       +'</div>'
       +'<div class="hint" style="margin:8px 0 0">賞与の所得税は<b>前月（'+esc(pm)+'）の給与から社会保険料を引いた額</b>と扶養人数で税率が決まります（国税庁 算出率表）。<span class="help-i" data-help="bonusPrev">💡</span> 前月を計算・保存していれば自動、無ければ各行で手入力してください。</div>'
@@ -2531,7 +2531,13 @@
       +'<p class="hint" style="margin:6px 0 0">全銀ファイル=銀行の「総合振込」に取り込む固定長データ（Shift-JIS）。銀行/支店コードは通帳や銀行サイトで確認してください。</p>';
     box.innerHTML=committer+listHTML+btns;
   }
-  function dlBytes(bytes, filename, type){ try{ var blob=new Blob([bytes],{type:type||'application/octet-stream'}); var url=URL.createObjectURL(blob); var a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(url); if(a.parentNode)a.parentNode.removeChild(a); },200); }catch(e){ uiAlert('ダウンロードに失敗しました'); } }
+  // ★ファイルの渡し口は js/file-out.js の1本だけ。種類は拡張子から必ず決まる（octet-stream にしない）。
+  //   iPhone では共有シートが出て「Excelで開く」が並ぶ。PC等は今までどおり落ちる。
+  function dlBytes(bytes, filename, type){
+    if(!window.FileOut){ uiAlert('ファイルの受け渡し部品(js/file-out.js)が読み込まれていません'); return; }
+    window.FileOut.deliver(bytes, filename, type?{type:type}:undefined)
+      .catch(function(e){ uiAlert('ファイルを渡せませんでした：'+((e&&e.message)||e)); });
+  }
   function downloadZengin(){
     if(typeof Zengin==='undefined'){ uiAlert('全銀モジュールが読み込まれていません'); return; }
     var c=state.company; var d=(c.furiDate&&/^\d{4}-\d{2}-\d{2}$/.test(c.furiDate))?c.furiDate.slice(5,7)+c.furiDate.slice(8,10):'';

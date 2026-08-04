@@ -52,6 +52,10 @@ jobs:
         run: node tests/api-claude.test.mjs
       - name: ★法定値の直書きガード (率・額が説明文に固定されていないか)
         run: node tests/no-hardcoded-statutory.test.mjs && node tests/no-hardcoded-statutory.test.mjs --self-test
+      - name: ★ファイルの渡し方 (種類・スマホは共有シート・PCは落ちる)
+        run: node kyuyo/tests/file-out.test.mjs
+      - name: ★iPhoneで動かない書き方ガード (type=month / octet-stream / writeFile / Blob散在)
+        run: node tests/ios-unsupported.test.mjs && node tests/ios-unsupported.test.mjs --self-test
       - name: ★契約v0 (レジストリ / 契約の線=呼ばれているか・面を呼び返していないか)
         run: node tests/op-registry.test.mjs && node tests/op-boundary.test.mjs && node tests/op-boundary.test.mjs --self-test
       - name: ★最低賃金 47県が公式の実額と一致 (前科のある行・1円単位)
