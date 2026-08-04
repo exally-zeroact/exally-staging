@@ -128,7 +128,78 @@ T('空・未設定は既定（従業員）として通す（昔のデータに�
   }
 });
 
+/* ── ★業務委託の源泉徴収（所得税法204条）─────────────────────────
+   2026-08-04: 業務委託の控除が完全に0だったので確かめた。
+   ★「業務委託＝控除ゼロ」で固定にはなっていない。源泉区分を見て、区分ごとの算式で引いている。
+   ★ただし区分の値を検証していなかったため、打ち間違い等が来ると【黙って源泉0】になっていた。
+     「引かない」が既定だと、引くべき源泉を引き忘れる。だから契約で弾くようにした。 */
+function gensenOf(kubun, amt) {
+  const e = Object.assign(emp({ employmentType: '業務委託', base: String(amt), houshuKubun: kubun }),
+    { shikyu: [{ label: '基本給', value: String(amt) }] });
+  const r = run([e]);
+  if (r.errors && r.errors.length) throw new Error(String(kubun) + ' が弾かれた: ' + r.errors[0].message);
+  const p = r.cells._people[0];
+  return {
+    gensen: (p.kojo || []).filter(x => /源泉/.test(x.label)).reduce((a, x) => a + Number(x.value || 0), 0),
+    shaho: (p.kojo || []).filter(x => /健康保険|厚生年金|介護|雇用保険/.test(x.label)).length,
+  };
+}
+
+T('★業務委託の源泉徴収が区分ごとに正しく引かれる（実数）', () => {
+  const cases = [
+    ['none', 250000, 0, '非該当（運転代行・運送等）＝源泉なし'],
+    ['ippan', 250000, Math.floor(250000 * 0.1021), '一般・士業＝支払額×10.21%'],
+    ['shihou', 250000, Math.floor((250000 - 10000) * 0.1021), '司法書士等＝（支払額−1万円）×10.21%'],
+    ['gaikou', 250000, Math.floor((250000 - 120000) * 0.1021), '外交員等＝（報酬−12万円）×10.21%'],
+    ['sonota', 250000, 0, 'その他（要確認）＝非該当扱い'],
+  ];
+  for (const [k, amt, want, why] of cases) {
+    const m = gensenOf(k, amt);
+    if (m.gensen !== want) throw new Error(why + ': 期待 ' + want + ' 実際 ' + m.gensen);
+    if (m.shaho !== 0) throw new Error(why + ': ★業務委託なのに社会保険が引かれている');
+  }
+});
+
+T('★源泉区分の打ち間違いは【黙って0にしない】（引くべき源泉を引き忘れないため）', () => {
+  const r = run([emp({ employmentType: '業務委託', houshuKubun: 'shiho' })]);   // 正しくは shihou
+  if (!r.errors || !r.errors.length) throw new Error('★通してしまった＝源泉0で計算されてしまう');
+});
+
+T('源泉区分の日本語の書き方も受け取る', () => {
+  for (const v of ['非該当', '一般', '士業', '司法書士', '外交員', 'その他']) {
+    const r = run([emp({ employmentType: '業務委託', houshuKubun: v })]);
+    if (r.errors && r.errors.length) throw new Error(v + ' → ' + r.errors[0].message);
+  }
+});
+
+T('源泉区分が未設定・空でも通る（既定＝非該当）', () => {
+  for (const v of [undefined, '', null]) {
+    const r = run([emp({ employmentType: '業務委託', houshuKubun: v })]);
+    if (r.errors && r.errors.length) throw new Error(JSON.stringify(v) + ' が弾かれた');
+  }
+});
+
+T('★算式が無い区分（昔のデータ）は、源泉0で計算したことを provenance に必ず出す', () => {
+  const r = run([emp({ name: '原稿料の人', employmentType: '業務委託', houshuKubun: 'genkou' })]);
+  if (r.errors && r.errors.length) throw new Error('昔のデータが弾かれた（お金を止めてしまう）: ' + r.errors[0].message);
+  const list = r.provenance && r.provenance.gensenNoFormula;
+  if (!list || !list.length) throw new Error('★源泉0で計算したことが provenance に出ていない＝黙って引かないのと同じ');
+  if (list[0].houshuKubun !== 'genkou') throw new Error('中身が違う: ' + JSON.stringify(list[0]));
+  // ★お金は変えていない（0のまま）＝移設前と同じ。ippan へ寄せるかどうかは判断待ち。
+  const p = r.cells._people[0];
+  const g = (p.kojo || []).filter(x => /源泉/.test(x.label)).length;
+  if (g !== 0) throw new Error('★勝手に源泉を引き始めている（お金を黙って変えない）');
+});
+
+T('正しい区分の人は provenance に出ない（空振りしていない）', () => {
+  const r = run([emp({ employmentType: '業務委託', houshuKubun: 'ippan' })]);
+  const list = (r.provenance && r.provenance.gensenNoFormula) || [];
+  if (list.length) throw new Error('出てはいけない: ' + JSON.stringify(list));
+});
+
 console.log('\n── 実測 ──');
 console.log('  アプリが作る値: ' + Object.entries(APP_VALUES).map(([k, v]) => k + '=' + v.join('/')).join('  '));
+console.log('  業務委託 月25万の源泉: ' + ['none', 'ippan', 'shihou', 'gaikou', 'sonota']
+  .map(k => k + '=' + gensenOf(k, 250000).gensen + '円').join(' / '));
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

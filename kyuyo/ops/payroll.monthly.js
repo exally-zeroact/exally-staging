@@ -18,13 +18,15 @@
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = factory(require('../lib/op-contract.js'), require('../lib/payroll-monthly.js'),
       require('../lib/payroll-warnings.js'), require('../lib/payslip-xlsx.js'), require('../lib/shakaihoken-hyo.js'),
-      require('../lib/koyo-hoken.js'), require('../lib/saitei-chingin.js'), require('../lib/statutory-meta.js'));
+      require('../lib/koyo-hoken.js'), require('../lib/saitei-chingin.js'), require('../lib/statutory-meta.js'),
+      require('../lib/shiharai-chosho.js'));
   } else {
     root.OpPayrollMonthly = factory(root.OpContract, root.PayrollMonthly, root.PayrollWarnings, root.PayslipXlsx,
       (typeof SHAKAIHOKEN_HYO !== 'undefined' ? SHAKAIHOKEN_HYO : root.SHAKAIHOKEN_HYO), root.KoyoHoken,
-      (typeof SAITEI_CHINGIN !== 'undefined' ? SAITEI_CHINGIN : root.SAITEI_CHINGIN), root.StatutoryMeta);
+      (typeof SAITEI_CHINGIN !== 'undefined' ? SAITEI_CHINGIN : root.SAITEI_CHINGIN), root.StatutoryMeta,
+      (typeof ShiharaiChosho !== 'undefined' ? ShiharaiChosho : root.ShiharaiChosho));
   }
-})(typeof self !== 'undefined' ? self : this, function (OpContract, PM, PW, Xlsx, SHH, KoyoHoken, SAI, SMeta) {
+})(typeof self !== 'undefined' ? self : this, function (OpContract, PM, PW, Xlsx, SHH, KoyoHoken, SAI, SMeta, SC) {
   'use strict';
 
   var VERSION = '1.0.0';
@@ -47,6 +49,25 @@
     });
     return out;
   })();
+
+  /* 源泉区分の値は lib/shiharai-chosho.js が持っている物をそのまま使う（手で書き写さない）。
+     日本語の書き方も受け取る（紙や他ソフトからの移行で日本語が来る）。 */
+  var HOUSHU_KEYS = (SC && SC.KUBUN_ORDER) ? SC.KUBUN_ORDER.slice() : ['none', 'ippan', 'shihou', 'gaikou', 'sonota'];
+  /* ★昔のデータに残っている区分。lib/shiharai-chosho.js に算式が無いので【源泉0】で計算される。
+     ・移設前(1c128e1)のゴールデンにも 'genkou'(原稿料) の人がいて、★源泉0のまま凍結されている★
+       ＝この取りこぼしは移設前からある（今回の変更で起きたものではない）。
+     ・★お金を勝手に変えない★ので、ここでは値として受け取るだけにする。
+       ただし「算式が無い＝0で計算した」ことを provenance に必ず出す（下の gensenNoFormula）。
+     ・ippan(一般・士業)へ寄せるかどうかは【お金が変わる】ので指示待ち。 */
+  var HOUSHU_LEGACY = ['genkou'];
+  HOUSHU_LEGACY.forEach(function (k) { if (HOUSHU_KEYS.indexOf(k) < 0) HOUSHU_KEYS.push(k); });
+  var HOUSHU_ALIASES = {
+    '非該当': 'none', 'なし': 'none', '対象外': 'none',
+    '一般': 'ippan', '士業': 'ippan', '報酬': 'ippan', '原稿料': 'ippan', '講演': 'ippan', 'デザイン': 'ippan',
+    '司法書士': 'shihou', '土地家屋調査士': 'shihou', '海事代理士': 'shihou',
+    '外交員': 'gaikou', '集金人': 'gaikou', '検針人': 'gaikou',
+    'その他': 'sonota', '要確認': 'sonota',
+  };
 
   // ── 入力の型（境界はここで弾く） ──
   var EMPLOYEE_SHAPE = {
@@ -76,6 +97,11 @@
     taishokuYmd: { type: 'ymd', label: '退職日' },
     leaveStartYmd: { type: 'ymd', label: '休暇開始日' },
     leaveEndYmd: { type: 'ymd', label: '休暇終了日' },
+    /* ★源泉区分（業務委託の時に、所得税法204条の報酬かどうか）。
+     *  ここを検証していなかったため、★知らない書き方が来ると黙って「非該当＝源泉0」になっていた★。
+     *  「引かない」が既定だと、引くべき源泉を引き忘れる（2026-08-04）。
+     *  値の一覧は lib/shiharai-chosho.js から機械で取る＝手で書き写さない。 */
+    houshuKubun: { type: 'enum', values: HOUSHU_KEYS, label: '源泉区分', aliases: HOUSHU_ALIASES },
     fuyou: { type: 'int', min: 0, label: '扶養親族等の数' },
     minWageReduce: { type: 'number', min: 0, max: 100, label: '最賃の減額特例率(%)' },
     weeklyScheduledH: { type: 'number', min: 0, max: 168, label: '週の所定労働時間' },
@@ -177,6 +203,19 @@
       note: m.note || (m.verified_at ? null : '内蔵値・確認日は未記録') };
   }
 
+  /* 業務委託なのに、源泉の算式が無い区分で計算された人を列挙する。
+     ★「引かない」を黙って既定にしないため。金額は変えず、事実だけ出す。 */
+  function gensenNoFormula(employees) {
+    var known = (SC && SC.KUBUN) || {};
+    return (employees || []).filter(function (e) {
+      if (String(e.employmentType) !== 'contractor') return false;
+      var k = e.houshuKubun;
+      if (!k) return false;                       // 未設定＝非該当（既定）
+      var d = known[k];
+      return !d || (d.gensen && !d.formula);      // 表に無い / 源泉ありなのに算式が無い
+    }).map(function (e) { return { name: e.name, houshuKubun: e.houshuKubun, note: '源泉の算式が無い区分のため源泉0で計算しています。区分を選び直してください。' }; });
+  }
+
   function statutorySnapshot(ctx, employees, statutorySource) {
     var ym = ctx.month;
     var src = statutorySource || {};
@@ -261,6 +300,8 @@
       law: LAW,
       statutory: statutorySnapshot(ctx, inputs.employees, (inputs.options || {}).statutorySource),
       watch: LAW.tekiyoKakudai.watch, // ★未反映の法改正を毎回出力して見えるようにする
+      // ★源泉の算式が無い区分で計算した人（＝源泉0になっている）。黙って0にしない・毎回見えるようにする。
+      gensenNoFormula: gensenNoFormula(inputs.employees),
     };
 
     return { value: value, cells: cells, warnings: warnings, errors: errors, provenance: provenance };
