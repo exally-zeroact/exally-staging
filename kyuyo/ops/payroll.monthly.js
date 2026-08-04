@@ -34,14 +34,43 @@
     'hiroshima', 'yamaguchi', 'tokushima', 'kagawa', 'ehime', 'kochi', 'fukuoka', 'saga', 'nagasaki', 'kumamoto',
     'oita', 'miyazaki', 'kagoshima', 'okinawa'];
 
+  /* ★県名(漢字) → コード の対応表を、lib の県名から機械で作る（手で47件書かない＝写し間違いが起きない）。
+     「東京都」「東京」の両方を受け取る。 */
+  var PREF_ALIASES = (function () {
+    var out = {};
+    var names = (SHH && SHH.KENKO_RITSU) || {};
+    PREFS.forEach(function (code) {
+      var n = names[code] && names[code].name;
+      if (!n) return;
+      out[n] = code;                                   // 東京都
+      out[n.replace(/[都道府県]$/, '')] = code;         // 東京
+    });
+    return out;
+  })();
+
   // ── 入力の型（境界はここで弾く） ──
   var EMPLOYEE_SHAPE = {
     id: { type: 'string', required: true, label: '従業員ID' },
     name: { type: 'string', required: true, label: '氏名' },
     payType: { type: 'enum', values: ['月給', '時給', '日給', '歩合', '役員', 'カスタム'], label: '給与形態' },
-    taxClass: { type: 'enum', values: ['ko', 'otsu', 'hei'], label: '所得税区分' },
-    employmentType: { type: 'enum', values: ['employee', 'contractor'], label: '雇用形態' },
-    pref: { type: 'enum', values: PREFS, label: '都道府県' },
+    // 甲乙丙は紙でも画面でも漢字で書かれる。実データに漢字が来ても受け取る。
+    taxClass: { type: 'enum', values: ['ko', 'otsu', 'hei'], label: '所得税区分',
+      aliases: { '甲': 'ko', '甲欄': 'ko', '乙': 'otsu', '乙欄': 'otsu', '丙': 'hei', '丙欄': 'hei' } },
+    // ★実データの書き方（日本語・旧表記）を受け取る。対応表はここ1箇所だけ。
+    //   2026-08-04: 司さんの実データが日本語で、契約が弾いて【Excelが1枚も出なくなった】。
+    //   ★対応表に無い書き方は寄せない＝弾く。雇用形態は社保・源泉の有無を決める＝勝手に決めない。
+    employmentType: {
+      type: 'enum', values: ['employee', 'contractor'], label: '雇用形態',
+      aliases: {
+        '従業員': 'employee', '正社員': 'employee', 'パート': 'employee', 'アルバイト': 'employee',
+        '社員': 'employee', '常用': 'employee', '雇用': 'employee',
+        '業務委託': 'contractor', '委託': 'contractor', '個人事業主': 'contractor',
+        '外注': 'contractor', '請負': 'contractor', 'フリーランス': 'contractor',
+      },
+    },
+    // ★県名(漢字)でも受け取る。対応表は【lib の県名から機械で作る】＝手で書かない。
+    //   移行(CSV/Excel)は完全一致した時だけコードに直すので、直せなかった県名がそのまま残りうる。
+    pref: { type: 'enum', values: PREFS, label: '都道府県', aliases: PREF_ALIASES },
     birthYmd: { type: 'ymd', label: '生年月日' },
     joinYmd: { type: 'ymd', label: '入社日' },
     taishokuYmd: { type: 'ymd', label: '退職日' },
@@ -59,7 +88,9 @@
             annualHolidays: { type: 'number', min: 0, max: 365, label: '年間休日' },
             dailyWorkH: { type: 'number', min: 0, max: 24, label: '1日の所定(時)' },
             dailyWorkM: { type: 'number', min: 0, max: 59, label: '1日の所定(分)' },
-            gyoshu: { type: 'enum', values: ['ippan', 'kensetsu', 'norin'], label: '雇用保険の業種' } } },
+            gyoshu: { type: 'enum', values: ['ippan', 'kensetsu', 'norin'], label: '雇用保険の業種',
+              aliases: { '一般': 'ippan', '一般の事業': 'ippan', '建設': 'kensetsu', '建設の事業': 'kensetsu',
+                '農林水産': 'norin', '農林水産・清酒製造': 'norin', '清酒製造': 'norin' } } } },
     { key: 'employees', type: 'array', required: true, minLength: 1, source: 'pay_employees', label: '従業員', of: EMPLOYEE_SHAPE },
     { key: 'ledger', type: 'array', source: 'pay_ledger(Exally台帳)', label: '台帳行' },
     { key: 'otHistory', type: 'map', source: '過去11ヶ月の確定明細', label: '36協定の履歴' },

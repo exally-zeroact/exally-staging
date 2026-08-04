@@ -2964,13 +2964,47 @@
       PayslipXlsx.download(people, {company:state.company.name, monthLabel:lbl, filename:fn}); });
     // ★契約経由の月次Excel。面の仕事は「詰め替え」と「ファイルに書く」だけ。
     //   検証NGなら【ファイルを作らず】どこが悪いかをその場で言う（0円の明細を出さない）。
+    /* ★契約のエラーを、客に向けた文にする（2026-08-04）
+     *  悪い: 「employees[0].employmentType：次のいずれかにしてください（employee/contractor）」
+     *  良い: 「山田 太郎さんの「雇用形態」が読めませんでした（設定 → 従業員マスタ で選び直してください）」
+     *  ★内部の名前（employees[0] / employmentType / 決まった値の一覧）を客に見せない。
+     *  ★何を・どこで直すかを書く。
+     *  内部の path と code は res.errors にそのまま残っている（テストとログ用・消していない）。 */
+    var OP_FIELD = {
+      employmentType: { name: '雇用形態', where: '設定 → 従業員マスタ' },
+      payType:        { name: '給与形態', where: '設定 → 従業員マスタ' },
+      taxClass:       { name: '所得税の区分（甲・乙・丙）', where: '設定 → 従業員マスタ' },
+      pref:           { name: '都道府県', where: '設定 → 従業員マスタ' },
+      birthYmd:       { name: '生年月日', where: '設定 → 従業員マスタ' },
+      joinYmd:        { name: '入社日', where: '設定 → 従業員マスタ' },
+      taishokuYmd:    { name: '退職日', where: '設定 → 従業員マスタ' },
+      fuyou:          { name: '扶養親族等の数', where: '設定 → 従業員マスタ' },
+      name:           { name: '氏名', where: '設定 → 従業員マスタ' },
+      gyoshu:         { name: '雇用保険の業種', where: '設定 → 会社の決まり' },
+      month:          { name: '対象月', where: '画面上の「対象月」' },
+    };
+    function humanOpErrors(errors, emps){
+      var lines=errors.slice(0,5).map(function(e){
+        var m=/^employees\[(\d+)\]\.(\w+)$/.exec(e.path||'');
+        var key=m?m[2]:String(e.path||'').split('.').pop();
+        var f=OP_FIELD[key]||null;
+        var field=f?f.name:'この項目', where=f?f.where:'設定';
+        if(m){
+          var i=+m[1], who=(emps&&emps[i]&&emps[i].name)?(emps[i].name+'さん'):((i+1)+'人目の方');
+          return '・'+who+'の「'+field+'」が読めませんでした（'+where+' で選び直してください）';
+        }
+        return '・「'+field+'」が読めませんでした（'+where+' で確認してください）';
+      });
+      return 'Excelを作れませんでした。次の所を直すと作れます。\n\n'+lines.join('\n')
+        +(errors.length>5?('\n…ほか'+(errors.length-5)+'件'):'')
+        +'\n\n※直したあと、もう一度「Excel」を押してください。';
+    }
+
     function exportMonthlyViaOp(emps){
       var op=opPayrollMonthly(); if(!op) return false;               // 読めていなければ従来の道
       var res=op.engine(payrollInputs(emps));
       if(res.errors && res.errors.length){
-        uiAlert('入力に問題があるためExcelを作りませんでした。\n\n'
-          + res.errors.slice(0,5).map(function(e){ return '・'+e.path+'：'+e.message; }).join('\n')
-          + (res.errors.length>5?('\n…ほか'+(res.errors.length-5)+'件'):''));
+        uiAlert(humanOpErrors(res.errors, emps));
         return true;                                                 // ★止めた（従来の道へは落とさない）
       }
       var out=op.excel.export(res); if(!out) return false;

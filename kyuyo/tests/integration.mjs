@@ -492,7 +492,12 @@ T('★検証NGなら【ファイルを作らず】どこが悪いか言う（0�
   }
   eq(calls.length, 0, '★ファイルを作っていない');
   ok(shown, '理由を画面に出している');
-  ok(/employees\[0\]\.pref/.test(shown), '★どこが悪いか(path)を客に言えている: ' + shown.slice(0, 140));
+  // ★客に向けた文であること（内部の名前を見せない）
+  ok(/都道府県/.test(shown), '何が悪いかを客の言葉で言っている: ' + shown.slice(0, 140));
+  ok(/設定/.test(shown), 'どこで直すかを書いている');
+  for (const bad of ['employees[', 'employmentType', 'payType', 'taxClass', 'enum', 'ENUM', 'null', 'undefined']) {
+    ok(shown.indexOf(bad) < 0, '★内部の名前が出ている: ' + bad + ' / ' + shown.slice(0, 160));
+  }
 });
 
 T('★provenance が出典と確認日を持つ（オフラインの内蔵値でも空にしない）', () => {

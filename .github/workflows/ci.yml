@@ -92,6 +92,8 @@ jobs:
         run: node kyuyo/tests/golden-immutable.test.mjs
       - name: Headless guard (lib/ がDOM・通信・非決定性に依存しない)
         run: node kyuyo/scripts/verify-headless.mjs
+      - name: ★契約が実データの書き方を受け取れるか (画面の選択肢を機械で突き合わせ)
+        run: node kyuyo/tests/ops-real-values.test.mjs
       - name: Ops golden parity (★1円一致★ 移設前ゴールデン vs ops/payroll.monthly)
         run: node kyuyo/tests/ops-golden-parity.test.mjs
       - name: Ops statutory (官公値の実数リテラル・Excel同一ソース・テストAPI非露出)
