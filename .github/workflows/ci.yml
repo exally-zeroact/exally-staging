@@ -56,6 +56,8 @@ jobs:
         run: node kyuyo/tests/file-out.test.mjs
       - name: ★スマホ幅の見た目 (ボタンが折り返さない / 対象月の選択は1つで重ならない)
         run: node kyuyo/tests/button-wrap.test.mjs && node kyuyo/tests/button-wrap.test.mjs --self-test && node kyuyo/tests/ym-picker.test.mjs && node kyuyo/tests/ym-picker.test.mjs --self-test
+      - name: ★振込タブ (印刷から切り離した / 機能を消していない / 0件で押せない＋理由 / 空ファイルを作らない)
+        run: node kyuyo/tests/furikomi-tab.test.mjs && node kyuyo/tests/furikomi-tab.test.mjs --self-test
       - name: ★iPhoneで動かない書き方ガード (type=month / octet-stream / writeFile / Blob散在)
         run: node tests/ios-unsupported.test.mjs && node tests/ios-unsupported.test.mjs --self-test
       - name: ★契約v0 (レジストリ / 契約の線=呼ばれているか・面を呼び返していないか)

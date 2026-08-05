@@ -384,14 +384,15 @@
   function showScreen(id){
     $$('.screen').forEach(function(s){ s.classList.toggle('active', s.id===id); });
     $$('.bn').forEach(function(b){ b.classList.toggle('on', b.dataset.scr===id); });
-    var TABN={'scr-settings':'設定','scr-input':'入力','scr-list':'一覧 / 集計','scr-print':'印刷'}; var at=$('#appbar-tab'); if(at) at.textContent=TABN[id]||''; // ヘッダー右はタブ名
-    // 対象月はヘッダー右にグローバル表示(入力/一覧)。設定=月概念なし・印刷=画面内に月/賞与切替があるので非表示。タブ名と排他。
+    var TABN={'scr-settings':'設定','scr-input':'入力','scr-list':'一覧 / 集計','scr-print':'印刷','scr-furikomi':'振込'}; var at=$('#appbar-tab'); if(at) at.textContent=TABN[id]||''; // ヘッダー右はタブ名
+    // 対象月はヘッダー右にグローバル表示(入力/一覧)。設定=月概念なし・印刷/振込=画面内に月があるので非表示。タブ名と排他。
     var showMon=(id==='scr-input'||id==='scr-list'); var am=$('#appbar-month'); if(am) am.style.display=showMon?'flex':'none'; if(at) at.style.display=showMon?'none':'';
     $$('.scr-month').forEach(function(m){ m.value=state.month; }); // 全.scr-month(ヘッダー/印刷)を対象月に同期
     if(id==='scr-settings'){ renderOnboard(); renderEmpMaster(); loadEmpProfiles(); }
     if(id==='scr-input'){ $('#in-month').textContent=monthLabel(); renderInputArea(); }
     if(id==='scr-list') renderListActive();
     if(id==='scr-print') renderPrint();
+    if(id==='scr-furikomi') renderFuri();   // ★振込は独立した画面（印刷から切り離した）
   }
 
   /* ---------- A11y: 見た目ラベルを入力のaria-labelへ伝播(スクリーンリーダー用・見た目は不変) ---------- */
@@ -2493,8 +2494,21 @@
     updateDailyLayoutUI();
     var sel=$('#p-emp'); sel.innerHTML='<option value="__all">全員</option>'+state.employees.map(function(e,i){return isActiveInMonth(e,state.month)?'<option value="'+i+'">'+esc(e.name)+'</option>':'';}).join('');
     renderWebMeisai();
-    renderFuri();
     doPreview();
+  }
+  /* ★純関数: 振込の対象から「押せるか／なぜ押せないか」を決める。
+   *   画面にもライブラリにも触らないので、tests/furikomi-tab.test.mjs が作り物で確かめられる。
+   *   ★押せない時は必ず理由を返す＝「押せないボタンだけ置いて黙る」を作らない。 */
+  function furikomiGate(transfers){
+    var rows=transfers||[];
+    var ready=rows.filter(function(t){return t.ready && t.amount>0;});
+    var listed=rows.filter(function(t){return t.amount>0;});     // 振込一覧Excelに載る分
+    return {
+      zengin:{ enabled:ready.length>0, count:ready.length,
+        reason: ready.length ? '' : (listed.length ? '振込先(銀行・支店・口座)が入っていません' : '対象月に振込む人がいません') },
+      xlsx:{ enabled:listed.length>0, count:listed.length,
+        reason: listed.length ? '' : '対象月に振込む人がいません' }
+    };
   }
   // ── 総合振込データ(全銀ファイル + 振込一覧Excel) ──
   function buildTransfers(){
@@ -2527,7 +2541,15 @@
       if(notReady.length) listHTML+='<div class="cr-warn" style="margin:8px 0 0">⚠ '+notReady.map(function(t){return esc(t.emp.name);}).join('・')+' は振込先(銀行/支店/口座)が未入力のため全銀ファイルから除外。設定 ▸ 従業員マスタ ▸ 総合振込データ用 で入力してください（振込一覧Excelには載ります）。</div>';
     }
     var total=ready.reduce(function(a,t){return a+t.amount;},0);
-    var btns='<div class="btn-row" style="margin-top:10px"><button class="btn-primary" id="b-zengin"'+(ready.length?'':' disabled')+'>全銀ファイル（'+ready.length+'件 '+yen(total)+'）</button><button class="btn-ghost" id="b-furixlsx">振込一覧Excel</button></div>'
+    // ★押せるかは furikomiGate が決める。押せない時は★理由をボタンの横に出す★
+    //  （押せないボタンだけ置いて黙ると「壊れている」と思われる）。
+    var gate=furikomiGate(tr);
+    var btns='<div class="btn-row" style="margin-top:10px;align-items:center">'
+      +'<button class="btn-primary" id="b-zengin"'+(gate.zengin.enabled?'':' disabled')+'>全銀ファイル（'+gate.zengin.count+'件 '+yen(total)+'）</button>'
+      +'<button class="btn-ghost" id="b-furixlsx"'+(gate.xlsx.enabled?'':' disabled')+'>振込一覧Excel</button>'
+      +'</div>'
+      +(gate.zengin.enabled?'':'<p class="hint" style="margin:6px 0 0">全銀ファイル：'+esc(gate.zengin.reason)+'</p>')
+      +(gate.xlsx.enabled?'':'<p class="hint" style="margin:2px 0 0">振込一覧Excel：'+esc(gate.xlsx.reason)+'</p>')
       +'<p class="hint" style="margin:6px 0 0">全銀ファイル=銀行の「総合振込」に取り込む固定長データ（Shift-JIS）。銀行/支店コードは通帳や銀行サイトで確認してください。</p>';
     box.innerHTML=committer+listHTML+btns;
   }
@@ -2634,7 +2656,8 @@
     document.addEventListener('change',function(ev){ if(!ev.target.classList.contains('scr-month'))return; state.month=ev.target.value||state.month; state._prevYm=null; state._bonusPrevYm=null; state._bonusYtdYm=null; /* 月替わりで前月比/賞与前月キャッシュを更新 */ $$('.scr-month').forEach(function(m){ m.value=state.month; }); updatePaydayPreview();
       if($('#scr-input').classList.contains('active')){$('#in-month').textContent=monthLabel();renderInputArea();}
       if($('#scr-list').classList.contains('active')) renderListActive();
-      if($('#scr-print').classList.contains('active')) doPreview(); }); // 印刷の月も対象月に統合(P1-18)
+      if($('#scr-print').classList.contains('active')) doPreview(); // 印刷の月も対象月に統合(P1-18)
+      if($('#scr-furikomi')&&$('#scr-furikomi').classList.contains('active')) renderFuri(); }); // ★振込も月を変えたら作り直す
 
     // 入力タブ: 月次給与/賞与 モード切替
     var inScr=$('#scr-input');
