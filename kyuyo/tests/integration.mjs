@@ -12,7 +12,7 @@ const ROOT = path.join(__dirname, '..');
 
 let JSDOM;
 try { ({ JSDOM } = await import('jsdom')); }
-catch { console.log('SKIP: jsdom未導入=統合テストをスキップ(npm i jsdom で有効化)。'); process.exit(0); }
+catch { console.log('★jsdomが入っていません。この検証は飛ばせません（SKIPを緑と呼ばない）。npm install してください。'); process.exit(1); }
 
 let pass = 0, fail = 0;
 function T(name, fn) { try { fn(); pass++; console.log('  ✓ ' + name); } catch (e) { fail++; console.log('  ✗ ' + name + ' — ' + (e && e.message)); } }
@@ -464,7 +464,8 @@ T('★「Excelに保存(月次)」が契約経由で通る（registry→engine�
   } finally { win.PayslipXlsx.downloadSheets = realDl; win.alert = realAlert; }
   if (alerts.length) throw new Error('検証で弾かれました（既定の状態が契約を通らない）: ' + alerts[0].slice(0, 200));
   eq(calls.length, 1, 'ファイル書き出しが1回呼ばれた');
-  ok(/^給与明細_\d{4}-\d{2}\.xlsx$/.test(calls[0].opts.filename), 'ファイル名: ' + calls[0].opts.filename);
+  // ★ファイル名に日時(YYYYMMDD_HHmm)が入る＝毎回違う名前＝古いダウンロードと見分けがつく
+  ok(/^給与明細_\d{4}-\d{2}_\d{8}_\d{4}\.xlsx$/.test(calls[0].opts.filename), 'ファイル名: ' + calls[0].opts.filename);
   ok(calls[0].sheets.length >= 2, 'シートが集計＋人数ぶんある: ' + calls[0].sheets.length);
   eq(calls[0].sheets[0].name, '集計', '1枚目は集計');
   // ★レジストリに実際に登録された＝契約を通った証拠

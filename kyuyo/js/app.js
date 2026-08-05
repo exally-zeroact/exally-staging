@@ -3000,6 +3000,12 @@
         +'\n\n※直したあと、もう一度「Excel」を押してください。';
     }
 
+    // ファイル名の「.xlsx」の前に日時を挿す（渡し口が持つ形を使う＝作り方を2箇所に書かない）
+    function withStamp(name){
+      if(!window.FileOut || !FileOut.stamp) return name;
+      return String(name).replace(/(\.[A-Za-z0-9]+)$/, '_' + FileOut.stamp() + '$1');
+    }
+
     function exportMonthlyViaOp(emps){
       var op=opPayrollMonthly(); if(!op) return false;               // 読めていなければ従来の道
       var res=op.engine(payrollInputs(emps));
@@ -3008,7 +3014,10 @@
         return true;                                                 // ★止めた（従来の道へは落とさない）
       }
       var out=op.excel.export(res); if(!out) return false;
-      PayslipXlsx.downloadSheets(out.sheets, { filename: out.filename });
+      // ★ファイル名に日時(YYYYMMDD_HHmm)を足す＝毎回違う名前。
+      //   iPhoneは同じ名前だと (1)(2) が付いて、どれが一番新しいか分からなくなるため。
+      //   （社内の代行請求アプリと同じ形。時刻は現在時刻＝面の仕事なのでここで足す）
+      PayslipXlsx.downloadSheets(out.sheets, { filename: withStamp(out.filename) });
       return true;
     }
     // Web明細で公開(従業員向け配布・アクセスコード方式)

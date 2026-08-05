@@ -8,7 +8,7 @@ import fs from 'node:fs'; import path from 'node:path'; import { fileURLToPath }
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
 let JSDOM; try { ({ JSDOM } = await import('jsdom')); }
-catch { console.log('SKIP: jsdom未導入=nencho-computeをスキップ。'); process.exit(0); }
+catch { console.log('★jsdomが入っていません。この検証は飛ばせません（SKIPを緑と呼ばない）。npm install してください。'); process.exit(1); }
 
 let pass = 0, fail = 0;
 function T(name, fn) { try { fn(); pass++; console.log('  ✓ ' + name); } catch (e) { fail++; console.log('  ✗ ' + name + ' — ' + (e && e.message)); } }
@@ -21,7 +21,9 @@ const dom = new JSDOM(html.replace(/<script[\s\S]*?<\/script>/g, ''), { runScrip
 const win = dom.window, doc = win.document; win.fetch = () => Promise.reject(new Error('no net'));
 for (const src of srcs) { const el = doc.createElement('script'); el.textContent = fs.readFileSync(path.join(ROOT, src), 'utf8'); doc.body.appendChild(el); }
 const A = win.__PAYSLIP_TEST;
-if (!A || !A.nenCompute) { console.log('SKIP: __PAYSLIP_TEST.nenCompute 未露出'); process.exit(0); }
+// ★露出が消えたら【赤】。ここで exit(0) にすると、アプリが年末調整の計算を出さなくなっても
+//   このテストは黙って緑になる＝一番たちの悪い空振り。
+if (!A || !A.nenCompute) { console.log('★__PAYSLIP_TEST.nenCompute が露出していません＝この検証が空振りします（飛ばせません）。'); process.exit(1); }
 
 // 本人=給与収入500万(→給与所得356万・本人所得tier0=900万以下)。控除は増分で検証。
 const AGG = { shunyu: 5000000, genzen: 0, shaho: 0, months: 12 };

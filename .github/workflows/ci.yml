@@ -52,8 +52,10 @@ jobs:
         run: node tests/api-claude.test.mjs
       - name: ★法定値の直書きガード (率・額が説明文に固定されていないか)
         run: node tests/no-hardcoded-statutory.test.mjs && node tests/no-hardcoded-statutory.test.mjs --self-test
-      - name: ★ファイルの渡し方 (種類・スマホは共有シート・PCは落ちる)
+      - name: ★ファイルの渡し方 (種類・全端末で落とす=共有シートを使わない・名前に日時)
         run: node kyuyo/tests/file-out.test.mjs
+      - name: ★スマホ幅の見た目 (ボタンが折り返さない / 対象月の選択は1つで重ならない)
+        run: node kyuyo/tests/button-wrap.test.mjs && node kyuyo/tests/button-wrap.test.mjs --self-test && node kyuyo/tests/ym-picker.test.mjs && node kyuyo/tests/ym-picker.test.mjs --self-test
       - name: ★iPhoneで動かない書き方ガード (type=month / octet-stream / writeFile / Blob散在)
         run: node tests/ios-unsupported.test.mjs && node tests/ios-unsupported.test.mjs --self-test
       - name: ★契約v0 (レジストリ / 契約の線=呼ばれているか・面を呼び返していないか)
@@ -66,6 +68,12 @@ jobs:
         run: node kyuyo/tests/statutory-freshness.test.mjs && node kyuyo/tests/statutory-freshness.test.mjs --self-test
       - name: ★app.jsの道とオペの道が同じ物を作るか (新旧AOA完全一致)
         run: node kyuyo/tests/ops-app-parity.test.mjs
+      - name: ★設定ファイルに知らない項目/説明文が混ざっていないか (混ぜるとデプロイがビルド前に止まる)
+        run: node tests/config-schema.test.mjs && node tests/config-schema.test.mjs --self-test
+      - name: ★空振りしているテストが無いか (SKIPを緑と呼んでいないか・逃げ道/除外の一覧)
+        run: node tests/hollow-guard.test.mjs --self-test && node tests/hollow-guard.test.mjs
+      - name: ★入口の見張りの「判定」が空振りしていないか (外へ出ない部分だけ・実際の死活は hosts.yml 週1)
+        run: node scripts/check-hosts.mjs --self-test
       - name: CI coverage guard (CIから黙って外れているテストが無いか=除外は理由と戻す条件つきのみ)
         run: node tests/ci-coverage.test.mjs
 

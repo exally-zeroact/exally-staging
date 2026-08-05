@@ -8,7 +8,7 @@ import fs from 'node:fs'; import path from 'node:path'; import { fileURLToPath }
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
 let JSDOM; try { ({ JSDOM } = await import('jsdom')); }
-catch { console.log('SKIP: jsdom未導入=paginationをスキップ。'); process.exit(0); }
+catch { console.log('★jsdomが入っていません。この検証は飛ばせません（SKIPを緑と呼ばない）。npm install してください。'); process.exit(1); }
 
 let pass = 0, fail = 0;
 function T(name, fn) { return Promise.resolve().then(fn).then(() => { pass++; console.log('  ✓ ' + name); }, e => { fail++; console.log('  ✗ ' + name + ' — ' + (e && e.message)); }); }

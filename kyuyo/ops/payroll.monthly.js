@@ -284,6 +284,9 @@
     var value = { month: inputs.month, company: { name: (inputs.company || {}).name }, count: rows.length,
       people: rows, totals: totals, partial: errors.length > 0 };
 
+    // ★ファイル名に日時(YYYYMMDD_HHmm)を足す＝毎回違う名前＝古いダウンロードと見分けがつく
+    //   （社内の代行請求アプリと同じ形。iPhoneは同名だと (1)(2) が付いてどれが新しいか分からない）
+    //   ★時刻は面(UI)が入れる。オペは headless（現在時刻に触らない）＝ここでは月までにする。
     var opts = { company: (inputs.company || {}).name, monthLabel: monthLabelOf(inputs.month), filename: '給与明細_' + inputs.month + '.xlsx' };
     var used = {};
     var cells = {

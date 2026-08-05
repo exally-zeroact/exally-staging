@@ -23,6 +23,9 @@ T('ヘルプ: すべての data-help="X" に HELP[X] 定義がある(死んだ�
   (app.match(/([a-zA-Z]+):\{ ?t:'💡/g) || []).forEach(function (m) { keys[m.replace(/:\{.*/, '')] = 1; });
   var refs = [];
   (app + idx).replace(/data-help="([a-zA-Z]+)"/g, function (_, k) { refs.push(k); return _; });
+  // ★拾えているかを先に見る。両方0件だと「未定義の💡は0件」で緑になるが、何も見ていない。
+  ok(Object.keys(keys).length > 0, 'HELPの定義を1つも拾えていない(この検査が空振り。書き方を変えたら正規表現も直す)');
+  ok(refs.length > 0, 'data-help を1つも拾えていない(この検査が空振り)');
   var missing = refs.filter(function (k, i) { return refs.indexOf(k) === i && !keys[k]; });
   ok(missing.length === 0, 'HELP未定義の💡: ' + missing.join(', '));
 });

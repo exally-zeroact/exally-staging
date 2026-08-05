@@ -75,6 +75,12 @@ function buildTable() {
     if (typeof n === 'number' && n > 0) yen.saitei.push(n);
   });
 
+  // ★どれか1つでも空なら、その種類は「文に直書きされていないか」を一度も見ていない＝空振り。
+  //   libの形が変わって拾えなくなっても、緑のままになるのを止める。
+  const empty = [...Object.entries(rates), ...Object.entries(yen)].filter(([, v]) => !v.length).map(([k]) => k);
+  if (empty.length) throw new Error('★libから値を拾えていない種類がある（この検査が空振り）: ' + empty.join(', '));
+  if (yen.saitei.length !== 47) throw new Error('★最低賃金を47件拾えていない（' + yen.saitei.length + '件）＝この検査が空振り');
+
   return { rates, yen };
 }
 

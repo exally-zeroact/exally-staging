@@ -9,7 +9,7 @@ const ROOT = path.join(__dirname, '..');
 
 let jsQR, qrcode;
 try { jsQR = require('jsqr'); jsQR = jsQR.default || jsQR; }
-catch { console.log('SKIP: jsqr未導入=QR復号テストをスキップ(npm i -D jsqr)。'); process.exit(0); }
+catch { console.log('★jsqrが入っていません。QRが読めるかの検証は飛ばせません（SKIPを緑と呼ばない）。npm i -D jsqr'); process.exit(1); }
 qrcode = require(path.join(ROOT, 'lib/qr.js'));
 
 let pass = 0, fail = 0;

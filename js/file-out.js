@@ -1,23 +1,25 @@
-/* file-out.js — ★ファイルを客に渡す唯一の口★（種類を正しく付ける／iPhoneは共有シート）
+/* file-out.js — ★ファイルを客に渡す唯一の口★（種類を正しく付けて、ふつうに落とす）
  *
  * なぜ必要か（2026-08-04・司さんの実機で判明）:
  *   iPhone に Excel が入っているのに、落としたファイルを ★Excelで開けなかった★。
- *   原因は端末ではなく実装:
- *     ・Blob の種類が application/octet-stream（＝「種類の分からないデータ」）だった
- *       → iPhone は Excel と紐づけられない。Excelが入っていても開けない。
- *     ・XLSX.writeFile 任せも同じ経路（種類を付けられない）
- *     ・navigator.share を1箇所も使っていなかった
- *   ★iPhoneでファイルを渡す普通のやり方は【共有シートを出す】こと。★
- *   そうすれば「Excelで開く」がその場に並ぶ。他のサイトがやっているのはこれ。
+ *   原因は端末ではなく実装で、★種類が application/octet-stream（＝種類の分からないデータ）だった1点★。
+ *   iPhone は種類を見てアプリと紐づけるので、Excelが入っていても開けない。
+ *
+ * ★2026-08-04 に共有シート(navigator.share)をやめました。
+ *   一度は「iPhoneは共有シートを出す」形にしたが、★これは間違い★でした。
+ *   navigator.share は【人に送る】ための仕組みで【開く】ための仕組みではない。
+ *   だからAirDrop・メッセージ・LINEが並ぶ＝客から見て回りくどい。
+ *   ★社内の代行請求アプリ(daikou-seikyu.html)が、正しい種類を付けて【ふつうに落とすだけ】で
+ *     iPhoneの「"Excel" で開く」を出していました。★ そのやり方に揃えます。
+ *   ＝端末で分けない。全部 <a download>。種類を正しく付けるのが本体。
  *
  * 決まり:
  *   ① ★octet-stream を既定にしない。★ 種類の分からない物は落とさせない（拡張子から必ず決める）
- *   ② 共有シートが使える端末（iPhone等）では navigator.share({files})
- *      使えない環境（PC等）は今までどおり <a download>
- *   ③ ★分岐はこの1箇所だけ。★ 他の場所で Blob を作らない・writeFile を呼ばない
+ *   ② 端末で分岐しない（pointer や UA を見ない）
+ *   ③ ★渡し口はこの1箇所だけ。★ 他の場所で Blob を作らない・writeFile を呼ばない
  *      （tests/ios-unsupported.test.mjs が破りを赤にする）
  *
- * 【利用】window.FileOut.deliver(bytes, 'name.xlsx') → Promise<{how:'share'|'download'}>
+ * 【利用】window.FileOut.deliver(bytes, 'name.xlsx') → Promise<{how:'download'}>
  */
 (function (global) {
   'use strict';
@@ -48,34 +50,15 @@
     return new Blob([data], { type: mime });
   }
 
-  /* 共有シートが使えるか（ファイル共有に対応しているか）を、実際に聞いて確かめる。
-     ★「iOSかどうか」で判定しない。端末や版で変わるので、機能があるかを聞く。 */
-  function canShareFile(file) {
-    try {
-      return !!(global.navigator && global.navigator.canShare && global.navigator.share
-        && global.navigator.canShare({ files: [file] }));
-    } catch (e) { return false; }
-  }
-
-  /* ★共有シートを出すのは【指で触る端末】だけ。
-     デスクトップのChromeも canShare は true を返すが、そこで共有シートを出すと
-     ★今まで落ちていたファイルが落ちなくなる＝PCの退行★（実測 2026-08-04）。
-     指で触る端末(pointer: coarse)＝スマホ/タブレットでは、落としても客が見つけられないので共有シートが正しい。
-     UA文字列で「iPhoneか」を見ない（端末や版で変わるうえ、偽装もできる）。 */
-  function prefersShare() {
-    try {
-      if (!global.matchMedia) return false;
-      return global.matchMedia('(pointer: coarse)').matches;
-    } catch (e) { return false; }
-  }
-
+  /* ★代行請求アプリと同じ形（動いている実物に揃える）。
+     後始末（URLの取り消しと要素の削除）は 1.5秒後＝落とし始める前に消えないように。 */
   function anchorDownload(blob, filename) {
-    var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
-    a.href = url; a.download = filename;
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
-    setTimeout(function () { URL.revokeObjectURL(url); if (a.parentNode) a.parentNode.removeChild(a); }, 200);
+    setTimeout(function () { URL.revokeObjectURL(a.href); if (a.parentNode) a.parentNode.removeChild(a); }, 1500);
     return { how: 'download', type: blob.type, filename: filename };
   }
 
@@ -91,22 +74,17 @@
     var blob = toBlob(data, mime);
     if (!blob) return Promise.reject(new Error('この環境ではファイルを作れません'));
 
-    var file = null;
-    try { file = new File([blob], filename, { type: mime }); } catch (e) { file = null; }
-
-    if (file && prefersShare() && canShareFile(file)) {
-      // ★iPhone等: 共有シートを出す＝その場に「Excelで開く」が並ぶ
-      return global.navigator.share({ files: [file], title: opts.title || filename })
-        .then(function () { return { how: 'share', type: mime, filename: filename }; })
-        .catch(function (err) {
-          // 客が共有シートを閉じただけ＝エラーではない（何も起きなくてよい）
-          if (err && (err.name === 'AbortError' || err.name === 'NotAllowedError')) return { how: 'cancel', type: mime, filename: filename };
-          // 共有できない端末だった場合は、落とす方に切り替える（無言で失敗させない）
-          return anchorDownload(blob, filename);
-        });
-    }
+    // ★端末で分けない。全部これ。種類が正しければ iPhone は「"Excel" で開く」を出す。
     return Promise.resolve(anchorDownload(blob, filename));
   }
 
-  global.FileOut = { deliver: deliver, mimeOf: mimeOf, MIME: MIME, canShareFile: canShareFile, prefersShare: prefersShare, extOf: extOf };
+  /* ファイル名の日時（YYYYMMDD_HHmm）。★毎回違う名前＝古いダウンロードと見分けがつく。
+     代行請求アプリと同じ形。使うかどうかは呼ぶ側が決める。 */
+  function stamp(d) {
+    d = d || new Date();
+    var z = function (n) { return ('0' + n).slice(-2); };
+    return d.getFullYear() + z(d.getMonth() + 1) + z(d.getDate()) + '_' + z(d.getHours()) + z(d.getMinutes());
+  }
+
+  global.FileOut = { deliver: deliver, mimeOf: mimeOf, MIME: MIME, stamp: stamp, extOf: extOf };
 })(typeof window !== 'undefined' ? window : globalThis);
