@@ -1147,14 +1147,14 @@ background:#FFE066 !important;
 }
 </style>
 
-<script src="hyperformula.full.min.js?v=a62c6d95"></script>
+<script src="hyperformula.full.min.js?v=212e3a0e"></script>
 
-<script src="exally-formula.js?v=a62c6d95"></script>
+<script src="exally-formula.js?v=212e3a0e"></script>
 <!-- グリッド→xlsx の変換と「落ちる物」の警告(純関数・軽い)。SheetJS本体(930KB)と lib/xlsx-io.js は
      初回の「Excelに保存」で初めて読み込む＝グリッドの表示を重くしない -->
-<script src="js/file-out.js?v=a62c6d95"></script>
-<script src="lib/grid-xlsx.js?v=a62c6d95"></script>
-<script src="lib/excel-version.js?v=a62c6d95"></script>
+<script src="js/file-out.js?v=212e3a0e"></script>
+<script src="lib/grid-xlsx.js?v=212e3a0e"></script>
+<script src="lib/excel-version.js?v=212e3a0e"></script>
 
 <script>
 /* ===== canvas-formula-engine.js (inlined) ===== */
@@ -1198,10 +1198,20 @@ function initFormulaEngine(sheetNames) {
   // ===== exally-formula.js に HyperFormula インスタンスを注入 =====
   if (typeof initExallyFormula === 'function') initExallyFormula(hf);
 }
+/* ★日付は「1899-12-30 から数えて何日目か」の数（シリアル値）にする。Excelと同じ考え方。
+   こうしないと「2026/8/31」がただの文字になり、+30 が 2056（2026+30）になる。
+   1900年うるう年の歴史的なズレを含む数え方まで Excel に合わせる（基準日 1899-12-30）。
+   守り: tests/grid-date.test.mjs ／ 書き出し側は lib/grid-xlsx.js の dateSerial と同じ規則。 */
+function dateSerial(y,mo,d){ return Math.round((Date.UTC(y,mo-1,d)-Date.UTC(1899,11,30))/86400000); }
 // シート名→HF数値IDに変換（HFはindex番号を要求）
 function toHFVal(v){
   if(v===''||v===null||v===undefined) return null;
   if(typeof v==='string'&&v[0]==='=') return v; // 数式はそのまま
+  // ★日付の文字列は日付として計算できる数にする（文字のままだと足し算が壊れる）
+  if(typeof v==='string'){
+    var _pd=(typeof parseDateStr==='function')?parseDateStr(v):null;
+    if(_pd) return dateSerial(_pd.y,_pd.m,_pd.d);
+  }
   if(typeof v==='string'&&v.trim()!==''&&!isNaN(v)) return parseFloat(v); // 数値文字列→number
   return v;
 }
@@ -2145,7 +2155,9 @@ function detectNumericPattern(values){
 
 // ===== 日付パターン検出 =====
 // 文字列を {y,m,d,sep,pad} にパース（失敗時は null）
-function parseDate(s){
+/* 「2026/8/31」のような日付の文字列だけを読む（数は見ない）。
+   ★ここを文字列専用に保つ理由: 社員番号 0007 や金額 15000 を日付に化けさせないため。 */
+function parseDateStr(s){
   if(typeof s!=='string') return null;
   var m=s.match(/^(\d{4})([\/\-])(\d{1,2})\2(\d{1,2})$/);
   if(!m) return null;
@@ -2154,6 +2166,21 @@ function parseDate(s){
   var dt=new Date(y,mo-1,d);
   if(dt.getFullYear()!==y||dt.getMonth()!==mo-1||dt.getDate()!==d) return null;
   return {y:y,m:mo,d:d,sep:m[2],pad:m[3].length===2};
+}
+/* 日付として読む。文字列（2026/8/31）と ★シリアル値（46265）★ の両方を受ける。
+   シリアル値も読めるようにしたのは、=DATE(2026,8,31) の結果を
+   ★アプリ自身が「日付として認識されません」と拒んでいた★ため。
+   ★小さい数は日付にしない★（0007 のような番号・件数が日付に化けるのを防ぐ）。
+     しきい値 = 1000（1902-09-26 相当）。これ未満の数は日付として扱わない。 */
+function parseDate(s){
+  var fromStr=parseDateStr(s);
+  if(fromStr) return fromStr;
+  var n=(typeof s==='number')?s:((typeof s==='string'&&s.trim()!==''&&!isNaN(s))?parseFloat(s):null);
+  if(n===null||!isFinite(n)) return null;
+  if(n<1000||n>2958465) return null;                 // 2958465 = 9999-12-31（Excelの上限）
+  if(Math.floor(n)!==n) n=Math.floor(n);             // 時刻ぶんの小数は日付として切り捨てる
+  var dt=new Date(Date.UTC(1899,11,30)+n*86400000);
+  return {y:dt.getUTCFullYear(),m:dt.getUTCMonth()+1,d:dt.getUTCDate(),sep:'/',pad:false};
 }
 // 日付オブジェクトを元フォーマットで文字列化
 function formatDate(dt,sep,pad){
@@ -2167,7 +2194,9 @@ function detectDatePattern(values){
   if(!values||values.length<2) return null;
   var dates=[];
   for(var i=0;i<values.length;i++){
-    var pd=parseDate(values[i]);
+    // ★ここは parseDateStr（文字列専用）。parseDate だと 15000 のような売上の数まで
+    //   日付と見なして、連続コピーが日付の連番になってしまう。
+    var pd=parseDateStr(values[i]);
     if(!pd) return null;
     dates.push(pd);
   }
@@ -3363,16 +3392,24 @@ function setCell(r,c,v,noUndo){
   var prev = sheets[activeSheet].data[key] ? sheets[activeSheet].data[key].v : '';
   if(!noUndo){ undoStack.push({sheet:activeSheet,key:key,old:prev,new_:v}); redoStack=[]; }
   var d = v;
-  // 時刻・日付は文字列として扱う（HFが小数シリアル値に変換するのを防ぐ）
-  var isTimeOrDate = false;
+  // 時刻は文字列として扱う（HFが小数シリアル値に変換するのを防ぐ）
+  var isTime = false, datePart = null;
   if(v && typeof v==='string' && v[0]!=='='){
-    if(typeof parseTime==='function' && parseTime(v)) isTimeOrDate=true;
-    else if(typeof parseDate==='function' && parseDate(v)) isTimeOrDate=true;
+    if(typeof parseTime==='function' && parseTime(v)) isTime=true;
+    // ★日付は「文字列だけ」を見る。parseDate だと 15000 のような売上の数まで日付になる。
+    else if(typeof parseDateStr==='function') datePart=parseDateStr(v);
   }
-  if(isTimeOrDate){
-    // HFには空をセット（残留防止）、d は v のまま
+  if(isTime){
+    // HFには打った文字をそのまま（時刻の扱いは今回変えていない）
     if(hf){
       try{ hf.setCellContents({sheet:_hfSid(activeSheet),row:r,col:c}, v); }catch(e){}
+    }
+  } else if(datePart){
+    /* ★日付は Excel と同じ「数（シリアル値）」で計算に渡す。
+       文字のまま渡していたので「2026/8/31」+30 が ★2056★（2026+30）になっていた。
+       画面に出す d は打った文字のまま＝見た目は変わらない。 */
+    if(hf){
+      try{ hf.setCellContents({sheet:_hfSid(activeSheet),row:r,col:c}, dateSerial(datePart.y,datePart.m,datePart.d)); }catch(e){}
     }
   } else {
     var hfResult = setCellFormula(activeSheet, r, c, v);
@@ -4992,7 +5029,11 @@ function openFmtModal(){
   var rawVal=(cell.d!==undefined&&cell.d!=='')?cell.d:cell.v;
   if(typeof parseTime==='function' && parseTime(rawVal)){
     _fmtModalCategory='time';
-  } else if(typeof parseDate==='function' && parseDate(rawVal)){
+  // ★打った日付の文字列なら日付。数(シリアル値)は「既に日付の書式が付いている時」だけ日付扱い。
+  //   そうしないと 15000 のような売上の数を開いた時まで日付の画面が出る。
+  } else if(typeof parseDateStr==='function' && parseDateStr(rawVal)){
+    _fmtModalCategory='date';
+  } else if(currentFmt && ['m/d','mm/dd','yyyy/m/d','yyyy/mm/dd','yyyy-m-d','yyyy-mm-dd','yyyy年m月d日','yyyy年mm月dd日','m月d日','m月d日(aaa)'].indexOf(currentFmt)>=0){
     _fmtModalCategory='date';
   }
   // 書式が既に時刻書式ならカテゴリ優先

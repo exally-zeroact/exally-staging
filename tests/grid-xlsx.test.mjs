@@ -86,9 +86,34 @@ T('③ ★数値判定が book.html の toHFVal と同じ規則（＝落とし�
   // '1,234' は isNaN なので文字列のまま。グリッドのエンジンも文字列として扱う(台帳 R11)。
   eq(b.sheets[0].cells.B5.v, '1,234'); eq(b.sheets[0].cells.B5.t, 's');
 });
-T('③b 日付に見える文字は日付にしない（グリッドと同じ＝台帳 R11）', () => {
-  eq(G.asValue('2026-07-31'), '2026-07-31');
-  eq(G.asValue('007-1234'), '007-1234');
+/* ★2026-08-05 に決まりを1つ変えた（理由を残す）★
+   前: 「日付に見える文字は日付にしない」
+   後: ★日付はExcelと同じ数（シリアル値）にする★
+   なぜ変えたか: 元の決まりの目的は「書き出しとグリッドの画面を一致させる」ことだった。
+     ところがグリッド側で ★日付が日付として扱われず★、
+       ・「2026/8/31」+30 が ★2056★（2026+30）になる
+       ・=DATE(2026,8,31) が 46265 という裸の数字のまま出る
+     という不具合があった。グリッド側を Excel と同じ扱いに直したので、
+     ★目的（画面と書き出しを一致させる）を守るには、書き出しも同じ数にする★のが正しい。
+   ★「日付でない物」は今までどおり文字のまま★（007-1234・1,234 は変えていない）。 */
+T('③b 日付はExcelと同じ数にする／日付でない物は文字のまま（2026-08-05 変更）', () => {
+  eq(G.asValue('2026-07-31'), 46234, '日付はシリアル値');
+  eq(G.asValue('007-1234'), '007-1234', '電話番号のような物は文字のまま');
+  eq(G.asValue('1,234'), '1,234', 'カンマ付きは文字のまま（台帳 R11・変更なし）');
+});
+
+T('★日付を数で書くなら、日付の表示形式も一緒に書く（Excelで裸の数字に見えない）', () => {
+  eq(G.dateFmtFor('2026/8/31'), 'yyyy/m/d', '打った形が / なら /');
+  eq(G.dateFmtFor('2026-08-31'), 'yyyy-mm-dd', '打った形が - なら -');
+  eq(G.dateFmtFor('15000'), null, '日付でない物には付けない');
+  const b = G.gridToBook([{ name: 'S', data: { '0,0': { v: '2026/8/31' } } }]);
+  eq(b.sheets[0].cells.A1.v, 46265, '値は数');
+  eq(b.sheets[0].cells.A1.z, 'yyyy/m/d', '表示形式が付く');
+});
+
+T('★人が選んだ表示形式は上書きしない', () => {
+  const b = G.gridToBook([{ name: 'S', data: { '0,0': { v: '2026/8/31', numFmt: 'yyyy年m月d日' } } }]);
+  eq(b.sheets[0].cells.A1.z, 'yyyy年m月d日');
 });
 
 T('④ 数値は数値として入る', () => {
@@ -165,7 +190,13 @@ T('⑬ ★★数値判定が book.html の toHFVal とズレたら赤（ズレ�
   const m = src.match(/function toHFVal\(v\)\{[\s\S]*?\n\}/);
   if (!m) throw new Error('book.html から toHFVal を取り出せない（名前が変わった？）');
   // 実際に book.html の toHFVal を動かして、asValue と同じ答えになるか比べる
-  const toHFVal = new Function('return (' + m[0].replace(/^function toHFVal/, 'function') + ')')();
+  // toHFVal は dateSerial / parseDateStr を呼ぶので、一緒に取り出して同じ入れ物で動かす
+  const helpers = ['dateSerial', 'parseDateStr'].map(n => {
+    const mm = src.match(new RegExp('function ' + n + '\\([^)]*\\)\\s*\\{[\\s\\S]*?\\n\\}'));
+    if (!mm) throw new Error('book.html から ' + n + ' を取り出せない（名前が変わった？）');
+    return mm[0];
+  }).join('\n');
+  const toHFVal = new Function(helpers + '\nreturn (' + m[0].replace(/^function toHFVal/, 'function') + ')')();
   const samples = ['0007', '1,234', '2026-07-31', '007-1234', '15000', '1.50', '-3', '0', '  12  ', 'あ', ''];
   const ng = [];
   for (const s of samples) {
