@@ -3422,7 +3422,8 @@ function setCell(r,c,v,noUndo){
   var existing = sheets[activeSheet].data[key] || {};
   sheets[activeSheet].data[key] = Object.assign({}, existing, {v:v, f:v, d:String(d)});
   // 依存セルの再計算（数値変更→数式セルに即反映）
-  if(!isTimeOrDate){
+  // ★日付も再計算に含める（数として渡しているので、これを飛ばすと 30日後 が更新されない）
+  if(!isTime){
     var _s=activeSheet, _d=sheets[activeSheet].data;
     _scheduleRecalc(_s,_d);
   }

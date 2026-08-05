@@ -141,6 +141,40 @@ T('★連続コピー(オートフィル)も数を日付にしない', () => {
   if (/[^S]parseDate\(values/.test(fn[0])) throw new Error('parseDate を使っている＝売上の並びが日付の連番になる');
 });
 
+/* ★★ここまでの検査は「ソースを読む」だけだった。それでは足りなかった。★★
+   実際に setCell を【動かして】いなかったので、直した時に消し忘れた変数
+   （isTimeOrDate）が残り、★実配信でセルに打つたびに例外が出ていた★。
+   ソースの形だけ見る検査は、こういう「動かすと落ちる」を1つも捕まえられない。
+   → ここで本当に呼び出して、例外が出ないことと答えを見る。 */
+T('★★setCell を実際に動かす（打つたびに例外が出ないこと）★★', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'book.html'), 'utf8');
+  const names = ['dateSerial', 'parseDateStr', 'parseDate', 'toHFVal', 'setCell'];
+  const body = names.map(n => grab(n)).join('\n');
+  // setCell が触る外の物だけを最小限そろえる（HFやcanvasは使わない）
+  const harness = `
+    var sheets=[{name:'S',data:{},colW:{},rowH:{}}], activeSheet=0;
+    var undoStack=[], redoStack=[], hf=null;
+    function _hfSid(){ return 0; }
+    function setCellFormula(){ return null; }
+    function evalFormula(v){ return v; }
+    function parseTime(){ return null; }
+    function _warnExcelCompat(){}
+    function _scheduleRecalc(){}
+    ${body}
+    return { setCell: setCell, sheets: sheets };
+  `;
+  const H = new Function(harness)();
+  const errs = [];
+  for (const [r, c, v] of [[0, 0, '締め日'], [0, 1, '2026/8/31'], [1, 1, '15000'], [2, 1, '0007'], [3, 1, 'あ'], [4, 1, '']]) {
+    try { H.setCell(r, c, v); } catch (e) { errs.push('setCell(' + r + ',' + c + ',' + JSON.stringify(v) + ') → ' + e.message); }
+  }
+  if (errs.length) throw new Error('打つと例外が出る:\n      ' + errs.join('\n      '));
+  // 画面に出る文字は打ったまま（見た目を変えていない）
+  const d = (r, c) => (H.sheets[0].data[r + ',' + c] || {}).d;
+  eq(d(0, 1), '2026/8/31', '日付の見た目');
+  eq(d(1, 1), '15000', '売上の見た目');
+});
+
 T('★書き出し(xlsx)も画面と同じ規則（ズレると落としたファイルだけ日付が違う）', () => {
   const ng = [];
   for (const s of ['2026/8/31', '2026-08-31', '0007', '1,234', '15000', 'あ', '']) {
