@@ -1203,6 +1203,35 @@ function initFormulaEngine(sheetNames) {
    1900年うるう年の歴史的なズレを含む数え方まで Excel に合わせる（基準日 1899-12-30）。
    守り: tests/grid-date.test.mjs ／ 書き出し側は lib/grid-xlsx.js の dateSerial と同じ規則。 */
 function dateSerial(y,mo,d){ return Math.round((Date.UTC(y,mo-1,d)-Date.UTC(1899,11,30))/86400000); }
+/* ★式の答えが日付になるなら、日付の表示形式を返す（無ければ null）。
+   Excelは =DATE(...) や「日付+30」の答えを自動で日付の顔にする。ここが無いと
+   ★「30日後」が 46295 という裸の数字で出て、客には壊れて見える。★
+   見分け方は2つだけにする（当てずっぽうで日付にしない）:
+     ① 日付を作る関数で始まっている（DATE / TODAY / NOW / EDATE / EOMONTH / DATEVALUE）
+     ② 日付のセルを足し引きしている（=B1+30）
+   ★TEXT は文字を返すので日付にしない。DATEDIF は「日数」なので日付にしない。★
+   lookup(ref) は参照先のセルを返す関数（テストから作り物を渡せるように外から受ける）。 */
+function dateFmtForFormula(f, lookup){
+  if(typeof f!=='string'||f[0]!=='=') return null;
+  var body=f.slice(1);
+  var head=(body.match(/^\s*([A-Za-z_][A-Za-z0-9_.]*)\s*\(/)||[])[1];
+  if(head){
+    var H=head.toUpperCase();
+    if(['DATE','TODAY','NOW','EDATE','EOMONTH','DATEVALUE'].indexOf(H)>=0) return 'yyyy/m/d';
+    return null;                       // 関数で始まる物は、上の一覧以外は日付にしない
+  }
+  // 足し引きだけの式で、参照先が日付なら日付（=B1+30 ＝ 30日後）
+  if(!/^[^()]*$/.test(body)) return null;
+  if(!/[+\-]/.test(body)) return null;
+  var ref=(body.match(/\$?[A-Za-z]{1,3}\$?\d{1,7}/)||[])[0];
+  if(!ref||typeof lookup!=='function') return null;
+  var cell=lookup(ref.replace(/\$/g,''));
+  if(!cell) return null;
+  var DATE_FMTS=['m/d','mm/dd','yyyy/m/d','yyyy/mm/dd','yyyy-m-d','yyyy-mm-dd','yyyy年m月d日','yyyy年mm月dd日','m月d日','m月d日(aaa)'];
+  if(cell.numFmt&&DATE_FMTS.indexOf(cell.numFmt)>=0) return 'yyyy/m/d';
+  if(typeof parseDateStr==='function'&&parseDateStr(cell.v)) return 'yyyy/m/d';
+  return null;
+}
 // シート名→HF数値IDに変換（HFはindex番号を要求）
 function toHFVal(v){
   if(v===''||v===null||v===undefined) return null;
@@ -3420,7 +3449,23 @@ function setCell(r,c,v,noUndo){
   }
   // 既存の書式プロパティを保持してv/f/dのみ更新
   var existing = sheets[activeSheet].data[key] || {};
-  sheets[activeSheet].data[key] = Object.assign({}, existing, {v:v, f:v, d:String(d)});
+  var next = Object.assign({}, existing, {v:v, f:v, d:String(d)});
+  /* ★日付には日付の表示形式を自動で付ける（Excelと同じ）。人が選んだ書式は上書きしない。
+     これが無いと「30日後」が 46295 という裸の数字で出て、客には壊れて見える。 */
+  if(!existing.numFmt){
+    if(datePart){
+      next.numFmt = (v.indexOf('-')>=0) ? 'yyyy-mm-dd' : 'yyyy/m/d';
+    } else if(typeof dateFmtForFormula==='function'){
+      var _df = dateFmtForFormula(v, function(ref){
+        var m=/^([A-Za-z]{1,3})(\d{1,7})$/.exec(ref); if(!m) return null;
+        var cc=0, L=m[1].toUpperCase();
+        for(var i2=0;i2<L.length;i2++) cc=cc*26+(L.charCodeAt(i2)-64);
+        return sheets[activeSheet].data[(parseInt(m[2],10)-1)+','+(cc-1)]||null;
+      });
+      if(_df) next.numFmt=_df;
+    }
+  }
+  sheets[activeSheet].data[key] = next;
   // 依存セルの再計算（数値変更→数式セルに即反映）
   // ★日付も再計算に含める（数として渡しているので、これを飛ばすと 30日後 が更新されない）
   if(!isTime){

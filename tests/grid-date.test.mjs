@@ -148,7 +148,7 @@ T('★連続コピー(オートフィル)も数を日付にしない', () => {
    → ここで本当に呼び出して、例外が出ないことと答えを見る。 */
 T('★★setCell を実際に動かす（打つたびに例外が出ないこと）★★', () => {
   const src = fs.readFileSync(path.join(ROOT, 'book.html'), 'utf8');
-  const names = ['dateSerial', 'parseDateStr', 'parseDate', 'toHFVal', 'setCell'];
+  const names = ['dateSerial', 'parseDateStr', 'parseDate', 'dateFmtForFormula', 'toHFVal', 'setCell'];
   const body = names.map(n => grab(n)).join('\n');
   // setCell が触る外の物だけを最小限そろえる（HFやcanvasは使わない）
   const harness = `
@@ -170,9 +170,41 @@ T('★★setCell を実際に動かす（打つたびに例外が出ないこと
   }
   if (errs.length) throw new Error('打つと例外が出る:\n      ' + errs.join('\n      '));
   // 画面に出る文字は打ったまま（見た目を変えていない）
-  const d = (r, c) => (H.sheets[0].data[r + ',' + c] || {}).d;
-  eq(d(0, 1), '2026/8/31', '日付の見た目');
-  eq(d(1, 1), '15000', '売上の見た目');
+  const cell = (r, c) => (H.sheets[0].data[r + ',' + c] || {});
+  eq(cell(0, 1).d, '2026/8/31', '日付の見た目');
+  eq(cell(1, 1).d, '15000', '売上の見た目');
+  // ★日付には日付の表示形式が自動で付く（46265 という裸の数字を出さないため）
+  eq(cell(0, 1).numFmt, 'yyyy/m/d', '打った日付に日付の書式が付く');
+  eq(cell(1, 1).numFmt, undefined, '★売上には日付の書式を付けない');
+  eq(cell(2, 1).numFmt, undefined, '★社員番号にも付けない');
+  // 日付のセルに足す式にも付く（＝30日後が日付で出る）
+  H.setCell(7, 1, '=B1+30');
+  eq(cell(7, 1).numFmt, 'yyyy/m/d', '★30日後にも日付の書式が付く');
+  H.setCell(8, 1, '=B2+30');
+  eq(cell(8, 1).numFmt, undefined, '★売上に足した式には付けない');
+});
+
+/* ★式の答えが日付になる時、Excelは自動で日付の顔にする。
+   ここを入れないと「30日後」が 46295 という裸の数字で出て、客には壊れて見える。 */
+T('★式の答えが日付なら、日付の見た目にする（46295 と出さない）', () => {
+  const D = build(['dateSerial', 'parseDateStr', 'parseDate', 'dateFmtForFormula']);
+  const dateCell = { numFmt: 'yyyy/m/d' };
+  const look = () => dateCell;                       // 参照先は日付のセル
+  eq(D.dateFmtForFormula('=DATE(2026,8,31)', look), 'yyyy/m/d', 'DATEで作った');
+  eq(D.dateFmtForFormula('=TODAY()', look), 'yyyy/m/d', 'TODAY');
+  eq(D.dateFmtForFormula('=EOMONTH(B1,0)', look), 'yyyy/m/d', 'EOMONTH');
+  eq(D.dateFmtForFormula('=B1+30', look), 'yyyy/m/d', '★日付のセルに足した（30日後）');
+});
+
+T('★日付でない式には日付の見た目を付けない（誤検知を出さない）', () => {
+  const D = build(['dateSerial', 'parseDateStr', 'parseDate', 'dateFmtForFormula']);
+  const plain = { numFmt: '#,##0' };
+  const look = () => plain;
+  eq(D.dateFmtForFormula('=SUM(B2:B4)', look), null, '合計');
+  eq(D.dateFmtForFormula('=B1+30', look), null, '日付でないセルへの足し算');
+  eq(D.dateFmtForFormula('=C2/B2-1', look), null, '前月比');
+  eq(D.dateFmtForFormula('=TEXT(B1,"yyyy年m月d日")', look), null, '★TEXTは文字を返すので日付にしない');
+  eq(D.dateFmtForFormula('=DATEDIF(B1,B2,"d")', look), null, '★DATEDIFは日数（数）なので日付にしない');
 });
 
 T('★書き出し(xlsx)も画面と同じ規則（ズレると落としたファイルだけ日付が違う）', () => {
