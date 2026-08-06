@@ -13,13 +13,13 @@ const FILES = [
   'ledger-source.test.js',  // E2 台帳→期間の実績値(ctx)
   'cross-agg.test.js',      // E5 横断集計(事業別のまとめ)
   'hub-ui.mjs',             // E1 UI 全ボタン(jsdom)
-  'grid-xlsx.test.mjs',
+  'grid-xlsx.test.mjs',  // ★グリッド→xlsx の変換と「落ちる物」の警告(+ toHFVal との同期)
   'grid-date.test.mjs',    // ★打った日付が日付として計算できるか(+30が2056にならない)＋数を日付に化けさせない
   ['grid-date.test.mjs', '--self-test'],
   'grid-colwidth.test.mjs',  // ★渡した相手の画面で ######## にならないか(日付の列に幅を付ける)
   ['grid-colwidth.test.mjs', '--self-test'],
   'grid-refedit.test.mjs',   // ★書き間違えた式を直せるか(=B1+30 の B1 を A1 に直せる／数字の直後で式を壊さない)
-  ['grid-refedit.test.mjs', '--self-test'],     // ★グリッド→xlsx の変換と「落ちる物」の警告(+ toHFVal との同期)
+  ['grid-refedit.test.mjs', '--self-test'],
   'no-duplicate-libs.test.mjs', // ★同じ物を2箇所に置かせない(法定データのコピペ・ドリフト防止)
   'excel-version.test.mjs', // ★その式が相手のExcelで動くか(Excelに無い23個＝常時 / 版マーカー14個＝版連動)
   ['excel-version.test.mjs', '--self-test'],
