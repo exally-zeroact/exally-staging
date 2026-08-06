@@ -60,6 +60,8 @@ jobs:
         run: node kyuyo/tests/furikomi-tab.test.mjs && node kyuyo/tests/furikomi-tab.test.mjs --self-test
       - name: ★グリッドの日付 (打った日付が日付になる / 売上の数を日付に化けさせない / 書き出しと同じ規則)
         run: node tests/grid-date.test.mjs && node tests/grid-date.test.mjs --self-test
+      - name: ★渡した相手の画面で ######## にならないか (日付の列に幅を付けて書き出す)
+        run: node tests/grid-colwidth.test.mjs && node tests/grid-colwidth.test.mjs --self-test
       - name: ★iPhoneで動かない書き方ガード (type=month / octet-stream / writeFile / Blob散在)
         run: node tests/ios-unsupported.test.mjs && node tests/ios-unsupported.test.mjs --self-test
       - name: ★契約v0 (レジストリ / 契約の線=呼ばれているか・面を呼び返していないか)
