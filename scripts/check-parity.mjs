@@ -47,6 +47,7 @@ const ALLOWED = {
   'tests/run.js': '登録する検査が違う（staging に Pages配信ガードと版対応ハーネスがある）。★中身は追いかける',
   'tests/hub-ui.mjs': 'staging はサブパス配信なので「絶対パスで書かない」検査を余分に持つ',
   'tests/ci-coverage.test.mjs': 'CIから外している物の一覧が違う（staging=repo-supa / 本番=xlsx-harness の入出力部品）',
+  'tests/xlsx-harness/report.md': '★走らせた日の数字が入る生成物（=TODAY() の日付シリアル）。日をまたぐと必ず違う＝中身の差ではない',
 };
 
 /* 比べる前にそろえる（改行コードと刻印は「中身の違い」ではない） */
