@@ -1154,6 +1154,7 @@ background:#FFE066 !important;
      初回の「Excelに保存」で初めて読み込む＝グリッドの表示を重くしない -->
 <script src="js/file-out.js?v=b80419bd"></script>
 <script src="lib/grid-xlsx.js?v=b80419bd"></script>
+  <script src="lib/grid-refedit.js?v=b80419bd"></script>
 <script src="lib/excel-version.js?v=b80419bd"></script>
 
 <script>
@@ -2024,21 +2025,41 @@ function insertRefAddr(r1,c1,r2,c2){
   var el = getRefInput();
   if(!el) return;
   var v = el.value;
-  // 最後がセル参照アドレス（A1 or A1:B2）なら置換、そうでなければ追加
-  var lastRefRe = /(\$?[A-Z]+\$?\d+(?::\$?[A-Z]+\$?\d+)?)$/;
-  if(lastRefRe.test(v)){
-    v = v.replace(lastRefRe, addr);
+
+  /* ★カーソルの位置で決める（2026-08-06・司さんが実機で踏んだ）★
+     以前は「末尾が参照なら置換／でなければ末尾に追加」だったため、
+     「=B1+30」の B1 を直そうとして A1 を触ると「=B1+30A1」になり、
+     ★B1 を直す手段が無かった★。判定は lib/grid-refedit.js（純関数・テスト済み）。 */
+  var pos;
+  if(el.id==='formula-input'){
+    pos = (typeof _fiCursorPos==='number') ? _fiCursorPos : v.length;
   } else {
-    v = v + addr;
+    try{ pos = el.selectionStart; }catch(e){ pos = v.length; }
   }
+
+  var res = (typeof GridRefEdit!=='undefined' && GridRefEdit && GridRefEdit.refEditAt)
+    ? GridRefEdit.refEditAt(v, pos, addr)
+    : { v: v + addr, pos: (v + addr).length, ok: true, why: 'fallback' };
+
+  if(!res.ok){
+    /* ★式を1文字も変えない。どうすればいいかだけ伝える★ */
+    if(typeof showToast==='function'){
+      showToast('直したい参照（例 <b>B1</b>）を<b>数式バーで触ってから</b>、セルを選んでください', 4000);
+    }
+    try{ el.focus(); }catch(e){}
+    return;
+  }
+
+  v = res.v;
   el.value = v;
   if(el.id==='formula-input'){
-    _fiCursorPos = v.length;
+    _fiCursorPos = res.pos;
+    try{ el.setSelectionRange(res.pos, res.pos); }catch(e){}
     if(typeof updateFormulaDisplay==='function') updateFormulaDisplay(v);
   } else if(el.id==='cell-input'){
-    // cell-input: カーソルを末尾に、input イベント発火で refMode 更新
-    try{ el.setSelectionRange(v.length, v.length); }catch(e){}
+    try{ el.setSelectionRange(res.pos, res.pos); }catch(e){}
     el.dispatchEvent(new Event('input', {bubbles:true}));
+    try{ el.setSelectionRange(res.pos, res.pos); }catch(e){}
   }
   refMode=(v.length>0&&(v[0]==='='||v[0]==='＝'));
   refStartR=r1; refStartC=c1;
