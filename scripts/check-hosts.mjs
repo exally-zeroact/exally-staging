@@ -33,6 +33,11 @@ const LIVE = [
   { name: '本番 グリッド', url: 'https://exally.vercel.app/book.html' },
   { name: 'テスト ハブ', url: 'https://exally-zeroact.github.io/exally-staging/hub.html' },
   { name: 'テスト 給与', url: 'https://exally-zeroact.github.io/exally-staging/kyuyo/' },
+  // ★2026-08-07 追加★ テストの配信は2つある（github.io と Vercel）。
+  //   Vercel版は★git連携が無く、手で打った時だけ更新される★＝黙って古いまま生き続ける。
+  //   見張っていなかったので、ここに載せて毎週 目に入るようにする。
+  //   （どちらに寄せるかは未決。決まるまでは両方 生きている前提で見る）
+  { name: 'テスト ハブ(Vercel版・手打ち更新)', url: 'https://exally-staging.vercel.app/hub.html' },
 ];
 
 /* 古い入口 → どこへ飛ぶべきか。
@@ -66,14 +71,23 @@ const OLD = [
       + 'sw.js まで転送すると SW の更新が失敗して★古いSWが永久に居座る★ので、ここだけは'
       + '「自分を登録解除してキャッシュを消す」中身をそのまま返す。',
   },
+  // ★2026-08-07 この2本が赤に変わった（実測）★
+  //     https://exally-test.vercel.app/          → 307 で /daikou-seikyu.html（自分のアプリ）へ
+  //     https://exally-test.vercel.app/home.html → 404
+  //   このホストは repo名変更(exally-test → daikou-seikyu)で★ダイコメの製品になった★ので、
+  //   飛び先を決めるのは向こうの担当。★赤を消すために期待値を書き換えない★
+  //   （測り方を実態に合わせて緩めると、次に本当に壊れた時に気づけない）。
+  //   ダイコメ側で「Exallyのハブへ戻す／戻さない」が決まったら、その時に この2行を直す。
   {
     name: '旧Exallyホーム(/)', url: 'https://exally-test.vercel.app/',
     to: 'https://exally.vercel.app/hub.html', landing: true,
-    why: '★入口が1つ増えているだけで価値がゼロ。司さんが古い入口を「テスト用」と誤解した前科がある。',
+    why: '★入口が1つ増えているだけで価値がゼロ。司さんが古い入口を「テスト用」と誤解した前科がある。'
+      + '★2026-08-07: 実際には代行請求アプリへ307。ホストの持ち主はダイコメ＝Exally側では直さない。',
   },
   {
     name: '旧Exallyホーム(/home.html)', url: 'https://exally-test.vercel.app/home.html',
     to: 'https://exally.vercel.app/hub.html', landing: true,
+    why: '★2026-08-07: 404 になった。ホストの持ち主はダイコメ＝Exally側では直さない。',
   },
   {
     name: '★代行請求は塞がない（実務で動いている）', url: 'https://exally-test.vercel.app/daikou-seikyu.html',

@@ -48,6 +48,8 @@ export const ALLOWED = {
     '法定データ(最低賃金・保険料率)は★本番の中央倉庫が正★。テスト側から読んでも本番を見るのが設計',
   'kyuyo/scripts/verify-statutory.mjs': '同上（法定データは本番中央が正）',
   'kyuyo/scripts/check-source-urls.mjs': '同上（法定データは本番中央が正）',
+  'scripts/check-warehouse-pointers.mjs':
+    '★6か所×全アプリの向き先を数える見張り★。本番とテストの両方のrefを「正解」として持たないと、何とも突き合わせられない',
 };
 
 /* 見るファイルの種類。docs/ の .md は配信されない設計書なので対象外。 */
