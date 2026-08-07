@@ -34,8 +34,12 @@ const ALLOWED = {
   '.nojekyll': 'GitHub Pages 専用。本番(Vercel)には要らない',
   'index.html': 'GitHub Pages のサブパス配信用の入口。本番は vercel.json の rewrites で hub.html を出す',
   'tests/pages-hosting.test.mjs': 'GitHub Pages のサブパス配信を守る検査。本番はサブパス配信ではない',
-  'tests/repo-supa.mjs': 'テスト用の倉庫(DB-test)を見る道具。本番の倉庫には向けない',
   'tools/verify-grid-export-excel.ps1': '実Excelでグリッド書き出しを確かめる道具。開発機でだけ使う',
+  // ★2026-08-07 tests/repo-supa.mjs をここから外した★
+  //   「stagingにしか無くてよい物」ではなかった。本番repoに無かったせいで
+  //   live-roundtrip / live-seed が本番を直書きし続け、差2件として6日間残った。
+  //   repo-supa は【そのrepoの js/supa-config.js を読む】部品＝両方に置くのが正しい
+  //   （本番repo→本番倉庫 / stagingのrepo→DB-test に自動でなる）。
 
   // ── 中身が違ってよい物 ──
   'js/supa-config.js': '★倉庫の接続先。本番=本番の倉庫 / staging=DB-test。同じにしてはいけない',
@@ -46,7 +50,10 @@ const ALLOWED = {
   'kyuyo/admin.html': "Service Worker の場所。staging はサブパス配信なので '../sw.js'、本番は '/sw.js'",
   'tests/run.js': '登録する検査が違う（staging に Pages配信ガードと版対応ハーネスがある）。★中身は追いかける',
   'tests/hub-ui.mjs': 'staging はサブパス配信なので「絶対パスで書かない」検査を余分に持つ',
-  'tests/ci-coverage.test.mjs': 'CIから外している物の一覧が違う（staging=repo-supa / 本番=xlsx-harness の入出力部品）',
+  // ★2026-08-07 tests/ci-coverage.test.mjs もここから外した★
+  //   理由が「staging=repo-supa / 本番=xlsx-harness の入出力部品」だったが、
+  //   repo-supa は両方に置いた／xlsx-io.js は lib/ へ移して実在しない＝★理由が嘘になった★。
+  //   理由が書けない差は許さない決まりなので、一覧から外して中身を比べる側に戻す。
   'tests/xlsx-harness/report.md': '★走らせた日の数字が入る生成物（=TODAY() の日付シリアル）。日をまたぐと必ず違う＝中身の差ではない',
 };
 
