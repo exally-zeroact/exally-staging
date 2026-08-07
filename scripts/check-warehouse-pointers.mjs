@@ -216,7 +216,10 @@ async function measureSecrets() {
     const wf = await ghGet(`https://api.github.com/repos/${b.repo}/contents/.github/workflows`, gh);
     let touches = null, files = [];
     if (wf.ok) {
-      files = JSON.parse(wf.text).filter((f) => /\.ya?ml$/.test(f.name));
+      // ★この見張り自身(warehouse.yml)は数えない★
+      //   読むだけの見張りが SUPABASE_ACCESS_TOKEN を受け取るので、
+      //   除かないと「倉庫に触るバッチが有る」と★自分を指さして★しまう（実際に1回そうなった）。
+      files = JSON.parse(wf.text).filter((f) => /\.ya?ml$/.test(f.name) && f.name !== 'warehouse.yml');
       touches = false;
       for (const f of files) {
         const c = await ghGet(f.download_url, gh);
@@ -296,19 +299,26 @@ async function measureEdge() {
         continue;
       }
     }
-    // 鍵が無い時の簡易判定: 関数URLを叩く。401=居る / 404=居ない
-    const seen = [];
+    // 鍵が無い時の簡易判定: 関数URLを叩く。
+    // ★2026-08-07 実測でここを直した★
+    //   最初は「401なら居る」にしていたが、本番の dk-sync-jobs は GET に ★405★ を返す。
+    //   鍵ありでは v12 で ACTIVE なのに ★居ない扱いで🔴になった（嘘の赤）★。
+    //   ⇒ 「居ない」と言い切れるのは ★404だけ★。それ以外は「居る」。
+    //   　 通信できなかった(0)は 🟡。版と中身は鍵が無ければ★どうやっても未測定★。
+    const missing = [], unknown = [];
     for (const n of EDGE_FUNCS) {
       const r = await get(`https://${ref}.supabase.co/functions/v1/${n}`);
-      if (r.status === 401 || r.status === 400 || r.status === 403) seen.push(n);
+      if (r.status === 404) missing.push(n);
+      else if (r.status === 0) unknown.push(n);
     }
-    const missing = EDGE_FUNCS.filter((n) => !seen.includes(n));
     const mark = missing.length ? '🔴' : '🟡';
     bump(mark);
     rows.c5.push({ ref: label, mark,
       text: missing.length
         ? `★居ない: ${missing.join(',')}（関数URLが404）`
-        : `4本とも居る（関数URLが401）／★版と中身は未測定（SUPABASE_ACCESS_TOKEN が無い）★` });
+        : `${EDGE_FUNCS.length - unknown.length}/${EDGE_FUNCS.length}本が居る（404以外が返る）`
+          + (unknown.length ? `／通信できず ${unknown.join(',')}` : '')
+          + `／★版と中身は未測定（SUPABASE_ACCESS_TOKEN が無い）★` });
   }
 }
 
