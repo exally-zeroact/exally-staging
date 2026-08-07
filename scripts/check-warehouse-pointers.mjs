@@ -39,7 +39,9 @@ export const TEST_REF = 'khawdrnvssdenumbiwfg';
 const APPS = [
   { app: 'Exally',        env: '本番',   host: 'https://exally.vercel.app',                        cfg: '/js/supa-config.js',  want: PROD_REF },
   { app: 'Exally',        env: 'テスト', host: 'https://exally-zeroact.github.io/exally-staging',  cfg: '/js/supa-config.js',  want: TEST_REF },
-  { app: 'Exally',        env: 'テスト(Vercel版)', host: 'https://exally-staging.vercel.app',      cfg: '/js/supa-config.js',  want: TEST_REF },
+  // ★2026-08-07 Vercel版の staging は畳んだ（司さんOK）★
+  //   git連携が無く手打ちでしか更新されない＝黙って古くなる形だった。テストの配信は github.io の1本。
+  //   ここに残すと「消えた住所」を毎週叩いて 🟡 が鳴り続けるので、行ごと外す。
   { app: '給与 kyuyo',    env: '本番',   host: 'https://exally.vercel.app',                        cfg: '/js/supa-config.js',  want: PROD_REF, note: 'Exallyと同居（同じ設定ファイル）' },
   { app: '給与 kyuyo',    env: 'テスト', host: 'https://exally-zeroact.github.io/exally-staging',  cfg: '/js/supa-config.js',  want: TEST_REF, note: 'Exallyと同居（同じ設定ファイル）' },
   { app: '代行請求',      env: '本番',   host: 'https://daikou-seikyu.vercel.app',                 cfg: '/daikou-seikyu.html', want: PROD_REF, owner: 'ダイコメ' },
@@ -79,7 +81,12 @@ const REDIRECT_HOSTS = [
   { app: 'Exally',         url: 'https://exally.vercel.app/hub.html' },
   { app: '給与 kyuyo',     url: 'https://exally.vercel.app/kyuyo/admin.html' },
   { app: 'Exally テスト',  url: 'https://exally-zeroact.github.io/exally-staging/hub.html' },
-  { app: 'Exally テストV', url: 'https://exally-staging.vercel.app/hub.html' },
+  // ★畳んだ住所（2026-08-07）。それでも許可リストには★残す★★
+  //   理由: 許可リストから行を消す作業そのものが事故のもと（消し間違えると他アプリのログインが壊れる）。
+  //   　　  余分な行が1つ残っても害は無い（そこへ戻る物がもう無い）。
+  //   ここで毎週「許可されたまま」を確かめておくと、
+  //   もし将来この住所を作り直しても、いきなり穴が開いた状態にならない。
+  { app: 'Exally テストV(畳んだ住所)', url: 'https://exally-staging.vercel.app/hub.html' },
   { app: '代行請求',       url: 'https://daikou-seikyu.vercel.app/daikou-seikyu.html' },
   { app: 'ダイコメ',       url: 'https://daikou-app.vercel.app/' },
   { app: 'ダイコメ事務所', url: 'https://daikome-jimusho.vercel.app/login.html' },
