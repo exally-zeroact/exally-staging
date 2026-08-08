@@ -48,7 +48,7 @@ function load({ coarse = false, share = true } = {}) {
   const origCreate = win.document.createElement.bind(win.document);
   win.document.createElement = (t) => {
     const el = origCreate(t);
-    if (t === 'a') el.click = () => downloaded.push({ name: el.download });
+    if (t === 'a') el.click = () => downloaded.push({ name: el.download, target: el.target, rel: el.rel });
     return el;
   };
   const s = win.document.createElement('script');
@@ -111,6 +111,22 @@ T('★渡し口のコードに共有シートの分岐が残っていない', ()
   for (const bad of ['navigator.share', 'canShare', 'pointer: coarse', 'prefersShare']) {
     if (code.indexOf(bad) >= 0) throw new Error('★まだ残っています: ' + bad);
   }
+});
+
+/* ★ホーム画面から開いたアプリ（standalone）で、押したあとアプリに戻れること（2026-08-09）
+   download が効かない端末では、同じ窓でファイルが開いて★戻れなくなる★（既知の罠）。
+   別の窓なら閉じるだけで戻れる。落とす物は全部この1箇所を通るので、ここで固定する。 */
+await TA('★★落とすリンクは別の窓で開く（ホーム画面のアプリから戻れなくならない）★★', async () => {
+  for (const dev of [{ coarse: true }, { coarse: false }]) {
+    const { FileOut, downloaded } = load(dev);
+    await FileOut.deliver(new Uint8Array([1]), 'furikomi_2026-08.txt');
+    eq(downloaded.length, 1, '落ちていない');
+    eq(downloaded[0].target, '_blank', '★target="_blank" が付いていない（同じ窓で開く＝戻れない）');
+    eq(downloaded[0].rel, 'noopener', 'rel="noopener" が付いていない');
+  }
+});
+T('★渡し口のコードに target が書いてある（消したら赤）', () => {
+  if (!/target\s*=\s*['"]_blank['"]/.test(SRC)) throw new Error('★target="_blank" が渡し口から消えている');
 });
 
 T('★後始末をしている（URLの取り消しと要素の削除）', () => {

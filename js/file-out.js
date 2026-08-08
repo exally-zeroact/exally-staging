@@ -51,11 +51,18 @@
   }
 
   /* ★代行請求アプリと同じ形（動いている実物に揃える）。
-     後始末（URLの取り消しと要素の削除）は 1.5秒後＝落とし始める前に消えないように。 */
+     後始末（URLの取り消しと要素の削除）は 1.5秒後＝落とし始める前に消えないように。
+     ★target="_blank" は必須（2026-08-09）★
+       ホーム画面から開いたアプリ（standalone）では、download が効かない端末だと
+       ★同じ窓でファイルが開いてしまい、アプリに戻れなくなる★（既知の罠）。
+       別の窓で開けば、閉じるだけでアプリへ戻れる。
+       download が効く端末では target は無視されるので、PCの落ち方は変わらない。 */
   function anchorDownload(blob, filename) {
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = filename;
+    a.target = '_blank';
+    a.rel = 'noopener';
     document.body.appendChild(a);
     a.click();
     setTimeout(function () { URL.revokeObjectURL(a.href); if (a.parentNode) a.parentNode.removeChild(a); }, 1500);
