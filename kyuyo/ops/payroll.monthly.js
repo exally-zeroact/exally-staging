@@ -19,14 +19,14 @@
     module.exports = factory(require('../lib/op-contract.js'), require('../lib/payroll-monthly.js'),
       require('../lib/payroll-warnings.js'), require('../lib/payslip-xlsx.js'), require('../lib/shakaihoken-hyo.js'),
       require('../lib/koyo-hoken.js'), require('../lib/saitei-chingin.js'), require('../lib/statutory-meta.js'),
-      require('../lib/shiharai-chosho.js'));
+      require('../lib/shiharai-chosho.js'), require('../lib/shaho-kanyu.js'));
   } else {
     root.OpPayrollMonthly = factory(root.OpContract, root.PayrollMonthly, root.PayrollWarnings, root.PayslipXlsx,
       (typeof SHAKAIHOKEN_HYO !== 'undefined' ? SHAKAIHOKEN_HYO : root.SHAKAIHOKEN_HYO), root.KoyoHoken,
       (typeof SAITEI_CHINGIN !== 'undefined' ? SAITEI_CHINGIN : root.SAITEI_CHINGIN), root.StatutoryMeta,
-      (typeof ShiharaiChosho !== 'undefined' ? ShiharaiChosho : root.ShiharaiChosho));
+      (typeof ShiharaiChosho !== 'undefined' ? ShiharaiChosho : root.ShiharaiChosho), root.ShahoKanyu);
   }
-})(typeof self !== 'undefined' ? self : this, function (OpContract, PM, PW, Xlsx, SHH, KoyoHoken, SAI, SMeta, SC) {
+})(typeof self !== 'undefined' ? self : this, function (OpContract, PM, PW, Xlsx, SHH, KoyoHoken, SAI, SMeta, SC, SK) {
   'use strict';
 
   var VERSION = '1.0.0';
@@ -132,6 +132,11 @@
   var LAW_SHIENKIN_PCT = pctOf(SHH.SHIENKIN_TOTAL_FROM_2026_04, 2);     // 子育て支援金 全体率
   var LAW_KOYO_Y = KoyoHoken.LATEST;
   var LAW_KOYO_PER1000 = String(Math.round(KoyoHoken.RATES[LAW_KOYO_Y].ippan * 1000 * 10) / 10); // 告示の書き方(◯/1000)
+  // 適用拡大：要件も人数も lib(ShahoKanyu) から組み立てる（撤廃・段階引下げで文だけ古くならないように）
+  var LAW_TEKIYO_CURRENT = SK.kakudaiReqText() + ' / 特定適用事業所(被保険者' + SK.TOKUTEI_MIN_NOW + '人以上)';
+  var LAW_TEKIYO_STEPS = SK.TOKUTEI_STEPS.map(function (s) {
+    return '令和' + (Number(s.ym.slice(0, 4)) - 2018) + '年' + Number(s.ym.slice(5, 7)) + '月 ' + s.n + '人以上';
+  }).join(' → ');
   var LAW = {
     incomeTax: { basis: '所得税法（電算機計算の特例・別表）', nendo: '令和8年分(2026)', appliedBy: 'payYm の年',
       source: 'https://www.nta.go.jp/taxes/shiraberu/taxanswer/gensen/2502.htm' },
@@ -152,14 +157,24 @@
     roukiho: { basis: '労働基準法 26条(休業手当)/27条(保障給)/32条(法定労働時間)/36条(時間外上限)/37条(割増)/60・61条(年少者)',
       source: 'https://laws.e-gov.go.jp/law/322AC0000000049' },
     tekiyoKakudai: { basis: '健康保険法・厚生年金保険法（短時間労働者の適用拡大）',
-      current: '週20時間以上 / 所定内賃金 月8.8万円以上 / 2か月超の雇用見込み / 学生でない / 特定適用事業所(被保険者51人以上)',
+      // ★要件の数字は lib(ShahoKanyu)から組み立てる。撤廃/引下げの時に文だけ取り残されないため。
+      current: LAW_TEKIYO_CURRENT,
       source: 'https://www.nenkin.go.jp/service/kounen/tekiyo/jigyosho/tanjikan.html',
       watch: [
-        { item: '賃金要件 月8.8万円以上の撤廃', when: '令和8年10月に撤廃予定（施行日は政令事項）', status: '本エンジン未反映（切替点 WAGE_88K_REMOVED_YM は null のまま）',
-          deadline: '2026-09-15 までに日本年金機構・厚労省を再照合して報告する（10月分の給与計算に間に合わせる）',
+        { item: '賃金要件（' + SK.wageReqText() + '）の撤廃',
+          when: '令和8年10月に撤廃予定（施行日は政令事項）',
+          status: '本エンジン未反映（切替点 WAGE_88K_REMOVED_YM は null のまま）',
+          /* ★2026-08-08 再照合の実測。次に見る人が同じ所を叩けるように、何を確かめたかまで残す。 */
+          recheckedAt: '2026-08-08',
+          finding: '年金機構は「令和8年10月に撤廃予定」のまま（ページ更新 2026-04-17）。'
+            + '施行期日を含む政令案はパブコメ済（公示 2026-05-22／締切 2026-06-20／施行予定日 令和8年10月1日）だが、'
+            + 'e-Gov法令データの厚生年金保険法【2026-10-01施行版】には賃金要件の条文（第12条5号ロ）がまだ残っている＝未確定。',
+          howToRecheck: 'node kyuyo/scripts/check-wage88k-removal.mjs（e-Govの法令データを実際に取得して機械で判定）',
+          deadline: '2026-09-15 までに再照合して切替（10月分の給与計算に間に合わせる）',
           source: 'https://www.nenkin.go.jp/service/kounen/tekiyo/jigyosho/tanjikan.html',
-          source2: 'https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/0000147284_00021.html' },
-        { item: '企業規模要件の段階的引下げ', when: '令和9年10月 36人以上 → 令和11年10月 21人以上 → 令和14年10月 11人以上', status: '未収録',
+          source2: 'https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/0000147284_00021.html',
+          source3: 'https://public-comment.e-gov.go.jp/servlet/Public?CLASSNAME=PCMMSTDETAIL&id=495260060&Mode=0' },
+        { item: '企業規模要件の段階的引下げ', when: LAW_TEKIYO_STEPS, status: '収録済（対象月に応じて人数の表示が変わる。加入判定は「特定適用事業所か」のチェックで受ける）',
           source: 'https://www.nenkin.go.jp/service/kounen/tekiyo/jigyosho/tanjikan.html' },
       ] },
   };

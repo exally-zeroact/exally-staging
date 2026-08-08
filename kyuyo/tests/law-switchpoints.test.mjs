@@ -24,6 +24,7 @@ const op = require(path.join(ROOT, 'ops/payroll.monthly.js'));
 const SHH = require(path.join(ROOT, 'lib/shakaihoken-hyo.js'));
 const KOYO = require(path.join(ROOT, 'lib/koyo-hoken.js'));
 const SAI = require(path.join(ROOT, 'lib/saitei-chingin.js'));
+const SK = require(path.join(ROOT, 'lib/shaho-kanyu.js'));
 
 let pass = 0, fail = 0;
 function T(n, fn) { try { fn(); pass++; console.log('  ✓ ' + n); } catch (e) { fail++; console.log('  ✗ ' + n + ' — ' + (e && e.message)); } }
@@ -119,21 +120,34 @@ T('provenance に実行時に選ばれた年度/率が出る（切替が効い�
 });
 
 // ── 未反映の法改正が毎回出力に載ること（watch） ──
-T('★watch: 8.8万円の撤廃予定(令和8年10月・施行日は政令)が provenance に出る＝見えない未対応を作らない', function () {
+T('★watch: 賃金要件の撤廃予定(令和8年10月・施行日は政令)が provenance に出る＝見えない未対応を作らない', function () {
   const w = run('2026-06').provenance.watch;
-  const t = w.find(x => /8\.8万/.test(x.item));
+  const t = w.find(x => /賃金要件/.test(x.item));
   if (!t) throw new Error('賃金要件の watch が無い');
+  if (t.item.indexOf(SK.wageReqText()) < 0) throw new Error('★watchの見出しが lib の実額から組み立てられていない: ' + t.item);
   if (!/令和8年10月/.test(t.when)) throw new Error('撤廃予定時期が書かれていない: ' + t.when);
   if (!/未反映/.test(t.status)) throw new Error('未反映である旨が書かれていない: ' + t.status);
   if (!/2026-09-15/.test(t.deadline)) throw new Error('再照合の期限が書かれていない: ' + t.deadline);
   if (!/nenkin\.go\.jp/.test(t.source)) throw new Error('出典URLが無い: ' + t.source);
+  // ★2026-08-08 の再照合ぶん: いつ・何を実測して・どう確かめ直すかまで出る（次の人が同じ所を叩ける）
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(t.recheckedAt || '')) throw new Error('再照合した日が無い: ' + t.recheckedAt);
+  if (!/e-Gov/.test(t.finding || '')) throw new Error('★何を実測したかが書かれていない: ' + t.finding);
+  if (!/check-wage88k-removal/.test(t.howToRecheck || '')) throw new Error('★確かめ直す道具が書かれていない: ' + t.howToRecheck);
   const k = w.find(x => /企業規模/.test(x.item));
   if (!k || !/令和9年10月 36人以上/.test(k.when)) throw new Error('企業規模の段階引下げが書かれていない');
 });
-T('★現行の適用拡大要件が law に実数で書かれ、出典URLがある', function () {
+T('★現行の適用拡大要件が law に実数で出て、その実数が lib と同じ物から来ている', function () {
   const t = op.law.tekiyoKakudai;
-  if (!/週20時間以上/.test(t.current) || !/8\.8万円以上/.test(t.current) || !/51人以上/.test(t.current)) throw new Error('要件: ' + t.current);
+  // ★「文に数字が出ている」だけでなく ★lib の値と一致している★ ことまで見る（文だけ取り残されない）
+  if (t.current.indexOf(SK.weekReqText()) < 0) throw new Error('週の要件: ' + t.current);
+  if (t.current.indexOf(SK.wageReqText()) < 0) throw new Error('賃金要件: ' + t.current);
+  if (t.current.indexOf(String(SK.TOKUTEI_MIN_NOW) + '人以上') < 0) throw new Error('人数の要件: ' + t.current);
+  if (t.current.indexOf('20時間') < 0 || t.current.indexOf('88,000') < 0) throw new Error('★実数が出ていない: ' + t.current);
   if (!/nenkin\.go\.jp/.test(t.source)) throw new Error('出典URL: ' + t.source);
+});
+T('★賃金要件の撤廃点は今も未確定(null)＝未確定の将来法を先取りしていない', function () {
+  eq(SK.WAGE_88K_REMOVED_YM, null, '★切替点');
+  eq(SK.wageReqActive('2026-10'), true, '撤廃予定月でも今は課す（政令が確定していないため）');
 });
 T('★law は領域ごとに年度を持つ（1枚の札で貼らない）＋全領域に出典URLがある', function () {
   const L = op.law;

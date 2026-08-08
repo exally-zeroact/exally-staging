@@ -30,3 +30,10 @@ jobs:
           node-version: '20'
       - name: ★中央statutoryの出典URLが全部生きているか（404なら赤・ただしCIは止めない）
         run: node kyuyo/scripts/check-source-urls.mjs
+
+      # ★社保 適用拡大の賃金要件(月88,000円)が法令から消えたか＝e-Gov法令データを実際に叩いて数える。
+      #   撤廃は「令和8年10月」予定だが施行日は政令事項＝まだ動く。人が読むページは「予定」としか書かない。
+      #   ここが赤(exit 3)＝★切替が要る合図★。★期限 2026-09-15★ までに人が見て判断する。
+      #   出典URLと同じ理由で通常CIには入れない（外のサイトの都合で push を止めない）。
+      - name: ★賃金要件(88,000円)の撤廃が法令に入ったか（入っていたら赤＝切替の合図）
+        run: node kyuyo/scripts/check-wage88k-removal.mjs

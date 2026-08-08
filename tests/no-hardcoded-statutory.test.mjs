@@ -50,6 +50,10 @@ const KINDS = {
   shienkin: { label: '子ども・子育て支援金', words: ['支援金', 'shienkin', 'SHIENKIN', '子育て'] },
   shouhizei: { label: '消費税', words: ['消費税', 'shouhizei', 'SHOUHIZEI', '軽減税率'] },
   saitei: { label: '最低賃金', words: ['最低賃金', '最賃', 'saitei', 'SAITEI'] },
+  /* ★社保 適用拡大（2026-08-08 追加）。賃金要件 月88,000円は【令和8年10月に撤廃予定】、
+     人数要件51人は【令和9年10月に36人】へ下がる。★どちらも文に直書きすると、
+     計算だけ直って画面の文だけ古い数字で残る。ここに入れれば その形が機械で赤になる。 */
+  tekiyo: { label: '社保 適用拡大', words: ['適用拡大', '特定適用', '短時間労働者', 'ShahoKanyu', 'shahoKanyu', 'WAGE_88K', 'TOKUTEI'] },
 };
 
 /* ── libから「実際の値」を集める ─────────────────────────────────── */
@@ -58,9 +62,14 @@ function buildTable() {
   const KH = require_(path.join(ROOT, 'kyuyo/lib/koyo-hoken.js'));
   const SHZ = require_(path.join(ROOT, 'kyuyo/lib/shouhizei-ritsu.js'));
   const SAI = require_(path.join(ROOT, 'kyuyo/lib/saitei-chingin.js'));
+  const SK = require_(path.join(ROOT, 'kyuyo/lib/shaho-kanyu.js'));
 
   const rates = { koyo: [], kenko: [], kaigo: [], kosei: [], shienkin: [], shouhizei: [] };
-  const yen = { saitei: [] };
+  const yen = { saitei: [], tekiyo: [] };
+  /* 適用拡大の賃金要件（88,000円）。★人数(51人→36人…)はここに入れない：
+     51/36/21/11 は普通の数と衝突しやすく、赤の信用を落とす。人数が lib から来ているかは
+     kyuyo/tests/shaho-kanyu.test.js と law-switchpoints が「文＝libの値」で見ている。 */
+  yen.tekiyo.push(SK.WAGE_88K);
 
   Object.values(KH.RATES).forEach(r => Object.values(r).forEach(v => rates.koyo.push(v)));
   Object.values(KH.EMPLOYER).forEach(r => Object.values(r).forEach(v => rates.koyo.push(v)));
@@ -127,6 +136,12 @@ export function patternsFor(table) {
       push(kind, esc(String(v)) + '(?![0-9])', String(v));
       const c = String(v).replace(/\B(?=(\d{3})+$)/g, ',');
       if (c !== String(v)) push(kind, esc(c) + '(?![0-9])', c);
+      // ★「万」の書き方も見る（88000 → 8.8万）。説明文はこの形で書かれることが多く、
+      //   数字だけ見ていると ★文の中の 8.8万円 を取り逃がす★。1万円未満は対象外。
+      if (v >= 10000) {
+        const man = String(v / 10000).replace(/\.?0+$/, '');
+        push(kind, esc(man) + '\\s*万', man + '万');
+      }
     }
   }
   return out;
@@ -195,8 +210,26 @@ if (process.argv.includes('--self-test')) {
     const h = findHardcoded({ 'js/a.js': 'var s="雇用保険 0.25 と 25%";' }, { rates: { koyo: [0.25] } });
     if (h.length) throw new Error('誤検知: ' + JSON.stringify(h));
   });
+  /* ★2026-08-08: 適用拡大の賃金要件。撤廃(令和8年10月予定)で ★文だけ古くなる★ 形を止める。
+     ここは「わざと壊して赤になるか」＝直す前の実物の文をそのまま食わせている。 */
+  T('★適用拡大: 88,000円 が説明文にあれば赤（直す前の app.js の文）', () => {
+    const t2 = { yen: { tekiyo: [88000] } };
+    const h = findHardcoded({ 'js/app.js': 'パートでも<b>週20時間以上・月88,000円以上・学生でない</b>で社保加入の対象（特定適用事業所）' }, t2);
+    if (h.length !== 1) throw new Error('赤になっていない: ' + JSON.stringify(h));
+  });
+  T('★適用拡大: 「8.8万円」の書き方でも赤（直す前の ops の文）', () => {
+    const t2 = { yen: { tekiyo: [88000] } };
+    const h = findHardcoded({ 'ops/a.js': "current: '週20時間以上 / 所定内賃金 月8.8万円以上 / 特定適用事業所'" }, t2);
+    if (h.length !== 1) throw new Error('赤になっていない: ' + JSON.stringify(h));
+  });
+  T('★適用拡大: 分野の話でなければ 88,000 でも赤にしない（標準報酬の等級表など）', () => {
+    const t2 = { yen: { tekiyo: [88000] } };
+    const h = findHardcoded({ 'js/a.js': '{ min: 0, max: 93000, hyojun: 88000, tokyu: 1 }' }, t2);
+    if (h.length) throw new Error('誤検知: ' + JSON.stringify(h));
+  });
   T('libから作った表が空振りしていない（実物のlibを読めている）', () => {
     const t = buildTable();
+    if (!t.yen.tekiyo.length) throw new Error('適用拡大の額を拾えていない');
     if (t.rates.kenko.length < 47) throw new Error('健保の県が足りない: ' + t.rates.kenko.length);
     if (!t.rates.koyo.length || !t.rates.kaigo.length || !t.yen.saitei.length) throw new Error('分野が空です');
   });

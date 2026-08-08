@@ -488,10 +488,15 @@
   }
   function renderCompanyRules(){
     var host=$('#rule-host'); if(!host)return; var c=state.company, on=c.ruleOn||{}, h='';
-    // 社保の特定適用事業所(厚年被保険者51人以上)トグル。パートの社保「適用拡大」判定をONにする（既定OFF=小さい会社では出さない）。
+    /* 社保の特定適用事業所トグル。パートの社保「適用拡大」判定をONにする（既定OFF=小さい会社では出さない）。
+       ★人数も要件も【法定】＝文に直書きしない。lib(ShahoKanyu)から対象月ぶんを組み立てる。
+         人数は段階引下げ（令和9年10月36人 …）、賃金要件は令和8年10月に撤廃予定。
+         直書きすると「計算だけ直って、画面の文だけ古い数字で残る」。客が読むのはこの文。 */
+    var skN=(window.ShahoKanyu?ShahoKanyu.tokuteiMinInsured(state.month):51);
+    var skReq=(window.ShahoKanyu?ShahoKanyu.kakudaiReqText(state.month).replace(/ \/ /g,'・'):'');
     h+='<div class="cr-item" style="border:1px solid #E4EFE9;border-radius:12px;padding:10px 12px;margin-bottom:10px">'
-      +'<label class="cr-chk" style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;color:#2E7D54;cursor:pointer"><input type="checkbox" data-cf="shakaTokutei"'+(c.shakaTokutei?' checked':'')+'>社会保険 51人以上（特定適用事業所）</label>'
-      +'<div class="ri-note" style="margin-top:5px">厚生年金の被保険者が<b>常時51人以上</b>の会社はチェック。パートでも<b>週20時間以上・月88,000円以上・学生でない・2か月超の見込み</b>で社保加入の対象になります（2024年10月〜）。<b>50人以下ならチェック不要</b>（この判定は出しません）。</div></div>';
+      +'<label class="cr-chk" style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;color:#2E7D54;cursor:pointer"><input type="checkbox" data-cf="shakaTokutei"'+(c.shakaTokutei?' checked':'')+'>社会保険 '+skN+'人以上（特定適用事業所）</label>'
+      +'<div class="ri-note" style="margin-top:5px">厚生年金の被保険者が<b>常時'+skN+'人以上</b>の会社はチェック。パートでも<b>'+esc(skReq)+'</b>で社保加入の対象になります。<b>'+(skN-1)+'人以下ならチェック不要</b>（この判定は出しません）。</div></div>';
     if(on.teikyu){ h+=ruleItemHTML('teikyu','休みの日は？','法定休日','teikyu',
       '<div class="wdays">'+WDAYS.map(function(d,i){return '<span class="wday'+((c.holidays||[]).indexOf(i)>=0?' on':'')+'" data-wd="'+i+'">'+d+'</span>';}).join('')+'</div><div class="ri-note">複数えらべます。法律上の休み(法定休日)は自動で特定。例：日曜だけ＝週休1日(現場系OK)。</div>'); }
     if(on.companyHol){
