@@ -592,5 +592,73 @@ T('★lib は文言を持たない（符号だけを返す）', () => {
   });
 });
 
+/* ★全銀ファイルの改行コード（銀行ごとに違う）が【実物の画面のボタン】まで届いているか（2026-08-08）
+   lib(zengin.js)の単体が緑でも、面が設定を渡していなければ ★銀行では弾かれる★。
+   だから jsdom で 振込タブを開き、実際に「全銀ファイル」ボタンを押して、
+   ★渡し口(FileOut)に届いたバイト列そのもの★ を数える。 */
+function pressZengin(newlineSetting) {
+  const A = win.__PAYSLIP_TEST;
+  const st = A.state;
+  const keepEmps = st.employees.slice(), keepCo = Object.assign({}, st.company), keepMode = st.printMode;
+  const keepDeliver = win.FileOut.deliver;
+  let got = null;
+  try {
+    st.printMode = 'monthly';
+    st.company = Object.assign({}, st.company, {
+      furiCode: '0123456789', furiName: 'ｶ)ｾﾞﾛｱｸﾄ', furiBankNo: '0001', furiBankName: 'ﾐｽﾞﾎ',
+      furiBranchNo: '001', furiBranchName: 'ﾎﾝﾃﾝ', furiYokin: '普通', furiAccount: '1234567',
+      furiDate: '2026-08-25', furiNewline: newlineSetting,
+    });
+    const e = Object.assign(A.defEmp('振込太郎'), {
+      payType: '月給', base: '250000', joinYmd: '2020-04-01',
+      furiBankNo: '0005', furiBankName: 'ﾐﾂﾋﾞｼ', furiBranchNo: '012', furiBranchName: 'ｼﾌﾞﾔ',
+      furiYokin: '普通', furiAccount: '7654321', furiKana: 'ﾌﾘｺﾐ ﾀﾛｳ',
+    });
+    st.employees = [e];
+    win.FileOut.deliver = function (bytes, filename) { got = { bytes: bytes, filename: filename }; return Promise.resolve(); };
+    win.document.querySelector('[data-scr="scr-furikomi"]').click();   // ★実物のタブを押す
+    const btn = win.document.getElementById('b-zengin');
+    ok(btn && !btn.disabled, '全銀ファイルのボタンが押せる状態で出ている');
+    btn.click();                                                       // ★実物のボタンを押す
+  } finally {
+    win.FileOut.deliver = keepDeliver;
+    st.employees = keepEmps; st.company = keepCo; st.printMode = keepMode;
+  }
+  ok(got, '★ボタンを押したのにファイルが渡されていない');
+  return got;
+}
+const nlBytes = (b) => Array.from(b).filter(x => x === 0x0D || x === 0x0A).length;
+
+T('★振込: 既定(設定なし)は今までどおりCRLF＝1バイトも変わらない（実UIのボタンで測る）', () => {
+  const r = pressZengin(undefined);
+  eq(r.filename.slice(-4), '.txt', 'ファイル名');
+  eq(r.bytes.length % 122, 0, '★120バイト＋CRLF の倍数');
+  eq(nlBytes(r.bytes), (r.bytes.length / 122) * 2, 'CRLFが行数ぶん');
+  eq(r.bytes[120], 0x0D); eq(r.bytes[121], 0x0A, '1行目の後ろがCRLF');
+});
+T('★振込: 「改行なし」を選ぶと、押したファイルに改行が1バイトも入らない（楽天型）', () => {
+  const r = pressZengin('NONE');
+  eq(r.bytes.length % 120, 0, '★120の倍数ちょうど');
+  eq(nlBytes(r.bytes), 0, '★改行バイト0本');
+});
+T('★振込: 「LF」を選ぶと LF だけ・CRが1バイトも混ざらない', () => {
+  const r = pressZengin('LF');
+  eq(r.bytes.length % 121, 0, '120＋LF の倍数');
+  eq(Array.from(r.bytes).filter(x => x === 0x0D).length, 0, '★CRが0本');
+});
+T('★振込: 知らない値が設定に入っていても【既定CRLF】に倒れる（黙ってLFにしない）', () => {
+  const r = pressZengin('えるえふ');
+  eq(r.bytes.length % 122, 0, '★既定のCRLFで出ている');
+});
+T('★振込: 画面に改行コードの選択があり、選択肢は lib の鍵と同じ（面に一覧を作り直していない）', () => {
+  win.document.querySelector('[data-scr="scr-furikomi"]').click();
+  const sel = win.document.querySelector('[data-fc="furiNewline"]');
+  ok(sel, '改行コードの選択が画面に無い');
+  const vals = [...sel.options].map(o => o.value);
+  eq(vals[0], 'CRLF', '★既定が先頭');
+  for (const v of vals) ok(win.Zengin.NEWLINES[v] != null, 'libに無い値が並んでいる: ' + v);
+  for (const k of Object.keys(win.Zengin.NEWLINES)) ok(vals.indexOf(k) >= 0, 'libにあるのに選べない: ' + k);
+});
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

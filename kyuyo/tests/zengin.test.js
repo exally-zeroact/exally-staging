@@ -85,3 +85,74 @@ T('zengin build: 負の金額は符号を保持して除外(正額に化けな�
   var r = Z.build(committer, [t1, { bankNo: '0009', branchNo: '001', account: '1', name: 'ﾏｲﾅｽ', amount: -500 }]);
   eq(r.count, 1); eq(r.total, 328710); // -500 が +500 として通らない
 });
+
+/* ══ ★改行コード（銀行ごとに違う）★ ═══════════════════════════════════
+ * 【なぜ】全銀の改行は銀行ごとに違う（CR+LF／CR／LF／改行なし）。
+ *   ★1つに固定すると、今 通っている銀行が明日 弾かれる。★
+ *   だから「選べる／既定は今のまま(CRLF)」を、境界ごと実物のバイト数で固定する。
+ * 【一次情報 2026-08-08 実測】docs/zengin-newline-banks.md
+ *   大分/京都/JA/きらぼし/イオン = CR+LF・CR・LF いずれも可＋改行なしも可
+ *   群馬/東和/広島/三菱UFJ信託  = 120バイト＋改行(CRLF)を付ける場合は後ろに2バイト
+ *   楽天銀行                    = 「120byte固定長、改行は不要」
+ * バイト数の期待値は 120×レコード数(+改行×レコード数) を【手で組んだ式】から出す（出力の写しではない）。 */
+var t2n = { bankNo: '0009', bankName: 'ﾐﾂｲ', branchNo: '100', branchName: 'ｼﾝｼﾞｭｸ', yokin: '当座', account: '0011223', name: 'サトウ タロウ', amount: 250000 };
+function bytesFor(nRec, nlLen) { return 120 * nRec + nlLen * nRec; }
+
+T('★改行: 既定(引数なし)は今までどおりCRLF＝1バイトも変わらない', function () {
+  var r = Z.build(committer, [t1, t2n]);
+  eq(r.newline, 'CRLF', '既定の鍵');
+  eq(r.bytes.length, bytesFor(5, 2), '120×5 + CRLF×5');
+  eq(r.text.slice(120, 122), '\r\n', '1行目の後ろがCRLF');
+  eq(r.text.slice(-2), '\r\n', '末尾にも改行(エンドレコード後は任意)');
+});
+T('★改行: 空・未設定・知らない値・日本語は【必ず既定CRLF】へ倒す(黙ってLFにしない)', function () {
+  ['', null, undefined, '改行なし', 'xxx', 0, '  '].forEach(function (v) {
+    eq(Z.newlineKey(v), 'CRLF', JSON.stringify(v) + ' → 既定');
+    eq(Z.build(committer, [t1], { newline: v }).newline, 'CRLF', JSON.stringify(v) + ' → build も既定');
+  });
+  eq(Z.build(committer, [t1], {}).newline, 'CRLF', 'optsが空でも既定');
+});
+T('★改行: NONE=改行なし(楽天型)。120バイトの倍数ちょうど・改行バイトが0本', function () {
+  var r = Z.build(committer, [t1, t2n], { newline: 'NONE' });
+  eq(r.newline, 'NONE');
+  eq(r.text.length, 120 * 5, '120×5文字ちょうど');
+  eq(r.bytes.length, bytesFor(5, 0), '120×5バイト');
+  eq(r.text.indexOf('\r'), -1, 'CRが1つも無い'); eq(r.text.indexOf('\n'), -1, 'LFが1つも無い');
+  eq(Array.from(r.bytes).filter(function (b) { return b === 0x0D || b === 0x0A; }).length, 0, '改行バイト0本');
+});
+T('★改行: LF=0x0Aだけ。CRが1バイトも混ざらない', function () {
+  var r = Z.build(committer, [t1, t2n], { newline: 'LF' });
+  eq(r.newline, 'LF');
+  eq(r.bytes.length, bytesFor(5, 1), '120×5 + LF×5');
+  eq(r.text.slice(120, 121), '\n');
+  eq(Array.from(r.bytes).filter(function (b) { return b === 0x0D; }).length, 0, '★CRが0本(LFのみ要求の銀行向け)');
+  eq(Array.from(r.bytes).filter(function (b) { return b === 0x0A; }).length, 5, 'LFが5本');
+});
+T('★改行: CR=0x0Dだけ(全銀の規定にある3つ目)', function () {
+  var r = Z.build(committer, [t1, t2n], { newline: 'CR' });
+  eq(r.newline, 'CR');
+  eq(r.bytes.length, bytesFor(5, 1));
+  eq(Array.from(r.bytes).filter(function (b) { return b === 0x0A; }).length, 0, 'LFが0本');
+});
+T('★改行: 小文字・前後の空白・全角混じりでも鍵として読める(nashi/none は改行なし)', function () {
+  eq(Z.newlineKey('crlf'), 'CRLF'); eq(Z.newlineKey(' lf '), 'LF');
+  eq(Z.newlineKey('none'), 'NONE'); eq(Z.newlineKey('nashi'), 'NONE');
+});
+T('★改行: どの改行でも「レコードは必ず120バイト」が崩れない(0件=3レコードの境界も)', function () {
+  ['CRLF', 'LF', 'CR', 'NONE'].forEach(function (k) {
+    var nl = Z.NEWLINES[k].length;
+    var r0 = Z.build(committer, [], { newline: k });                 // 対象0件=ヘッダ+トレーラ+エンド
+    eq(r0.records.length, 3, k + ': 0件でも3レコード');
+    eq(r0.count, 0); eq(r0.total, 0);
+    eq(r0.bytes.length, bytesFor(3, nl), k + ': 0件のバイト数');
+    var r1 = Z.build(committer, [t1], { newline: k });               // 1件=4レコード
+    eq(r1.bytes.length, bytesFor(4, nl), k + ': 1件のバイト数');
+    r1.records.forEach(function (rec) { eq(Z.toShiftJisBytes(rec).length, 120, k + ': 各レコード120バイト'); });
+  });
+});
+T('★改行: 中身(120桁のレコード)は改行を変えても1文字も変わらない', function () {
+  var a = Z.build(committer, [t1, t2n], { newline: 'CRLF' }).records.join('|');
+  ['LF', 'CR', 'NONE'].forEach(function (k) {
+    eq(Z.build(committer, [t1, t2n], { newline: k }).records.join('|'), a, k + ': レコード本体が変わっている');
+  });
+});

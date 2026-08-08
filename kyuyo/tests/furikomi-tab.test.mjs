@@ -135,6 +135,40 @@ T('★⑥ 入力済みの値が消えない（委託者情報は会社の設定�
   if (!/#furi-box/.test(APP)) throw new Error('振込の入れ物(#furi-box)への配線が無い');
 });
 
+/* ★⑦〜⑩ 改行コード（2026-08-08）
+   全銀の改行は銀行ごとに違う。★1つに固定すると、今 通っている銀行が明日 弾かれる。★
+   実際に押して測るのは tests/integration.mjs（jsdomで実物のボタン→渡されたバイト列）。
+   ここでは「面が lib に渡す形になっているか」「一次情報の表があるか」を見る。 */
+T('★⑦ 委託者情報に改行コードの選択がある（会社ごとに選べる）', () => {
+  if (!/data-fc="furiNewline"/.test(APP)) throw new Error('改行コードの選択(data-fc="furiNewline")が無い');
+  if (!/furiNewlineOptions/.test(APP)) throw new Error('選択肢を作る所が無い');
+  if (!/Zengin\.NEWLINES/.test(APP)) throw new Error('選択肢を lib(Zengin.NEWLINES) から作っていない＝二重に持っている');
+});
+
+T('★⑧ 押した時、その会社の設定を lib に渡している（渡し忘れ＝銀行で弾かれる）', () => {
+  const zg = (/function downloadZengin\(\)[\s\S]*?\n  \}/.exec(APP) || [''])[0];
+  if (!zg) throw new Error('downloadZengin を読めない＝この検査が空振り');
+  if (!/Zengin\.build\([^)]*,\s*\{[^}]*newline/.test(zg)) throw new Error('★Zengin.build に改行の設定を渡していない');
+  if (!/furiNewline/.test(zg)) throw new Error('★会社の設定(furiNewline)を見ていない');
+});
+
+T('★⑨ 一次情報の対応表がある（推測で表を埋めない・出典URL付き）', () => {
+  const p = path.join(ROOT, 'docs/zengin-newline-banks.md');
+  if (!fs.existsSync(p)) throw new Error('docs/zengin-newline-banks.md が無い');
+  const md = fs.readFileSync(p, 'utf8');
+  const urls = md.match(/https?:\/\/[^\s)]+/g) || [];
+  if (urls.length < 8) throw new Error('出典URLが少なすぎる（' + urls.length + '本）＝表が推測で埋まっている疑い');
+  for (const bank of ['大分銀行', '楽天銀行', 'JAバンク']) {
+    if (md.indexOf(bank) < 0) throw new Error('対応表に ' + bank + ' が無い');
+  }
+  if (!/未確認/.test(md) || !/未測定/.test(md)) throw new Error('★測れていない所を「未確認/未測定」と書いていない（0件・異常なしにしている）');
+});
+
+T('★⑩ 既定は CRLF のまま（今 通っている形を1バイトも変えていない）', () => {
+  const Z = fs.readFileSync(path.join(ROOT, 'lib/zengin.js'), 'utf8');
+  if (!/NEWLINE_DEFAULT\s*=\s*'CRLF'/.test(Z)) throw new Error('★既定が CRLF でなくなっている');
+});
+
 console.log('\n── 実測 ──');
 console.log('  下タブ: ' + TABS.map(t => t.label).join(' / '));
 const g0 = furikomiGate([]), g1 = furikomiGate([{ amount: 250000, ready: false }]);

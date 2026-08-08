@@ -5,7 +5,9 @@
  *   ヘッダー: 区分1(1)+種別"21"(2)+コード区分"0"(1)+委託者コード(10N)+委託者名(40C)+取組日MMDD(4N)+仕向銀行番号(4N)+仕向銀行名(15C)+仕向支店番号(3N)+仕向支店名(15C)+預金種目(1N)+口座番号(7N)+ダミー(17)=120
  *   データ: 区分2(1)+被仕向銀行番号(4N)+被仕向銀行名(15C)+被仕向支店番号(3N)+被仕向支店名(15C)+手形交換所(4N)+預金種目(1N)+口座番号(7N)+受取人名(30C)+振込金額(10N)+新規コード(1N)+顧客コード1(10C)+顧客コード2(10C)+振込区分(1N)+識別表示(1C)+ダミー(7)=120
  *   トレーラー: 区分8(1)+合計件数(6N)+合計金額(12N)+ダミー(101)=120  / エンド: 区分9(1)+ダミー(119)=120
- * 【出力】.text=120桁×行(CRLF区切り) / .bytes=Shift-JIS(Uint8Array)。実銀行に上げるのはbytes(Shift-JIS)。
+ * 【出力】.text=120桁×行(改行は下の NEWLINES) / .bytes=Shift-JIS(Uint8Array)。実銀行に上げるのはbytes(Shift-JIS)。
+ * 【★改行コード】★銀行ごとに違う＝1つに固定してはいけない★。既定は CRLF(=今まで通っている形)。
+ *   変わるのは会社の設定で選んだ時だけ。一次情報の対応表は docs/zengin-newline-banks.md。
  * 【利用】ブラウザ window.Zengin / Node require('./zengin.js')
  */
 (function (root, factory) {
@@ -76,7 +78,26 @@
   function trailer(count, total) { return '8' + padN(count, 6) + padN(total, 12) + space(101); }
   function endRec() { return '9' + space(119); }
 
-  // Shift-JIS(半角のみ)へエンコード。ASCII=そのまま/半角カナ(U+FF61..FF9F)=0xA1..0xDF。改行=CRLF。
+  /* ── 改行コード ────────────────────────────────────────────────────────
+   * ★全銀の改行は【銀行ごとに違う】。「LFで弾かれた」＝「CRLFが間違い」ではない。★
+   * 【一次情報 2026-08-08 実測】
+   *   大分/京都/JAバンク/きらぼし/イオン … 「CR+LF(0d0a)・CR(0d)・LF(0a)」いずれも可＋★改行なしも可★
+   *   群馬/東和/広島/三菱UFJ信託        … 「120バイト、改行(CRLF)をつける場合は後ろに2バイト」
+   *   三菱UFJ(BizSTATION)               … レコード長120バイト または 改行コードあり＝「標準」
+   *   楽天銀行                          … ★「120byte固定長、改行は不要」★(改行なし前提)
+   *   ⇒ ★CRLFが通る銀行が多数派。だから既定はCRLFのまま動かさない。★
+   *     LFのみを要求する銀行は一次情報では見つからなかったが、規定上LFも認める銀行があるので
+   *     選べるようにしておく（銀行から指定された時に、その銀行だけ変えられる）。
+   * ★知らない値・空・未設定は必ず既定(CRLF)へ倒す。黙ってLFにしない。★ */
+  var NEWLINES = { CRLF: '\r\n', LF: '\n', CR: '\r', NONE: '' };
+  var NEWLINE_DEFAULT = 'CRLF';
+  function newlineKey(v) {
+    var k = String(v == null ? '' : v).toUpperCase().replace(/[^A-Z]/g, '');
+    if (k === 'NASHI' || k === 'NONE') return 'NONE';
+    return NEWLINES[k] != null ? k : NEWLINE_DEFAULT;
+  }
+
+  // Shift-JIS(半角のみ)へエンコード。ASCII=そのまま/半角カナ(U+FF61..FF9F)=0xA1..0xDF。改行はそのまま通す。
   function toShiftJisBytes(text) {
     var bytes = [];
     for (var i = 0; i < text.length; i++) {
@@ -93,21 +114,26 @@
   /** 総合振込ファイルを生成。
    * @param {object} committer 委託者 {code,name,torikumiMMDD,bankNo,bankName,branchNo,branchName,yokin,account}
    * @param {Array} transfers 明細 [{bankNo,bankName,branchNo,branchName,yokin,account,name,amount}]
-   * @returns {object} {text, bytes, count, total, records[]}  (amount<=0の明細は除外)
+   * @param {object} [opts] {newline:'CRLF'|'LF'|'CR'|'NONE'} ★既定CRLF。空/未設定/知らない値も既定へ倒す
+   * @returns {object} {text, bytes, count, total, records[], newline}  (amount<=0の明細は除外)
    */
-  function build(committer, transfers) {
+  function build(committer, transfers, opts) {
     var list = (transfers || []).filter(function (t) { return num(t.amount) > 0; });
     var recs = [header(committer)];
     var total = 0;
     list.forEach(function (t) { recs.push(dataRec(t)); total += num(t.amount); });
     recs.push(trailer(list.length, total));
     recs.push(endRec());
-    var text = recs.join('\r\n') + '\r\n';
-    return { text: text, bytes: toShiftJisBytes(text), count: list.length, total: total, records: recs };
+    var key = newlineKey(opts && opts.newline);
+    var nl = NEWLINES[key];
+    // 改行ありの時は末尾にも付ける(エンドレコード後の改行は各行「任意」＝今までの形を変えない)。
+    var text = nl ? recs.join(nl) + nl : recs.join('');
+    return { text: text, bytes: toShiftJisBytes(text), count: list.length, total: total, records: recs, newline: key };
   }
 
   return {
     build: build, header: header, dataRec: dataRec, trailer: trailer, endRec: endRec,
-    toHankaku: toHankaku, padN: padN, padC: padC, yokinCode: yokinCode, toShiftJisBytes: toShiftJisBytes
+    toHankaku: toHankaku, padN: padN, padC: padC, yokinCode: yokinCode, toShiftJisBytes: toShiftJisBytes,
+    newlineKey: newlineKey, NEWLINES: NEWLINES, NEWLINE_DEFAULT: NEWLINE_DEFAULT
   };
 });

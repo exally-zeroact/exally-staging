@@ -2518,6 +2518,15 @@
       return { emp:e, name:(e.furiKana||e.name), bankNo:e.furiBankNo, bankName:e.furiBankName, branchNo:e.furiBranchNo, branchName:e.furiBranchName, yokin:e.furiYokin, account:e.furiAccount, amount:net, ready:ready };
     });
   }
+  /* 改行コードの選択肢。★選べる中身は lib(Zengin.NEWLINES) から取る＝面とlibで二重に持たない。
+     ★見せ方(言い方と並び順)だけ面が決める。既定を先頭に置く。libが読めない時も既定だけは出す。 */
+  var FURI_NL_LABEL={ CRLF:'CR+LF（既定）', NONE:'改行なし', LF:'LF', CR:'CR' };
+  function furiNewlineOptions(cur){
+    var has=(typeof Zengin!=='undefined'&&Zengin.NEWLINES)?Zengin.NEWLINES:null;
+    var keys=has?['CRLF','NONE','LF','CR'].filter(function(k){return has[k]!=null;}):['CRLF'];
+    var sel=(has&&Zengin.newlineKey)?Zengin.newlineKey(cur):'CRLF';
+    return keys.map(function(k){ return '<option value="'+k+'"'+(k===sel?' selected':'')+'>'+esc(FURI_NL_LABEL[k]||k)+'</option>'; }).join('');
+  }
   function renderFuri(){
     var box=$('#furi-box'); if(!box) return;
     if((state.printMode||'monthly')==='bonus'){ box.innerHTML='<p class="hint" style="margin:0">総合振込データは「月次給与」で作成します。</p>'; return; }
@@ -2533,7 +2542,11 @@
         +'<div class="frow"><div class="flabel">支店コード<span class="hint2">3桁</span></div>'+fi('furiBranchNo','001','inputmode="numeric" maxlength="3"')+'</div></div>'
       +'<div class="frow2"><div class="frow"><div class="flabel">科目</div><select class="finput" data-fc="furiYokin"><option'+((c.furiYokin==='普通'||!c.furiYokin)?' selected':'')+'>普通</option><option'+(c.furiYokin==='当座'?' selected':'')+'>当座</option></select></div>'
         +'<div class="frow"><div class="flabel">口座番号<span class="hint2">7桁</span></div>'+fi('furiAccount','1234567','inputmode="numeric" maxlength="7"')+'</div></div>'
-      +'<div class="frow"><div class="flabel">振込指定日</div><input class="finput" type="date" data-fc="furiDate" value="'+attr(c.furiDate)+'"></div>';
+      +'<div class="frow2"><div class="frow"><div class="flabel">振込指定日</div><input class="finput" type="date" data-fc="furiDate" value="'+attr(c.furiDate)+'"></div>'
+      /* ★改行コードは銀行ごとに違う（CR+LF／改行なし／LF）。既定は CR+LF＝今まで通っている形。
+         銀行から指定された時だけ、その会社ぶんを変える。値は lib/zengin.js の NEWLINES の鍵と同じ。 */
+        +'<div class="frow"><div class="flabel">改行コード<span class="hint2">銀行の指定があるときだけ</span></div>'
+        +'<select class="finput" data-fc="furiNewline">'+furiNewlineOptions(c.furiNewline)+'</select></div></div>';
     var listHTML='<div class="sec-lb">振込対象（'+esc(state.month)+'・差引支給額）</div>';
     if(!tr.length){ listHTML+='<p class="hint" style="margin:0">対象月に在籍する従業員がいません。</p>'; }
     else {
@@ -2583,9 +2596,12 @@
     var committer={ code:c.furiCode, name:c.furiName, torikumiMMDD:d, bankNo:c.furiBankNo, bankName:c.furiBankName, branchNo:c.furiBranchNo, branchName:c.furiBranchName, yokin:c.furiYokin, account:c.furiAccount };
     var tr=buildTransfers().filter(function(t){return t.ready;});
     if(!tr.length){ uiAlert('振込対象がありません。従業員マスタの「総合振込データ用」に銀行/支店/口座を入力してください。'); return; }
-    var r=Zengin.build(committer, tr);
+    // ★改行コードは会社の設定どおり（未設定＝既定CRLF＝今まで通っている形）。
+    var r=Zengin.build(committer, tr, { newline:c.furiNewline });
     dlBytes(r.bytes, 'furikomi_'+state.month+'.txt', 'text/plain');
-    toast('全銀ファイルを作成しました（'+r.count+'件・'+yen(r.total)+'）');
+    // 既定から変えている時だけ、何で作ったかを言う（既定の人には余計な字を出さない）。
+    toast('全銀ファイルを作成しました（'+r.count+'件・'+yen(r.total)
+      +(r.newline===Zengin.NEWLINE_DEFAULT?'':'・改行'+(FURI_NL_LABEL[r.newline]||r.newline))+'）');
   }
   function downloadFuriExcel(){
     if(typeof PayslipXlsx==='undefined'||!PayslipXlsx.downloadSheets){ uiAlert('Excelモジュールが読み込まれていません'); return; }
