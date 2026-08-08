@@ -2549,8 +2549,10 @@
       ? '一覧にない銀行は CR+LF で作ります（多数派）。取り込めなかった時だけ、下の「行の終わり」を変えてください。' : '';
     if(!b.confirmed) return esc(b.name)+' は公式仕様に改行の記載が見つかりませんでした（<b>未確認</b>）。まず CR+LF で試してください。';
     var nl=FURI_NL_LABEL[Zengin.newlineKey(b.newline)]||b.newline;
+    /* ★出典は別の行に置いて、指で押せる大きさにする（22×16pxでは押せない＝実測）。
+       ★ホーム画面アプリで同じ窓に開くと戻れなくなるので target="_blank" は必須。 */
     return esc(b.name)+' は <b>'+esc(nl)+'</b>（公式仕様書で確認済み）'
-      +(b.source?' <a href="'+attr(b.source)+'" target="_blank" rel="noopener">出典</a>':'');
+      +(b.source?'<br><a href="'+attr(b.source)+'" target="_blank" rel="noopener" style="display:inline-block;padding:8px 2px;min-height:24px">公式の仕様書を見る ↗</a>':'');
   }
   // 行の終わり。既定=「銀行に合わせる」＝銀行を選んでいなければ CR+LF。★選択肢は減らさない★
   function furiNewlineOptions(cur){
@@ -2651,7 +2653,7 @@
     dlBytes(r.bytes, 'furikomi_'+state.month+'.txt', 'text/plain');
     // 既定から変えている時だけ、何で作ったかを言う（既定の人には余計な字を出さない）。
     toast('全銀ファイルを作成しました（'+r.count+'件・'+yen(r.total)
-      +(r.newline===Zengin.NEWLINE_DEFAULT?'':'・改行'+(FURI_NL_LABEL[r.newline]||r.newline))+'）');
+      +(r.newline===Zengin.NEWLINE_DEFAULT?'':'・行の終わり='+(FURI_NL_LABEL[r.newline]||r.newline))+'）');
   }
   function downloadFuriExcel(){
     if(typeof PayslipXlsx==='undefined'||!PayslipXlsx.downloadSheets){ uiAlert('Excelモジュールが読み込まれていません'); return; }
