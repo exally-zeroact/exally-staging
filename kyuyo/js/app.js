@@ -2550,7 +2550,7 @@
       +'<div class="frow2"><div class="frow"><div class="flabel">振込指定日</div><input class="finput" type="date" data-fc="furiDate" value="'+attr(c.furiDate)+'"></div>'
       /* ★改行コードは銀行ごとに違う（CR+LF／改行なし／LF）。既定は CR+LF＝今まで通っている形。
          銀行から指定された時だけ、その会社ぶんを変える。値は lib/zengin.js の NEWLINES の鍵と同じ。 */
-        +'<div class="frow"><div class="flabel">改行コード<span class="hint2">銀行の指定があれば</span></div>'
+        +'<div class="frow"><div class="flabel">改行コード<span class="hint2">銀行の指定時</span></div>'
         +'<select class="finput" data-fc="furiNewline">'+furiNewlineOptions(c.furiNewline)+'</select></div></div>';
     var listHTML='<div class="sec-lb">振込対象（'+esc(state.month)+'・差引支給額）</div>';
     if(!tr.length){ listHTML+='<p class="hint" style="margin:0">対象月に在籍する従業員がいません。</p>'; }
