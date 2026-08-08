@@ -2510,9 +2510,12 @@
     var listed=rows.filter(function(t){return t.amount>0;});     // 振込一覧Excelに載る分
     return {
       zengin:{ enabled:ready.length>0, count:ready.length,
-        reason: ready.length ? '' : (listed.length ? '振込先(銀行・支店・口座)が入っていません' : '対象月に振込む人がいません') },
+        reason: ready.length ? '' : (listed.length ? '振込先(銀行・支店・口座)が入っていません' : '対象月に振込む人がいません'),
+        // ★短い理由＝ボタンの中に入れる用。押せない理由を下まで読ませない。
+        short: ready.length ? '' : (listed.length ? '振込先なし' : '対象者なし') },
       xlsx:{ enabled:listed.length>0, count:listed.length,
-        reason: listed.length ? '' : '対象月に振込む人がいません' }
+        reason: listed.length ? '' : '対象月に振込む人がいません',
+        short: listed.length ? '' : '対象者なし' }
     };
   }
   // ── 総合振込データ(全銀ファイル + 振込一覧Excel) ──
@@ -2523,14 +2526,40 @@
       return { emp:e, name:(e.furiKana||e.name), bankNo:e.furiBankNo, bankName:e.furiBankName, branchNo:e.furiBranchNo, branchName:e.furiBranchName, yokin:e.furiYokin, account:e.furiAccount, amount:net, ready:ready };
     });
   }
-  /* 改行コードの選択肢。★選べる中身は lib(Zengin.NEWLINES) から取る＝面とlibで二重に持たない。
-     ★見せ方(言い方と並び順)だけ面が決める。既定を先頭に置く。libが読めない時も既定だけは出す。 */
-  var FURI_NL_LABEL={ CRLF:'CR+LF 既定', NONE:'改行なし', LF:'LF', CR:'CR' };
+  /* ── 「銀行に取り込めなかった時」の中身（普段は閉じている） ────────────────
+     ★選べる中身(銀行の表・改行の種類)は lib(Zengin) から取る＝面とlibで二重に持たない。
+     ★見せ方(言い方と並び順)だけ面が決める。 */
+  var FURI_NL_LABEL={ CRLF:'CR+LF', NONE:'改行なし', LF:'LF', CR:'CR' };
+  var furiFoldOpen=false;   // 開いているか（保存しない＝次に開いた時はまた閉じている）
+  // 銀行の選択肢。★確認済みと未確認を【選ぶ前に】群で分ける（選んで初めて分かる、にしない）★
+  function furiBankOptions(cur){
+    var list=(typeof Zengin!=='undefined'&&Zengin.BANKS)?Zengin.BANKS:[];
+    var sel=String(cur||'');
+    function opts(arr){ return arr.map(function(b){ return '<option value="'+attr(b.key)+'"'+(b.key===sel?' selected':'')+'>'+esc(b.name)+'</option>'; }).join(''); }
+    var ok=list.filter(function(b){return b.confirmed;}), ng=list.filter(function(b){return !b.confirmed;});
+    return '<option value=""'+(sel?'':' selected')+'>選んでいません（CR+LFで作ります）</option>'
+      +(ok.length?'<optgroup label="確認済み（公式仕様で確かめた）">'+opts(ok)+'</optgroup>':'')
+      +(ng.length?'<optgroup label="未確認（公式仕様に記載なし）">'+opts(ng)+'</optgroup>':'')
+      +'<option value="__other"'+(sel==='__other'?' selected':'')+'>その他の銀行（一覧にない）</option>';
+  }
+  // 選んだ銀行についての1行。★未確認は「未確認」と正直に出し、改行は動かさない★
+  function furiBankNote(cur){
+    var b=(typeof Zengin!=='undefined'&&Zengin.bankOf)?Zengin.bankOf(cur):null;
+    if(!b) return String(cur||'')==='__other'
+      ? '一覧にない銀行は CR+LF で作ります（多数派）。取り込めなかった時だけ、下の「行の終わり」を変えてください。' : '';
+    if(!b.confirmed) return esc(b.name)+' は公式仕様に改行の記載が見つかりませんでした（<b>未確認</b>）。まず CR+LF で試してください。';
+    var nl=FURI_NL_LABEL[Zengin.newlineKey(b.newline)]||b.newline;
+    return esc(b.name)+' は <b>'+esc(nl)+'</b>（公式仕様書で確認済み）'
+      +(b.source?' <a href="'+attr(b.source)+'" target="_blank" rel="noopener">出典</a>':'');
+  }
+  // 行の終わり。既定=「銀行に合わせる」＝銀行を選んでいなければ CR+LF。★選択肢は減らさない★
   function furiNewlineOptions(cur){
     var has=(typeof Zengin!=='undefined'&&Zengin.NEWLINES)?Zengin.NEWLINES:null;
     var keys=has?['CRLF','NONE','LF','CR'].filter(function(k){return has[k]!=null;}):['CRLF'];
-    var sel=(has&&Zengin.newlineKey)?Zengin.newlineKey(cur):'CRLF';
-    return keys.map(function(k){ return '<option value="'+k+'"'+(k===sel?' selected':'')+'>'+esc(FURI_NL_LABEL[k]||k)+'</option>'; }).join('');
+    var v=String(cur==null?'':cur).toUpperCase();
+    var auto=(!v||v==='AUTO');
+    return '<option value=""'+(auto?' selected':'')+'>銀行に合わせる（既定）</option>'
+      +keys.map(function(k){ return '<option value="'+k+'"'+((!auto&&Zengin.newlineKey(v)===k)?' selected':'')+'>'+esc(FURI_NL_LABEL[k]||k)+'</option>'; }).join('');
   }
   function renderFuri(){
     var box=$('#furi-box'); if(!box) return;
@@ -2547,29 +2576,44 @@
         +'<div class="frow"><div class="flabel">支店コード<span class="hint2">3桁</span></div>'+fi('furiBranchNo','001','inputmode="numeric" maxlength="3"')+'</div></div>'
       +'<div class="frow2"><div class="frow"><div class="flabel">科目</div><select class="finput" data-fc="furiYokin"><option'+((c.furiYokin==='普通'||!c.furiYokin)?' selected':'')+'>普通</option><option'+(c.furiYokin==='当座'?' selected':'')+'>当座</option></select></div>'
         +'<div class="frow"><div class="flabel">口座番号<span class="hint2">7桁</span></div>'+fi('furiAccount','1234567','inputmode="numeric" maxlength="7"')+'</div></div>'
-      +'<div class="frow2"><div class="frow"><div class="flabel">振込指定日</div><input class="finput" type="date" data-fc="furiDate" value="'+attr(c.furiDate)+'"></div>'
-      /* ★改行コードは銀行ごとに違う（CR+LF／改行なし／LF）。既定は CR+LF＝今まで通っている形。
-         銀行から指定された時だけ、その会社ぶんを変える。値は lib/zengin.js の NEWLINES の鍵と同じ。 */
-        +'<div class="frow"><div class="flabel">改行コード<span class="hint2">銀行の指定時</span></div>'
-        +'<select class="finput" data-fc="furiNewline">'+furiNewlineOptions(c.furiNewline)+'</select></div></div>';
+      +'<div class="frow"><div class="flabel">振込指定日</div><input class="finput" type="date" data-fc="furiDate" value="'+attr(c.furiDate)+'"></div>';
+    /* ★手前が空なら、奥の設定より先に「まずここを埋めて」と言う（埋める順番を伝える）。 */
+    var needBasics=!(String(c.furiCode||'').trim() && String(c.furiBankNo||'').trim()
+      && String(c.furiBranchNo||'').trim() && String(c.furiAccount||'').trim());
+    var lead=needBasics?'<div class="cr-warn" style="margin:0 0 10px">まず下の「委託者情報」を埋めてください。銀行から通知されている値です。</div>':'';
     var listHTML='<div class="sec-lb">振込対象（'+esc(state.month)+'・差引支給額）</div>';
     if(!tr.length){ listHTML+='<p class="hint" style="margin:0">対象月に在籍する従業員がいません。</p>'; }
     else {
       listHTML+='<div style="font-size:12.5px">'+ready.map(function(t){ return '<div class="dl"><span>'+esc(t.emp.name)+'（'+esc(t.bankName||'')+' '+esc(t.branchName||'')+' '+esc(t.account||'')+'）</span><span class="v">'+yen(t.amount)+'</span></div>'; }).join('')+'</div>';
-      if(notReady.length) listHTML+='<div class="cr-warn" style="margin:8px 0 0">⚠ '+notReady.map(function(t){return esc(t.emp.name);}).join('・')+' は振込先(銀行/支店/口座)が未入力のため全銀ファイルから除外。設定 ▸ 従業員マスタ ▸ 総合振込データ用 で入力してください（振込一覧Excelには載ります）。</div>';
+      /* ★1行に縮める（どこを直せばいいかだけ）。3人以上は「ほか○名」。 */
+      if(notReady.length){
+        var nm=notReady.map(function(t){return esc(t.emp.name);});
+        var who=nm.length<=2?nm.join('・'):(nm[0]+'ほか'+(nm.length-1)+'名');
+        listHTML+='<div class="cr-warn" style="margin:8px 0 0">⚠ '+who+' は振込先が未入力（設定 ▸ 従業員マスタ）</div>';
+      }
     }
     var total=ready.reduce(function(a,t){return a+t.amount;},0);
-    // ★押せるかは furikomiGate が決める。押せない時は★理由をボタンの横に出す★
-    //  （押せないボタンだけ置いて黙ると「壊れている」と思われる）。
+    /* ★押せるかは furikomiGate が決める。押せない理由は【ボタンの中】に出す。
+       （下に小さく置くと読まれない。横に置くと幅360で折り返してボタンが崩れる＝実測） */
     var gate=furikomiGate(tr);
     var btns='<div class="btn-row" style="margin-top:10px;align-items:center">'
-      +'<button class="btn-primary" id="b-zengin"'+(gate.zengin.enabled?'':' disabled')+'>全銀ファイル（'+gate.zengin.count+'件 '+yen(total)+'）</button>'
+      +'<button class="btn-primary" id="b-zengin"'+(gate.zengin.enabled?'':' disabled')+'>全銀ファイル（'
+        +(gate.zengin.enabled?(gate.zengin.count+'件 '+yen(total)):esc(gate.zengin.short))+'）</button>'
       +'<button class="btn-ghost" id="b-furixlsx"'+(gate.xlsx.enabled?'':' disabled')+'>振込一覧Excel</button>'
-      +'</div>'
-      +(gate.zengin.enabled?'':'<p class="hint" style="margin:6px 0 0">全銀ファイル：'+esc(gate.zengin.reason)+'</p>')
-      +(gate.xlsx.enabled?'':'<p class="hint" style="margin:2px 0 0">振込一覧Excel：'+esc(gate.xlsx.reason)+'</p>')
-      +'<p class="hint" style="margin:6px 0 0">全銀ファイル=銀行の「総合振込」に取り込む固定長データ（Shift-JIS）。銀行/支店コードは通帳や銀行サイトで確認してください。</p>';
-    box.innerHTML=committer+listHTML+btns;
+      +'</div>';
+    /* ★「銀行に取り込めなかった時」＝普段は閉じている。開かなければ今までどおり CR+LF で動く。
+       開くと【銀行を選ぶ】のが主役。改行そのものは、その下の逃げ道。 */
+    var fold='<div class="emp-dtgl" id="furi-fold" tabindex="0" role="button" aria-expanded="'+(furiFoldOpen?'true':'false')+'">'
+      +'銀行に取り込めなかった時<span class="mco-cv" style="margin-left:auto'+(furiFoldOpen?';transform:rotate(180deg)':'')+'">▾</span></div>'
+      +'<div id="furi-foldbody"'+(furiFoldOpen?'':' style="display:none"')+'>'
+        +'<p class="hint" style="margin:0 0 8px">銀行によって、行の終わりの形が違います。取り込めなかった時だけ変えてください。</p>'
+        +'<div class="frow"><div class="flabel">銀行</div><select class="finput" data-fc="furiBank">'+furiBankOptions(c.furiBank)+'</select></div>'
+        +'<p class="hint" id="furi-banknote" style="margin:4px 0 0">'+furiBankNote(c.furiBank)+'</p>'
+        +'<div class="frow" style="margin-top:8px"><div class="flabel">行の終わり</div>'
+          +'<select class="finput" data-fc="furiNewline">'+furiNewlineOptions(c.furiNewline)+'</select></div>'
+        +'<p class="hint" style="margin:8px 0 0">全銀ファイル=銀行の「総合振込」に取り込む固定長データ（Shift-JIS）。銀行/支店コードは通帳や銀行サイトで確認してください。</p>'
+      +'</div>';
+    box.innerHTML=lead+committer+listHTML+btns+fold;
   }
   // ★ファイルの渡し口は js/file-out.js の1本だけ。種類は拡張子から必ず決まる（octet-stream にしない）。
   //   iPhone では共有シートが出て「Excelで開く」が並ぶ。PC等は今までどおり落ちる。
@@ -2601,8 +2645,9 @@
     var committer={ code:c.furiCode, name:c.furiName, torikumiMMDD:d, bankNo:c.furiBankNo, bankName:c.furiBankName, branchNo:c.furiBranchNo, branchName:c.furiBranchName, yokin:c.furiYokin, account:c.furiAccount };
     var tr=buildTransfers().filter(function(t){return t.ready;});
     if(!tr.length){ uiAlert('振込対象がありません。従業員マスタの「総合振込データ用」に銀行/支店/口座を入力してください。'); return; }
-    // ★改行コードは会社の設定どおり（未設定＝既定CRLF＝今まで通っている形）。
-    var r=Zengin.build(committer, tr, { newline:c.furiNewline });
+    /* ★改行は会社の設定どおり。決めるのは lib（銀行→確認済みならその形／それ以外は既定CR+LF）。
+       未設定・未確認の銀行・一覧にない銀行は、今まで通っている形（CR+LF）のまま。 */
+    var r=Zengin.build(committer, tr, { bank:c.furiBank, newline:c.furiNewline });
     dlBytes(r.bytes, 'furikomi_'+state.month+'.txt', 'text/plain');
     // 既定から変えている時だけ、何で作ったかを言う（既定の人には余計な字を出さない）。
     toast('全銀ファイルを作成しました（'+r.count+'件・'+yen(r.total)
@@ -2961,9 +3006,21 @@
     });
     // 総合振込データ(委託者入力の保存 + 全銀/Excel ダウンロード)。#furi-boxは静的なので委譲で1回だけ配線。
     (function(){ var fb=$('#furi-box'); if(!fb) return;
-      function setFc(ev){ var el=ev.target.closest&&ev.target.closest('[data-fc]'); if(el){ state.company[el.getAttribute('data-fc')]=el.value; persistSaveDebounced(); } }
+      function setFc(ev){ var el=ev.target.closest&&ev.target.closest('[data-fc]'); if(el){ state.company[el.getAttribute('data-fc')]=el.value; persistSaveDebounced();
+        // 銀行を選び直したら、その銀行についての1行を出し直す（選んで初めて分かる、を作らない）
+        if(el.getAttribute('data-fc')==='furiBank'){ var n=$('#furi-banknote'); if(n) n.innerHTML=furiBankNote(el.value); } } }
       fb.addEventListener('input', setFc); fb.addEventListener('change', setFc);
-      fb.addEventListener('click', function(ev){ if(ev.target.closest('#b-zengin')){ downloadZengin(); } else if(ev.target.closest('#b-furixlsx')){ downloadFuriExcel(); } });
+      // ★「銀行に取り込めなかった時」の開け閉め。開いた状態は保存しない（次はまた閉じている）
+      function toggleFold(){ furiFoldOpen=!furiFoldOpen;
+        var body=$('#furi-foldbody'), hd=$('#furi-fold');
+        if(body) body.style.display=furiFoldOpen?'':'none';
+        if(hd){ hd.setAttribute('aria-expanded', furiFoldOpen?'true':'false');
+          var cv=hd.querySelector('.mco-cv'); if(cv) cv.style.transform=furiFoldOpen?'rotate(180deg)':''; } }
+      fb.addEventListener('click', function(ev){
+        if(ev.target.closest('#b-zengin')){ downloadZengin(); }
+        else if(ev.target.closest('#b-furixlsx')){ downloadFuriExcel(); }
+        else if(ev.target.closest('#furi-fold')){ toggleFold(); } });
+      fb.addEventListener('keydown', function(ev){ if((ev.key==='Enter'||ev.key===' ')&&ev.target.closest&&ev.target.closest('#furi-fold')){ ev.preventDefault(); toggleFold(); } });
     })();
     // 勤怠CSV: ファイル選択→UTF-8で読み、文字化け/日本語なしならShift-JISで再デコード→取込
     (function(){ var kf=$('#kintai-file'); if(!kf) return;

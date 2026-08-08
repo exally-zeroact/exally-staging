@@ -36,9 +36,12 @@ export function furikomiGate(transfers) {
   const listed = rows.filter(t => t.amount > 0);          // 振込一覧Excelに載る分
   return {
     zengin: { enabled: ready.length > 0, count: ready.length,
-      reason: ready.length ? '' : (listed.length ? '振込先(銀行・支店・口座)が入っていません' : '対象月に振込む人がいません') },
+      reason: ready.length ? '' : (listed.length ? '振込先(銀行・支店・口座)が入っていません' : '対象月に振込む人がいません'),
+      // ★短い理由＝ボタンの中に入れる用（下まで読ませない）
+      short: ready.length ? '' : (listed.length ? '振込先なし' : '対象者なし') },
     xlsx: { enabled: listed.length > 0, count: listed.length,
-      reason: listed.length ? '' : '対象月に振込む人がいません' },
+      reason: listed.length ? '' : '対象月に振込む人がいません',
+      short: listed.length ? '' : '対象者なし' },
   };
 }
 
@@ -115,10 +118,15 @@ T('★③ 印刷タブから振込が消えている（両方に出しっぱな�
   if (!/b-print/.test(pr)) throw new Error('印刷タブの中身まで消えています');
 });
 
-T('★④ 0件のときボタンを押せない＋理由が横に出る', () => {
+T('★④ 0件のときボタンを押せない＋理由が【ボタンの中】に出る（下まで読ませない）', () => {
   if (!/furikomiGate|b-zengin[^>]*disabled|disabled/.test(APP)) throw new Error('押せなくする作りが無い');
   if (APP.indexOf('furikomiGate') < 0) throw new Error('押せるかの判定(furikomiGate)を面が使っていない');
-  if (!/gate\.zengin\.reason|gate\.xlsx\.reason/.test(APP)) throw new Error('理由を画面に出していない');
+  if (!/gate\.zengin\.short/.test(APP)) throw new Error('理由を画面に出していない');
+  // ★理由はボタンの中（b-zengin のタグから閉じタグまで）に入っていること
+  const btn = (/<button[^>]*id="b-zengin[\s\S]{0,400}?<\/button>/.exec(APP) || [''])[0];
+  if (!/gate\.zengin\.short/.test(btn)) throw new Error('★理由がボタンの中に入っていない: ' + btn.slice(0, 120));
+  // ★下の小さい説明2行は消えていること（読まれない場所に理由を置かない）
+  if (/全銀ファイル：'\+esc\(gate\.zengin\.reason\)/.test(APP)) throw new Error('★下の説明行が残っている');
 });
 
 T('★⑤ 0件で空のファイルを作らない（押せてしまった時の最後の砦）', () => {
@@ -139,10 +147,27 @@ T('★⑥ 入力済みの値が消えない（委託者情報は会社の設定�
    全銀の改行は銀行ごとに違う。★1つに固定すると、今 通っている銀行が明日 弾かれる。★
    実際に押して測るのは tests/integration.mjs（jsdomで実物のボタン→渡されたバイト列）。
    ここでは「面が lib に渡す形になっているか」「一次情報の表があるか」を見る。 */
-T('★⑦ 委託者情報に改行コードの選択がある（会社ごとに選べる）', () => {
-  if (!/data-fc="furiNewline"/.test(APP)) throw new Error('改行コードの選択(data-fc="furiNewline")が無い');
-  if (!/furiNewlineOptions/.test(APP)) throw new Error('選択肢を作る所が無い');
-  if (!/Zengin\.NEWLINES/.test(APP)) throw new Error('選択肢を lib(Zengin.NEWLINES) から作っていない＝二重に持っている');
+T('★⑦ 改行は【折りたたみの中】。普段は見せない／中身は lib から作る', () => {
+  if (!/data-fc="furiNewline"/.test(APP)) throw new Error('行の終わりの選択が無い');
+  if (!/data-fc="furiBank"/.test(APP)) throw new Error('★銀行の選択が無い（人に改行を選ばせる作りのまま）');
+  if (!/銀行に取り込めなかった時/.test(APP)) throw new Error('★折りたたみの見出しが「いつ使うか」になっていない');
+  if (!/Zengin\.NEWLINES/.test(APP) || !/Zengin\.BANKS/.test(APP)) throw new Error('選択肢を lib から作っていない＝二重に持っている');
+  // ★折りたたみは既定で閉じている（開いた状態を保存しない）
+  if (!/var furiFoldOpen\s*=\s*false/.test(APP)) throw new Error('★既定で開いている');
+  // ★「CR+LFとは…」の解説を画面に書かない
+  if (/CR\+LF\s*(とは|は改行)/.test(APP)) throw new Error('★解説文を書いている（読まれない）');
+});
+
+T('★⑪ 未確認の銀行は改行を動かさない（libで担保）', () => {
+  const Z = fs.readFileSync(path.join(ROOT, 'lib/zengin.js'), 'utf8');
+  if (!/b\.confirmed/.test(Z)) throw new Error('★確認済みかどうかを見ずに銀行の形を使っている');
+  const rows = [...Z.matchAll(/confirmed:\s*false[^}]*/g)];
+  if (rows.length < 4) throw new Error('未確認の行が少なすぎる＝この検査が空振り');
+});
+
+T('★⑫ 委託者情報が空なら先に案内を出す（埋める順番を伝える）', () => {
+  if (!/まず下の「委託者情報」を埋めてください/.test(APP)) throw new Error('★案内が無い');
+  if (!/needBasics/.test(APP)) throw new Error('空かどうかを見ていない＝常に出る/常に出ない');
 });
 
 T('★⑧ 押した時、その会社の設定を lib に渡している（渡し忘れ＝銀行で弾かれる）', () => {

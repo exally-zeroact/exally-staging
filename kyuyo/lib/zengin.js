@@ -97,6 +97,56 @@
     return NEWLINES[k] != null ? k : NEWLINE_DEFAULT;
   }
 
+  /* ── ★銀行の表（これが唯一の正。画面はここから作る）★ ──────────────────
+   * ★並べ方：中小企業のメインバンクは【地方銀行39.76%＋信用金庫】が最多（2025年 全国160万社調査）。
+   *   だから【地銀・信金を先頭】に置き、司さんの地域(愛媛)から埋める。メガ・ネットは後回し。
+   *   ★目標は「全銀行を網羅」ではなく「今いる客の銀行が全部ある」。★
+   * ★confirmed:false（未確認）は「公式仕様に改行の記載を確認できていない」という意味。
+   *   ★未確認は改行を動かさない＝既定(CR+LF)のまま。「未確認」は「変える理由が無い」ということ。★
+   * 出典の全文引用は docs/zengin-newline-banks.md（この表と機械で突き合わせている）。 */
+  var BANKS = [
+    // ── 地方銀行・信用金庫・JA（ここから埋める） ──
+    { key: 'iyo', name: '伊予銀行', newline: 'CRLF', confirmed: true, source: 'https://www.iyobank.co.jp/business/pdf/ieb_manual.pdf' },
+    { key: 'oita', name: '大分銀行', newline: 'CRLF', confirmed: true, source: 'https://www.dhbk.co.jp/business/efficiency/ib/pdf/sougou_furikomi_zenginkyou.pdf' },
+    { key: 'kyoto', name: '京都銀行', newline: 'CRLF', confirmed: true, source: 'https://www.kyotobank.co.jp/houjin/webeb/manual/pdf/sougou_file.pdf' },
+    { key: 'hirogin', name: '広島銀行', newline: 'CRLF', confirmed: true, source: 'https://www.hirogin.co.jp/bizweb/inc/pdf/fileformat_file.pdf' },
+    { key: 'gunma', name: '群馬銀行', newline: 'CRLF', confirmed: true, source: 'https://www.gunmabank.co.jp/hojin/biznb/service/pdf/z_format1.pdf' },
+    { key: 'towa', name: '東和銀行', newline: 'CRLF', confirmed: true, source: 'https://www.towabank.co.jp/houjin/file_format.pdf' },
+    { key: 'kiraboshi', name: 'きらぼし銀行', newline: 'CRLF', confirmed: true, source: 'https://www.kiraboshibank.co.jp/hojin/kouritsuka/biz-net/fileformat/pdf/sogofurikomi.pdf' },
+    { key: 'ja', name: 'JAバンク', newline: 'CRLF', confirmed: true, source: 'https://www.houjinnet.jabank.jp/faq/pdf/format.pdf' },
+    // ── 流通・ネット ──
+    { key: 'aeon', name: 'イオン銀行', newline: 'CRLF', confirmed: true, source: 'https://www.aeonbank.co.jp/business/pdf/manual_other_03.pdf' },
+    { key: 'rakuten', name: '楽天銀行', newline: 'NONE', confirmed: true, source: 'https://www.rakuten-bank.co.jp/business/howto/pdf/h07_06_05.pdf' },
+    // ── メガ・信託（シェアが小さいので後回し） ──
+    { key: 'mufg', name: '三菱UFJ銀行（BizSTATION）', newline: 'CRLF', confirmed: true, source: 'https://web.bizstn.bk.mufg.jp/biz/help/pdf/manual_a-14-3.pdf' },
+    { key: 'mufgtr', name: '三菱UFJ信託銀行', newline: 'CRLF', confirmed: true, source: 'https://www.tr.mufg.jp/houjin/mbd/manual/pdf/manual05.pdf' },
+    // ── ★未確認（公式仕様に改行の記載を確認できていない）★ 改行は既定のまま動かさない ──
+    { key: 'ehime', name: '愛媛銀行', newline: 'CRLF', confirmed: false, source: '' },
+    { key: 'ehime-shinkin', name: '愛媛信用金庫', newline: 'CRLF', confirmed: false, source: '' },
+    { key: 'imabari-shinkin', name: '今治信用金庫', newline: 'CRLF', confirmed: false, source: '' },
+    { key: 'shinkin', name: 'その他の信用金庫', newline: 'CRLF', confirmed: false, source: '' },
+    { key: 'mizuho', name: 'みずほ銀行', newline: 'CRLF', confirmed: false, source: '' },
+    { key: 'smbc', name: '三井住友銀行', newline: 'CRLF', confirmed: false, source: '' },
+    { key: 'yucho', name: 'ゆうちょ銀行', newline: 'CRLF', confirmed: false, source: '' }
+  ];
+  function bankOf(key) {
+    var k = String(key == null ? '' : key);
+    for (var i = 0; i < BANKS.length; i++) { if (BANKS[i].key === k) return BANKS[i]; }
+    return null;
+  }
+  /* 実際に使う改行を決める。
+   *   ① 手で選んでいれば それ（'AUTO'/空 は「選んでいない」）
+   *   ② 銀行を選んでいて【確認済み】なら その銀行の形
+   *   ③ どちらでもなければ ★既定 CR+LF★（一覧にない銀行・未確認の銀行・未設定 は全部ここ） */
+  function resolveNewlineKey(opts) {
+    opts = opts || {};
+    var manual = String(opts.newline == null ? '' : opts.newline).toUpperCase().replace(/[^A-Z]/g, '');
+    if (manual && manual !== 'AUTO') return newlineKey(manual);
+    var b = bankOf(opts.bank);
+    if (b && b.confirmed) return newlineKey(b.newline);
+    return NEWLINE_DEFAULT;
+  }
+
   // Shift-JIS(半角のみ)へエンコード。ASCII=そのまま/半角カナ(U+FF61..FF9F)=0xA1..0xDF。改行はそのまま通す。
   function toShiftJisBytes(text) {
     var bytes = [];
@@ -114,7 +164,8 @@
   /** 総合振込ファイルを生成。
    * @param {object} committer 委託者 {code,name,torikumiMMDD,bankNo,bankName,branchNo,branchName,yokin,account}
    * @param {Array} transfers 明細 [{bankNo,bankName,branchNo,branchName,yokin,account,name,amount}]
-   * @param {object} [opts] {newline:'CRLF'|'LF'|'CR'|'NONE'} ★既定CRLF。空/未設定/知らない値も既定へ倒す
+   * @param {object} [opts] {bank:'iyo'…, newline:'AUTO'|'CRLF'|'LF'|'CR'|'NONE'}
+   *   ★既定CRLF。空/未設定/知らない値/未確認の銀行/一覧にない銀行 は全部 既定へ倒す
    * @returns {object} {text, bytes, count, total, records[], newline}  (amount<=0の明細は除外)
    */
   function build(committer, transfers, opts) {
@@ -124,7 +175,7 @@
     list.forEach(function (t) { recs.push(dataRec(t)); total += num(t.amount); });
     recs.push(trailer(list.length, total));
     recs.push(endRec());
-    var key = newlineKey(opts && opts.newline);
+    var key = resolveNewlineKey(opts);
     var nl = NEWLINES[key];
     // 改行ありの時は末尾にも付ける(エンドレコード後の改行は各行「任意」＝今までの形を変えない)。
     var text = nl ? recs.join(nl) + nl : recs.join('');
@@ -134,6 +185,7 @@
   return {
     build: build, header: header, dataRec: dataRec, trailer: trailer, endRec: endRec,
     toHankaku: toHankaku, padN: padN, padC: padC, yokinCode: yokinCode, toShiftJisBytes: toShiftJisBytes,
-    newlineKey: newlineKey, NEWLINES: NEWLINES, NEWLINE_DEFAULT: NEWLINE_DEFAULT
+    newlineKey: newlineKey, resolveNewlineKey: resolveNewlineKey, bankOf: bankOf,
+    NEWLINES: NEWLINES, NEWLINE_DEFAULT: NEWLINE_DEFAULT, BANKS: BANKS
   };
 });
