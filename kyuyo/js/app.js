@@ -2525,7 +2525,7 @@
   }
   /* 改行コードの選択肢。★選べる中身は lib(Zengin.NEWLINES) から取る＝面とlibで二重に持たない。
      ★見せ方(言い方と並び順)だけ面が決める。既定を先頭に置く。libが読めない時も既定だけは出す。 */
-  var FURI_NL_LABEL={ CRLF:'CR+LF（既定）', NONE:'改行なし', LF:'LF', CR:'CR' };
+  var FURI_NL_LABEL={ CRLF:'CR+LF 既定', NONE:'改行なし', LF:'LF', CR:'CR' };
   function furiNewlineOptions(cur){
     var has=(typeof Zengin!=='undefined'&&Zengin.NEWLINES)?Zengin.NEWLINES:null;
     var keys=has?['CRLF','NONE','LF','CR'].filter(function(k){return has[k]!=null;}):['CRLF'];
