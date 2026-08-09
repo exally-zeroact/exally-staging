@@ -51,7 +51,12 @@ const A = loadApp();
 function emp(id, name, o) {
   const base = A.defEmp(name);
   delete base.id;
-  return Object.assign({ id, name, pref: 'tokyo', birthYmd: '1985-04-10' }, base, o, { id, name });
+  /* ★pref は base(defEmp) の後ろに置いて明示的に固定する（2026-08-09）★
+     defEmp の県の既定を「未選択」に変えた（黙って東京の率で計算させないため）。
+     ここは【凍結した入力】なので、凍結した当時と同じ 'tokyo' を fixture 側で持つ。
+     ＝アプリの既定が変わっても、ゴールデンの入力は1バイトも動かない。
+     （birthYmd は今までどおり base の値が勝つ＝順番を変えない） */
+  return Object.assign({ id, name, pref: 'tokyo', birthYmd: '1985-04-10' }, base, { pref: 'tokyo' }, o, { id, name });
 }
 // defCompany は __PAYSLIP_TEST に露出していないため、初期化直後の state.company(=defCompany()の結果)を複製して使う
 const DEF_COMPANY = JSON.parse(JSON.stringify(A.state.company));

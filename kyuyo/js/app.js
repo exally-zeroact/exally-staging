@@ -285,10 +285,20 @@
   function shahoKanyuWarn(e){ return PW().shahoKanyuWarn(e, ctxOf()); }
   function statutoryStaleWarn(){ return PW().statutoryStaleWarn(ctxOf()); }
   function empWarnings(e){ return PW().empWarnings(e, ctxOf()); }
+  /* 都道府県の選択肢。★先頭に「未選択」を置く★＝新しい人を勝手に東京にしない。
+     空のままだと健保が黙って東京の率で計算され、最賃の判定も動かないので、
+     未選択の間は黄色で知らせて「今月を確定」を止める（lib/payroll-warnings.js）。 */
   function prefOptions(sel){
     var S=SHH(); var K=(S&&S.KENKO_RITSU)||{tokyo:{name:'東京都'}};
-    return Object.keys(K).map(function(code){return '<option value="'+code+'"'+(code===sel?' selected':'')+'>'+esc(K[code].name)+'</option>';}).join('');
+    var cur=String(sel==null?'':sel);
+    return '<option value=""'+(cur?'':' selected')+'>未選択</option>'
+      +Object.keys(K).map(function(code){return '<option value="'+code+'"'+(code===cur?' selected':'')+'>'+esc(K[code].name)+'</option>';}).join('');
   }
+  function prefMissingWarn(){ return PW().prefMissingWarn(activeEmployees()); }
+  function prefTokyoNote(){ return PW().prefTokyoNote(state.employees||[]); }
+  // 対象月に在籍している人（＝この月の計算に乗る人）だけを見る
+  function activeEmployees(){ return (state.employees||[]).filter(function(e){ return isActiveInMonth(e,state.month) && !e.retired; }); }
+  function prefMissingIds(){ return PW().prefStats(activeEmployees()).missing.map(function(x){return x.id;}); }
   // 健保従業員負担率(対象月payYmの社保年度で自動選択)＋子育て支援金(令和8/4〜)。両方healthRateに含めて社保計算へ渡す。
   function prefRate(code, payYm){ return PM().prefRate(code, payYm); }
 
@@ -296,7 +306,7 @@
   //  勝手に手当や額が付くのを防ぐ。payType/pref/taxClass/fuyou/kintai 等の構造は既定を維持。
   function defEmp(name){
     return { id:uid(), name:name||'従業員 1', no:'', birthYmd:'1980-05-15', dept:'', role:'', employmentType:'employee', houshuKubun:'none',
-      payType:'月給', base:'', hourly:'', commissionAmt:'', hourlyGuarantee:'', salesAmt:'', pieceCount:'', payRule:null, fuyou:'1', nenshoFuyo:'', pref:'tokyo', commute:'', commuteType:'public', commuteKm:'', residentTax:'', residentTaxMode:'monthly', residentTaxAnnual:'', residentTaxIkkatsu:false, juminCollect:'special', bank:'',
+      payType:'月給', base:'', hourly:'', commissionAmt:'', hourlyGuarantee:'', salesAmt:'', pieceCount:'', payRule:null, fuyou:'1', nenshoFuyo:'', pref:'', commute:'', commuteType:'public', commuteKm:'', residentTax:'', residentTaxMode:'monthly', residentTaxAnnual:'', residentTaxIkkatsu:false, juminCollect:'special', bank:'',
       furiBankName:'', furiBankNo:'', furiBranchName:'', furiBranchNo:'', furiYokin:'普通', furiAccount:'', furiKana:'',
       annualHolidays:'', dailyWorkH:'', dailyWorkM:'', workedH:'160', workedM:'0', weeklyScheduledH:'', dailyEntries:[],
       kintai:[{label:'出勤日数',value:'21'},{label:'欠勤日数',value:'0'},{label:'有給取得',value:'1'}],
@@ -925,7 +935,10 @@
     var FILTERS=[['active','在籍中',cActive],['leave','休暇中',cLeave],['retired','退職者',cRet],['all','全員',state.employees.length]];
     var groups={}; var order=[];
     state.employees.forEach(function(e,i){ if(!empMatchesFilter(e)) return; var g=e.dept||'未分類'; if(!groups[g]){groups[g]=[];order.push(g);} groups[g].push(i); });
-    var html='<div class="emp-filter">'+FILTERS.map(function(f){ return '<b class="ef-b'+(filt===f[0]?' on':'')+'" data-empfilter="'+f[0]+'">'+f[1]+'<span class="ef-n">'+f[2]+'</span></b>'; }).join('')+'</div>';
+    /* ★都道府県：未選択は黄色（直す場所がここなので、ここに出す）。
+       東京のままの人数は数えて出すだけ＝★勝手に書き換えない★（初期値のままかもしれない、を知らせる）。 */
+    var html=prefMissingWarn()+prefTokyoNote();
+    html+='<div class="emp-filter">'+FILTERS.map(function(f){ return '<b class="ef-b'+(filt===f[0]?' on':'')+'" data-empfilter="'+f[0]+'">'+f[1]+'<span class="ef-n">'+f[2]+'</span></b>'; }).join('')+'</div>';
     html+=itemSuggestHTML(); // カスタム項目名の候補(過去に使った名前＋定番)
     html+=empProfileStripHTML();
     var pats=state.payPatterns||[];
@@ -1344,11 +1357,14 @@
     var viewToggle=activeCount>1 ? '<div class="in-view-seg imode-seg" style="grid-template-columns:1fr 1fr;max-width:320px">'
       +'<b class="ivw'+(view==='card'?' on':'')+'" data-ivw="card">カードで1人ずつ</b>'
       +'<b class="ivw'+(view==='table'?' on':'')+'" data-ivw="table">表でまとめて</b></div>' : '';
-    // 「今月を確定」ボタン(表/カード両ビューで共通)。★以前は表ビューで未定義=「undefined」表示+確定不可だった★
-    var confirmBtn='<div style="display:flex;align-items:center;gap:10px;margin:14px 0 4px"><button class="btn-primary" data-confirm-month style="flex:0 0 auto;padding:11px 18px;font-size:14px">今月を確定（台帳・年調に反映）</button>'
+    /* 「今月を確定」ボタン(表/カード両ビューで共通)。★以前は表ビューで未定義=「undefined」表示+確定不可だった★
+       ★都道府県が未選択の人が1人でもいたら押せない★＝黙って東京の率で確定させない。
+         理由はボタンの中に入れる（下に小さく置くと読まれない・昨日の振込タブと同じ形）。 */
+    var prefMiss=PW().prefStats(activeEmployees());
+    var confirmBtn='<div style="display:flex;align-items:center;gap:10px;margin:14px 0 4px"><button class="btn-primary" data-confirm-month'+(prefMiss.missingCount?' disabled':'')+' style="flex:0 0 auto;padding:11px 18px;font-size:14px">今月を確定（'+(prefMiss.missingCount?'県が未選択'+prefMiss.missingCount+'名':'台帳・年調に反映')+'）</button>'
       +(cnt.need>0?'<span style="font-size:11px;color:#92500A;font-weight:700">未確認 '+cnt.need+'名</span>':'<span style="font-size:11px;color:#3D9E72;font-weight:700">✓ 確認済</span>')
       +'<span style="font-size:10px;color:#5C7E6C"><b>保存は自動</b>です。「確定」は全員を確認済みにし、<b>賃金台帳・年末調整の集計対象</b>として今月を記録し、<b>従業員のWeb明細に自動公開</b>します（従業員はいつでも閲覧可・あとで直せます）。</span></div>';
-    if(view==='table' && activeCount>1){ host.innerHTML=statutoryStaleWarn()+ledgerImportBanner()+calHTML+progHTML+viewToggle+renderInputTableHTML(reviewOnly)+confirmBtn; return; }
+    if(view==='table' && activeCount>1){ host.innerHTML=statutoryStaleWarn()+prefMissingWarn()+ledgerImportBanner()+calHTML+progHTML+viewToggle+renderInputTableHTML(reviewOnly)+confirmBtn; return; }
     var cards=state.employees.map(function(e,i){
       if(!isActiveInMonth(e,state.month)) return '';
       ensureKintai(e);
@@ -1384,7 +1400,7 @@
       return;
     }
     var emptyMsg=(reviewOnly && !cards) ? '<p class="hint" style="text-align:center;padding:18px 0">要確認の人はいません（全員確認済み）。</p>' : '';
-    host.innerHTML=statutoryStaleWarn()+ledgerImportBanner()+calHTML+progHTML+viewToggle+cards+emptyMsg+confirmBtn;
+    host.innerHTML=statutoryStaleWarn()+prefMissingWarn()+ledgerImportBanner()+calHTML+progHTML+viewToggle+cards+emptyMsg+confirmBtn;
   }
   // 表でまとめて入力(全従業員1画面・弥生の弱点/Exallyモデル)。列は既存と同じdata属性を再利用=同じハンドラで書ける。
   function renderInputTableHTML(reviewOnly){
@@ -2890,6 +2906,11 @@
           uiConfirm('「確認済」を外すと、この月の保存内容（賃金台帳・年末調整の集計）が現在の入力で再計算・更新される場合があります。よろしいですか？').then(function(ok){ if(!ok){ renderInput(); return; } setConfirm(emc.id,false); renderInput(); persistSaveDebounced(); });
           return;
         }
+        // ★都道府県が未選択の人は確認済みにしない（黙って東京の率で凍結させない）
+        if(!String(emc.pref||'').trim()){
+          e.target.checked=false;
+          uiAlert('都道府県が未選択です。健康保険料率が県ごとに違うため、選ぶまで正しい額になりません（最低賃金の判定もできません）。設定 ▸ 従業員マスタ で選んでください。');
+          return; }
         // ★確定前に現在値のスナップショットを保存してから凍結★(一括「今月を確定」と同じ順)。
         //  先に確定するとsaveMonthlyPayslipsが確定済みをスキップし当月slipが未保存になる不具合を防ぐ。
         try{ saveMonthlyPayslips(); }catch(_){} setConfirm(emc.id, true); renderInput(); persistSave(); return; }

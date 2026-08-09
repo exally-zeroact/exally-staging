@@ -58,3 +58,53 @@ T('未知の府県コードでも例外なく数値（フォールバック）',
   var r = PayslipCalc.computePayslip({ shikyu: [{ label: '基本給', value: 300000 }], birthYmd: '1990-01-01', payYm: '2026-06', fuyou: 0, hyojunBase: 300000 });
   eq(typeof r.si.health, 'number'); ok(r.si.health > 0);
 });
+
+/* ══ ★都道府県の未選択（黙って東京で計算されるのを止める）★ ═══════════════════
+ * 【2026-08-09 実測】県が空だと:
+ *   ・健保 … getKenko('') は★東京にフォールバック★（名前も「東京都」）＝黙って違う率で計算される
+ *   ・最賃 … getChingin('') が null → minWageInfo が null ＝★最賃割れの判定が動かない★
+ * だから「未選択」という状態を持ち、黄色で知らせて確定を止める。
+ * ★既に入っている県は書き換えない★（東京のままの人は数えて出すだけ）。 */
+var PW = require('../lib/payroll-warnings.js');
+
+T('★県が空だと 健保は東京に倒れ、最賃は判定できない（止める理由の実測）', function () {
+  var k = SH.getKenko('', '2026-09');
+  eq(k.name, '東京都', '空なのに東京の名前が出る');
+  eq(k.total, SH.getKenko('tokyo', '2026-09').total, '空なのに東京の率で計算される');
+  var SA = require('../lib/saitei-chingin.js');
+  eq(SA.getChingin(''), null, '最賃は引けない');
+  eq(SA.getChingin('ehime'), 1033, '愛媛は引ける(令和7年度)');
+});
+
+T('★prefStats: 未選択の人を数える／東京のままの人も数える（書き換えない）', function () {
+  var s = PW.prefStats([{ id: 'a', name: '甲', pref: '' }, { id: 'b', name: '乙', pref: 'tokyo' },
+    { id: 'c', name: '丙', pref: 'ehime' }, { id: 'd', name: '丁' }, { id: 'e', name: '戊', pref: '  ' }]);
+  eq(s.missingCount, 3, '空・未設定・空白は未選択');
+  eq(s.missing.map(function (x) { return x.name; }).join(','), '甲,丁,戊');
+  eq(s.tokyoCount, 1, '東京のままの人数');
+  eq(s.total, 5);
+});
+T('prefStats: 空配列・undefined でも落ちない（0件）', function () {
+  eq(PW.prefStats([]).missingCount, 0); eq(PW.prefStats().missingCount, 0); eq(PW.prefStats([]).tokyoCount, 0);
+});
+
+T('★未選択が居れば黄色が出て、居なければ何も出ない', function () {
+  var w = PW.prefMissingWarn([{ name: '甲', pref: '' }]);
+  ok(/都道府県が未選択/.test(w), '黄色の文が出ない: ' + w);
+  ok(/cr-warn/.test(w), '黄色(cr-warn)になっていない');
+  ok(/選ぶまで正しい額になりません/.test(w), '理由が書かれていない');
+  ok(/最低賃金の判定もできません/.test(w), '最賃が止まることを言っていない');
+  ok(/従業員マスタ/.test(w), 'どこで直すか書かれていない');
+  eq(PW.prefMissingWarn([{ name: '乙', pref: 'ehime' }]), '', '全員選んでいれば出さない');
+  eq(PW.prefMissingWarn([]), '', '0人なら出さない');
+});
+T('未選択が3人以上なら「ほか○名」に縮める（1行に収める）', function () {
+  var w = PW.prefMissingWarn([{ name: '甲', pref: '' }, { name: '乙', pref: '' }, { name: '丙', pref: '' }]);
+  ok(/甲ほか2名/.test(w), '縮めていない: ' + w);
+});
+T('★東京のままの人数は「知らせるだけ」（黄色にしない・書き換えない）', function () {
+  var n = PW.prefTokyoNote([{ name: '甲', pref: 'tokyo' }, { name: '乙', pref: 'tokyo' }, { name: '丙', pref: 'ehime' }]);
+  ok(/2名/.test(n), '人数が出ていない: ' + n);
+  eq(/cr-warn/.test(n), false, '★黄色にしてはいけない（勝手に直させない・知らせるだけ）');
+  eq(PW.prefTokyoNote([{ name: '丙', pref: 'ehime' }]), '', '0人なら出さない');
+});

@@ -227,6 +227,41 @@
     return '<div class="cr-warn" style="margin:0 0 10px">⚠ 対象月（' + esc(YM(ctx)) + '）の <b>' + msgs.join('・') + '</b> は未収録の年度です。直近の収録年度の値で<b>暫定計算</b>しています（公式値が公表されたらデータ更新が必要）。</div>';
   }
 
+  /* ── ⑦-2 ★都道府県の未選択（黙って東京で計算されるのを止める）★ ──────────────
+   * 【2026-08-09 実測】従業員の都道府県が空だと:
+   *   ・健康保険料率 … ★黙って東京の率で計算され、名前も「東京都」と出る★(getKenkoのフォールバック)
+   *   ・最低賃金     … getChingin('')=null → minWageInfo が null ＝ ★最賃割れの判定が行われない★
+   *   ＝ 赤くも黄色くもならずに違う金額で回る。だから【選ぶまで確定させない】。
+   * ★既に入っている県は書き換えない★（勝手に直さない）。東京のままの人数は数えて出すだけ。
+   * 純関数＝画面に触らないので、テストが作り物で確かめられる。 */
+  function prefStats(emps) {
+    var list = emps || [], missing = [], tokyo = 0;
+    for (var i = 0; i < list.length; i++) {
+      var e = list[i] || {};
+      var p = String(e.pref == null ? '' : e.pref).trim();
+      if (!p) missing.push({ id: e.id, name: e.name || '' });
+      else if (p === 'tokyo') tokyo++;
+    }
+    return { missing: missing, missingCount: missing.length, tokyoCount: tokyo, total: list.length };
+  }
+  // 未選択が1人でもいれば黄色。0人なら空文字（＝何も出さない）。
+  function prefMissingWarn(emps) {
+    var s = prefStats(emps);
+    if (!s.missingCount) return '';
+    var nm = s.missing.map(function (x) { return esc(x.name); });
+    var who = nm.length <= 2 ? nm.join('・') : (nm[0] + 'ほか' + (nm.length - 1) + '名');
+    return '<div class="cr-warn" style="margin:0 0 10px">⚠ <b>都道府県が未選択</b>です（' + who + '）。'
+      + '健康保険料率が県ごとに違うため、<b>選ぶまで正しい額になりません</b>（最低賃金の判定もできません）。'
+      + '設定 ▸ 従業員マスタ で選んでください。</div>';
+  }
+  // 「東京のままの人が何人いるか」を知らせるだけの1行（黄色にしない・書き換えない）。0人なら空。
+  function prefTokyoNote(emps) {
+    var s = prefStats(emps);
+    if (!s.tokyoCount) return '';
+    return '<p class="hint" style="margin:0 0 8px">都道府県が<b>東京都</b>のまま：' + s.tokyoCount + '名'
+      + '（初期値のままかもしれません。健康保険料率は県ごとに違います）</p>';
+  }
+
   // ── ⑧ 経理向けサマリ（Excel/集計に出す） ──
   // 経理向け警告(最賃割れ/差引マイナス/休業手当未入力)。従業員に渡す明細でなく集計/Excelに出す。
   function empWarnings(e, ctx) {
@@ -312,6 +347,7 @@
     laborLimitItems: laborLimitItems, laborLimitWarn: laborLimitWarn, laborLimitText: laborLimitText,
     shahoOffWarn: shahoOffWarn, fullTimeWeeklyH: fullTimeWeeklyH, shoteiMonthlyWage: shoteiMonthlyWage, shahoKanyuWarn: shahoKanyuWarn,
     statutoryStaleWarn: statutoryStaleWarn, empWarnings: empWarnings, prorateNote: prorateNote,
+    prefStats: prefStats, prefMissingWarn: prefMissingWarn, prefTokyoNote: prefTokyoNote,
     collect: collect, collectCompany: collectCompany,
   };
 });

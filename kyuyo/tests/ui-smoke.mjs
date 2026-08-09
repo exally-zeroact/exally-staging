@@ -171,6 +171,9 @@ T('個別「確認済」で当月スナップショットが保存される(確�
   q('.bn[data-scr="scr-input"]').click();
   const cb = q('#input-list .econf'); ok(cb, '個別「確認済」チェックボックス');
   const eci = +cb.dataset.econf; const emp = A.state.employees[eci];
+  /* ★県が未選択だと確認済みにできない（2026-08-09の守り）。ここで測りたいのは
+     「確認を付けた時にスナップショットが保存されるか」なので、県は選んだ状態にしてから押す。 */
+  if (!emp.pref) emp.pref = 'tokyo';
   ok(!cb.checked, '初期は未確認');
   cb.click(); // 確認ON → 確定前に saveMonthlyPayslips が走るはず
   ok(saved.some(s => s.eid === emp.id && s.ym === '2026-06'), '確定した従業員の当月slipが保存された(' + saved.map(s => s.eid).join(',') + ')');
@@ -782,7 +785,12 @@ T('修正A 新規従業員ひな型=決めつけ金額なし(基本給/時給/�
   const e = A.defEmp('テスト');
   ok(e.base === '' && e.hourly === '' && e.commute === '' && e.residentTax === '', '金額既定(基本給/時給/通勤/住民税)が空');
   ok(e.shikyu.length === 1 && e.shikyu[0].label === '基本給' && e.shikyu[0].value === '', 'shikyu=基本給(空)のみ・住宅手当なし');
-  ok(e.payType === '月給' && e.pref === 'tokyo' && e.taxClass === 'ko' && e.fuyou === '1', '骨組み(payType/pref/taxClass/fuyou)維持');
+  /* ★2026-08-09 変更: pref(都道府県)は骨組みから外した★
+     県が最初から入っていると「東京」で黙って計算が通る（健保率は県ごとに違い、
+     空だと最賃の判定も動かない＝実測）。だから ★県は「未選択」で始めて、選ぶまで確定させない★
+     形にした（黄色＋確定ボタンを止める）。ここを 'tokyo' に戻すと守りが効かない状態に逆戻りする。 */
+  ok(e.payType === '月給' && e.taxClass === 'ko' && e.fuyou === '1', '骨組み(payType/taxClass/fuyou)維持');
+  ok(e.pref === '', '★県は未選択で始める（勝手に東京にしない）');
   ok(Array.isArray(e.kintai) && e.kintai.length === 3, 'kintai骨組み維持');
 });
 

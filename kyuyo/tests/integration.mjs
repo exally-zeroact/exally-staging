@@ -769,5 +769,77 @@ T('★振込: 振込先が未入力の人の警告が1行（3行にしない）'
   } finally { st.employees = keep; win.document.querySelector('[data-scr="scr-furikomi"]').click(); }
 });
 
+/* ★都道府県の未選択を、わざと作って画面で確かめる（2026-08-09）
+   県が空だと 健保が黙って東京の率になり、最賃の判定も動かない（lib側で実測済み）。
+   だから ①黄色が出る ②「今月を確定」が押せない ③選んだら押せる を実物の画面で見る。 */
+function withEmployees(emps, fn) {
+  const A = win.__PAYSLIP_TEST, st = A.state;
+  const keep = st.employees.slice(), keepConf = st.confirmed;
+  try { st.employees = emps; st.confirmed = {}; win.document.querySelector('[data-scr="scr-input"]').click(); return fn(); }
+  finally { st.employees = keep; st.confirmed = keepConf; win.document.querySelector('[data-scr="scr-input"]').click(); }
+}
+const mkEmp = (name, pref) => {
+  const A = win.__PAYSLIP_TEST;
+  return Object.assign(A.defEmp(name), { payType: '月給', base: '250000', joinYmd: '2020-04-01', pref: pref });
+};
+
+T('★新しく足した人の県は「未選択」（勝手に東京にしない）', () => {
+  const e = win.__PAYSLIP_TEST.defEmp('新人');
+  eq(e.pref, '', '★既定が空でない＝黙って東京の率で計算される');
+});
+
+T('★★県が未選択のまま回すと 黄色が出て「今月を確定」が押せない★★', () => {
+  withEmployees([mkEmp('未選択さん', ''), mkEmp('選んださん', 'ehime')], () => {
+    const box = win.document.querySelector('#input-list, #scr-input');
+    const t = box.textContent;
+    ok(/都道府県が未選択/.test(t), '★黄色が出ていない');
+    ok(/選ぶまで正しい額になりません/.test(t), '理由が出ていない');
+    ok(/最低賃金の判定もできません/.test(t), '最賃が止まることを言っていない');
+    const b = win.document.querySelector('[data-confirm-month]');
+    ok(b, '確定ボタンが無い');
+    eq(b.disabled, true, '★未選択なのに確定が押せてしまう');
+    ok(/県が未選択1名/.test(b.textContent), '★理由がボタンの中に無い: ' + b.textContent);
+  });
+});
+
+T('★全員が県を選んでいれば、黄色は消えて確定が押せる（誤って止めない）', () => {
+  withEmployees([mkEmp('甲', 'ehime'), mkEmp('乙', 'tokyo')], () => {
+    const t = win.document.querySelector('#scr-input').textContent;
+    eq(/都道府県が未選択/.test(t), false, '選んでいるのに黄色が出ている');
+    const b = win.document.querySelector('[data-confirm-month]');
+    eq(b.disabled, false, '★選んでいるのに押せない（誤って止めている）');
+    ok(/台帳・年調に反映/.test(b.textContent), 'ボタンの文が戻っていない: ' + b.textContent);
+  });
+});
+
+T('★県の選択肢の先頭が「未選択」で、選べば消える（画面の実物）', () => {
+  withEmployees([mkEmp('未選択さん', '')], () => {
+    const A = win.__PAYSLIP_TEST;
+    win.document.querySelector('[data-scr="scr-settings"]').click();
+    [...win.document.querySelectorAll('button.seg-b')].find(b => /従業員マスタ/.test(b.textContent)).click();
+    A.state.open[A.state.employees[0].id] = true;
+    A.renderEmpMaster();
+    const sel = win.document.querySelector('#emp-list [data-f="pref"]');
+    ok(sel, '県の選択が無い');
+    eq(sel.options[0].value, '', '先頭が未選択でない');
+    eq(sel.options[0].text, '未選択');
+    eq(sel.value, '', '★新しい人が最初から東京になっている');
+    ok([...sel.options].some(o => o.value === 'ehime'), '47県が並んでいない');
+    // 従業員マスタにも黄色が出る（直す場所に出す）
+    ok(/都道府県が未選択/.test(win.document.querySelector('#emp-list').parentNode.textContent), '★直す画面に黄色が出ていない');
+  });
+});
+
+T('★東京のままの人数は「知らせるだけ」＝黄色にしないし、書き換えない', () => {
+  withEmployees([mkEmp('甲', 'tokyo'), mkEmp('乙', 'tokyo')], () => {
+    win.document.querySelector('[data-scr="scr-settings"]').click();
+    [...win.document.querySelectorAll('button.seg-b')].find(b => /従業員マスタ/.test(b.textContent)).click();
+    win.__PAYSLIP_TEST.renderEmpMaster();
+    const host = win.document.querySelector('#emp-list');
+    ok(/東京都.*2名|2名/.test(host.textContent), '人数が出ていない');
+    eq(win.__PAYSLIP_TEST.state.employees[0].pref, 'tokyo', '★勝手に書き換えている');
+  });
+});
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
