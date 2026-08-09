@@ -841,5 +841,104 @@ T('★東京のままの人数は「知らせるだけ」＝黄色にしない�
   });
 });
 
+/* ★従業員の削除の歯止め（2026-08-09）★
+   実測: 削除すると 倉庫には給与の記録が残るのに、一覧・集計・賃金台帳の★どこからも出てこない★。
+   賃金台帳は労基法108条で保存が要る＝★取り出せない＝無いのと同じ★。
+   だから「確定した給与明細が1件でもある人」は削除できない。作り間違いを消す用途だけに絞る。
+   ここは★実際にボタンを押して★確かめる（歯止めを外せば、この検査が赤になる）。 */
+function openEmpCard(idx) {
+  const A = win.__PAYSLIP_TEST;
+  const e = A.state.employees[idx];
+  A.state.open[e.id] = true; A.state.open['D' + e.id] = true;
+  A.renderEmpMaster();
+  return win.document.querySelectorAll('#emp-list .mco')[idx];
+}
+function withRoster(emps, confirmed, fn) {
+  const A = win.__PAYSLIP_TEST, st = A.state;
+  const keepE = st.employees.slice(), keepC = st.confirmed, keepO = st.open;
+  try { st.employees = emps; st.confirmed = confirmed || {}; st.open = {}; return fn(); }
+  finally { st.employees = keepE; st.confirmed = keepC; st.open = keepO; }
+}
+
+T('★確定した月がある人は 削除ボタンが押せない＋理由と「退職」への案内が出る', () => {
+  const a = mkEmp('確定あり', 'ehime'), b = mkEmp('確定なし', 'ehime');
+  withRoster([a, b], { '2026-07': { [a.id]: true }, '2026-08': { [a.id]: true } }, () => {
+    const card = openEmpCard(0);
+    const del = card.querySelector('.m-del-emp');
+    ok(del, '削除ボタンが無い');
+    eq(del.disabled, true, '★確定があるのに削除が押せてしまう');
+    ok(/確定 2か月/.test(del.textContent), '★理由がボタンの中に無い: ' + del.textContent);
+    ok(/賃金台帳に必要/.test(card.textContent), '理由（台帳に要る）が出ていない');
+    ok(/退職にする/.test(card.textContent), '★「退職」への道が近くに無い');
+  });
+});
+
+T('★★押しても消えない（画面が壊れても最後の砦が効く）★★', () => {
+  const a = mkEmp('確定あり', 'ehime'), b = mkEmp('相方', 'ehime');
+  withRoster([a, b], { '2026-07': { [a.id]: true } }, () => {
+    const A = win.__PAYSLIP_TEST;
+    const card = openEmpCard(0);
+    const del = card.querySelector('.m-del-emp');
+    del.disabled = false;                 // ★歯止め(見た目)をわざと外して押す
+    del.click();
+    const ov = win.document.querySelector('.ui-modal-ov');
+    ok(ov, '何も出ずに消えた（＝最後の砦が無い）');
+    ok(/削除できません/.test(ov.textContent), '理由が出ていない: ' + ov.textContent.slice(0, 60));
+    ok(/退職/.test(ov.textContent), '「退職」への案内が無い');
+    [...ov.querySelectorAll('button')].pop().click();
+    eq(A.state.employees.length, 2, '★確定があるのに消えた');
+  });
+});
+
+/* uiConfirm は Promise なので、OKを押した後の処理は次の順番で起きる＝待ってから数える。
+   名簿の後片付けも、待ってからでないと「消えていない」を見誤る（実際に一度 見誤った）。 */
+const TA = async (n, fn) => { try { await fn(); pass++; console.log('  ✓ ' + n); } catch (e) { fail++; console.log('  ✗ ' + n + ' — ' + (e && e.message)); } };
+const tick = () => new Promise(r => setTimeout(r, 0));
+async function withRosterA(emps, confirmed, fn) {
+  const A = win.__PAYSLIP_TEST, st = A.state;
+  const keepE = st.employees.slice(), keepC = st.confirmed, keepO = st.open;
+  try { st.employees = emps; st.confirmed = confirmed || {}; st.open = {}; return await fn(); }
+  finally { st.employees = keepE; st.confirmed = keepC; st.open = keepO; }
+}
+
+await TA('★確定が1つも無い人は 確認が出て、OKで消える／キャンセルで残る', async () => {
+  const a = mkEmp('間違えて作った人', 'ehime'), b = mkEmp('相方', 'ehime');
+  await withRosterA([a, b], {}, async () => {
+    const A = win.__PAYSLIP_TEST;
+    let card = openEmpCard(0);
+    const del = card.querySelector('.m-del-emp');
+    eq(del.disabled, false, '確定が無いのに押せない（誤って止めている）');
+    ok(/この従業員を削除/.test(del.textContent), 'ボタンの文: ' + del.textContent);
+    // ① キャンセル → 残る
+    del.click();
+    let ov = win.document.querySelector('.ui-modal-ov');
+    ok(ov, '★確認が出ない（戻せない操作なのに）');
+    ok(/元に戻せません/.test(ov.textContent), '戻せないことを言っていない: ' + ov.textContent.slice(0, 80));
+    [...ov.querySelectorAll('button')].find(x => /キャンセル/.test(x.textContent)).click();
+    await tick();
+    eq(A.state.employees.length, 2, 'キャンセルしたのに消えた');
+    // ② OK → 消える
+    card = openEmpCard(0);
+    card.querySelector('.m-del-emp').click();
+    ov = win.document.querySelector('.ui-modal-ov');
+    [...ov.querySelectorAll('button')].find(x => /OK|削除/.test(x.textContent)).click();
+    await tick();
+    eq(A.state.employees.length, 1, '★OKなのに消えていない');
+    eq(A.state.employees[0].name, '相方', '違う人が消えた');
+  });
+});
+
+T('confirmedMonthsOf: 確定した月だけを数える（他人の月・空を数えない）', () => {
+  const A = win.__PAYSLIP_TEST;
+  const keep = A.state.confirmed;
+  try {
+    A.state.confirmed = { '2026-06': { x: true }, '2026-07': { x: true, y: true }, '2026-08': { y: true }, '2026-09': {} };
+    eq(A.confirmedMonthsOf({ id: 'x' }).join(','), '2026-06,2026-07');
+    eq(A.confirmedMonthsOf({ id: 'y' }).join(','), '2026-07,2026-08');
+    eq(A.confirmedMonthsOf({ id: 'z' }).length, 0, '確定していない人は0');
+    eq(A.confirmedMonthsOf({}).length, 0, 'idが無ければ0');
+  } finally { A.state.confirmed = keep; }
+});
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

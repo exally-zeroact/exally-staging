@@ -804,9 +804,20 @@
     var detail=(isContractor
         ? subsec('zaiseki','在籍・勤務',gZaiseki)+contractorPanel+subsec('teate','手当・振込・控除',gTeate)
         : subsec('zaiseki','在籍・勤務',gZaiseki)+subsec('zei','税・住民税',gZei)+subsec('shaho','社会保険',gShaho)+subsec('teate','通勤・手当・振込・控除',gTeate))
-      +'<div style="display:flex;justify-content:space-between;margin-top:10px">'
-        +'<button class="m-retire btn-ghost" style="color:#7A6A2E;border-color:#e6dcb0;padding:8px 14px">'+(e.retired?'復帰させる':'退職にする')+'</button>'
-        +'<button class="m-del-emp btn-ghost" style="color:#C0392B;border-color:#f3c9c4;padding:8px 14px">この従業員を削除</button></div>';
+      /* ★確定した給与明細がある人は削除できない（2026-08-09）★
+         削除しても賃金の記録は倉庫に残るが、画面のどこからも取り出せなくなる＝実測済み。
+         賃金台帳は労基法108条で保存が要る帳簿なので、★取り出せない＝無いのと同じ★。
+         ＝削除は「作り間違いを消す」ためだけに絞る。辞めた人は隣の「退職にする」。 */
+      +(function(){
+        var cm=confirmedMonthsOf(e);
+        var delBtn=cm.length
+          ? '<button class="m-del-emp btn-ghost" disabled style="color:#9aa;border-color:#ddd;padding:8px 14px">削除できません（確定 '+cm.length+'か月）</button>'
+          : '<button class="m-del-emp btn-ghost" style="color:#C0392B;border-color:#f3c9c4;padding:8px 14px">この従業員を削除</button>';
+        return '<div style="display:flex;justify-content:space-between;margin-top:10px">'
+          +'<button class="m-retire btn-ghost" style="color:#7A6A2E;border-color:#e6dcb0;padding:8px 14px">'+(e.retired?'復帰させる':'退職にする')+'</button>'
+          +delBtn+'</div>'
+          +(cm.length?'<div class="cr-warn" style="margin:8px 0 0">確定した給与明細があるため削除できません（賃金台帳に必要です）。辞めた方は左の「退職にする」を押してください。</div>':'');
+      })();
     return '<div class="mco-body">'+basic
       +'<div class="emp-dtgl" data-dtoggle="'+i+'">詳細設定（社保・控除・手当・在籍など）<span class="mco-cv" style="margin-left:auto;transform:'+(dOpen?'rotate(180deg)':'none')+'">▾</span></div>'
       +(dOpen?'<div class="emp-detail">'+detail+'</div>':'')
@@ -1119,6 +1130,14 @@
   function empNeedsReview(e,r){ return !empConfirmed(e) && !empAutoOk(e,r); }      // 変化あり/新規 かつ 未確認
   function reviewCounts(){ var done=0,total=0; state.employees.forEach(function(e){ if(!isActiveInMonth(e,state.month))return; total++; var r=compute(e); if(empConfirmed(e)||empAutoOk(e,r))done++; }); return {done:done,total:total,need:total-done}; }
   function setConfirm(id,on){ if(!state.confirmed[state.month])state.confirmed[state.month]={}; if(on)state.confirmed[state.month][id]=true; else delete state.confirmed[state.month][id]; }
+  /* ★その人が「確定した月」の一覧（削除してよいかの判断に使う・純関数）★
+     確定＝賃金台帳と年末調整の集計対象。1件でもあれば削除させない。 */
+  function confirmedMonthsOf(emp){
+    var id=emp&&emp.id; if(!id) return [];
+    var c=state.confirmed||{}; var out=[];
+    for(var ym in c){ if(Object.prototype.hasOwnProperty.call(c,ym) && c[ym] && c[ym][id]) out.push(ym); }
+    return out.sort();
+  }
   function toast(msg){ try{ var t=document.getElementById('app-toast'); if(!t){ t=document.createElement('div'); t.id='app-toast'; t.style.cssText='position:fixed;left:50%;bottom:88px;transform:translateX(-50%);background:#2E7D54;color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:700;box-shadow:0 4px 16px rgba(0,0,0,.22);z-index:9999;opacity:0;transition:opacity .25s;pointer-events:none'; document.body.appendChild(t); } t.textContent=msg; t.style.opacity='1'; clearTimeout(t._h); t._h=setTimeout(function(){ t.style.opacity='0'; },2200); }catch(e){} }
   // アプリ内モーダル(native alert/confirm/promptの置換)。Promiseで解決=非同期。DOMは動的生成(HTML変更不要)。
   //  uiAlert→Promise<true> / uiConfirm→Promise<bool> / uiPrompt→Promise<string|null(キャンセル)>
@@ -2859,8 +2878,15 @@
       var prtd=ev.target.closest('[data-prtierdel]'); if(prtd){ var _pp=String(prtd.dataset.prtierdel).split(':'); var _tp2=ensurePayRule(emp).variable.parts[+_pp[1]]; if(_tp2&&_tp2.tiers)_tp2.tiers.splice(+_pp[2],1); renderEmpMaster(); return; } // 段削除
       if(ev.target.classList.contains('m-retire')){ if(!emp.retired){ uiConfirm((emp.name||'この従業員')+' を退職にします。給与計算・印刷の対象から外れます（データは残ります）。').then(function(ok){ if(!ok)return; emp.retired=true; emp.retiredYmd=state.month; state.open[emp.id]=false; renderEmpMaster(); }); } else { emp.retired=false; renderEmpMaster(); } return; }
       if(ev.target.classList.contains('m-del-emp')){ if(activeEmps().length<=1&&!emp.retired){uiAlert('稼働中は最低1名必要です');return;}
-        if(window.Store&&Store.unpublishMeisai){ try{ Store.unpublishMeisai(emp.id); }catch(_){} } // 削除=Web明細リンクを失効(docsは物理削除しない・オフラインはno-op)
-        state.employees.splice(i,1); renderEmpMaster(); return; }
+        /* ★確定した給与明細がある人は消させない（画面が壊れても消えないよう、ここでも見る）★ */
+        var cmz=confirmedMonthsOf(emp);
+        if(cmz.length){ uiAlert('この方には確定した給与明細が '+cmz.length+'か月分あります（'+cmz[0]+'〜'+cmz[cmz.length-1]+'）。賃金台帳に必要なので削除できません。辞めた方は「退職にする」を押してください。'); return; }
+        // ★戻せない操作なので確認を1枚 挟む★
+        uiConfirm('「'+(emp.name||'この従業員')+'」を削除します。★元に戻せません。★\n（給与明細を確定したことがない方だけ削除できます）').then(function(ok){
+          if(!ok) return;
+          if(window.Store&&Store.unpublishMeisai){ try{ Store.unpublishMeisai(emp.id); }catch(_){} } // 削除=Web明細リンクを失効(docsは物理削除しない・オフラインはno-op)
+          state.employees.splice(i,1); renderEmpMaster(); if(window.persistSaveDebounced)persistSaveDebounced(); toast('「'+(emp.name||'従業員')+'」を削除しました');
+        }); return; }
     });
     el.addEventListener('change',function(ev){
       var card=ev.target.closest('.mco'); if(!card)return; var i=+card.dataset.i; var emp=state.employees[i];
@@ -3279,7 +3305,7 @@
   /* 統合テスト用API。★本番ブラウザには露出しない（jsdomのときだけ）★=RC1対策の自動統合テスト(tests/integration.mjs)の入口。 */
   try{ if(typeof navigator!=='undefined' && /jsdom/i.test(navigator.userAgent||'')){
     window.__PAYSLIP_TEST={ compute:compute, defEmp:defEmp, mergeEmp:mergeEmp, state:state, buildDailyData:buildDailyData, dailySlipDoc:dailySlipDoc, shimePeriods:shimePeriods, shimeSplit:shimeSplit,
-      saveMonthlyPayslips:saveMonthlyPayslips, ensurePayRule:ensurePayRule, minWageInfo:minWageInfo, isInMinWage:isInMinWage, minWageTeate:minWageTeate, setConfirm:setConfirm, renderInput:renderInput, renderInputTableHTML:renderInputTableHTML, effShukkin:effShukkin, onboardSteps:onboardSteps, renderEmpMaster:renderEmpMaster, filterEmpSearch:filterEmpSearch, labelInputsA11y:labelInputsA11y, computeBonus:computeBonus, bonusEntry:bonusEntry, nenAggregate:nenAggregate, confirmedRecs:confirmedRecs, loadBonusYtd:loadBonusYtd, nenchoWizardHTML:nenchoWizardHTML, nenStore:nenStore, nenDeclBannerHTML:nenDeclBannerHTML, makePayPattern:makePayPattern, applyPayPattern:applyPayPattern, openBulkPatternApply:openBulkPatternApply, applyEmpProfile:applyEmpProfile, empProfileStripHTML:empProfileStripHTML, importEmpProfile:importEmpProfile, qrSvg:qrSvg, itemSuggestOptions:itemSuggestOptions, itemSuggestHTML:itemSuggestHTML, bonusItemSuggestOptions:bonusItemSuggestOptions, bonusItemSuggestHTML:bonusItemSuggestHTML, santeiKisoRow:santeiKisoRow, santeiRows:santeiRows, santeiAoa:santeiAoa, stType:stType, stLabel:stLabel, santeiRule:santeiRule, gekkakuTh:gekkakuTh, shahoBasisOf:shahoBasisOf, bonusHarauRows:bonusHarauRows, bonusHarauAoa:bonusHarauAoa, gekkakuRows:gekkakuRows, gekkakuAoa:gekkakuAoa, ymAddLocal:ymAddLocal, extractCity:extractCity, gyoyoRows:gyoyoRows, gyoyoMeisaiAoa:gyoyoMeisaiAoa, gyoyoSoukatsuAoa:gyoyoSoukatsuAoa, roudouRows:roudouRows, roudouSummary:roudouSummary, roudouAoa:roudouAoa, roudouFYof:roudouFYof, ymdPlus1:ymdPlus1, shikakuRows:shikakuRows, shikakuAoa:shikakuAoa, fuyoBuckets:fuyoBuckets, nenCompute:nenCompute, nenGensenHTML:nenGensenHTML, nenGensenDoc:nenGensenDoc, applyMigrationRows:applyMigrationRows, buildEmpFromRow:buildEmpFromRow, prevYmOf:prevYmOf, applyLedgerToEmployees:applyLedgerToEmployees, importLedgerForMonth:importLedgerForMonth, payRuleCtx:payRuleCtx, monthYmdRange:monthYmdRange, shahoKanyuWarn:shahoKanyuWarn, fullTimeWeeklyH:fullTimeWeeklyH, shoteiMonthlyWage:shoteiMonthlyWage, empWarnings:empWarnings, laborLimitItems:laborLimitItems, prorateNote:prorateNote, buildPeople:buildPeople, ctxOf:ctxOf, koyoRateNote:koyoRateNote, kaigoRateOf:kaigoRateOf }; }
+      saveMonthlyPayslips:saveMonthlyPayslips, ensurePayRule:ensurePayRule, minWageInfo:minWageInfo, isInMinWage:isInMinWage, minWageTeate:minWageTeate, setConfirm:setConfirm, renderInput:renderInput, renderInputTableHTML:renderInputTableHTML, effShukkin:effShukkin, onboardSteps:onboardSteps, renderEmpMaster:renderEmpMaster, filterEmpSearch:filterEmpSearch, labelInputsA11y:labelInputsA11y, computeBonus:computeBonus, bonusEntry:bonusEntry, nenAggregate:nenAggregate, confirmedRecs:confirmedRecs, confirmedMonthsOf:confirmedMonthsOf, loadBonusYtd:loadBonusYtd, nenchoWizardHTML:nenchoWizardHTML, nenStore:nenStore, nenDeclBannerHTML:nenDeclBannerHTML, makePayPattern:makePayPattern, applyPayPattern:applyPayPattern, openBulkPatternApply:openBulkPatternApply, applyEmpProfile:applyEmpProfile, empProfileStripHTML:empProfileStripHTML, importEmpProfile:importEmpProfile, qrSvg:qrSvg, itemSuggestOptions:itemSuggestOptions, itemSuggestHTML:itemSuggestHTML, bonusItemSuggestOptions:bonusItemSuggestOptions, bonusItemSuggestHTML:bonusItemSuggestHTML, santeiKisoRow:santeiKisoRow, santeiRows:santeiRows, santeiAoa:santeiAoa, stType:stType, stLabel:stLabel, santeiRule:santeiRule, gekkakuTh:gekkakuTh, shahoBasisOf:shahoBasisOf, bonusHarauRows:bonusHarauRows, bonusHarauAoa:bonusHarauAoa, gekkakuRows:gekkakuRows, gekkakuAoa:gekkakuAoa, ymAddLocal:ymAddLocal, extractCity:extractCity, gyoyoRows:gyoyoRows, gyoyoMeisaiAoa:gyoyoMeisaiAoa, gyoyoSoukatsuAoa:gyoyoSoukatsuAoa, roudouRows:roudouRows, roudouSummary:roudouSummary, roudouAoa:roudouAoa, roudouFYof:roudouFYof, ymdPlus1:ymdPlus1, shikakuRows:shikakuRows, shikakuAoa:shikakuAoa, fuyoBuckets:fuyoBuckets, nenCompute:nenCompute, nenGensenHTML:nenGensenHTML, nenGensenDoc:nenGensenDoc, applyMigrationRows:applyMigrationRows, buildEmpFromRow:buildEmpFromRow, prevYmOf:prevYmOf, applyLedgerToEmployees:applyLedgerToEmployees, importLedgerForMonth:importLedgerForMonth, payRuleCtx:payRuleCtx, monthYmdRange:monthYmdRange, shahoKanyuWarn:shahoKanyuWarn, fullTimeWeeklyH:fullTimeWeeklyH, shoteiMonthlyWage:shoteiMonthlyWage, empWarnings:empWarnings, laborLimitItems:laborLimitItems, prorateNote:prorateNote, buildPeople:buildPeople, ctxOf:ctxOf, koyoRateNote:koyoRateNote, kaigoRateOf:kaigoRateOf }; }
   }catch(e){}
   /* ---------- 永続化(localStorage既定・window.SUPA設定でSupabaseにも保存) ---------- */
   var PKEY='payslip_state_v1';
