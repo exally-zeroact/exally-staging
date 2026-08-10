@@ -2529,12 +2529,28 @@
     row.style.display=show?'':'none';
     if(show) $$('.dls').forEach(function(x){ x.classList.toggle('on', x.dataset.dls===(state.dailySlipLayout||'1col')); });
   }
+  /* ★従業員への公開は「取り返しがつかない」★（月ごとに取り消す道が無い＝実測）。
+     だから ①未確定の月では押せない ②押す時は必ず確認を1枚、の2つで守る。
+     文言は1か所に置く（確定ボタンと公開ボタンで食い違わせない）。 */
+  var PUBLISH_WARN='あとから月ごとに取り消す方法はありません。\n（個人ごとに「確認済」を外すことはできますが、公開は消えません）';
+  var CONFIRM_MONTH_MSG='確定すると、この月の明細が従業員のWeb明細に公開されます。\n'+PUBLISH_WARN;
+  var PUBLISH_MSG='この月の明細を、従業員のWeb明細に公開します。\n'+PUBLISH_WARN;
+  /* 「Web明細で公開」を押せるか。★1人でも未確認なら押せない（下書きを従業員に見せない）★
+     賞与は確定の道が別なので、ここでは月次だけを見る（賞与は今までどおり）。 */
+  function webPubGate(){
+    if((state.printMode||'monthly')!=='monthly') return { enabled:true, count:0, short:'' };
+    var need=state.employees.filter(function(e){ return isActiveInMonth(e,state.month) && !empConfirmed(e); });
+    return { enabled:need.length===0, count:need.length, short:need.length?(need.length+'名が未確認'):'' };
+  }
   function renderPrint(){
     $('#p-month').value=state.month;
     $$('.pmode').forEach(function(x){ x.classList.toggle('on', x.dataset.pmode===(state.printMode||'monthly')); });
     updatePrintMonthUI();
     updateDailyLayoutUI();
     var sel=$('#p-emp'); sel.innerHTML='<option value="__all">全員</option>'+state.employees.map(function(e,i){return isActiveInMonth(e,state.month)?'<option value="'+i+'">'+esc(e.name)+'</option>':'';}).join('');
+    // ★押せない時は理由をボタンの中に（下に小さく置くと読まれない）
+    var wp=$('#b-webpub'), g=webPubGate();
+    if(wp){ wp.disabled=!g.enabled; wp.textContent=g.enabled?'Web明細で公開':('Web明細で公開（'+g.short+'）'); }
     renderWebMeisai();
     doPreview();
   }
@@ -2946,9 +2962,14 @@
       if(e.target.dataset.reviewonly!=null){ state._reviewOnly=e.target.checked; renderInput(); return; }
       var ivw=e.target.closest('[data-ivw]'); if(ivw){ state.inputView=ivw.dataset.ivw==='table'?'table':'card'; renderInput(); if(window.persistSaveDebounced)persistSaveDebounced(); return; }
       var cmb=e.target.closest('[data-confirm-month]');
-      if(cmb){ state.employees.forEach(function(emp){ if(isActiveInMonth(emp,state.month)) setConfirm(emp.id,true); }); try{ saveMonthlyPayslips(true); }catch(_){} persistSave(); renderInput();
-        // ★確定した月は自動で従業員のWeb明細に公開(会社が「Web明細で公開」を押さなくても、従業員はいつでもどの月でも閲覧可)
-        publishMeisaiNow(false,{silent:true}).then(function(n){ toast('今月を確定しました'+(n?'（従業員のWeb明細に公開）':'')); }, function(){ toast('今月を確定しました'); }); return; }
+      /* ★確定＝その場で従業員に公開される。月ごとに取り消す道が無いので、確認を1枚 挟む。
+         「取り消せる」と誤解させない＝取り消せないことを、そのまま書く。 */
+      if(cmb){ uiConfirm(CONFIRM_MONTH_MSG).then(function(ok){
+          if(!ok) return;
+          state.employees.forEach(function(emp){ if(isActiveInMonth(emp,state.month)) setConfirm(emp.id,true); }); try{ saveMonthlyPayslips(true); }catch(_){} persistSave(); renderInput();
+          // ★確定した月は自動で従業員のWeb明細に公開(会社が「Web明細で公開」を押さなくても、従業員はいつでもどの月でも閲覧可)
+          publishMeisaiNow(false,{silent:true}).then(function(n){ toast('今月を確定しました'+(n?'（従業員のWeb明細に公開）':'')); }, function(){ toast('今月を確定しました'); });
+        }); return; }
       var fs=e.target.closest('[data-fillsche]');
       if(fs){ var sd=fs.dataset.fillsche;
         var hasManual=state.employees.some(function(emp){ if(!isActiveInMonth(emp,state.month))return false; var mi=kinIdx(emp,/出勤/); return mi>=0 && emp.kintai[mi].value!=='' && emp.kintai[mi].value!=null && String(emp.kintai[mi].value)!==String(sd); });
@@ -3174,7 +3195,12 @@
       return true;
     }
     // Web明細で公開(従業員向け配布・アクセスコード方式)
-    $('#b-webpub').addEventListener('click',function(){ markOutput(); publishMeisaiNow(state.printMode==='bonus'); });
+    /* ★押す前に必ず確認（取り消せないので）。押せない月はそもそも押させない。 */
+    $('#b-webpub').addEventListener('click',function(){
+      var g=webPubGate();
+      if(!g.enabled){ uiAlert('この月はまだ確定していません（'+g.short+'）。入力タブで確認してから公開してください。'); return; }
+      uiConfirm(PUBLISH_MSG).then(function(ok){ if(!ok) return; markOutput(); publishMeisaiNow(state.printMode==='bonus'); });
+    });
     $('#webmeisai-card').addEventListener('click',function(e){
       var cp=e.target.closest('.wm-copy'); if(cp){ try{ navigator.clipboard.writeText(cp.dataset.link); toast('コピーしました'); }catch(err){} return; }
       var qb=e.target.closest('.wm-qr'); if(qb){ showMeisaiQR(qb.dataset.qrName, qb.dataset.qrUrl); return; } // 個人のQR表示/印刷

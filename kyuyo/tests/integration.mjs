@@ -945,5 +945,93 @@ T('confirmedMonthsOf: 確定した月だけを数える（他人の月・空を�
   } finally { A.state.confirmed = keep; }
 });
 
+/* ★①② 従業員への公開は取り返しがつかない（月ごとに取り消す道が無い＝実測）★
+   ①「今月を確定」は押した瞬間に公開される → 確認を1枚。取り消せないことを正直に書く
+   ②「Web明細で公開」は未確定の月でも押せた → 押せなくし、理由をボタンの中に */
+await TA('★① 今月を確定：確認が出る／キャンセルなら確定も公開もしない', async () => {
+  const A = win.__PAYSLIP_TEST;
+  const a = mkEmp('甲', 'ehime'), b = mkEmp('乙', 'ehime');
+  const keepPub = win.Store && win.Store.publishMeisai;
+  let published = 0;
+  await withRosterA([a, b], {}, async () => {
+    if (win.Store) win.Store.publishMeisai = () => { published++; return Promise.resolve(); };
+    try {
+      win.document.querySelector('[data-scr="scr-input"]').click();
+      const btn = win.document.querySelector('[data-confirm-month]');
+      ok(btn && !btn.disabled, '確定ボタンが押せる状態でない');
+      btn.click();
+      const ov = win.document.querySelector('.ui-modal-ov');
+      ok(ov, '★確認が出ない（取り消せない操作なのに）');
+      ok(/Web明細に公開/.test(ov.textContent), '公開されることを言っていない: ' + ov.textContent.slice(0, 60));
+      ok(/取り消す方法はありません/.test(ov.textContent), '★取り消せないことを正直に書いていない');
+      ok(/「確認済」を外す/.test(ov.textContent), '個人ごとに外せることの断りが無い');
+      eq(/★/.test(ov.textContent), false, '画面に「★」が出ている');
+      [...ov.querySelectorAll('button')].find(x => /キャンセル/.test(x.textContent)).click();
+      await tick();
+      eq(Object.keys(A.state.confirmed[A.state.month] || {}).length, 0, '★キャンセルしたのに確定された');
+      eq(published, 0, '★キャンセルしたのに公開された');
+    } finally { if (win.Store && keepPub) win.Store.publishMeisai = keepPub; }
+  });
+});
+
+await TA('★① OKなら確定される（機能は止めていない）', async () => {
+  const A = win.__PAYSLIP_TEST;
+  const a = mkEmp('甲', 'ehime');
+  const keepPub = win.Store && win.Store.publishMeisai;
+  await withRosterA([a], {}, async () => {
+    if (win.Store) win.Store.publishMeisai = () => Promise.resolve();
+    try {
+      win.document.querySelector('[data-scr="scr-input"]').click();
+      win.document.querySelector('[data-confirm-month]').click();
+      const ov = win.document.querySelector('.ui-modal-ov');
+      [...ov.querySelectorAll('button')].find(x => x.textContent.trim() === 'OK').click();
+      await tick();
+      eq(!!(A.state.confirmed[A.state.month] || {})[a.id], true, 'OKなのに確定されていない');
+    } finally { if (win.Store && keepPub) win.Store.publishMeisai = keepPub; }
+  });
+});
+
+T('★② 未確定の月では「Web明細で公開」が押せない＋理由がボタンの中', () => {
+  const a = mkEmp('甲', 'ehime'), b = mkEmp('乙', 'ehime');
+  withRoster([a, b], {}, () => {
+    win.document.querySelector('[data-scr="scr-print"]').click();
+    const wp = win.document.getElementById('b-webpub');
+    ok(wp, '公開ボタンが無い');
+    eq(wp.disabled, true, '★1人も確認していないのに押せてしまう');
+    ok(/2名が未確認/.test(wp.textContent), '★理由がボタンの中に無い: ' + wp.textContent);
+  });
+});
+
+T('★② 全員 確認済みなら押せる（誤って止めない）', () => {
+  const a = mkEmp('甲', 'ehime'), b = mkEmp('乙', 'ehime');
+  const A = win.__PAYSLIP_TEST;
+  withRoster([a, b], { [A.state.month]: { [a.id]: true, [b.id]: true } }, () => {
+    win.document.querySelector('[data-scr="scr-print"]').click();
+    const wp = win.document.getElementById('b-webpub');
+    eq(wp.disabled, false, '★確定済みなのに押せない');
+    eq(wp.textContent.trim(), 'Web明細で公開', 'ボタンの文: ' + wp.textContent);
+  });
+});
+
+await TA('★② 押せる時も 公開の前に確認が出る（取り消せないので）', async () => {
+  const a = mkEmp('甲', 'ehime');
+  const A = win.__PAYSLIP_TEST;
+  const keepPub = win.Store && win.Store.publishMeisai;
+  let published = 0;
+  await withRosterA([a], { [A.state.month]: { [a.id]: true } }, async () => {
+    if (win.Store) win.Store.publishMeisai = () => { published++; return Promise.resolve(); };
+    try {
+      win.document.querySelector('[data-scr="scr-print"]').click();
+      win.document.getElementById('b-webpub').click();
+      const ov = win.document.querySelector('.ui-modal-ov');
+      ok(ov, '★確認なしで公開された');
+      ok(/取り消す方法はありません/.test(ov.textContent), '取り消せないことを書いていない');
+      [...ov.querySelectorAll('button')].find(x => /キャンセル/.test(x.textContent)).click();
+      await tick();
+      eq(published, 0, '★キャンセルしたのに公開された');
+    } finally { if (win.Store && keepPub) win.Store.publishMeisai = keepPub; }
+  });
+});
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
