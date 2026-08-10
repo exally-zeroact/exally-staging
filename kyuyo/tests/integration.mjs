@@ -1009,7 +1009,7 @@ T('★② 未確定の月では「Web明細で公開」が押せない＋理由�
     const wp = win.document.getElementById('b-webpub');
     ok(wp, '公開ボタンが無い');
     eq(wp.disabled, true, '★1人も確認していないのに押せてしまう');
-    ok(/2名が未確認/.test(wp.textContent), '★理由がボタンの中に無い: ' + wp.textContent);
+    ok(/先に今月を確定/.test(wp.textContent), '★理由がボタンの中に無い: ' + wp.textContent);
     /* ★理由を足すとボタンが長くなり、幅390で行から横にはみ出した（実測）。
        button-wrap の検査は index.html の【静的な文字】しか見ないので、
        実行時に付け替えるこの文は見えない＝この行がその穴を塞ぐ。
@@ -1027,6 +1027,43 @@ T('★② 全員 確認済みなら押せる（誤って止めない）', () => 
     const wp = win.document.getElementById('b-webpub');
     eq(wp.disabled, false, '★確定済みなのに押せない');
     eq(wp.textContent.trim(), 'Web明細で公開', 'ボタンの文: ' + wp.textContent);
+  });
+});
+
+/* ★実UIで踏んだ食い違い（2026-08-10・テスト線 2026-07）★
+   入力画面は「下書き」なのに「確認 2/2名 ✓ 全員確認済」と出る（前月と手取りが同じ人は
+   自動で確認済み扱いだから）。その月の公開ボタンが「2名が未確認」と言っていた＝
+   ★同じアプリの中で言う事が食い違う★。可否も理由も monthFixedInfo() 1か所に寄せて直した。
+   この検査は「自動で確認済み扱い」の状態を作って、両方の画面の言い分を突き合わせる。 */
+T('★② 前月と同じで自動確認済みの月＝「全員確認済」と「未確認」を同時に言わない', () => {
+  const a = mkEmp('甲', 'ehime'), b = mkEmp('乙', 'ehime');
+  const A = win.__PAYSLIP_TEST, st = A.state;
+  const keepPrev = st._prev;
+  try {
+    withRoster([a, b], {}, () => {
+      st._prev = { [a.id]: A.compute(a).net, [b.id]: A.compute(b).net }; // 前月と変動なし=自動済扱い
+      win.document.querySelector('[data-scr="scr-input"]').click();
+      const inTxt = win.document.getElementById('scr-input').textContent;
+      ok(/全員確認済/.test(inTxt), '前提が作れていない（自動で確認済み扱いになっていない）');
+      ok(/下書き/.test(inTxt), '前提が作れていない（人が確定を押していないのに確定済みになっている）');
+
+      win.document.querySelector('[data-scr="scr-print"]').click();
+      const wp = win.document.getElementById('b-webpub');
+      eq(wp.disabled, true, '★人が確定を押していない月なのに公開できてしまう');
+      eq(/名が未確認/.test(wp.textContent), false,
+        '★入力画面が「全員確認済」と言っている月に「◯名が未確認」と出ている: ' + wp.textContent);
+      ok(/先に今月を確定/.test(wp.textContent), '★何をすれば押せるのかが書いていない: ' + wp.textContent);
+    });
+  } finally { st._prev = keepPrev; }
+});
+
+/* 在籍0名の月＝公開する物が無い。前は素通りで押せた（押しても何も起きない黙ったボタン）。 */
+T('★② その月に誰も在籍していないなら押せない＋理由がボタンの中', () => {
+  withRoster([], {}, () => {
+    win.document.querySelector('[data-scr="scr-print"]').click();
+    const wp = win.document.getElementById('b-webpub');
+    eq(wp.disabled, true, '★対象者が0名なのに押せてしまう');
+    ok(/対象者なし/.test(wp.textContent), '★理由がボタンの中に無い: ' + wp.textContent);
   });
 });
 

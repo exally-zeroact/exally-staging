@@ -1132,6 +1132,15 @@
   function empNeedsReview(e,r){ return !empConfirmed(e) && !empAutoOk(e,r); }      // 変化あり/新規 かつ 未確認
   function reviewCounts(){ var done=0,total=0; state.employees.forEach(function(e){ if(!isActiveInMonth(e,state.month))return; total++; var r=compute(e); if(empConfirmed(e)||empAutoOk(e,r))done++; }); return {done:done,total:total,need:total-done}; }
   function setConfirm(id,on){ if(!state.confirmed[state.month])state.confirmed[state.month]={}; if(on)state.confirmed[state.month][id]=true; else delete state.confirmed[state.month][id]; }
+  /* ★この月が「確定済」か＝従業員に見せてよい状態か。ここ1か所だけで決める。
+     入力画面のバッジ（下書き／確定済）と「Web明細で公開」の可否が食い違わないようにするため。
+     ★「前月と同じだから自動で確認済み扱い」(empAutoOk)は入れない★
+       ＝人が「今月を確定」を押していない月は下書き。押していない物を押した事にしない。 */
+  function monthFixedInfo(){
+    var act=state.employees.filter(function(e){ return isActiveInMonth(e,state.month); });
+    var need=act.filter(function(e){ return !empConfirmed(e); });
+    return { total:act.length, need:need.length, fixed:(act.length>0 && need.length===0) };
+  }
   /* ★その人が「確定した月」の一覧（削除してよいかの判断に使う・純関数）★
      確定＝賃金台帳と年末調整の集計対象。1件でもあれば削除させない。 */
   function confirmedMonthsOf(emp){
@@ -1360,7 +1369,7 @@
       +'</div>';
     var cnt=reviewCounts(), reviewOnly=!!state._reviewOnly;
     // 月の状態バッジ(下書き/確定済)=freee型「確定=凍結」の状態を可視化(UX🟠#7)。全員確認済=確定済(凍結)
-    var monthConf=(cnt.total>0)&&state.employees.every(function(e){ return !isActiveInMonth(e,state.month)||empConfirmed(e); });
+    var monthConf=monthFixedInfo().fixed;
     var stateChip=monthConf?'<span class="mstate mstate-fixed" title="この月は確定=凍結済み。自動保存では上書きされません">🔒 確定済</span>':'<span class="mstate mstate-draft" title="下書き。編集すると自動保存されます">下書き</span>';
     var progHTML='<div class="cal-box" style="background:#fff;border:1px solid #d4eae0;border-radius:12px;padding:10px 12px;margin-bottom:12px">'
       +'<div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px">'
@@ -2537,12 +2546,16 @@
   var PUBLISH_WARN='あとから月ごとに取り消す方法はありません。\n（個人ごとに「確認済」を外すことはできますが、公開は消えません）';
   var CONFIRM_MONTH_MSG='確定すると、この月の明細が従業員のWeb明細に公開されます。\n'+PUBLISH_WARN;
   var PUBLISH_MSG='この月の明細を、従業員のWeb明細に公開します。\n'+PUBLISH_WARN;
-  /* 「Web明細で公開」を押せるか。★1人でも未確認なら押せない（下書きを従業員に見せない）★
-     賞与は確定の道が別なので、ここでは月次だけを見る（賞与は今までどおり）。 */
+  /* 「Web明細で公開」を押せるか。★確定していない月は押せない（下書きを従業員に見せない）★
+     賞与は確定の道が別なので、ここでは月次だけを見る（賞与は今までどおり）。
+     ★可否も理由も monthFixedInfo() ＝入力画面の「下書き／確定済」と同じ1か所から取る★
+       （前は「◯名が未確認」と出していたが、入力画面が「✓ 全員確認済」と言っている月にも
+         出てしまい、同じアプリの中で言う事が食い違っていた＝実測して直した） */
   function webPubGate(){
     if((state.printMode||'monthly')!=='monthly') return { enabled:true, count:0, short:'' };
-    var need=state.employees.filter(function(e){ return isActiveInMonth(e,state.month) && !empConfirmed(e); });
-    return { enabled:need.length===0, count:need.length, short:need.length?(need.length+'名が未確認'):'' };
+    var m=monthFixedInfo();
+    return { enabled:m.fixed, count:m.need,
+             short: m.fixed ? '' : (m.total===0 ? '対象者なし' : '先に今月を確定') };
   }
   function renderPrint(){
     $('#p-month').value=state.month;
