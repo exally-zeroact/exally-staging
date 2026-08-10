@@ -917,6 +917,8 @@ await TA('★確定が1つも無い人は 確認が出て、OKで消える／キ
     let ov = win.document.querySelector('.ui-modal-ov');
     ok(ov, '★確認が出ない（戻せない操作なのに）');
     ok(/元に戻せません/.test(ov.textContent), '戻せないことを言っていない: ' + ov.textContent.slice(0, 80));
+    // ★の記号は私たちの覚え書き用。客の画面に出さない（押して気づいた）
+    eq(/★/.test(ov.textContent), false, '★画面に「★」が出ている: ' + ov.textContent.slice(0, 80));
     [...ov.querySelectorAll('button')].find(x => /キャンセル/.test(x.textContent)).click();
     await tick();
     eq(A.state.employees.length, 2, 'キャンセルしたのに消えた');

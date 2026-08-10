@@ -2884,7 +2884,8 @@
         var cmz=confirmedMonthsOf(emp);
         if(cmz.length){ uiAlert('この方には確定した給与明細が '+cmz.length+'か月分あります（'+cmz[0]+'〜'+cmz[cmz.length-1]+'）。賃金台帳に必要なので削除できません。辞めた方は「退職にする」を押してください。'); return; }
         // ★戻せない操作なので確認を1枚 挟む★
-        uiConfirm('「'+(emp.name||'この従業員')+'」を削除します。★元に戻せません。★\n（給与明細を確定したことがない方だけ削除できます）').then(function(ok){
+        /* ★の記号は私たちの覚え書き用。客の画面には出さない（押して気づいた） */
+        uiConfirm('「'+(emp.name||'この従業員')+'」を削除します。元に戻せません。\n（給与明細を確定したことがない方だけ削除できます）').then(function(ok){
           if(!ok) return;
           if(window.Store&&Store.unpublishMeisai){ try{ Store.unpublishMeisai(emp.id); }catch(_){} } // 削除=Web明細リンクを失効(docsは物理削除しない・オフラインはno-op)
           state.employees.splice(i,1); renderEmpMaster(); if(window.persistSaveDebounced)persistSaveDebounced(); toast('「'+(emp.name||'従業員')+'」を削除しました');
