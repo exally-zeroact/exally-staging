@@ -991,6 +991,17 @@ await TA('★① OKなら確定される（機能は止めていない）', asyn
   });
 });
 
+T('★確定ボタンの行がスマホ幅で崩れない（説明が縦帯にならない）', () => {
+  const a = mkEmp('甲', 'ehime');
+  withRoster([a], {}, () => {
+    win.document.querySelector('[data-scr="scr-input"]').click();
+    const row = win.document.querySelector('[data-confirm-month]').parentNode;
+    ok(/flex-wrap\s*:\s*wrap/.test(row.getAttribute('style') || ''), '★折り返さない指定のまま（幅390で1文字ずつの縦帯になる）');
+    const note = [...row.children].pop();
+    ok(/flex\s*:\s*1 0 100%/.test(note.getAttribute('style') || ''), '★説明文が行いっぱいに置かれていない');
+  });
+});
+
 T('★② 未確定の月では「Web明細で公開」が押せない＋理由がボタンの中', () => {
   const a = mkEmp('甲', 'ehime'), b = mkEmp('乙', 'ehime');
   withRoster([a, b], {}, () => {
