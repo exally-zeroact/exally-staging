@@ -108,11 +108,34 @@
     return 'left';
   }
 
+  /* ★「取引の内容」を出せる列が1本でもあるか★
+     法定の記載事項③＝取引の内容。列名が「品名」である必要は無い（代行なら「行き先」が内容）。
+     数・金額・税率・日付・番号 だけの並びにすると ★何を売ったのか書いていない紙★になる。 */
+  function hasContentColumn(items) {
+    var list = Array.isArray(items) ? items : [];
+    for (var i = 0; i < list.length; i++) {
+      var k = String(list[i] == null ? '' : list[i]).trim();
+      if (!k) continue;
+      var r = roleOf(k);
+      // 内容になれる＝品名・摘要、または役割を持たない自由な列（行き先・工事名 など）
+      if (r === 'name' || r === 'memo' || r === null) {
+        if (k === '日付') continue;      // 日付は「いつ」であって「何を」ではない
+        return true;
+      }
+    }
+    return false;
+  }
+
   /* 列の並びそのものの検査（★空欄・重複のまま紙を作らせない★） */
   function validate(items) {
     var errs = [];
     var list = Array.isArray(items) ? items : [];
     if (!list.length) { errs.push('列が1本もありません（何を並べるか決めてください）'); return errs; }
+    if (!hasContentColumn(list)) {
+      // ★法定の記載事項③（取引の内容）。列名は自由だが、内容を書く列は1本 要る。
+      errs.push('「何を売ったか」を書く列がありません（品名・内容／行き先／工事名 など、'
+        + '内容を書ける列を1本は残してください。数字と日付だけの請求書は法律の要件を満たしません）');
+    }
     if (list.length > MAX_COLS) errs.push('列が' + list.length + '本あります。1枚に並べられるのは' + MAX_COLS + '本までです');
     var seen = {};
     for (var i = 0; i < list.length; i++) {
@@ -169,7 +192,7 @@
     PAPER_WIDTH: PAPER_WIDTH, MIN_W: MIN_W, MAX_W: MAX_W, MAX_COLS: MAX_COLS,
     ROLES: ROLES, BASE_W: BASE_W,
     roleOf: roleOf, clampWidth: clampWidth, bumpWidth: bumpWidth,
-    widthsOf: widthsOf, alignOf: alignOf, validate: validate,
+    widthsOf: widthsOf, alignOf: alignOf, validate: validate, hasContentColumn: hasContentColumn,
     cellOf: cellOf, normalizeSpec: normalizeSpec,
   };
 });
