@@ -38,6 +38,10 @@ jobs:
       - name: Stamp tool tests (ハッシュが決定論か=CRLF/LF・OS差でブレないか)
         run: node tests/stamp.test.mjs
       # ↓ tests/run.js にも入っているが、赤くなった時にどれで落ちたか一目で分かるよう先に単独で出す
+      - name: ★テスト環境の帯 (本番には絶対 出さない・全画面に入っている・頭を隠さない)
+        run: node tests/env-badge.test.mjs
+      - name: ★テスト環境の帯 (ホスト名で決める作りに戻すと赤になるかの自己確認)
+        run: node tests/env-badge.test.mjs --self-test
       - name: ★Pages配信ガード (href="/…" 等の絶対パス・本番倉庫への誤接続を止める)
         run: node tests/pages-hosting.test.mjs
       - name: ★Pages配信ガード (わざと壊して赤になるかの自己確認・7通り)

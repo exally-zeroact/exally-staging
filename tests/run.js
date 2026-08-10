@@ -25,6 +25,8 @@ const FILES = [
   'excel-version.test.mjs', // ★その式が相手のExcelで動くか(Excelに無い23個＝常時 / 版マーカー14個＝版連動)
   ['excel-version.test.mjs', '--self-test'],
   // ★staging(GitHub Pages のサブパス配信)で壊れる書き方＋本番倉庫への誤接続を止める恒久ガード
+  'env-badge.test.mjs',      // ★テスト環境の帯(本番に出さない・全画面に入っている)
+  ['env-badge.test.mjs', '--self-test'],
   'pages-hosting.test.mjs',
   ['pages-hosting.test.mjs', '--self-test'],  // ★わざと壊して赤になるかの自己確認(7通り)
   'refs-resolve.test.mjs',      // ★読んでいるファイルが実在するか(require/importも参照として数える)
