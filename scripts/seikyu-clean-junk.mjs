@@ -1,6 +1,13 @@
 /* seikyu-clean-junk.mjs — ★テスト線の倉庫だけ★ 請求書の「検証ゴミ」を片づける手道具
  *   node scripts/seikyu-clean-junk.mjs show    ... 今 入っている請求書を出すだけ（1行も書かない）
- *   node scripts/seikyu-clean-junk.mjs clean   ... ★ゴミと見分けた行だけ★ 消す
+ *   node scripts/seikyu-clean-junk.mjs clean   ... ★ゴミと見分けた行だけ★ 片づける
+ *
+ * ★「消す」で全部が消える訳ではない（2026-08-11 実際に走らせて分かった）★
+ *   倉庫は「一度でも発行した紙」を消させない。台帳なので、それが正しい。
+ *     ・下書きのゴミ  → 消す
+ *     ・発行済みのゴミ → 取り消し（void）にする
+ *     ・取り消し済み  → もう片づいている（何もしない）
+ *   取り消し済みは 一覧の既定「出した物」に出ないので、人の目からは消える。
  *
  * ★安全★（1つでも欠けたら中止する）
  *   ・接続先は【このリポジトリの js/supa-config.js】から取る（直書きしない）。
@@ -88,9 +95,14 @@ junk.forEach((v) => console.log('  ' + v.id + '  ' + (v.no || '（番号なし�
    倉庫の側が delete を止めている（＝正しい）。
    だからゴミでも、発行済みは ★取り消し（void）★ にする。
    一覧の既定は「出した物」＝取り消しを出さないので、これで目の前からは消える。 */
-let del = 0, voided = 0;
+let del = 0, voided = 0, already = 0;
 const failed = [];
 for (const v of junk) {
+  /* ★取り消し済みは もう片づいている★
+     倉庫は「一度でも発行した紙」を消させない（台帳として正しい）。
+     取り消しにしてあれば 一覧の既定「出した物」には出ないので、これ以上やる事は無い。
+     ここで delete を試すと必ず断られ、片づいているのに赤く見える。 */
+  if (String(v.status) === 'void') { already++; continue; }
   if (String(v.status) === 'issued') {
     const u = await sb.from('pay_invoices')
       .update({ status: 'void', voided_at: new Date().toISOString() })
@@ -104,7 +116,7 @@ for (const v of junk) {
   if (d.error) { console.error('  消せません ' + v.id + ': ' + d.error.message); failed.push(v.no); continue; }
   del++;
 }
-console.log('\n消した: ' + del + '件 / 取り消した: ' + voided + '件');
+console.log('\n消した: ' + del + '件 / 取り消した: ' + voided + '件 / もう片づいていた: ' + already + '件');
 
 /* ★本物が1円も動いていないか数える（消しついでに本物を壊していないか） */
 const after = await sb.from('pay_invoices').select('id,no,status,totals').order('issue_ymd', { ascending: false });
@@ -125,7 +137,10 @@ console.log('本物 ' + real.length + '件の金額が動いた数: ' + moved);
 const bad = left.filter((v) => isJunk(v) && String(v.status) !== 'void');
 if (bad.length) { console.error('★まだゴミが残っています: ' + bad.map((v) => v.no).join(' / ')); process.exit(1); }
 const hidden = left.filter((v) => isJunk(v) && String(v.status) === 'void');
-if (hidden.length) console.log('取り消しにして一覧から隠した: ' + hidden.map((v) => v.no).join(' / '));
+if (hidden.length) {
+  console.log('取り消し済み＝一覧の既定「出した物」には出ない（倉庫は消させない＝台帳として正しい）:');
+  hidden.forEach((v) => console.log('  ' + v.no));
+}
 if (failed.length) { console.error('★手が付けられなかった: ' + failed.join(' / ')); process.exit(1); }
 if (moved) process.exit(1);
 console.log('\n片づきました。');
