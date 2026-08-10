@@ -867,9 +867,12 @@ T('★確定した月がある人は 削除ボタンが押せない＋理由と�
     const del = card.querySelector('.m-del-emp');
     ok(del, '削除ボタンが無い');
     eq(del.disabled, true, '★確定があるのに削除が押せてしまう');
-    ok(/確定 2か月/.test(del.textContent), '★理由がボタンの中に無い: ' + del.textContent);
+    ok(/削除できません/.test(del.textContent), '★理由がボタンの中に無い: ' + del.textContent);
+    ok(/2か月分/.test(card.textContent), '★何か月分あるのかが出ていない');
     ok(/賃金台帳に必要/.test(card.textContent), '理由（台帳に要る）が出ていない');
     ok(/退職にする/.test(card.textContent), '★「退職」への道が近くに無い');
+    // ★ボタンの文が長いと幅390で折り返す（実測して短くした）＝短いままであること
+    ok(del.textContent.trim().length <= 8, '★削除ボタンの文が長い（折り返す）: ' + del.textContent);
   });
 });
 

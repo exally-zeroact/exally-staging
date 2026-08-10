@@ -810,13 +810,15 @@
          ＝削除は「作り間違いを消す」ためだけに絞る。辞めた人は隣の「退職にする」。 */
       +(function(){
         var cm=confirmedMonthsOf(e);
+        /* ★ボタンの文は短く（幅390で「退職にする」が2行に折り返した＝実測して直した）。
+           月数は下の黄色に書く。 */
         var delBtn=cm.length
-          ? '<button class="m-del-emp btn-ghost" disabled style="color:#9aa;border-color:#ddd;padding:8px 14px">削除できません（確定 '+cm.length+'か月）</button>'
-          : '<button class="m-del-emp btn-ghost" style="color:#C0392B;border-color:#f3c9c4;padding:8px 14px">この従業員を削除</button>';
+          ? '<button class="m-del-emp btn-ghost" disabled style="color:#9aa;border-color:#ddd;padding:8px 14px;white-space:nowrap">削除できません</button>'
+          : '<button class="m-del-emp btn-ghost" style="color:#C0392B;border-color:#f3c9c4;padding:8px 14px;white-space:nowrap">この従業員を削除</button>';
         return '<div style="display:flex;justify-content:space-between;margin-top:10px">'
-          +'<button class="m-retire btn-ghost" style="color:#7A6A2E;border-color:#e6dcb0;padding:8px 14px">'+(e.retired?'復帰させる':'退職にする')+'</button>'
+          +'<button class="m-retire btn-ghost" style="color:#7A6A2E;border-color:#e6dcb0;padding:8px 14px;white-space:nowrap">'+(e.retired?'復帰させる':'退職にする')+'</button>'
           +delBtn+'</div>'
-          +(cm.length?'<div class="cr-warn" style="margin:8px 0 0">確定した給与明細があるため削除できません（賃金台帳に必要です）。辞めた方は左の「退職にする」を押してください。</div>':'');
+          +(cm.length?'<div class="cr-warn" style="margin:8px 0 0">確定した給与明細が<b>'+cm.length+'か月分</b>あるため削除できません（賃金台帳に必要です）。辞めた方は左の「退職にする」を押してください。</div>':'');
       })();
     return '<div class="mco-body">'+basic
       +'<div class="emp-dtgl" data-dtoggle="'+i+'">詳細設定（社保・控除・手当・在籍など）<span class="mco-cv" style="margin-left:auto;transform:'+(dOpen?'rotate(180deg)':'none')+'">▾</span></div>'
