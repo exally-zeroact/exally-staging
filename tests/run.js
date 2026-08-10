@@ -21,6 +21,7 @@ const FILES = [
   'grid-refedit.test.mjs',   // ★書き間違えた式を直せるか(=B1+30 の B1 を A1 に直せる／数字の直後で式を壊さない)
   ['grid-refedit.test.mjs', '--self-test'],
   'grid-edit-ui.mjs',        // ★本物の book.html を読み込んで、本物の insertRefAddr を動かす(画面の中で直せるか)
+  'book-open.test.mjs',      // ★受け取ったブックを「開いて何も変えずに保存」しても1バイトも変わらない(zip直編集の3本＋book-open.js)
   'no-duplicate-libs.test.mjs', // ★同じ物を2箇所に置かせない(法定データのコピペ・ドリフト防止)
   'excel-version.test.mjs', // ★その式が相手のExcelで動くか(Excelに無い23個＝常時 / 版マーカー14個＝版連動)
   ['excel-version.test.mjs', '--self-test'],
