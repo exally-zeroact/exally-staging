@@ -178,8 +178,19 @@ T('★undefined / NaN を1つも出さない', () => {
 T('見積書は呼び方が変わる（シート名も）', () => {
   const s = AOA.build(Object.assign({}, S1, { inv: Object.assign({}, S1.inv, { doc_type: 'quote' }) }));
   eq(s.name, '見積書');
-  ok(JSON.stringify(s.aoa).includes('見積番号'), '番号の呼び方が請求書のまま');
-  ok(JSON.stringify(s.aoa).includes('お見積金額'), '金額の呼び方が請求書のまま');
+  const j = JSON.stringify(s.aoa);
+  ok(j.includes('見積日'), '日付の呼び方が請求書のまま');
+  ok(j.includes('御見積金額（税込）'), '金額の呼び方が請求書のまま');
+  // ★番号のラベルは紙と同じ「No.」（うちの語彙）★
+  ok(j.includes('"No."'), '番号のラベルが「No.」でない');
+  ok(!j.includes('請求番号') && !j.includes('見積番号'), 'うちの語彙に無いラベルが出ている');
+});
+
+T('★紙とExcelで言葉づかいがそろっている（突き合わせできる）', () => {
+  const j = JSON.stringify(SH.aoa);
+  ['No.', '請求日', 'お支払期限', '御請求金額（税込）', '小計', '消費税', '合計', '区分', 'お振込先', '備考']
+    .forEach((w) => ok(j.includes(w), 'Excelに「' + w + '」が無い'));
+  ok(!j.includes('ご請求金額'), '紙と違う言い方（ご請求金額）が出ている');
 });
 
 T('★網羅：税率の組み合わせ×内外×丸め を全部書き出して、合計が Excel の中でも一致', () => {

@@ -60,7 +60,7 @@
 
     push([heading]);
     push([]);
-    push([(isQuote ? '見積番号' : '請求番号'), inv.no || '（未採番）']);
+    push(['No.', inv.no || '（未採番）']);
     push([(isQuote ? '見積日' : '請求日'), jpDate(inv.issue_ymd) || '（未入力）']);
     if (inv.due_ymd) push(['お支払期限', jpDate(inv.due_ymd)]);
     push([]);
@@ -71,7 +71,7 @@
     if (g.tel) push(['', 'TEL ' + g.tel]);
     if (g.invoiceNo) push(['', '登録番号 ' + g.invoiceNo]);
     push([]);
-    var gr = push([(isQuote ? 'お見積金額' : 'ご請求金額'), Number(tax.grandTotal) || 0]);
+    var gr = push([(isQuote ? '御見積金額（税込）' : '御請求金額（税込）'), Number(tax.grandTotal) || 0]);
     money(gr, 1);
     if (inv.data && inv.data.subject) push(['件名', inv.data.subject]);
     push([]);

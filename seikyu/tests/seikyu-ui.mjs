@@ -426,7 +426,7 @@ await TA('3. ★「中身を見る」で紙の下見が出る（アプリの画�
   $('b-preview').click();
   await sleep(400);
   const src = $('pv').srcdoc || '';
-  ok(/請 求 書/.test(src), '紙になっていない');
+  ok(/請　求　書/.test(src), '紙になっていない');
   ok(/藤原建設株式会社/.test(src), '宛先が出ていない');
   ok(!/botnav|appbar|b-issue/.test(src), 'アプリの画面が紙に混ざっている');
   ok($('pv-wrap').style.display !== 'none', '下見の枠が出ていない');
@@ -458,7 +458,7 @@ await TA('3. ★印刷は「紙だけの新しい窓」に書かれる', async (
   ok(opened.length === n0 + 1, '新しい窓が開かない');
   const w = opened[opened.length - 1];
   ok(/<!DOCTYPE html>/.test(w._html), '紙が書かれていない');
-  ok(/請 求 書/.test(w._html), '紙の見出しが無い');
+  ok(/請　求　書/.test(w._html), '紙の見出しが無い');
   ok(!/botnav|appbar|b-issue|<script/i.test(w._html), 'アプリの画面/スクリプトが紙の窓に混ざっている');
   ok(w._printed, '印刷が呼ばれていない');
   eq(w.document.title, '20260930_藤原建設株式会社_請求書_346.pdf', 'PDFの既定の名前が窓の題名になっていない');

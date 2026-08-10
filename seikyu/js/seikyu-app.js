@@ -34,7 +34,10 @@
   function setText(id, t) { var e = $(id); if (e) e.textContent = t || ''; }
   function box(id, text) { var e = $(id); if (!e) return; e.textContent = text || ''; show(e, !!text); }
 
-  function yen(v) { return PAPER.yen(v); }
+  /* ★画面の金額は「1,100 円」（桁区切り＋円）★
+     紙は「¥1,100」（¥ 記号）。画面で ¥ と 円 を両方付けると二重になる。
+     どちらも同じ関数から作る＝紙と画面で桁区切りがズレない。 */
+  function yen(v) { return PAPER.comma(v); }
   function todayYmd() {
     var d = new Date(), z = function (n) { return ('0' + n).slice(-2); };
     return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate());

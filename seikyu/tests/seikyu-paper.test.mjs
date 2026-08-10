@@ -59,9 +59,11 @@ function sample(over) {
 export function paperBad(kind, o) {
   const b = PAPER.build(o);
   if (kind === 'noRates') return b.html.replace(/<table class="rates">[\s\S]*?<\/table>/, '');
-  // ★請求番号の欄（meta の1行目）だけを登録番号に差し替える（題名は触らない）
-  if (kind === 'mixNo') return b.html.replace(/(請求番号<\/th><td>)[^<]*/, '$1T1234567890123');
+  // ★番号の欄（No.　…）だけを登録番号に差し替える（題名は触らない）
+  if (kind === 'mixNo') return b.html.replace(/(No\.　)[^<]*/, '$1T1234567890123');
   if (kind === 'flex') return b.html.replace('.note-b{display:block', '.note-b{display:flex');
+  // ★金額を塗りつぶした角丸の箱に入れる＝差し戻しの原因そのもの
+  if (kind === 'grandBox') return b.html.replace('.grand{margin:0 0 6mm;', '.grand{background:#EEF7F1;border:1px solid #CDE7D8;border-radius:2mm;padding:4mm 6mm;margin:0 0 6mm;');
   return b.html;
 }
 
@@ -77,11 +79,19 @@ if (process.argv.includes('--self-test')) {
     ok(/class="rates"/.test(PAPER.build(sample()).html), '本物に区分が無い');
   });
 
-  S('② 請求番号の欄に登録番号を入れた紙は「別物として出す」検査に落ちる', () => {
+  S('② 番号(No.)の欄に登録番号を入れた紙は「別物として出す」検査に落ちる', () => {
     const bad = paperBad('mixNo', sample());
-    ok(/請求番号<\/th><td>T\d{13}/.test(bad.replace(/\s+/g, '')), '作り物が壊れていない＝この検査が空振り');
-    const good = PAPER.build(sample()).html.replace(/\s+/g, '');
-    ok(!/請求番号<\/th><td>T\d{13}/.test(good), '本物が登録番号を請求番号の欄に出している');
+    ok(/No\.　T\d{13}/.test(bad), '作り物が壊れていない＝この検査が空振り');
+    ok(!/No\.　T\d{13}/.test(PAPER.build(sample()).html), '本物が登録番号を番号の欄に出している');
+  });
+
+  S('④ ★金額を塗りつぶした箱に入れた紙は「枠なし」検査に落ちる（差し戻しの原因）', () => {
+    const bad = paperBad('grandBox', sample());
+    const badRule = (/\.grand\{([^}]*)\}/.exec(bad) || [])[1] || '';
+    ok(/background/.test(badRule) && /border-radius/.test(badRule), '作り物が壊れていない＝この検査が空振り');
+    const good = (/\.grand\{([^}]*)\}/.exec(PAPER.css()) || [])[1] || '';
+    ok(!/background/.test(good) && !/border-radius/.test(good), '本物の金額が箱に入っている');
+    ok(/border-bottom/.test(good), '本物の金額の下に線が無い');
   });
 
   S('③ 文の箱を flex にした紙は「flex/grid を使わない」検査に落ちる', () => {
@@ -126,11 +136,10 @@ T('★税率ごとの区分が、計算した区分の数だけ出る', () => {
   });
 });
 
-T('★登録番号(T+13桁)と請求番号は別の欄に出す', () => {
-  const f = flat(H1);
-  ok(/請求番号<\/th><td>202609-001/.test(f), '請求番号が出ていない');
-  ok(!/請求番号<\/th><td>T\d{13}/.test(f), '請求番号の欄に登録番号が出ている');
-  ok(/登録番号T1234567890123/.test(f), '自社の登録番号が出ていない');
+T('★登録番号(T+13桁)と番号(No.)は別の欄に出す', () => {
+  ok(/No\.　202609-001/.test(H1), '番号が出ていない（No.　＋全角スペース）');
+  ok(!/No\.　T\d{13}/.test(H1), '番号の欄に登録番号が出ている');
+  ok(/登録番号 T1234567890123/.test(H1), '自社の登録番号が出ていない');
 });
 
 T('★合計＝税抜＋消費税 が紙の上でも一致する', () => {
@@ -164,7 +173,7 @@ T('★取れなかったを空欄にしない（相手・自社・番号）', ()
   const h = PAPER.build({ inv: { doc_type: 'invoice', no: '', issue_ymd: '', tax_mode: 'exclusive', data: {} }, tax: S1.tax, partner: {}, org: {} }).html;
   ok(/（取引先が未選択）/.test(h), '宛先が空欄になっている');
   ok(/（自社情報が未入力）/.test(h), '自社が空欄になっている');
-  ok(/（未採番）/.test(h), '番号が空欄になっている');
+  ok(/No.　（未採番）/.test(h), '番号が空欄になっている');
   ok(/（未入力）/.test(h), '請求日が空欄になっている');
 });
 
@@ -183,15 +192,16 @@ T('★支払期限は決めていなければ出さない（勝手な期限を�
 
 T('見積書は見出しと呼び方が変わる', () => {
   const h = PAPER.build(sample({ inv: Object.assign({}, S1.inv, { doc_type: 'quote' }) })).html;
-  ok(/見 積 書/.test(h), '見出しが請求書のまま');
-  ok(/お見積金額/.test(h), '金額の呼び方が請求書のまま');
-  ok(/見積番号/.test(h) && /見積日/.test(h), '番号・日付の呼び方が請求書のまま');
+  ok(/見　積　書/.test(h), '見出しが請求書のまま');
+  ok(/ご見積金額（税込）/.test(h), '金額の呼び方が請求書のまま');
+  ok(/下記の通り御見積申し上げます。/.test(h), '挨拶が請求書のまま');
+  ok(/見積日　/.test(h), '日付の呼び方が請求書のまま');
 });
 
 T('金額は桁区切り・マイナスは頭に付く・数でない物は0にしない', () => {
-  eq(PAPER.yen(142660), '142,660');
-  eq(PAPER.yen(-142660), '-142,660');
-  eq(PAPER.yen(0), '0');
+  eq(PAPER.comma(142660), '142,660');
+  eq(PAPER.comma(-142660), '-142,660');
+  eq(PAPER.comma(0), '0');
   eq(PAPER.yen('abc'), '—', '数でない物が0になっている');
   eq(PAPER.jpDate('2026-09-30'), '2026年9月30日');
   eq(PAPER.jpDate('2026/09/30'), '', '読めない日付が通っている');
@@ -201,6 +211,111 @@ T('★文字はそのまま埋め込まない（HTMLとして壊れる／差し�
   const h = PAPER.build(sample({ partner: { name: '<script>alert(1)</script>' } })).html;
   ok(!/<script>alert/.test(h), '取引先名の中のタグがそのまま出ている');
   ok(/&lt;script&gt;/.test(h), 'エスケープされていない');
+});
+
+/* ── ⑥ ★うちの紙の作法（daikou-seikyu-test/invoice-pdf.js が一次情報）★ ──────
+   ここが今回の差し戻しの中心。画面の色をそろえても、客に届くのは紙。
+   出典: invoice-pdf.js 466(枠なし＋下線)／460(挨拶)／156(¥)／408・413・428(ラベル＋全角スペース)
+         180(和暦)／571(小計・消費税・合計は枠なし)／720(【…】)／755・760・785(ページ送り) */
+const HOUSE_MUST = [
+  '請　求　書',                    // タイトルは字間を空ける
+  '下記の通り御請求申し上げます。',  // 挨拶
+  'ご請求金額（税込）',              // 金額のラベル（classic系＝std1。elegantは「御請求金額（税込）」）
+  '¥',                             // 通貨は記号
+  'No.　',                         // 番号のラベル（★全角スペース★）
+  '請求日　',                      // 日付のラベル（★全角スペース★）
+  'お支払期限　',                  // 期限のラベル（★全角スペース★）
+  '　御中',                        // 宛名（★全角スペース★）
+  '小計', '合計', '（内訳）',
+];
+/* ★うちの語彙に無い言い方（出たら赤）★ */
+const HOUSE_NEVER = [
+  '外税／消費税込み', '外税/消費税込み',   // うちの語彙に無い言い方
+  '請求番号',                            // うちは「No.　」
+  'ご請求金額（税抜）',                   // 税込としか言わない
+];
+
+T('★うちの紙の言葉づかいが全部 在る（invoice-pdf.js が一次情報）', () => {
+  const h = H1;
+  HOUSE_MUST.forEach((w) => ok(h.indexOf(w) >= 0, 'うちの紙の言葉が無い: ' + w));
+});
+
+T('★うちの語彙に無い言い方を紙に出さない', () => {
+  HOUSE_NEVER.forEach((w) => ok(H1.indexOf(w) < 0, 'うちの紙に無い言い方が出ている: ' + w));
+});
+
+T('★御請求金額は「枠なし＋下に線」（塗りつぶした箱に入れない）', () => {
+  const rule = (/\.grand\{([^}]*)\}/.exec(PAPER.css()) || [])[1] || '';
+  ok(rule, '.grand の指定が無い');
+  ok(!/background/.test(rule), '★金額が塗りつぶしの箱に入っている★: ' + rule);
+  ok(!/border-radius/.test(rule), '★金額が角丸の箱に入っている★');
+  ok(/border-bottom\s*:\s*[\d.]+p?t?\s+solid/.test(rule), '金額の下に線が無い');
+  ok(!/border\s*:\s*1px solid/.test(rule), '金額が枠で囲まれている');
+});
+
+T('★お振込先・備考も箱で囲まない（うちは囲まない）', () => {
+  const rule = (/\.note\{([^}]*)\}/.exec(PAPER.css()) || [])[1] || '';
+  ok(!/background|border-radius|border\s*:\s*1px/.test(rule), '振込先・備考が箱に入っている: ' + rule);
+  ok(!/class="note-box"/.test(H1), '古い箱の書き方が残っている');
+});
+
+T('★小計・消費税・合計は枠なし、合計の上に線', () => {
+  const css = PAPER.css();
+  const td = (/\.sums td\{([^}]*)\}/.exec(css) || [])[1] || '';
+  ok(/border\s*:\s*0/.test(td), '合計欄が罫線で囲まれている: ' + td);
+  const g = (/\.sums-g td\{([^}]*)\}/.exec(css) || [])[1] || '';
+  ok(/border-top\s*:\s*[\d.]+p?t?\s+solid/.test(g), '合計の上に線が無い');
+});
+
+T('★消費税のラベルは区分から作る（率の数字を書かない）', () => {
+  const one = TAX.compute({ lines: [{ name: 'a', amount: 1000, rate: STD }], taxMode: 'exclusive', rounding: 'floor' });
+  eq(PAPER.taxLabel(one, 'exclusive'), '消費税（' + STD + '%）');
+  eq(PAPER.taxLabel(one, 'inclusive'), '消費税（' + STD + '%・内税）');
+  const two = TAX.compute({ lines: [{ name: 'a', amount: 1000, rate: STD }, { name: 'b', amount: 1000, rate: RED }], taxMode: 'exclusive', rounding: 'floor' });
+  eq(PAPER.taxLabel(two, 'exclusive'), '消費税');
+  ok(/消費税（/.test(H1) || /消費税/.test(H1), '消費税のラベルが紙に無い');
+});
+
+T('★日付は和暦も出せる（既定は代行請求と同じ西暦）', () => {
+  eq(PAPER.dateStr('2026-09-30', 'seireki'), '2026/9/30');
+  eq(PAPER.dateStr('2026-09-30', 'reiwa'), '令和8年9月30日');
+  eq(PAPER.dateStr('2026-09-30'), '2026/9/30', '既定が西暦でない');
+  eq(PAPER.dateStr('2026/09/30', 'reiwa'), '', '読めない日付が通っている');
+  const w = PAPER.build(sample({ inv: Object.assign({}, S1.inv, { data: Object.assign({}, S1.inv.data, { dateEra: 'reiwa' }) }) })).html;
+  ok(/令和8年9月30日/.test(w), '和暦が出せていない');
+});
+
+T('★金額は ¥ 記号（invoice-pdf.js:156 と同じ）', () => {
+  eq(PAPER.yen(142660), '¥142,660');
+  eq(PAPER.yen(0), '¥0');
+  eq(PAPER.yen(-1234), '¥-1,234');
+  eq(PAPER.yen('abc'), '—', '数でない物が0になっている');
+  // 表の中は ¥ を付けない（桁が詰まる）＝ invoice-pdf.js の comma() と同じ
+  eq(PAPER.comma(142660), '142,660');
+  eq(PAPER.comma(''), '');
+});
+
+T('★表の上に【…】の小さなキャプションが出る', () => {
+  ok(/【9月分 運転代行ご利用料金】/.test(H1), 'キャプションが無い');
+});
+
+T('★明細が多い時は次の紙へ送る（黙って切らない・3つの言葉が出る）', () => {
+  const many = [];
+  for (let i = 0; i < 40; i++) many.push({ name: '行' + (i + 1), amount: 1000, rate: STD });
+  const t = TAX.compute({ lines: many, taxMode: 'exclusive', rounding: 'floor' });
+  const b = PAPER.build({ inv: S1.inv, tax: t, partner: S1.partner, org: S1.org });
+  ok(b.pages > 1, '1枚に押し込めている: ' + b.pages);
+  ok(/このページの小計/.test(b.html), '「このページの小計」が無い');
+  ok(/次ページへ続く →/.test(b.html), '「次ページへ続く →」が無い');
+  ok(/1ページ目/.test(b.html) && /2ページ目/.test(b.html), '「nページ目」が無い');
+  // ★全部の行が どれかの紙に出ている（黙って落ちていない）
+  for (let i = 0; i < many.length; i++) ok(b.html.indexOf('行' + (i + 1) + '<') >= 0, (i + 1) + '行目が紙から消えた');
+  // 金額のラベルは1枚目にだけ（invoice-pdf.js:719「単ページのみ上部に御請求金額」と同じ考え）
+  eq((b.html.match(/ご請求金額（税込）/g) || []).length, 1, '金額のラベルが2枚以上に出ている');
+  // 合計・振込先は最後の紙にだけ
+  eq((b.html.match(/お振込先/g) || []).length, 1, 'お振込先が2枚以上に出ている');
+  // ページの小計の合計＝全体の小計
+  eq(PAPER.paginate(many).reduce((a, p) => a + p.length, 0), many.length, 'ページ分けで行が増減した');
 });
 
 /* ── ⑤ 文が縦に割れない書き方 ─────────────────────────────────── */
@@ -213,7 +328,7 @@ T('★紙のCSSに flex/grid を1つも使わない（文が1文字ずつ縦に�
 
 T('★文が入る箱は「折り返し可」で「最低幅」を持つ', () => {
   // 長い日本語が入りうる箱＝ここが潰れると1文字ずつ縦になる
-  ['.grand-n', '.note-b'].forEach((sel) => {
+  ['.lead-l', '.note-b'].forEach((sel) => {
     const rule = (new RegExp(sel.replace('.', '\\.') + '\\{([^}]*)\\}').exec(CSS) || [])[1];
     ok(rule, sel + ' の指定が無い');
     ok(/min-width\s*:\s*\d/.test(rule), sel + ' に最低幅が無い（箱が潰れる）');

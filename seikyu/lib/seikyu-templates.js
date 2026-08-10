@@ -43,8 +43,9 @@
         headBg: '#F0FAF4',    // 表の見出しの地
         headInk: '#2E7D54',
         grandInk: '#2E7D54',
-        rule: 'all',          // 罫線 = 全部引く
+        rule: 'rows',         // 罫線 = 横線だけ（うちの紙は縦罫を引かない）
         titleSpacing: '.32em',
+        grandGo: 'ご',        // 「ご請求金額（税込）」＝ classic系の言い方（invoice-pdf.js:957）
       },
     },
     elegant: {
@@ -67,6 +68,7 @@
         grandInk: '#3D9E72',
         rule: 'rows',         // 罫線 = 横線だけ
         titleSpacing: '.5em',
+        grandGo: '御',        // 「御請求金額（税込）」＝ elegant系の言い方（invoice-pdf.js:479）
       },
     },
   };
