@@ -334,5 +334,48 @@ T('★実測した規模（1通 最大69行）が余裕で入る', () => {
   eq(r.tax.grandTotal, 89700);
 });
 
+/* ── 角印（会社の印） ────────────────────────────────────────────
+   ★押してある／無いで相手の受け取り方が変わる★ので、入れられる・大きさを変えられる・
+   消せる を揃える。上限を超えた画像は ★黙って縮めずに赤で返す★
+   （黙って縮めると「押したはずの印が欠けている」に押した本人が気づけない）。 */
+T('★角印に使えるのは PNG / JPEG の画像だけ（外のURLは受けない）', () => {
+  ok(D.validateSeal('data:image/png;base64,iVBORw0KGgo=').ok);
+  ok(D.validateSeal('data:image/jpeg;base64,/9j/4AAQ').ok);
+  ok(!D.validateSeal('https://example.com/hanko.png').ok, '外のURLが通っている');
+  ok(!D.validateSeal('data:image/svg+xml;base64,PHN2Zz4=').ok, 'SVGが通っている');
+  ok(!D.validateSeal('').ok, '空が通っている');
+  eq(D.validateSeal('').reason, '画像が選ばれていません');
+});
+
+T('★大きすぎる画像は黙って縮めずに赤で返す（何KBかを言う）', () => {
+  const big = 'data:image/png;base64,' + 'A'.repeat(500 * 1024);
+  const r = D.validateSeal(big);
+  ok(!r.ok, '上限を超えた画像が通っている');
+  ok(/KB/.test(r.reason), '大きさを言っていない: ' + r.reason);
+  ok(r.bytes > D.SEAL_MAX_BYTES, '大きさを測れていない');
+  // 上限のすぐ下は通る（境界）
+  const justUnder = 'data:image/png;base64,' + 'A'.repeat(Math.floor(D.SEAL_MAX_BYTES * 4 / 3) - 8);
+  ok(D.validateSeal(justUnder).ok, '上限のすぐ下が通らない');
+});
+
+T('★角印の大きさは 10〜40mm（既定21mm）', () => {
+  eq(D.sealSizeMm(), D.SEAL_DEFAULT_MM);
+  eq(D.sealSizeMm(0), D.SEAL_MIN_MM);
+  eq(D.sealSizeMm(999), D.SEAL_MAX_MM);
+  eq(D.sealSizeMm('abc'), D.SEAL_DEFAULT_MM, '数でない値が通っている');
+  eq(D.sealSizeMm(25.4), 25, '小数が丸められていない');
+});
+
+T('★発行した時の印は写しに残る（あとで印を替えても、出した紙は変わらない）', () => {
+  const seal = 'data:image/png;base64,iVBORw0KGgo=';
+  const s = D.snapshotOf({
+    at: '2026-09-30T00:00:00.000Z', partner: { id: 'p', data: { name: 'A' } },
+    org: { data: { yago: 'B', sealDataUrl: seal, sealSizeMm: 30 } },
+    tax: { subtotal: 1, taxTotal: 0, grandTotal: 1 }, templateId: 'std1',
+  });
+  eq(s.org.sealDataUrl, seal, '写しに印が残っていない');
+  eq(s.org.sealSizeMm, 30, '写しに大きさが残っていない');
+});
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

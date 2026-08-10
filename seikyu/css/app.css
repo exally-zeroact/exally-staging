@@ -93,3 +93,10 @@
 
 /* 保存する名前の小窓の添え書き */
 .ov-ext { font-size: 12px; color: #7AA08C; margin-top: 4px; }
+
+/* 角印の下見 */
+.seal-row { margin: 4px 0 10px; }
+.seal-pv {
+  display: block; width: 72px; height: 72px; object-fit: contain;
+  border: 1px solid #D4EAE0; border-radius: 10px; background: #FFFFFF; padding: 4px;
+}

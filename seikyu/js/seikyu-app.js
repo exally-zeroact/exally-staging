@@ -478,7 +478,9 @@
     var p = partnerById(v.partner_id);
     var partner = snap ? snap.partner : ((p && p.data) || {});
     var org = snap ? snap.org : (S.org || {});
-    if (!snap && S.org) org = Object.assign({}, S.org, { bank: settings().bank });
+    // ★下書きの下見では、まだ保存していない角印も出す（押してから保存できる）
+    if (!snap && S.org) org = Object.assign({}, S.org, { bank: settings().bank },
+      sealPending ? { sealDataUrl: sealPending } : {});
     var inv = Object.assign({}, v, { lines: cleanLines(v.lines) });
     return { inv: inv, tax: t, partner: partner, org: org, cols: colsOf(v), theme: themeOf(v) };
   }
@@ -778,6 +780,69 @@
     box('col-ok', '「' + t.label + '」の既定の列に戻しました。');
   }
 
+  /* ═══ 角印（会社の印） ═══
+     ★決まりは seikyu-doc.js（使える種類・上限・大きさ）★。ここは画面の配線だけ。
+     ★画像は data URL で持つ＝Blob を作らない（落とす口は js/file-out.js の1本だけ）★ */
+  var sealPending = null;   // 選んだばかりでまだ保存していない画像
+
+  function fillSeal() {
+    var d = S.org || {};
+    var url = sealPending || d.sealDataUrl || '';
+    var pv = $('seal-pv');
+    if (url) { pv.src = url; show(pv, true); show($('seal-none'), false); }
+    else { pv.removeAttribute('src'); show(pv, false); show($('seal-none'), true); }
+    $('seal-mm').value = DOC.sealSizeMm(d.sealSizeMm);
+    setText('seal-why', '大きさは ' + DOC.SEAL_MIN_MM + '〜' + DOC.SEAL_MAX_MM + 'mm の間だけ（既定 '
+      + DOC.SEAL_DEFAULT_MM + 'mm）。画像は ' + Math.round(DOC.SEAL_MAX_BYTES / 1024) + 'KB まで。'
+      + '発行した時の印は写しに残るので、あとで印を替えても ★出した紙は変わりません★。');
+    $('b-seal-clear').disabled = !(d.sealDataUrl || sealPending);
+  }
+
+  function pickSeal(file) {
+    box('seal-err', ''); box('seal-ok', '');
+    if (!file) return;
+    var fr = new FileReader();
+    fr.onload = function () {
+      var url = String(fr.result || '');
+      var chk = DOC.validateSeal(url);
+      if (!chk.ok) { box('seal-err', chk.reason); sealPending = null; fillSeal(); return; }
+      sealPending = url;
+      fillSeal();
+      box('seal-ok', '下見に出しました。「保存」を押すと紙に出ます。');
+    };
+    fr.onerror = function () { box('seal-err', 'この画像は読めませんでした。別の画像でお試しください。'); };
+    fr.readAsDataURL(file);
+  }
+
+  function saveSeal() {
+    var mm = DOC.sealSizeMm($('seal-mm').value);
+    var patch = { sealSizeMm: mm };
+    if (sealPending) {
+      var chk = DOC.validateSeal(sealPending);
+      if (!chk.ok) { box('seal-err', chk.reason); return Promise.resolve(); }
+      patch.sealDataUrl = sealPending;
+    }
+    box('seal-err', '');
+    return S.store.org.save(patch).then(function (r) {
+      if (!r.ok) { box('seal-err', '保存できませんでした（' + r.reason + '）'); return; }
+      S.org = r.data;
+      sealPending = null;
+      fillSeal();
+      box('seal-ok', '保存しました。次に発行する紙から この印で刷ります。');
+    });
+  }
+
+  function clearSeal() {
+    if (!global.confirm('角印を消しますか？\n（これから出す紙に印が付かなくなります。すでに出した紙は変わりません）')) return Promise.resolve();
+    sealPending = null;
+    return S.store.org.save({ sealDataUrl: '' }).then(function (r) {
+      if (!r.ok) { box('seal-err', '消せませんでした（' + r.reason + '）'); return; }
+      S.org = r.data;
+      fillSeal();
+      box('seal-ok', '角印を消しました。');
+    });
+  }
+
   /* ═══ 設定の画面 ═══ */
   function fillSettings() {
     var s = settings();
@@ -799,6 +864,7 @@
     // 様式と列（★会社の既定★。作りかけの1通ではなく、これから作る物に効く）
     drawSetTpl(s.template);
     renderColEditor();
+    fillSeal();
   }
 
   function drawSetTpl(id) {
@@ -966,6 +1032,9 @@
     $('b-void').onclick = function () { return voidIt(); };
     $('b-delete').onclick = function () { return removeDraft(); };
 
+    $('b-seal-save').onclick = function () { return saveSeal(); };
+    $('b-seal-clear').onclick = function () { return clearSeal(); };
+    $('seal-file').onchange = function (e) { pickSeal(e.target.files && e.target.files[0]); };
     $('b-col-add').onclick = function () { addCol(); };
     $('b-col-reset').onclick = function () { resetCols(); };
     $('col-new').onkeydown = function (e) { if (e.key === 'Enter') { e.preventDefault(); addCol(); } };
@@ -1026,5 +1095,10 @@
     _new: newInvoice,
     _fillSettings: fillSettings,
     _loadMasters: function () { return loadMasters(true); },   // テストから1回だけ読ませる
+    _pickSealUrl: function (url) {           // テスト用: ファイル選択の代わりに data URL を渡す
+      var chk = DOC.validateSeal(url);
+      if (!chk.ok) { box('seal-err', chk.reason); sealPending = null; fillSeal(); return chk; }
+      sealPending = url; fillSeal(); return chk;
+    },
   };
 })(window);

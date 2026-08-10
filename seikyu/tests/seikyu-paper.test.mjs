@@ -295,6 +295,31 @@ T('★金額は ¥ 記号（invoice-pdf.js:156 と同じ）', () => {
   eq(PAPER.comma(''), '');
 });
 
+T('★角印（会社の印）が紙に出る／入れていなければ出さない', () => {
+  const seal = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUg==';
+  const withSeal = PAPER.build(sample({ org: Object.assign({}, S1.org, { sealDataUrl: seal, sealSizeMm: 30 }) })).html;
+  ok(/class="seal"/.test(withSeal), '印が紙に出ていない');
+  ok(/width:30mm;height:30mm/.test(withSeal), '大きさが効いていない');
+  ok(withSeal.indexOf(seal) >= 0, '印の画像が入っていない');
+  // 入れていない会社の紙には出さない（空の枠を出さない）
+  ok(!/class="seal"/.test(H1), '印を入れていないのに枠が出ている');
+});
+
+T('★角印の大きさは 10〜40mm に収める（紙からはみ出す印を作らない）', () => {
+  eq(PAPER.sealMm(999), 40);
+  eq(PAPER.sealMm(1), 10);
+  eq(PAPER.sealMm(), 21, '既定が21mmでない');
+  eq(PAPER.sealMm('abc'), 21, '数でない値が通っている');
+  const h = PAPER.build(sample({ org: Object.assign({}, S1.org, { sealDataUrl: 'data:image/png;base64,iVBORw0KGgo=', sealSizeMm: 999 }) })).html;
+  ok(/width:40mm/.test(h), '上限に収まっていない');
+});
+
+T('★角印は薄く重ねる（実物と同じ扱い・文字を隠し切らない）', () => {
+  const rule = (/\.seal\{([^}]*)\}/.exec(PAPER.css()) || [])[1] || '';
+  ok(/opacity\s*:\s*\.?9/.test(rule), '印が濃すぎる（下の文字が読めなくなる）: ' + rule);
+  ok(/object-fit\s*:\s*contain/.test(rule), '印が歪む（縦横比を保っていない）');
+});
+
 T('★表の上に【…】の小さなキャプションが出る', () => {
   ok(/【9月分 運転代行ご利用料金】/.test(H1), 'キャプションが無い');
 });

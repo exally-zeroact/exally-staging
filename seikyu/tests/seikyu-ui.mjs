@@ -627,6 +627,67 @@ await TA('7. 支払期限は決め方から自動で入り、手でも直せる'
   eq(win.SeikyuApp._state.cur.due_ymd, '2026-11-15', '手で直した期限が持たれていない');
 });
 
+/* ═══ 6-c. ★角印（会社の印）★ ═══ */
+await TA('6-c. ★角印を入れると紙に出る／大きさを変えられる／消せる', async () => {
+  doc.querySelector('.ex-bn[data-scr="scr-set"]').click();
+  await sleep(30);
+  ok($('seal-none').style.display !== 'none', '最初から印が入っていることになっている');
+  ok($('b-seal-clear').disabled, '印が無いのに「消す」が押せる');
+
+  // ファイル選択は jsdom で作れないので、読み込んだあとの data URL を直接渡す
+  const seal = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+  const r = win.SeikyuApp._pickSealUrl(seal);
+  ok(r.ok, '正しい画像がはじかれた: ' + r.reason);
+  await sleep(20);
+  ok($('seal-pv').style.display !== 'none', '下見に出ていない');
+  $('seal-mm').value = '30';
+  $('b-seal-save').click();
+  await sleep(60);
+  eq(db.pay_org[0].data.sealDataUrl, seal, '倉庫に印が入っていない');
+  eq(db.pay_org[0].data.sealSizeMm, 30, '大きさが入っていない');
+  eq(db.pay_org[0].data.yago, '株式会社ゼロアクト', '★ハブが入れた自社情報を消している★');
+
+  // 新しい1通の紙に出る
+  $('b-new').click();
+  await sleep(30);
+  setVal('e-partner', 'pt_a');
+  await sleep(20);
+  const tr = $('lines-body').querySelector('tr');
+  tr.querySelector('[data-f="name"]').value = 'あ';
+  tr.querySelector('[data-f="name"]').dispatchEvent(new win.Event('input'));
+  tr.querySelector('[data-f="amount"]').value = '1000';
+  tr.querySelector('[data-f="amount"]').dispatchEvent(new win.Event('input'));
+  await sleep(20);
+  $('b-preview').click();
+  await sleep(400);
+  const src = $('pv').srcdoc || '';
+  ok(/class="seal"/.test(src), '紙に印が出ていない');
+  ok(/width:30mm/.test(src), '紙の印の大きさが効いていない');
+});
+
+await TA('6-c. ★大きすぎる画像・PNG/JPEG でない物は入らない（理由を出す）', async () => {
+  doc.querySelector('.ex-bn[data-scr="scr-set"]').click();
+  await sleep(30);
+  const bad = win.SeikyuApp._pickSealUrl('https://example.com/hanko.png');
+  ok(!bad.ok, '外のURLが通った');
+  ok($('seal-err').style.display !== 'none', '理由を出していない');
+  const big = win.SeikyuApp._pickSealUrl('data:image/png;base64,' + 'A'.repeat(500 * 1024));
+  ok(!big.ok, '大きすぎる画像が通った');
+  ok(/KB/.test($('seal-err').textContent), '何KBかを言っていない: ' + $('seal-err').textContent);
+  // 前に保存した印は残っている（弾かれても消えない）
+  eq(db.pay_org[0].data.sealDataUrl.slice(0, 22), 'data:image/png;base64,', '弾かれた拍子に保存済みの印が消えた');
+});
+
+await TA('6-c. ★印を消せる（消しても、すでに出した紙は変わらない）', async () => {
+  const issued = db.pay_invoices.filter((x) => x.status === 'issued')[0];
+  const before = issued.snapshot.org.sealDataUrl || '';
+  $('b-seal-clear').click();
+  await sleep(60);
+  eq(db.pay_org[0].data.sealDataUrl, '', '倉庫から消えていない');
+  ok($('seal-none').style.display !== 'none', '「入れていません」に戻っていない');
+  eq(issued.snapshot.org.sealDataUrl || '', before, '★出した紙の写しが書き換わった★');
+});
+
 /* ═══ 6-b. ★列を選べるようになる前に出した紙も、あとから列が増えない★ ═══ */
 await TA('6-b. ★写しに列が無い古い請求書は、会社の「今の列」を当てずに様式の既定で刷る', async () => {
   // 列を足す前に出した1通を作る（写しに cols が無い＝2026-08-10 より前に出した物と同じ形）

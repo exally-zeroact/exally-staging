@@ -210,7 +210,7 @@
       org: {
         yago: od.yago || '', addr: od.addr || '', tel: od.tel || '',
         invoiceNo: od.invoiceNo || '', bank: od.bank || '',
-        sealDataUrl: od.sealDataUrl || '', logoDataUrl: od.logoDataUrl || '',
+        sealDataUrl: od.sealDataUrl || '', sealSizeMm: sealSizeMm(od.sealSizeMm), logoDataUrl: od.logoDataUrl || '',
       },
       totals: { subtotal: t.subtotal || 0, taxTotal: t.taxTotal || 0, grandTotal: t.grandTotal || 0 },
       byRate: t.byRate || [],
@@ -239,6 +239,43 @@
     var nm = p && p.data && p.data.name;
     if (nm) return nm;
     return '（消えた取引先）';
+  }
+
+  /* ── 角印（会社の印） ──────────────────────────────────────────
+     ★紙に重ねるだけの飾りではない★。押してある/無いで相手の受け取り方が変わるので、
+     「入れられる」「大きさを変えられる」「消せる」を揃える。
+     代行請求の実物と同じ扱い（invoice-pdf.js:927 hankoSizeMm 既定21mm・薄く重ねる）。 */
+  var SEAL_DEFAULT_MM = 21;
+  var SEAL_MIN_MM = 10;
+  var SEAL_MAX_MM = 40;
+  /* 倉庫の1行に画像を入れるので上限を決める。★超えたら黙って縮めずに赤で返す★
+     （黙って縮めると「押したはずの印が薄い/欠ける」になり、押した本人が気づけない） */
+  var SEAL_MAX_BYTES = 300 * 1024;
+
+  function sealSizeMm(v) {
+    var n = Number(v);
+    if (!Number.isFinite(n)) return SEAL_DEFAULT_MM;
+    return Math.max(SEAL_MIN_MM, Math.min(SEAL_MAX_MM, Math.round(n)));
+  }
+
+  /** 角印に使える画像か。返り = { ok, reason }
+   *  ・png / jpeg の data URL だけ（外のURLは受けない＝紙を刷る時に読めないと空白になる）
+   *  ・上限を超えたら赤（何KBかを言う） */
+  function validateSeal(dataUrl, opts) {
+    var max = (opts && opts.maxBytes) || SEAL_MAX_BYTES;
+    var s = String(dataUrl || '');
+    if (!s) return { ok: false, reason: '画像が選ばれていません' };
+    var m = /^data:image\/(png|jpe?g);base64,([A-Za-z0-9+/=]+)$/.exec(s);
+    if (!m) return { ok: false, reason: '角印に使えるのは PNG か JPEG の画像だけです' };
+    // base64 の長さから元の大きさを出す（末尾の = は数えない）
+    var b64 = m[2];
+    var pad = (b64.slice(-2) === '==') ? 2 : (b64.slice(-1) === '=' ? 1 : 0);
+    var bytes = Math.floor(b64.length * 3 / 4) - pad;
+    if (bytes > max) {
+      return { ok: false, bytes: bytes, reason: '画像が大きすぎます（' + Math.round(bytes / 1024) + 'KB）。'
+        + Math.round(max / 1024) + 'KB までにしてください（角印は小さく写れば十分です）' };
+    }
+    return { ok: true, bytes: bytes };
   }
 
   /* ── 入金 ────────────────────────────────────────────────────── */
@@ -332,6 +369,8 @@
     dueDateFrom: dueDateFrom, parseYmd: parseYmd,
     canEdit: canEdit, canDelete: canDelete, canVoid: canVoid, statusOf: statusOf,
     snapshotOf: snapshotOf, partnerNameOf: partnerNameOf,
+    validateSeal: validateSeal, sealSizeMm: sealSizeMm,
+    SEAL_DEFAULT_MM: SEAL_DEFAULT_MM, SEAL_MIN_MM: SEAL_MIN_MM, SEAL_MAX_MM: SEAL_MAX_MM, SEAL_MAX_BYTES: SEAL_MAX_BYTES,
     paymentStateOf: paymentStateOf,
     validateInvoice: validateInvoice, convertQuoteToInvoice: convertQuoteToInvoice,
   };

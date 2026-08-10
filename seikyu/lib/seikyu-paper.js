@@ -116,6 +116,13 @@
     return '消費税' + (inTax ? '（内税）' : '');
   }
 
+  /* 角印の大きさ（mm）。10〜40に収める＝紙からはみ出す印を作らない */
+  function sealMm(v) {
+    var n = Number(v);
+    if (!Number.isFinite(n)) return 21;
+    return Math.max(10, Math.min(40, Math.round(n)));
+  }
+
   function hasRole(items, role) {
     for (var i = 0; i < items.length; i++) if (COLS.roleOf(items[i]) === role) return true;
     return false;
@@ -216,7 +223,7 @@
         + (g.addr ? '<div class="from-sub">' + esc(g.addr) + '</div>' : '')
         + (g.tel ? '<div class="from-sub">TEL ' + esc(g.tel) + '</div>' : '')
         + (g.invoiceNo ? '<div class="from-sub">登録番号 ' + esc(g.invoiceNo) + '</div>' : '')
-        + (g.sealDataUrl ? '<img class="seal" src="' + esc(g.sealDataUrl) + '" alt="">' : '')
+        + (g.sealDataUrl ? '<img class="seal" style="width:' + sealMm(g.sealSizeMm) + 'mm;height:' + sealMm(g.sealSizeMm) + 'mm" src="' + esc(g.sealDataUrl) + '" alt="会社の印">' : '')
         + '</td></tr></tbody></table>'
         + (multi ? '<div class="pageno">' + (pageIdx + 1) + 'ページ目</div>' : '');
     }
@@ -357,7 +364,9 @@
       'word-break:normal;overflow-wrap:break-word;}',
       '.from-sub{font-size:9pt;color:' + SUB + ';line-height:1.6;',
       'word-break:normal;overflow-wrap:break-word;}',
-      '.seal{width:18mm;height:18mm;object-fit:contain;margin-top:2mm;}',
+      /* ★角印は薄く重ねる（代行請求の実物 invoice-pdf.js:933 opacity 0.95 と同じ扱い）★
+         大きさは会社が決める（10〜40mm・既定21mm）。文字の上に少しかかってよい。 */
+      '.seal{display:inline-block;object-fit:contain;margin-top:2mm;opacity:.95;}',
       '.pageno{font-size:9.5pt;color:' + SUB + ';margin:0 0 3mm;}',
 
       /* 挨拶。★block＋十分な幅＝1文字ずつ縦に割れない★ */
@@ -437,7 +446,7 @@
   return {
     build: build, css: css, esc: esc, yen: yen, comma: comma,
     dateStr: dateStr, jpDate: jpDate, honorOf: honorOf, taxLabel: taxLabel,
-    paginate: paginate, TEMPLATE_ID: TEMPLATE_ID,
+    paginate: paginate, sealMm: sealMm, TEMPLATE_ID: TEMPLATE_ID,
     ROWS_FIRST: ROWS_FIRST, ROWS_REST: ROWS_REST,
   };
 });
