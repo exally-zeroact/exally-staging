@@ -71,12 +71,10 @@ input, select, button, textarea { font-family: inherit; }
 }
 .ex-back { flex: 0 0 auto; color: #2E7D54; font-size: 12px; text-decoration: none; white-space: nowrap; }
 .ex-grow { flex: 1 1 auto; min-width: 0; }
-.ex-who {
-  flex: 0 1 auto; min-width: 0; max-width: 40vw;
-  font-size: 11px; color: #7AA08C;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.ex-out { font-size: 11px; color: #2E7D54; cursor: pointer; white-space: nowrap; }
+/* ★ログイン中の人は「設定」の中に出す（頭には出さない＝給与と同じ）★
+   頭に置くと、狭い端末でメールが見出しを押し出す。 */
+.ex-who { color: #2B3A31; font-weight: 500; overflow-wrap: break-word; }
+.ex-note { margin: 0 0 10px; font-size: 13px; color: #4A5D52; }
 
 /* ── 器 ─────────────────────────────────────────────── */
 .ex-main { padding: 12px 12px 84px; max-width: 900px; margin: 0 auto; }
@@ -194,3 +192,24 @@ a:focus-visible, button:focus-visible, select:focus-visible,
 input:focus-visible, textarea:focus-visible, [tabindex]:focus-visible {
   outline: 2px solid #2E7D54; outline-offset: 2px; border-radius: 6px;
 }
+
+/* ── 主ボタン（画面にひとつだけ大きく）────────────────────────
+   ★出す口をたくさん並べない★。押す物が7個 横に並ぶと、どれが本命か分からなくなる。
+   本命だけ大きく、ほかは「畳む」に入れる。 */
+.ex-b-big { font-size: 16px; padding: 15px 28px; flex: 1 1 auto; min-width: 200px; }
+
+/* ── 畳む（開くまで画面に出さない）──────────────────────────
+   ★説明で画面を埋めない★。細かい設定・ほかの出し方はここに入れる。 */
+.ex-more { padding: 0; }
+.ex-more > summary {
+  list-style: none; cursor: pointer; padding: 12px 14px;
+  font-size: 13px; font-weight: 700; color: #3D6B53;
+  display: block; white-space: normal; word-break: normal; overflow-wrap: break-word;
+}
+.ex-more > summary::-webkit-details-marker { display: none; }
+.ex-more > summary::before { content: "▸ "; color: #7AA08C; }
+.ex-more[open] > summary::before { content: "▾ "; }
+.ex-more[open] > summary { border-bottom: 1px solid #D4EAE0; margin-bottom: 10px; }
+.ex-more > *:not(summary) { padding: 0 14px 12px; }
+.ex-card.ex-more > *:not(summary) { padding: 0 0 12px; }
+.ex-card.ex-more > summary { padding: 2px 0 12px; }

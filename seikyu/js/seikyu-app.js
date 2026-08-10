@@ -24,7 +24,7 @@
     sb: null, store: null, suite: null,
     org: null, partners: [], invoices: [], receipts: null,
     cur: null,            // 今 開いている1通（画面の下書き）
-    fil: 'all',
+    fil: 'live',      // ★既定は「取り消し以外」＝出した紙が上に来る
     dirty: false,
   };
 
@@ -132,10 +132,13 @@
 
   function renderList() {
     var host = $('list-body'); if (!host) return;
-    var rows = S.invoices.filter(function (v) { return S.fil === 'all' || v.status === S.fil; });
+    var rows = S.invoices.filter(function (v) {
+      if (S.fil === 'live') return v.status !== 'void';   // ★既定は取り消し以外（出した紙が上に来る）
+      return S.fil === 'all' || v.status === S.fil;
+    });
     if (!rows.length) {
       host.innerHTML = '<div class="ex-card"><div class="ex-empty">'
-        + (S.invoices.length ? 'この絞り込みに当てはまる請求書はありません。' : 'まだ請求書がありません。「＋ 新しく作る」から作れます。')
+        + (S.invoices.length ? 'この絞り込みに当てはまる請求書はありません。' : 'まだ請求書がありません。「＋ 新しい請求書」から出せます。')
         + '</div></div>';
       return;
     }
@@ -229,10 +232,10 @@
     fillSelect($('e-partner'), [{ v: '', t: '（選んでください）' }].concat(S.partners.map(function (p) {
       return { v: p.id, t: (p.data && p.data.name) || '(名称未設定)' };
     })), v.partner_id || '');
-    show($('e-partner-hint'), !S.partners.length ? true : true);
-    if (!S.partners.length) {
-      setText('e-partner-hint', '取引先がまだ1社もありません。Exally のハブ（共有データ ▸ 取引先）で追加してください。');
-    }
+    // ★注意書きは「今 困っている時」だけ出す（いつも出ていると読まれない）
+    var noPartner = !S.partners.length;
+    show($('e-partner-hint'), noPartner);
+    if (noPartner) setText('e-partner-hint', '取引先がまだ1社もありません。Exally のハブ（共有データ ▸ 取引先）で追加してください。');
 
     $('e-issue').value = v.issue_ymd || '';
     var term = (v.data && v.data.term) || { kind: 'none', n: 0 };
@@ -241,49 +244,167 @@
     show($('e-termn'), term.kind === 'days' || term.kind === 'nextDay');
     $('e-due').value = v.due_ymd || '';
 
-    Array.prototype.forEach.call($('e-taxmode').querySelectorAll('[data-tm]'), function (b) {
-      b.classList.toggle('on', b.getAttribute('data-tm') === v.tax_mode);
-    });
-    fillSelect($('e-round'), TAX.ROUNDINGS.map(function (k) { return { v: k, t: ROUND_LABEL[k] }; }), v.rounding);
-
-    var nm = (v.data && v.data.noMode) || 'auto';
-    Array.prototype.forEach.call($('e-nomode').querySelectorAll('[data-nm]'), function (b) {
-      b.classList.toggle('on', b.getAttribute('data-nm') === nm);
-    });
+    // ★番号はふだん読むだけ（「変える」を押した時だけ直せる）
+    setText('e-no-view', v.no || '（自動）');
     $('e-no').value = v.no || '';
+    show($('e-no'), ((v.data && v.data.noMode) || 'auto') === 'manual');
+
     $('e-subject').value = (v.data && v.data.subject) || '';
     $('e-memo').value = (v.data && v.data.memo) || '';
 
-    // ★この1通の様式（見た目だけ。金額は動かない）
-    drawEditTpl(v.template_id || settings().template);
-
+    renderGuess();
     renderLines();
     recalc();
     lockInputs();
   }
 
+  /* ═══ ★前回から当てて確かめる★ ═══
+     空欄を並べて埋めさせない。取引先を選んだら前回の請求から当てて、
+     ★「✓ はい、これで」を押すだけ★にする。当てた値には印を出し、押せば直せる。 */
+  function prevOf(partnerId) {
+    var best = null;
+    for (var i = 0; i < S.invoices.length; i++) {
+      var v = S.invoices[i];
+      if (!v || v.status !== 'issued') continue;
+      if ((v.partner_id || '') !== (partnerId || '')) continue;
+      if (S.cur && v.id === S.cur.id) continue;
+      if (!best) { best = v; continue; }
+      var newer = (v.issue_ymd || '') > (best.issue_ymd || '')
+        || ((v.issue_ymd || '') === (best.issue_ymd || '') && String(v.no || '') > String(best.no || ''));
+      if (newer) best = v;
+    }
+    return best;
+  }
+
+  /** 前回の1通から、この1通に当てる物を作る（★入れるのは押された時だけ★） */
+  function guessFrom(prev) {
+    if (!prev) return null;
+    var d = prev.data || {};
+    var snapCols = (prev.snapshot && prev.snapshot.cols) || null;
+    return {
+      no: prev.no || '',
+      term: d.term || { kind: 'none', n: 0 },
+      subject: d.subject || '',
+      memo: d.memo || '',
+      taxMode: prev.tax_mode,
+      rounding: prev.rounding,
+      templateId: prev.template_id || '',
+      cols: (snapCols && snapCols.items && snapCols.items.length) ? snapCols : (d.cols || null),
+      lineCount: Array.isArray(prev.lines) ? prev.lines.length : 0,
+      total: (prev.totals && prev.totals.grandTotal),
+    };
+  }
+
+  function termLabel(t) {
+    for (var i = 0; i < DOC.PAY_TERMS.length; i++) {
+      if (DOC.PAY_TERMS[i].key === (t && t.kind)) {
+        return DOC.PAY_TERMS[i].label + ((t.kind === 'days' || t.kind === 'nextDay') && t.n ? '（' + t.n + '）' : '');
+      }
+    }
+    return '決めていない';
+  }
+
+  function renderGuess() {
+    var card = $('guess-card'); if (!card) return;
+    var v = S.cur;
+    // 発行済み・すでに決めた1通では出さない（聞くのは新しく作る時だけ）
+    if (!v || locked() || v.id || S.guessDone) { show(card, false); return; }
+    if (!v.partner_id) { show(card, false); return; }
+
+    var prev = prevOf(v.partner_id);
+    var g = guessFrom(prev);
+    S.guess = g;
+
+    if (!g) {
+      // ★初回は「前回の請求はありません」＝空欄を並べない・0と書かない
+      setText('guess-h', '前回の請求はありません');
+      $('guess-list').innerHTML = '<p class="ex-hint">この取引先へは初めての請求です。'
+        + 'このまま明細を打てば出せます（支払期限や件名は「細かく決める」で足せます）。</p>';
+      show($('b-guess-ok'), false);
+      show($('b-guess-edit'), false);
+      show(card, true);
+      return;
+    }
+    setText('guess-h', '前回と同じで作りますか？');
+    var rows = [
+      ['前回の請求', 'No.　' + esc(g.no) + (g.total === undefined || g.total === null ? '' : '（' + yen(g.total) + ' 円）')],
+      ['支払期限', esc(termLabel(g.term))],
+      ['件名', esc(g.subject || '（なし）')],
+      ['明細の列', esc((g.cols && g.cols.items ? g.cols.items : colsOf(v).items).join('・'))],
+      ['税の入れ方', g.taxMode === 'inclusive' ? '内税' : '外税'],
+    ];
+    $('guess-list').innerHTML = '<table class="guess-t"><tbody>'
+      + rows.map(function (r) { return '<tr><th>' + r[0] + '</th><td>' + r[1] + '</td></tr>'; }).join('')
+      + '</tbody></table>';
+    show($('b-guess-ok'), true);
+    show($('b-guess-edit'), true);
+    show(card, true);
+  }
+
+  /** ✓ を押した＝前回の中身をこの1通に入れる（明細の中身は入れない＝毎月 違うので） */
+  function applyGuess() {
+    var g = S.guess, v = S.cur;
+    if (!g || !v) return;
+    v.data.term = { kind: (g.term && g.term.kind) || 'none', n: (g.term && g.term.n) || 0 };
+    v.data.subject = g.subject;
+    v.data.memo = g.memo;
+    if (g.taxMode) v.tax_mode = g.taxMode;
+    if (g.rounding) v.rounding = g.rounding;
+    if (g.templateId) v.template_id = g.templateId;
+    if (g.cols) v.data.cols = COLS.normalizeSpec(g.cols);
+    S.guessApplied = { subject: !!g.subject, term: !!(g.term && g.term.kind !== 'none') };
+    S.guessDone = true;
+    recalcDue();
+    fillEdit();
+    show($('tag-subject'), !!S.guessApplied.subject);
+    show($('tag-term'), !!S.guessApplied.term);
+    box('edit-ok', '前回と同じ内容を入れました。明細を打てば発行できます（直したい所は「細かく決める」から）。');
+  }
+
   /* 発行済み・取り消し済みは触らせない（★押せない理由も出す★） */
   function lockInputs() {
     var ro = locked();
-    ['e-partner', 'e-issue', 'e-term', 'e-termn', 'e-due', 'e-round', 'e-no', 'e-subject', 'e-memo'].forEach(function (id) {
+    ['e-partner', 'e-issue', 'e-term', 'e-termn', 'e-due', 'e-no', 'e-subject', 'e-memo'].forEach(function (id) {
       var el = $(id); if (el) el.disabled = ro;
     });
-    Array.prototype.forEach.call(document.querySelectorAll('#e-taxmode .ex-chip, #e-nomode .ex-chip, #e-tpl .ex-chip'), function (b) { b.disabled = ro; });
+    var noEdit = $('b-no-edit'); if (noEdit) noEdit.disabled = ro;
     Array.prototype.forEach.call(document.querySelectorAll('#lines-body input, #lines-body select, #lines-body button'), function (b) { b.disabled = ro; });
     var add = $('b-addline'); if (add) add.disabled = ro;
 
     var v = S.cur || {};
-    $('b-save').disabled = ro;
-    $('b-issue').disabled = ro;
-    $('b-void').disabled = !DOC.canVoid(v);
-    $('b-delete').disabled = !(DOC.canDelete(v) && v.id);
+    // ★押せない物は出さない（説明で補わない）★
+    show($('b-issue'), !ro);
+    show($('b-save'), !ro);
+    show($('more-box'), !ro);
 
-    var why = [];
-    if (ro && v.status === 'issued') why.push('発行済みなので、直す・保存する・もう一度発行する はできません（取り消してから作り直します）。');
-    if (ro && v.status === 'void') why.push('取り消し済みなので直せません。新しく作り直してください。');
-    if (!ro) why.push('取り消しは発行済みのときだけ、削除は下書きのときだけ押せます。');
-    if (!v.id && !ro) why.push('まだ保存していないので「削除」は押せません。');
-    setText('act-why', why.join(' '));
+    /* 取り消す／削除は「押せる時だけ」その場に出す */
+    var host = $('danger-row');
+    if (host) {
+      var html = '';
+      if (DOC.canVoid(v)) html += '<button class="ex-b2" type="button" id="b-void">この請求書を取り消す</button>';
+      if (DOC.canDelete(v) && v.id) html += '<button class="ex-bdel" type="button" id="b-delete">下書きを削除</button>';
+      host.innerHTML = html;
+      var bv = $('b-void'); if (bv) bv.onclick = function () { return voidIt(); };
+      var bd = $('b-delete'); if (bd) bd.onclick = function () { return removeDraft(); };
+      show($('out-box'), ro ? !!html : true);
+
+      /* ★畳みの見出しは「中に本当に在る物」で書く★
+         発行済みでは下書き保存が出ていないのに「下書き…」と書いてあると、
+         開くまで何が出来るのか分からない（2026-08-11 実機で発生）。
+         発行済み・取り消し済みは、ここが唯一の出来る事なので ★開いた状態で出す★。 */
+      var can = [];
+      if (!ro) can.push('下書き');
+      can.push('下見', '印刷', 'Excel');
+      if (DOC.canVoid(v)) can.push('取り消し');
+      if (DOC.canDelete(v) && v.id) can.push('削除');
+      setText('out-sum', (ro ? 'この請求書に出来る事' : 'ほかの出し方') + '（' + can.join('・') + '）');
+      $('out-box').open = ro;
+    }
+
+    var why = '';
+    if (ro && v.status === 'issued') why = 'この請求書は発行済みです。直すには取り消してから作り直します。';
+    else if (ro && v.status === 'void') why = 'この請求書は取り消し済みです。新しく作り直してください。';
+    setText('act-why', why);
   }
 
   /* ── 明細（★列は会社が決めた items のとおりに作る★） ── */
@@ -352,21 +473,7 @@
     return { name: '', qty: '', unit: '', price: '', amount: '', rate: firstRate(), memo: '', extra: {} };
   }
 
-  /* この1通の様式を選ぶ（発行済みは選べない＝写しの様式で固まっている） */
-  function drawEditTpl(id) {
-    renderTplSeg('e-tpl', 'e-tpl-note', id, function (pick) {
-      if (!S.cur || locked()) return;
-      S.cur.template_id = pick;
-      // 列をこの1通で決めていなければ、選んだ様式の既定に合わせる
-      if (!(S.cur.data && S.cur.data.cols && S.cur.data.cols.items && S.cur.data.cols.items.length)) {
-        S.cur.data.cols = COLS.normalizeSpec(TPL.getOrDefault(pick).cols);
-      }
-      drawEditTpl(pick);
-      renderLines(); recalc(); lockInputs();
-      // 下見を出したままなら、その場で刷り直す（見た目が変わった事が分かる）
-      if ($('pv-wrap').style.display !== 'none') doPreview();
-    }, locked());
-  }
+
 
   /* 画面の文字を、計算に渡せる形に直す（★空は空のまま＝0にしない★） */
   function cleanLines(lines) {
@@ -435,6 +542,7 @@
     if (errs.length) {
       $('e-no').value = '';
       v.no = '';
+      setText('e-no-view', '（作れません）');
       setText('e-no-hint', errs.join(' '));
       return Promise.resolve();
     }
@@ -442,6 +550,8 @@
       var no = DOC.nextNo({ format: s.format, resetYearly: s.resetYearly, ymd: v.issue_ymd, partnerCode: code, existing: used });
       v.no = no;
       $('e-no').value = no;
+      // ★ふだん読むだけの欄にも入れる（番号は非同期に決まるので、ここで入れないと「（自動）」のまま）
+      setText('e-no-view', no || '（作れません）');
       setText('e-no-hint', no
         ? '「設定」で決めた形から作りました。同じ番号を二度使わないことは倉庫が守ります。'
         : '番号が作れませんでした（請求日か取引先コードを確かめてください）。');
@@ -967,11 +1077,12 @@
     $('b-new').onclick = function () { newInvoice(); };
     // ★「読み直す」は共有マスタも取り直す（自社が読めなかった時の直し方がこれ）
     $('b-reload').onclick = function () { return loadMasters().then(loadList); };
-    $('b-back').onclick = function () { goScreen('scr-list'); };
 
     $('e-partner').onchange = function () {
       S.cur.partner_id = $('e-partner').value;
+      S.guessDone = false;          // 相手を変えたら、また前回から当て直す
       applyPartnerDefaults();
+      renderGuess();
       return autoNumber();
     };
     $('e-issue').onchange = function () {
@@ -990,24 +1101,21 @@
       recalcDue();
     };
     $('e-due').onchange = function () { S.cur.due_ymd = $('e-due').value; };
-    Array.prototype.forEach.call(document.querySelectorAll('#e-taxmode [data-tm]'), function (b) {
-      b.onclick = function () {
-        S.cur.tax_mode = b.getAttribute('data-tm');
-        Array.prototype.forEach.call(document.querySelectorAll('#e-taxmode [data-tm]'), function (x) { x.classList.toggle('on', x === b); });
-        recalc();
-      };
-    });
-    $('e-round').onchange = function () { S.cur.rounding = $('e-round').value; recalc(); };
-    Array.prototype.forEach.call(document.querySelectorAll('#e-nomode [data-nm]'), function (b) {
-      b.onclick = function () {
-        var m = b.getAttribute('data-nm');
-        S.cur.data.noMode = m;
-        Array.prototype.forEach.call(document.querySelectorAll('#e-nomode [data-nm]'), function (x) { x.classList.toggle('on', x === b); });
-        if (m === 'auto') return autoNumber();
-        setText('e-no-hint', '自分で決めた番号も「使用済み」として数えます。同じ番号は倉庫が受け付けません。');
-      };
-    });
-    $('e-no').oninput = function () { S.cur.no = $('e-no').value; };
+    /* ★税の入れ方・円未満の丸め方・紙の様式は「設定」で1回 決める★
+       ＝入力の画面では聞かない（打つ前に選ばせない）。
+       番号も ふだんは読むだけ。「変える」を押した時だけ自分で決める形にする。 */
+    $('b-no-edit').onclick = function () {
+      var open = $('e-no').style.display !== 'none';
+      if (open) {
+        S.cur.data.noMode = 'auto';
+        show($('e-no'), false);
+        return autoNumber().then(function () { setText('e-no-view', S.cur.no || '（自動）'); });
+      }
+      S.cur.data.noMode = 'manual';
+      show($('e-no'), true);
+      try { $('e-no').focus(); } catch (e) { /* 端末によっては動かないが害はない */ }
+    };
+    $('e-no').oninput = function () { S.cur.no = $('e-no').value; setText('e-no-view', S.cur.no || '（自動）'); };
     $('e-subject').oninput = function () { S.cur.data.subject = $('e-subject').value; };
     $('e-memo').oninput = function () { S.cur.data.memo = $('e-memo').value; };
     $('b-addline').onclick = function () {
@@ -1015,6 +1123,13 @@
       renderLines(); recalc(); lockInputs();
     };
 
+    $('b-guess-ok').onclick = function () { applyGuess(); };
+    $('b-guess-edit').onclick = function () {
+      S.guessDone = true;
+      renderGuess();
+      var m = $('more-box'); if (m) m.open = true;
+      box('edit-ok', '');
+    };
     $('b-preview').onclick = function () { doPreview(); };
     $('b-print').onclick = function () { askName('pdf', doPrint); };
     $('b-xlsx').onclick = function () { askName('xlsx', doExcel); };
@@ -1029,8 +1144,6 @@
 
     $('b-save').onclick = function () { return saveDraft(); };
     $('b-issue').onclick = function () { return issue(); };
-    $('b-void').onclick = function () { return voidIt(); };
-    $('b-delete').onclick = function () { return removeDraft(); };
 
     $('b-seal-save').onclick = function () { return saveSeal(); };
     $('b-seal-clear').onclick = function () { return clearSeal(); };
@@ -1058,7 +1171,14 @@
     S.suite = global.SuiteData.create({ client: sb });
     S.store = global.SeikyuStore.create({ client: sb, suite: S.suite });
     bind();
-    return loadMasters().then(function () { return loadList(); }).then(function () { return S.store; });
+    return loadMasters().then(function () { return loadList(); }).then(function () {
+      /* ★開いた所が「入力」なので、白紙の1通をここで作っておく★
+         これが無いと、初めて開いた人の画面は
+         請求日も明細の行も取引先も空のまま＝どこも押せない（2026-08-11 実機で発生）。
+         一覧から開いた1通を作りかけで持っている時は、そのままにする。 */
+      if (!S.cur) newInvoice();
+      return S.store;
+    });
   }
 
   /* ★共有マスタ（自社・取引先）を読む★

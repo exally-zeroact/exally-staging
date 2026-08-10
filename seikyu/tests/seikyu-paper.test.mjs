@@ -301,6 +301,22 @@ T('★お振込先・備考も箱で囲まない（うちは囲まない）', ()
   ok(!/class="note-box"/.test(H1), '古い箱の書き方が残っている');
 });
 
+/* 2026-08-11 実機で発生：共有マスタの「お振込先」に 物 が入っていて、
+   紙に ★[object Object]★ と刷られた。客に渡る紙なので、読めない物は出さない。 */
+T('★紙に [object Object] を刷らない（読めない物は出さない）', () => {
+  [{ name: '伊予銀行', no: '1234567' }, ['伊予銀行', '普通'], {}].forEach((bad, i) => {
+    const h = PAPER.build(sample({ org: Object.assign({}, sample().org, { bank: bad }) })).html;
+    ok(!/\[object Object\]/.test(h), i + ': 紙に [object Object] が出ている');
+    ok(!/お振込先/.test(h), i + ': 中身の無い「お振込先」の見出しだけ出ている');
+  });
+  const inv = Object.assign({}, sample().inv);
+  inv.data = Object.assign({}, inv.data, { memo: { a: 1 } });
+  const h2 = PAPER.build(sample({ inv })).html;
+  ok(!/\[object Object\]/.test(h2), '備考に [object Object] が出ている');
+  // ★ちゃんとした文字列は今までどおり出る（消しすぎない）
+  ok(/伊予銀行 今治支店 普通 1234567/.test(H1), '文字列の振込先まで消している');
+});
+
 T('★小計・消費税・合計は枠なし、合計の上に線', () => {
   const css = PAPER.css();
   const td = (/\.sums td\{([^}]*)\}/.exec(css) || [])[1] || '';

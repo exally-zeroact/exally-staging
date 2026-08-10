@@ -100,3 +100,28 @@
   display: block; width: 72px; height: 72px; object-fit: contain;
   border: 1px solid #D4EAE0; border-radius: 10px; background: #FFFFFF; padding: 4px;
 }
+
+/* ── 番号（ふだんは読むだけ・「変える」で直せる）──────────── */
+.no-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 40px; }
+.no-v {
+  flex: 1 1 120px; min-width: 120px;
+  font-family: 'DM Mono', ui-monospace, monospace; font-size: 14px; color: #2E7D54;
+  white-space: normal; word-break: normal; overflow-wrap: break-word;
+}
+
+/* ── 当てた印（前回から入れた値だと分かるようにする）──────── */
+.guess-tag {
+  display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px;
+  background: #F0FAF4; border: 1px solid #C8ECD8; color: #5C7E6C;
+  font-size: 10.5px; font-weight: 400; white-space: nowrap;
+}
+/* 前回の中身の読み合わせ（★flexの子に文を直接置かない＝表で組む★） */
+.guess-t { width: 100%; border-collapse: collapse; font-size: 13px; }
+.guess-t th {
+  width: 34%; min-width: 90px; text-align: left; font-weight: 400; color: #5C7E6C;
+  padding: 5px 8px 5px 0; vertical-align: top; white-space: nowrap;
+}
+.guess-t td {
+  padding: 5px 0; color: #2E7D54; font-weight: 700; vertical-align: top;
+  white-space: normal; word-break: normal; overflow-wrap: break-word;
+}

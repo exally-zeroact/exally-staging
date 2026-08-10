@@ -79,7 +79,12 @@
           return fetchAllQ(function (a, b) {
             return sb.from('pay_invoices').select(COLS, { count: 'exact' })
               .eq('doc_type', dt).is('deleted_at', null)
-              .order('issue_ymd', { ascending: false }).order('no', { ascending: false }).range(a, b);
+              /* ★並びをはっきり決める＝新しい順（請求日）→ 同じ日は番号の大きい順 → 最後はidで固定★
+                 （最後まで決めないと、同じ日・同じ番号の時に開くたび順が変わる） */
+              .order('issue_ymd', { ascending: false })
+              .order('no', { ascending: false })
+              .order('id', { ascending: false })
+              .range(a, b);
           }).then(function (r) {
             if (r && r.error) throw new Error(err(r.error));
             return r.data || [];

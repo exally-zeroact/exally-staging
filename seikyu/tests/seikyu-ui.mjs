@@ -126,6 +126,22 @@ T('0. 取引先と自社が共有マスタから読めている（請求書で�
   eq(win.SeikyuApp._state.org.yago, '株式会社ゼロアクト');
 });
 
+/* ★開いた直後を、1つも押さずに測る★
+   （2026-08-11 実機で発生：開いた所を「入力」にしたのに白紙の1通を作っていなかった。
+     画面には「新しい請求書」と出ているのに 請求日も明細の行も無い＝どこも押せない。
+     b-new を押してから測っていたので、この検査は緑のままだった。） */
+T('0. ★開いた直後＝1つも押していないのに、その場で打ち始められる', () => {
+  const cur = win.SeikyuApp._state.cur;
+  ok(cur, '開いた直後に1通も持っていない（画面は「新しい請求書」と出ているのに中身が無い）');
+  ok(cur.issue_ymd, '請求日が空');
+  ok(Array.isArray(cur.lines) && cur.lines.length >= 1, '明細の行が無い');
+  ok($('e-issue').value, '画面の請求日が空');
+  ok(doc.querySelectorAll('#e-partner option').length >= 1, '取引先の選択肢が1つも無い');
+  ok($('lines-body').querySelectorAll('tr').length >= 1, '画面に明細の行が無い');
+  // ★番号は後から決まる。読むだけの欄にも入っていること（「（自動）」のままにしない）
+  eq($('e-no-view').textContent, cur.no, '番号の欄が「（自動）」のまま');
+});
+
 /* ═══ 1. 画面にあるボタンを1つ残らず押す ═══
    ★押した数を報告するのではなく、押す物の一覧をここで作って全部通す★ */
 await TA('1. ★3画面ぜんぶのボタンを1つ残らず押しても、JSが1つも落ちない', async () => {
@@ -156,6 +172,11 @@ await TA('1. ★3画面ぜんぶのボタンを1つ残らず押しても、JSが
   console.log('     押した物(' + pressed.length + '): ' + pressed.join(' / '));
   ok(pressed.length >= 25, '押した物が少なすぎる（一覧が取れていない）: ' + pressed.length);
   eq(errs.length, before, 'JSが落ちた: ' + errs.slice(before).join(' | '));
+  // ★総当たりで作られた行は片づける（次の検査を汚さない）。押した事実は上に残す
+  db.pay_invoices.length = 0;
+  await win.SeikyuApp._state.store.invoices.list('invoice');
+  $('b-reload').click();
+  await sleep(60);
 });
 
 /* ═══ 1-b. 見た目の土台（スイート共通の皮）と、潰れない書き方 ═══
@@ -225,8 +246,15 @@ T('1-b. ★文が入る箱は block で最低幅を持ち、日本語を1文字�
     ok(/white-space\s*:\s*nowrap/.test(rule), sel + ' が折り返す（日本語のアプリ名が縦に割れる）');
     ok(/flex\s*:\s*0 0 auto/.test(rule), sel + ' が縮む指定になっている（flexの子は既定で縮む）');
   }
+  /* ★頭にはメールを置かない（給与と同じ＝ログイン中の人は「設定」の中）★
+     頭は flex なので、長いメールが入ると 屋号や見出しを押し出す。
+     「…」で切って耐えるのではなく、★そもそも頭に入れない★ で直した（2026-08-11）。 */
+  const headTag = (/<header[\s\S]*?<\/header>/.exec(html) || [''])[0];
+  ok(!/id="who"|id="b-logout"/.test(headTag), '頭にメールかログアウトが戻っている: ' + headTag.slice(0, 160));
+  ok(/<section class="screen" id="scr-set">[\s\S]*id="who"[\s\S]*?<\/section>/.test(html), 'ログイン中の人が「設定」の中に無い');
   const who = (/\.ex-who\s*\{([^}]*)\}/.exec(CSS) || [])[1] || '';
-  ok(/text-overflow\s*:\s*ellipsis/.test(who), '長いメールが「…」で切られない（他を押し出す）');
+  ok(/overflow-wrap\s*:\s*break-word/.test(who), '長いメールが箱からはみ出す');
+  ok(!/word-break\s*:\s*break-all/.test(who), 'break-all（1文字ずつ割れる）');
   // ★列の編集は flex の行。中の「列の名前」が縦帯にならないよう先に幅を確保している
   const cn = (/\.col-name\s*\{([^}]*)\}/.exec(CSS) || [])[1] || '';
   ok(/min-width\s*:\s*\d+px/.test(cn), '列の名前に最低幅が無い（flexの中で1文字ずつ縦に割れる）');
@@ -250,11 +278,44 @@ await sleep(10);
 $('b-new').click();
 await sleep(10);
 
-await TA('2. ★新しく作る＝白紙を埋めさせない（今日・既定の税・番号が最初から入る）', async () => {
+await TA('2. ★新しく作る＝白紙を埋めさせない（今日・番号が最初から入る）', async () => {
   ok($('e-issue').value, '請求日が空');
   ok($('e-no').value, '番号が空: ' + $('e-no').value);
-  ok(qa('#e-taxmode .ex-chip.on').length === 1, '税の入れ方が選ばれていない');
   ok($('lines-body').querySelectorAll('tr').length >= 1, '明細の行が無い');
+  // ★既定の税の入れ方は設定から黙って使う（入力では聞かない）
+  eq(win.SeikyuApp._state.cur.tax_mode, 'exclusive', '設定の既定が入っていない');
+  ok(win.SeikyuApp._state.cur.rounding, '丸め方が入っていない');
+});
+
+T('2-a. ★入力の画面で「毎回 聞く物」を出さない（設定で1回 決めた物は聞かない）', () => {
+  const edit = $('scr-edit');
+  ok(!edit.querySelector('#e-taxmode'), '税の入れ方を毎回 聞いている');
+  ok(!edit.querySelector('#e-round'), '円未満の丸め方を毎回 聞いている');
+  ok(!edit.querySelector('#e-tpl'), '紙の様式を毎回 聞いている');
+  ok(!edit.querySelector('#e-nomode'), '番号の決め方を毎回 聞いている');
+  // 設定の側には在る（消したのではなく移した）
+  const set = $('scr-set');
+  ok(set.querySelector('#s-taxmode') && set.querySelector('#s-round') && set.querySelector('#s-tpl'),
+    '設定から無くなっている（移したのではなく消してしまった）');
+});
+
+T('2-a. ★出すボタンは1つだけ大きく・ほかは畳む（7個 横並びをやめた）', () => {
+  const big = $('b-issue');
+  ok(big && /ex-b-big/.test(big.className), '本命のボタンが大きくない');
+  const box = $('out-box');
+  ok(box && box.tagName === 'DETAILS', 'ほかの出し方が畳まれていない');
+  ok(!box.open, '最初から開いている（画面が説明とボタンで埋まる）');
+  // 畳みの外に出ているボタンは「発行する」だけ
+  const outside = [...$('scr-edit').querySelectorAll('button')].filter((b) => !b.closest('details') && !b.closest('#lines-body') && b.id !== 'b-addline' && b.id !== 'b-no-edit' && !b.id.startsWith('b-guess'));
+  eq(outside.map((b) => b.id).join(','), 'b-issue', '畳みの外にボタンが多い: ' + outside.map((b) => b.id));
+});
+
+T('2-a. ★タブの順と動詞を給与にそろえた（設定→入力→一覧・「作る」ではなく「入力」）', () => {
+  const tabs = [...doc.querySelectorAll('.ex-bn')].map((b) => b.getAttribute('data-scr') + ':' + b.querySelector('.ex-bn-l').textContent);
+  eq(tabs.join(' '), 'scr-set:設定 scr-edit:入力 scr-list:一覧', 'タブの順か言葉が給与と違う');
+  ok(!/作る/.test([...doc.querySelectorAll('.ex-bn')].map((b) => b.textContent).join('')), 'タブに「作る」が残っている（給与は「入力」）');
+  // 開いた時に出ているのは入力（初めての人がそのまま1通 出せる）
+  ok(/<section class="screen active" id="scr-edit">/.test(html), '開いた時の画面が入力でない');
 });
 
 await TA('2. 取引先を選ぶ・明細を入れる → 合計が実額で出る', async () => {
@@ -310,11 +371,17 @@ await TA('2. ★発行済みは直せない・もう一度発行できない（�
   ok($('e-partner').disabled, '取引先が直せる');
   ok($('e-no').disabled, '番号が直せる');
   ok(qa('#lines-body input').every((i) => i.disabled), '明細が直せる');
-  ok($('b-save').disabled, '保存が押せる');
-  ok($('b-issue').disabled, '発行がもう一度押せる');
-  ok($('b-delete').disabled, '発行済みなのに削除が押せる');
-  ok(!$('b-void').disabled, '取り消しが押せない');
-  ok(/発行済み/.test($('act-why').textContent), '押せない理由が出ていない: ' + $('act-why').textContent);
+  // ★押せない物は「出さない」（説明で補わない）
+  eq($('b-save').style.display, 'none', '発行済みなのに保存が出ている');
+  eq($('b-issue').style.display, 'none', '発行済みなのに発行が出ている');
+  ok(!$('b-delete'), '発行済みなのに削除が出ている');
+  ok($('b-void'), '取り消しが出ていない');
+  ok(/発行済み/.test($('act-why').textContent), '理由が出ていない: ' + $('act-why').textContent);
+  /* ★畳みの見出しが、中に無い物を並べていない（発行済みに「下書き」と書かない）★
+     ＋ 発行済みはここが唯一の出来る事なので、畳んだままにしない */
+  eq(/下書き/.test($('out-sum').textContent), false, '発行済みなのに見出しが「下書き」と言っている: ' + $('out-sum').textContent);
+  ok(/取り消し/.test($('out-sum').textContent), '見出しに「取り消し」が無い: ' + $('out-sum').textContent);
+  eq($('out-box').open, true, '発行済みなのに出来る事が畳まれたまま');
   ok($('edit-locked').style.display !== 'none', '発行済みの断り書きが出ていない');
 });
 
@@ -489,8 +556,8 @@ await TA('4. ★同じ番号を二度使わない（倉庫が弾き、1つ進め
   setVal('e-issue', '2026-09-30');
   await sleep(20);
   // 「自分で決める」にして、わざと発行済みと同じ番号を入れる
-  doc.querySelector('#e-nomode [data-nm="manual"]').click();
-  await sleep(6);
+  $('b-no-edit').click();     // ★番号は「変える」を押した時だけ直せる
+  await sleep(10);
   setVal('e-no', firstNo);
   const tr = $('lines-body').querySelector('tr');
   tr.querySelector('[data-f="name"]').value = 'テスト';
@@ -526,6 +593,10 @@ await TA('5. 一覧に2通出る・絞り込みが効く', async () => {
   doc.querySelector('#fil-seg [data-fil="all"]').click();   // 1. の総当たりで絞り込みが残っているので戻す
   await sleep(6);
   eq($('list-body').querySelectorAll('[data-open]').length, 2, 'すべて');
+  // ★既定は「出した物」＝取り消しは出さない（検証ゴミが上に来ない）
+  doc.querySelector('#fil-seg [data-fil="live"]').click();
+  await sleep(6);
+  eq($('list-body').querySelectorAll('[data-open]').length, 1, '出した物（取り消し以外）');
   doc.querySelector('#fil-seg [data-fil="issued"]').click();
   await sleep(6);
   eq($('list-body').querySelectorAll('[data-open]').length, 1, '発行済');
@@ -753,7 +824,7 @@ await TA('7-b. ★自社情報が読めなかった時は、空っぽ扱いに�
   ok(/読めていない/.test($('edit-err').textContent), '止めた理由を言っていない: ' + $('edit-err').textContent);
 
   // 「読み直す」で直る
-  $('b-back').click();
+  doc.querySelector('.ex-bn[data-scr="scr-list"]').click();
   await sleep(10);
   await win.SeikyuApp._loadMasters();
   await sleep(50);

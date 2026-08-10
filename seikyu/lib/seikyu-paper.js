@@ -67,6 +67,18 @@
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
+  /* ★人が読む文として使えるか★
+     String() は 物 を渡されると "[object Object]" を作る。それを紙に刷ると、
+     客の手元に [object Object] と書かれた請求書が届く
+     （2026-08-11 実機で発生：お振込先に 物 が入っていた）。
+     ★読めない物は紙に出さない★（ここは法定の項目ではなく、書いてあれば読む物）。 */
+  function textOf(v) {
+    if (v == null) return '';
+    if (typeof v === 'string') return v;
+    if (typeof v === 'number') return Number.isFinite(v) ? String(v) : '';
+    return '';
+  }
+
   /* ★紙の金額は ¥ 記号（画面は「1,100 円」。二重に付けない）★
      数にならない物は 0 にしない（取れなかったを 0 と作り分ける）。 */
   function yen(v) {
@@ -275,8 +287,9 @@
          ★2段組みは表で作る★（flex だと文が1文字ずつ縦に割れる） */
     function footerBlock() {
       var left = '';
-      if (g.bank) left += '<div class="note"><div class="note-h">お振込先</div><div class="note-b">' + esc(g.bank).replace(/\n/g, '<br>') + '</div></div>';
-      var memo = (inv.data && inv.data.memo) || '';
+      var bank = textOf(g.bank);
+      if (bank) left += '<div class="note"><div class="note-h">お振込先</div><div class="note-b">' + esc(bank).replace(/\n/g, '<br>') + '</div></div>';
+      var memo = textOf(inv.data && inv.data.memo);
       if (memo) left += '<div class="note"><div class="note-h">備考</div><div class="note-b">' + esc(memo).replace(/\n/g, '<br>') + '</div></div>';
       return '<table class="foot"><tbody><tr>'
         + '<td class="foot-l">' + left + '</td>'
