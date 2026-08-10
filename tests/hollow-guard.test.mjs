@@ -127,10 +127,13 @@ const NOT_A_CHECK = {
   'dbtest-seed.mjs': 'DB-test の下ごしらえ／後片付けの道具。CIでは走らない',
   'live-seed.mjs': '実機確認の下ごしらえ／後片付けの道具。鍵が要る・CIでは走らない',
   'live-roundtrip.mjs': '本物のSupabaseへ本物のログインで往復する道具。鍵が要る・CIでは走らない',
+  'live-seikyu.mjs': '請求書の棚へ本物のログインで往復し、凍結と番号の重複が実際に弾かれるか測る道具。鍵が要る・CIでは走らない',
 };
 
+// ★seikyu/tests を足した（2026-08-10）。足すまで請求書のテストは
+//   この道具からも ci-coverage からも見えていなかった＝「何も見ていないのに緑」の口。
 const FILES = [];
-for (const dir of ['tests', 'kyuyo/tests']) {
+for (const dir of ['tests', 'kyuyo/tests', 'seikyu/tests']) {
   for (const f of fs.readdirSync(path.join(ROOT, dir))) {
 
 

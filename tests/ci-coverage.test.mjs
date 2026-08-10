@@ -44,7 +44,7 @@ const NOT_TESTS = {
   'tests/xlsx-harness/build-libre-input.mjs': 'LibreOffice入力を作る手動ツール',
   'tests/xlsx-harness/collect-libre.mjs': 'LibreOfficeの結果を集める手動ツール',
   'tests/xlsx-harness/run-exally.mjs': 'ハーネスの実行部品（compare.mjs から使う）',
-
+  'seikyu/tests/live-seikyu.mjs': '請求書の棚へ本物のログインで往復する手動確認ツール（鍵が要る・CIから叩かない）',
 };
 
 let pass = 0, fail = 0;
@@ -63,6 +63,10 @@ function listTestFiles() {
   };
   walk('tests');
   walk('kyuyo/tests');
+  // ★2026-08-10 追加。足すまで seikyu/tests は【この見張りの視界の外】にあり、
+  //   「宙に浮いているテスト 0本」と出ながら請求書のテストを1本も数えていなかった。
+  //   ＝テストを足してもCIに載らず、誰も気づけない状態だった（指示役が発見）。
+  walk('seikyu/tests');
   return out.sort();
 }
 

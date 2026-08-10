@@ -83,6 +83,27 @@ jobs:
       - name: CI coverage guard (CIから黙って外れているテストが無いか=除外は理由と戻す条件つきのみ)
         run: node tests/ci-coverage.test.mjs
 
+      # ── 請求書(seikyu/) ──────────────────────────────────────────────
+      # ★テストを足すコミットと、それをCIに並べる登録は離さない（指示役 2026-08-10）。
+      #   seikyu/tests に何本書いてもここに並べなければ1本も走らない＝
+      #   「テストが緑」が請求書のテストを1本も見ていない状態になる。
+      - name: ★請求書 消費税 (税率ごとに1回だけ丸める・国税庁の定め)
+        run: node seikyu/tests/seikyu-tax.test.mjs
+      - name: ★請求書 消費税 (わざと「明細ごとに丸める」等に壊して赤になるかの自己確認)
+        run: node seikyu/tests/seikyu-tax.test.mjs --self-test
+      - name: ★請求書の決まり (番号の重複を作らない/発行したら固まる/過入金を0にしない/未確認と0件を分ける)
+        run: node seikyu/tests/seikyu-doc.test.mjs
+      - name: ★請求書の決まり (わざと壊して赤になるかの自己確認)
+        run: node seikyu/tests/seikyu-doc.test.mjs --self-test
+      - name: ★倉庫に当てる前の門番 (消す系・他の棚・security_invoker抜けを止める)
+        run: node seikyu/tests/sql-guard.test.mjs
+      - name: ★倉庫に当てる前の門番 (わざと危ない物を食わせて止まるかの自己確認)
+        run: node seikyu/tests/sql-guard.test.mjs --self-test
+      - name: ★設計図(SQL)と lib のズレ (固まる列・一意制約のwhere・窓口のsecurity_invoker)
+        run: node seikyu/tests/schema-contract.test.mjs
+      - name: ★設計図(SQL)と lib のズレ (わざとズラして赤になるかの自己確認)
+        run: node seikyu/tests/schema-contract.test.mjs --self-test
+
       # ── 給与(kyuyo/) 由来（据置） ──
       - name: Payroll unit tests (依存なし・実数リテラル+回帰)
         run: node kyuyo/tests/run.js
