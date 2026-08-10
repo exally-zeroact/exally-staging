@@ -2557,6 +2557,35 @@
     return { enabled:m.fixed, count:m.need,
              short: m.fixed ? '' : (m.total===0 ? '対象者なし' : '先に今月を確定') };
   }
+  /* ★「印刷 / PDF保存」を押せるか。刷る物が1枚も無いなら押させない★（2026-08-10 実測）
+     押した時の実装は「下絵(iframe)の .sheet/.page を1枚ずつ焼いてPDFにする」。
+     ★0枚だと保険の道に落ちて iframe.contentWindow.print() ＝【白紙のまま】ブラウザの印刷ダイアログが開く★。
+     ダイアログは画面を全部ふさぐので、スマホでもパソコンでも「固まった」ようにしか見えない
+     （指示役の環境で実際に固まり、原因の切り分けに時間を取らせた）。
+     ★0枚かどうかだけで止める★＝html2canvas/jsPDF が読めていない時の保険の道は残す
+       （刷る物があるのにライブラリが無い時は、ブラウザ印刷に落ちるのが正しい）。 */
+  function printGate(pages){
+    if(pages>0) return { enabled:true, pages:pages, short:'' };
+    var actives=state.employees.filter(function(e){ return isActiveInMonth(e,state.month); });
+    if(!actives.length) return { enabled:false, pages:0, short:'対象者なし' };
+    var isBonus=(state.printMode==='bonus');
+    var cyc=(state.company&&state.company.payCycle)||'monthly';
+    // 日払い/週払い・期間分割は【日別の入力】から明細を作る道。入っていないと1枚も出ない
+    if(!isBonus && (cyc==='daily'||cyc==='weekly'||shimeSplit())) return { enabled:false, pages:0, short:'日別の入力がありません' };
+    return { enabled:false, pages:0, short:'刷る物がありません' };
+  }
+  // 下絵の枚数を数えて「印刷 / PDF保存」に反映する。★下絵は srcdoc で後から入る★ので
+  //   描き直しの度に呼ぶ（fitFrameToPages の中からも呼ぶ＝読み込み後に数え直す）。
+  function framePageCount(){
+    var f=$('#frame'); if(!f) return 0;
+    try{ var idoc=f.contentDocument||(f.contentWindow&&f.contentWindow.document); return idoc?idoc.querySelectorAll('.sheet,.page').length:0; }catch(e){ return 0; }
+  }
+  function updatePrintBtn(){
+    var b=$('#b-print'); if(!b) return;
+    var g=printGate(framePageCount());
+    b.disabled=!g.enabled;
+    b.textContent=g.enabled?'印刷 / PDF保存':('印刷 / PDF保存（'+g.short+'）');
+  }
   function renderPrint(){
     $('#p-month').value=state.month;
     $$('.pmode').forEach(function(x){ x.classList.toggle('on', x.dataset.pmode===(state.printMode||'monthly')); });
@@ -2568,6 +2597,7 @@
     if(wp){ wp.disabled=!g.enabled; wp.textContent=g.enabled?'Web明細で公開':('Web明細で公開（'+g.short+'）'); }
     renderWebMeisai();
     doPreview();
+    updatePrintBtn();   // 下絵が入る前の見た目。読み込み後に fitFrameToPages から数え直す
   }
   /* ★純関数: 振込の対象から「押せるか／なぜ押せないか」を決める。
    *   画面にもライブラリにも触らないので、tests/furikomi-tab.test.mjs が作り物で確かめられる。
@@ -2738,7 +2768,8 @@
     fr.style.width=pageW+'px'; fr.style.transformOrigin='top left'; fr.dataset.pw=pageW; fr.dataset.ph=pageH;
     function apply(){ var n=1;
       try{ var idoc=fr.contentDocument; var pages=idoc?idoc.querySelectorAll('.sheet,.page'):null; n=(pages&&pages.length)||1; }catch(e){}
-      var total=n*pageH; fr.style.height=total+'px'; fr.dataset.ph=total; fitPreview(); }
+      var total=n*pageH; fr.style.height=total+'px'; fr.dataset.ph=total; fitPreview();
+      updatePrintBtn(); }   // ★数え終わってから「印刷 / PDF保存」の可否を決める（0枚なら押させない）
     fr.onload=apply; setTimeout(apply, 80); // srcdoc読込後に測る(onload未発火の保険にsetTimeoutも)
   }
   function doPreview(){
@@ -3066,10 +3097,15 @@
     // 印刷/PDF保存 = ★jsPDFで自前生成(A4ぴったり・iOSのURL/日付フッター無し・新窓を開かないので戻れる)。
     //   iOSのwebページ印刷(window.print/window.open)はフッターが必ず付き余白で2ページ化+戻れないため不採用。
     //   プレビューiframe内の各ページ(.sheet/.page)をhtml2canvasでA4寸法固定(潰れ防止)で焼き、複数人=複数ページに対応。
-    $('#b-print').addEventListener('click',function(){ markOutput();
+    $('#b-print').addEventListener('click',function(){
+      /* ★刷る物が0枚なら、ここから先へ行かせない★（行くと白紙の印刷ダイアログが開いて「固まった」になる）。
+         ボタンは押せない見た目にしてあるが、その見た目が壊れても最後にここで止める。 */
       var f=$('#frame'), idoc=f&&(f.contentDocument||f.contentWindow.document);
       var pages=idoc?idoc.querySelectorAll('.sheet,.page'):null;
-      if(!pages||!pages.length||!(window.html2canvas)||!(window.jspdf&&window.jspdf.jsPDF)){
+      var pg=printGate((pages&&pages.length)||0);
+      if(!pg.enabled){ updatePrintBtn(); uiAlert('刷る物がまだありません（'+pg.short+'）。'); return; }
+      markOutput();
+      if(!(window.html2canvas)||!(window.jspdf&&window.jspdf.jsPDF)){
         try{f.contentWindow.focus();f.contentWindow.print();}catch(err){window.print();} return; // 保険=ライブラリ未読込ならブラウザ印刷
       }
       var isLand=(+(f.dataset.pw||794))>900; // pw=1123→A4横
@@ -3348,7 +3384,8 @@
 
   /* 統合テスト用API。★本番ブラウザには露出しない（jsdomのときだけ）★=RC1対策の自動統合テスト(tests/integration.mjs)の入口。 */
   try{ if(typeof navigator!=='undefined' && /jsdom/i.test(navigator.userAgent||'')){
-    window.__PAYSLIP_TEST={ compute:compute, defEmp:defEmp, mergeEmp:mergeEmp, state:state, buildDailyData:buildDailyData, dailySlipDoc:dailySlipDoc, shimePeriods:shimePeriods, shimeSplit:shimeSplit,
+    window.__PAYSLIP_TEST={ printGate:printGate, updatePrintBtn:updatePrintBtn, monthFixedInfo:monthFixedInfo, webPubGate:webPubGate,
+      compute:compute, defEmp:defEmp, mergeEmp:mergeEmp, state:state, buildDailyData:buildDailyData, dailySlipDoc:dailySlipDoc, shimePeriods:shimePeriods, shimeSplit:shimeSplit,
       saveMonthlyPayslips:saveMonthlyPayslips, ensurePayRule:ensurePayRule, minWageInfo:minWageInfo, isInMinWage:isInMinWage, minWageTeate:minWageTeate, setConfirm:setConfirm, renderInput:renderInput, renderInputTableHTML:renderInputTableHTML, effShukkin:effShukkin, onboardSteps:onboardSteps, renderEmpMaster:renderEmpMaster, filterEmpSearch:filterEmpSearch, labelInputsA11y:labelInputsA11y, computeBonus:computeBonus, bonusEntry:bonusEntry, nenAggregate:nenAggregate, confirmedRecs:confirmedRecs, confirmedMonthsOf:confirmedMonthsOf, loadBonusYtd:loadBonusYtd, nenchoWizardHTML:nenchoWizardHTML, nenStore:nenStore, nenDeclBannerHTML:nenDeclBannerHTML, makePayPattern:makePayPattern, applyPayPattern:applyPayPattern, openBulkPatternApply:openBulkPatternApply, applyEmpProfile:applyEmpProfile, empProfileStripHTML:empProfileStripHTML, importEmpProfile:importEmpProfile, qrSvg:qrSvg, itemSuggestOptions:itemSuggestOptions, itemSuggestHTML:itemSuggestHTML, bonusItemSuggestOptions:bonusItemSuggestOptions, bonusItemSuggestHTML:bonusItemSuggestHTML, santeiKisoRow:santeiKisoRow, santeiRows:santeiRows, santeiAoa:santeiAoa, stType:stType, stLabel:stLabel, santeiRule:santeiRule, gekkakuTh:gekkakuTh, shahoBasisOf:shahoBasisOf, bonusHarauRows:bonusHarauRows, bonusHarauAoa:bonusHarauAoa, gekkakuRows:gekkakuRows, gekkakuAoa:gekkakuAoa, ymAddLocal:ymAddLocal, extractCity:extractCity, gyoyoRows:gyoyoRows, gyoyoMeisaiAoa:gyoyoMeisaiAoa, gyoyoSoukatsuAoa:gyoyoSoukatsuAoa, roudouRows:roudouRows, roudouSummary:roudouSummary, roudouAoa:roudouAoa, roudouFYof:roudouFYof, ymdPlus1:ymdPlus1, shikakuRows:shikakuRows, shikakuAoa:shikakuAoa, fuyoBuckets:fuyoBuckets, nenCompute:nenCompute, nenGensenHTML:nenGensenHTML, nenGensenDoc:nenGensenDoc, applyMigrationRows:applyMigrationRows, buildEmpFromRow:buildEmpFromRow, prevYmOf:prevYmOf, applyLedgerToEmployees:applyLedgerToEmployees, importLedgerForMonth:importLedgerForMonth, payRuleCtx:payRuleCtx, monthYmdRange:monthYmdRange, shahoKanyuWarn:shahoKanyuWarn, fullTimeWeeklyH:fullTimeWeeklyH, shoteiMonthlyWage:shoteiMonthlyWage, empWarnings:empWarnings, laborLimitItems:laborLimitItems, prorateNote:prorateNote, buildPeople:buildPeople, ctxOf:ctxOf, koyoRateNote:koyoRateNote, kaigoRateOf:kaigoRateOf }; }
   }catch(e){}
   /* ---------- 永続化(localStorage既定・window.SUPA設定でSupabaseにも保存) ---------- */

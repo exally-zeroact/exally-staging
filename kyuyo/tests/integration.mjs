@@ -1067,6 +1067,75 @@ T('★② その月に誰も在籍していないなら押せない＋理由が�
   });
 });
 
+/* ★指示役の環境が「印刷の所を押したら固まった」件の切り分け（2026-08-10・実UIで再現した）★
+   実測: 下絵(iframe)が0枚のときに「印刷 / PDF保存」を押すと、保険の道に落ちて
+   iframe.contentWindow.print() ＝★白紙のままブラウザの印刷ダイアログが開く★。
+   ダイアログは画面を全部ふさぐので「固まった」ようにしか見えない。
+   （下絵が2枚あるときは jsPDF の道を通り 46ms で返って blob を別窓で開く＝固まらない。これも実測）
+   だから★0枚なら押させない★。「押せない見た目」と「押しても進まないこと」の両方を見る。 */
+T('★印刷: 刷る物が0枚なら「印刷 / PDF保存」は押せない＋理由がボタンの中', () => {
+  const A = win.__PAYSLIP_TEST;
+  const a = mkEmp('甲', 'ehime');
+  withRoster([a], {}, () => {
+    win.document.querySelector('[data-scr="scr-print"]').click();
+    A.updatePrintBtn();                       // 下絵は jsdom では入らない＝0枚の状態
+    const b = win.document.getElementById('b-print');
+    ok(b, '印刷ボタンが無い');
+    eq(b.disabled, true, '★0枚なのに押せてしまう（押すと白紙の印刷ダイアログが開く）');
+    ok(/（.+）/.test(b.textContent), '★理由がボタンの中に無い: ' + b.textContent);
+  });
+});
+
+T('★印刷: 0枚の理由は状況で言い分ける（対象者なし／日別の入力がありません／刷る物がありません）', () => {
+  const A = win.__PAYSLIP_TEST, st = A.state;
+  const a = mkEmp('甲', 'ehime');
+  const keepCompany = st.company;
+  try {
+    withRoster([], {}, () => {
+      eq(A.printGate(0).short, '対象者なし', '★在籍0名の月に別の理由が出ている');
+      eq(A.printGate(0).enabled, false, '★在籍0名なのに押せる');
+    });
+    withRoster([a], {}, () => {
+      st.company = Object.assign({}, keepCompany, { payCycle: 'monthly', shimeMethod: 'monthly' });
+      eq(A.printGate(0).short, '刷る物がありません', '普通の月の理由: ' + A.printGate(0).short);
+      // ★テスト線で実際に踏んだ形＝10日締め(期間分割)なのに日別の入力が無い
+      st.company = Object.assign({}, keepCompany, { payCycle: 'monthly', shimeMethod: 'ten' });
+      eq(A.printGate(0).short, '日別の入力がありません', '★期間分割の月に「何を入れれば出るか」が出ていない: ' + A.printGate(0).short);
+      st.company = Object.assign({}, keepCompany, { payCycle: 'daily', shimeMethod: 'monthly' });
+      eq(A.printGate(0).short, '日別の入力がありません', '日払いの理由: ' + A.printGate(0).short);
+    });
+  } finally { st.company = keepCompany; }
+});
+
+T('★印刷: 1枚でもあれば押せる（誤って止めない）', () => {
+  const A = win.__PAYSLIP_TEST;
+  const g = A.printGate(2);
+  eq(g.enabled, true, '★刷る物があるのに押せない');
+  eq(g.short, '', '押せる時に理由を出している: ' + g.short);
+});
+
+await TA('★★印刷: 0枚で押しても【印刷ダイアログを開かない】（押せない見た目が壊れても最後で止める）★★', async () => {
+  const a = mkEmp('甲', 'ehime');
+  await withRosterA([a], {}, async () => {
+    win.document.querySelector('[data-scr="scr-print"]').click();
+    const f = win.document.getElementById('frame');
+    let printed = 0;
+    const keepPrint = win.print;
+    win.print = () => { printed++; };
+    try { if (f && f.contentWindow) f.contentWindow.print = () => { printed++; }; } catch (_) {}
+    try {
+      const b = win.document.getElementById('b-print');
+      b.disabled = false;                      // ★見た目の歯止めを壊してから押す
+      b.click();
+      await tick();
+      eq(printed, 0, '★白紙のまま印刷ダイアログを開いた（＝固まる道に入った）');
+      const ov = win.document.querySelector('.ui-modal-ov');
+      ok(ov && /刷る物がまだありません/.test(ov.textContent), '★黙って何も起きない（理由が出ていない）');
+      [...ov.querySelectorAll('button')].pop().click();
+    } finally { win.print = keepPrint; }
+  });
+});
+
 await TA('★② 押せる時も 公開の前に確認が出る（取り消せないので）', async () => {
   const a = mkEmp('甲', 'ehime');
   const A = win.__PAYSLIP_TEST;
