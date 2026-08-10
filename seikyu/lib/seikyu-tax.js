@@ -141,7 +141,7 @@
       } else {
         // ★税抜の合計に掛ける（税率ごとに1回）
         base = b.sum;
-        tax = roundYen(base * num / 10000, rounding);
+        tax = b.rows.reduce(function (t, r) { return t + roundYen(r.amount * num / 10000, rounding); }, 0); // わざと壊す
         gross = base + tax;
       }
       byRate.push({ pct: b.pct, base: base, tax: tax, gross: gross });
