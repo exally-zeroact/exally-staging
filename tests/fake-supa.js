@@ -16,6 +16,10 @@ function createFakeSupa(opts) {
   var uid = opts.uid || 'u1';
   var db = opts.tables || {};                 // { tableName: [row, ...] }
   var pk = opts.pk || {};                     // { tableName: 'id' | ['a','b'] }
+  // ★一意制約: { tableName: [['account_id','doc_type','no'], …] }
+  //   本番の uq_pay_invoices_no のように「主キーとは別に二度使えない組」がある表を再現する。
+  //   これが無いと「番号の重複は倉庫が止める」を、倉庫に触らずに測れない。
+  var uniques = opts.unique || {};
   var calls = [];                             // 呼び出し記録(検証用)
   var failNext = null;                        // {table, op, message} 次の1回だけ失敗させる
   var nowSeq = 0;
@@ -67,6 +71,18 @@ function createFakeSupa(opts) {
         if (!row.updated_at) row.updated_at = now();
         var idx = -1;
         for (var j = 0; j < rows.length; j++) { if (sameKey(t, rows[j], row)) { idx = j; break; } }
+        // ★一意制約: 主キーが違うのに、二度使えない組が同じ行が既にある → 弾く
+        var uq = uniques[t] || [];
+        for (var u = 0; u < uq.length; u++) {
+          var cols = uq[u];
+          for (var k2 = 0; k2 < rows.length; k2++) {
+            if (sameKey(t, rows[k2], row)) continue;                 // 自分自身の更新は除く
+            var same = cols.every(function (c) { return String(rows[k2][c]) === String(row[c]); });
+            if (same) {
+              return { data: null, error: { code: '23505', message: 'duplicate key value violates unique constraint "uq_' + t + '_' + cols.join('_') + '"' } };
+            }
+          }
+        }
         if (idx >= 0) {
           if (self._op === 'insert') return { data: null, error: { message: 'duplicate key value violates unique constraint' } };
           rows[idx] = Object.assign({}, rows[idx], row);

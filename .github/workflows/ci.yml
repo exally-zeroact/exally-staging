@@ -103,6 +103,20 @@ jobs:
         run: node seikyu/tests/schema-contract.test.mjs
       - name: ★設計図(SQL)と lib のズレ (わざとズラして赤になるかの自己確認)
         run: node seikyu/tests/schema-contract.test.mjs --self-test
+      - name: ★請求書 推奨ファイル名 (相手/日付が空でも空欄を作らない・落とせない文字を残さない・上限に収める)
+        run: node seikyu/tests/seikyu-name.test.mjs
+      - name: ★請求書 推奨ファイル名 (わざと掃除を外して赤になるかの自己確認)
+        run: node seikyu/tests/seikyu-name.test.mjs --self-test
+      - name: ★請求書 紙(自作テンプレstd1) (税率ごとの区分が出る/登録番号と請求番号を混ぜない/文が縦に割れない書き方)
+        run: node seikyu/tests/seikyu-paper.test.mjs
+      - name: ★請求書 紙 (わざと区分を消す/番号を混ぜる/flexにして赤になるかの自己確認)
+        run: node seikyu/tests/seikyu-paper.test.mjs --self-test
+      - name: ★請求書 Excel (列幅つきで ######## にしない・金額は数のまま・実際に書き出して読み戻す)
+        run: node seikyu/tests/seikyu-aoa.test.mjs
+      - name: ★請求書 Excel (わざと列幅を外す/金額を文字にして赤になるかの自己確認)
+        run: node seikyu/tests/seikyu-aoa.test.mjs --self-test
+      - name: ★請求書 実UI (画面のボタンを1つ残らず押す＋作る→発行→紙→Excelを実際に通す)
+        run: node seikyu/tests/seikyu-ui.mjs
 
       # ── 給与(kyuyo/) 由来（据置） ──
       - name: Payroll unit tests (依存なし・実数リテラル+回帰)

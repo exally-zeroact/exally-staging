@@ -22,20 +22,29 @@ const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 // '.' = リポジトリ直下の .js も対象。book.html が読む exally-formula.js / hyperformula.full.min.js 等が
 //   ここに居るため（グリッドをハブから使えるようにした 2026-07-29）。
 // kyuyo/ = 給与アプリ(payslip-app から統合)。1リポジトリになったので版は【全体で1つ】にする。
-const ASSET_DIRS = ['.', 'js', 'lib', 'css', 'kyuyo/js', 'kyuyo/lib', 'kyuyo/css', 'kyuyo/ops'];
+// ★アプリを1つ足したら【この2つ】に足す（APP_DIRS だけで済むようにしてある）。
+//   足さないと、そのアプリのHTMLには ?v= が付かず、GitHub Pages の古いJSを掴む。
+//   2026-08-10: 請求書(seikyu/)を足した。足すまで /seikyu/ は見張りの視界の外だった。
+const APP_DIRS = ['kyuyo', 'seikyu'];
+const ASSET_DIRS = ['.', 'js', 'lib', 'css']
+  .concat(APP_DIRS.flatMap(a => [a + '/js', a + '/lib', a + '/css', a + '/ops']));
 // 対象 = ローカルの js|lib|css/ 配下、または直下の .js/.css。
 //   直下は「/ を含まない」ので https://... の外部CDNには当たらない。
-// 対象 = js|lib|css|ops 配下（kyuyo/ からの `../js/...` も拾う）、または直下の .js/.css。
-//   先頭の `../` は任意。https://... の外部CDNには当たらない（`//` を含まないため）。
-const ASSET_RE = /((?:src|href)=")((?:\.\.\/)?(?:js|lib|css|ops)\/[^"?\s]+\.(?:js|css)|[^"?\s\/:]+\.(?:js|css))(\?v=[^"]*)?(")/g;
+// 対象 = js|lib|css|ops 配下（kyuyo/ からの `../js/...`、請求書からの `../kyuyo/lib/...` も拾う）、
+//   または直下の .js/.css。先頭の `../` は任意。https://... の外部CDNには当たらない（`//` を含まないため）。
+const APP_RE = APP_DIRS.join('|');
+const ASSET_RE = new RegExp(
+  '((?:src|href)=")((?:\\.\\./)?(?:(?:' + APP_RE + ')/)?(?:js|lib|css|ops)/[^"?\\s]+\\.(?:js|css)'
+  + '|[^"?\\s/:]+\\.(?:js|css))(\\?v=[^"]*)?(")', 'g');
 
-// 対象HTML = リポジトリ直下の *.html を全部（貼り忘れに強い。
+// 対象HTML = リポジトリ直下の *.html 全部 ＋ 各アプリ直下の *.html（貼り忘れに強い。
 //   js/|lib/|css/ を参照していないHTMLは正規表現に当たらないので無害）
 function htmlFiles() {
   const out = fs.readdirSync(ROOT).filter(f => /\.html$/i.test(f)).map(f => f);
-  const sub = path.join(ROOT, 'kyuyo');
-  if (fs.existsSync(sub)) {
-    for (const f of fs.readdirSync(sub)) if (/\.html$/i.test(f)) out.push('kyuyo/' + f);
+  for (const a of APP_DIRS) {
+    const sub = path.join(ROOT, a);
+    if (!fs.existsSync(sub)) continue;
+    for (const f of fs.readdirSync(sub)) if (/\.html$/i.test(f)) out.push(a + '/' + f);
   }
   return out.sort();
 }

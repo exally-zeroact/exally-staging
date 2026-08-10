@@ -100,7 +100,9 @@ const NOT_SCANNED = {
 const ABS_ATTR_RE = /\s(?:href|src|action|poster|data)="\/(?!\/)[^"]*"/g;   // ="//…"(外部)は対象外
 const ABS_CALL_RE = /(?:serviceWorker\.register|fetch|import|open)\(\s*'\/(?!\/)[^']*'/g;
 
-const isShippedHtml = (rel) => /^(?:[^/]+|kyuyo\/[^/]+)\.html$/.test(rel);
+// ★アプリを足したらここにも足す（2026-08-10 請求書 seikyu/ を追加）。
+//   足すまで、そのアプリのHTMLは「サブパス配信で壊れる書き方」の見張りの外に居る。
+const isShippedHtml = (rel) => /^(?:[^/]+|(?:kyuyo|seikyu)\/[^/]+)\.html$/.test(rel);
 const isScannableJs = (rel) => /\.(js|mjs|html)$/.test(rel) && !/\.min\.js$/.test(rel)
   && !rel.startsWith('tests/') && !rel.startsWith('tools/') && !rel.startsWith('scripts/') && !rel.includes('/scripts/');
 

@@ -100,9 +100,9 @@ T('0. ★中身(.app)は最初 hidden＝未ログインで画面を見せない'
 doc.getElementById('app').hidden = false;   // 以降はログイン済みとして描画を見る
 
 /* ═══ 1. ハブ ═══ */
-T('1. ハブが出る・タイルは5つ(給与/日次台帳/集計/共有データ/表)', () => {
+T('1. ハブが出る・タイルは6つ(給与/請求書/日次台帳/集計/共有データ/表)', () => {
   ok(doc.getElementById('scr-hub').classList.contains('active'), 'ハブが表示されていない');
-  ok(doc.querySelectorAll('#scr-hub .tile').length === 5, 'タイル数=' + doc.querySelectorAll('#scr-hub .tile').length);
+  ok(doc.querySelectorAll('#scr-hub .tile').length === 6, 'タイル数=' + doc.querySelectorAll('#scr-hub .tile').length);
 });
 // 2026-08-01 統合: 給与は別サイト(payslip-app-olive)ではなく【同一オリジンの kyuyo/】になった。
 //   同一オリジンであることが「ログイン1回で両方使える」の条件そのものなので、そこを見張る。
@@ -125,8 +125,21 @@ T('1. ★削除した旧ページ(請求書/見積/旧トップ/テンプレ)へ
   ['seikyusyo.html', 'mitsumoriyo.html', 'home.html', 'template.html', 'kyuuryoumeisai.html'].forEach(f => {
     ok(!new RegExp(f.replace('.', '\.')).test(html), 'ハブに ' + f + ' へのリンクが残っている');
   });
-  ok(!doc.getElementById('tile-seikyu'), '請求書タイルが残っている');
   ok(!doc.getElementById('tile-mitsumori'), '見積タイルが残っている');
+});
+// 2026-08-10: 請求書は【中身のある新しいアプリ seikyu/】として戻ってきた。
+//   上の検査は「消した旧ページ(seikyusyo.html)へのリンク」を見ているので、そのまま生きている。
+//   ここでは新しい方が、同一オリジンの相対リンクで繋がっているかを見る。
+T('1. ★請求書タイルは同一オリジンの seikyu/ へ繋がる(相対)', () => {
+  const a = doc.getElementById('tile-seikyu');
+  ok(a, '請求書タイルが無い');
+  ok(a.tagName === 'A', 'リンクでない');
+  ok(a.getAttribute('href') === 'seikyu/', 'href=' + a.getAttribute('href') + ' (相対 seikyu/ であること)');
+  ok(!/^https?:/.test(a.getAttribute('href')), '外部URLになっている(別オリジン=ログインが分かれる)');
+  ok(!a.getAttribute('target'), '別タブで開く指定が残っている(同一サイト内なので不要)');
+  const d = a.querySelector('.tile-d');
+  ok(d && d.textContent.trim().length > 0, '説明が無い');
+  ok(d.textContent.length <= 30, '説明が長すぎる(薄くの原則): ' + d.textContent);
 });
 T('1. ★撤去したお試し画面(chat.html)へのタイルは無い', () => {
   ok(!/chat.html/.test(doc.getElementById('scr-hub').innerHTML), 'ハブから chat.html へ行ける');

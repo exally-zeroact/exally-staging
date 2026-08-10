@@ -200,7 +200,10 @@
       at: o.at || '',
       partner: {
         id: (o.partner && o.partner.id) || '',
-        name: pd.name || '', honor: pd.honor || '御中', person: pd.person || '',
+        // ★敬称は hub の取引先画面が既に `keisho` で保存している（js/hub.js savePt）。
+        //   `honor` しか見ないと、人が選んだ「様」が紙で「御中」に化ける（②で実物と突き合わせて判明）。
+        //   契約の名前は `honor` のまま。読む時だけ既存の `keisho` も受ける。
+        name: pd.name || '', honor: pd.honor || pd.keisho || '御中', person: pd.person || '',
         zip: pd.zip || '', addr: pd.addr || '', tel: pd.tel || '',
         invoiceNo: pd.invoiceNo || '', code: pd.code || '',
       },

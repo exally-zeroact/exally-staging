@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>請求書 — Exally</title>
+<meta name="theme-color" content="#2E7D54">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="../img/icon-192.png">
+<link rel="icon" type="image/png" href="../img/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@500&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/app.css?v=915297d9">
+</head>
+<body>
+
+<!-- ★ログインが済むまで中身を1バイトも見せない（js/auth.js と同じ流儀）。
+     JSが動かない・接続設定が読めない端末でも、中身が露出したままにならない。 -->
+<div id="app" hidden>
+
+<header class="appbar">
+  <a class="back" href="../hub.html">← Exally</a>
+  <div class="logo">請求書</div>
+  <div class="grow"></div>
+  <span class="who" id="who"></span>
+  <span class="out" id="b-logout">ログアウト</span>
+</header>
+
+<main class="main">
+
+  <!-- ═══ ① 一覧 ═══ -->
+  <section class="screen active" id="scr-list">
+    <div class="card">
+      <div class="card-h">請求書</div>
+      <div class="seg" id="fil-seg">
+        <button class="seg-b on" type="button" data-fil="all">すべて</button>
+        <button class="seg-b" type="button" data-fil="draft">下書き</button>
+        <button class="seg-b" type="button" data-fil="issued">発行済</button>
+        <button class="seg-b" type="button" data-fil="void">取り消し</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" type="button" id="b-new">＋ 新しく作る</button>
+        <button class="btn-ghost" type="button" id="b-reload">読み直す</button>
+      </div>
+      <p class="hint" id="list-hint">発行した請求書は、あとから中身を直せません（取り消して作り直します）。番号は同じ物を二度使いません。</p>
+      <div class="bad" id="list-err" style="display:none"></div>
+    </div>
+    <div id="list-body"></div>
+  </section>
+
+  <!-- ═══ ② 作る／中身 ═══ -->
+  <section class="screen" id="scr-edit">
+    <div class="card">
+      <div class="card-h" id="edit-h">新しい請求書</div>
+      <div class="warn" id="edit-locked" style="display:none">この請求書は発行済みです。中身は直せません。直すときは取り消してから作り直してください。</div>
+
+      <div class="frow">
+        <div class="flabel">取引先</div>
+        <select class="finput" id="e-partner"></select>
+        <p class="hint" id="e-partner-hint">取引先の登録は Exally のハブ（共有データ ▸ 取引先）でします。ここで選ぶと、住所や登録番号も紙に出ます。</p>
+      </div>
+
+      <div class="frow2">
+        <div class="frow">
+          <div class="flabel">請求日</div>
+          <input class="finput" id="e-issue" type="date">
+        </div>
+        <div class="frow">
+          <div class="flabel">支払期限</div>
+          <select class="finput" id="e-term"></select>
+          <input class="finput num" id="e-termn" type="text" inputmode="numeric" placeholder="日数" style="margin-top:6px;display:none">
+          <input class="finput" id="e-due" type="date" style="margin-top:6px">
+        </div>
+      </div>
+
+      <div class="frow2">
+        <div class="frow">
+          <div class="flabel">税の入れ方</div>
+          <div class="seg" id="e-taxmode">
+            <button class="seg-b on" type="button" data-tm="exclusive">外税</button>
+            <button class="seg-b" type="button" data-tm="inclusive">内税</button>
+          </div>
+        </div>
+        <div class="frow">
+          <div class="flabel">円未満の丸め方</div>
+          <select class="finput" id="e-round"></select>
+        </div>
+      </div>
+
+      <div class="frow">
+        <div class="flabel">請求番号</div>
+        <div class="seg" id="e-nomode">
+          <button class="seg-b on" type="button" data-nm="auto">自動</button>
+          <button class="seg-b" type="button" data-nm="manual">自分で決める</button>
+        </div>
+        <input class="finput" id="e-no" type="text" placeholder="（自動）">
+        <p class="hint" id="e-no-hint"></p>
+      </div>
+
+      <div class="frow">
+        <div class="flabel">件名<span style="color:#7A9A87">（任意）</span></div>
+        <input class="finput" id="e-subject" type="text" placeholder="例：9月分 運転代行ご利用料金">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h">明細</div>
+      <div class="lines-scroll">
+        <table class="lines">
+          <thead><tr>
+            <th class="l-name">品名・内容</th><th class="l-sm">数量</th><th class="l-sm">単位</th>
+            <th class="l-sm">単価</th><th class="l-sm">金額</th><th class="l-rate">税率</th><th class="l-x"></th>
+          </tr></thead>
+          <tbody id="lines-body"></tbody>
+        </table>
+      </div>
+      <p class="scroll-note">明細の表は、狭い画面では横に動かして見られます。</p>
+      <button class="btn-add" type="button" id="b-addline">＋ 行を足す</button>
+      <p class="hint">金額を直接入れた行は、その金額をそのまま使います。数量と単価だけ入れた行は、掛け算して円にします。</p>
+
+      <div class="tot" id="tot-box"></div>
+      <div class="bad" id="edit-err" style="display:none"></div>
+      <div class="warn" id="edit-warn" style="display:none"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-h">備考<span style="color:#7A9A87;font-weight:400">（紙のいちばん下に出ます）</span></div>
+      <textarea class="finput" id="e-memo" placeholder="例：振込手数料は貴社にてご負担ください"></textarea>
+    </div>
+
+    <div class="card">
+      <div class="card-h">出す</div>
+      <div class="btn-row">
+        <button class="btn-ghost" type="button" id="b-preview">中身を見る</button>
+        <button class="btn-primary" type="button" id="b-print">印刷 / PDF保存</button>
+        <button class="btn-ghost" type="button" id="b-xlsx">Excel</button>
+      </div>
+      <p class="why" id="out-why"></p>
+      <div class="btn-row">
+        <button class="btn-primary" type="button" id="b-save">下書きを保存</button>
+        <button class="btn-primary" type="button" id="b-issue">発行する</button>
+        <button class="btn-ghost" type="button" id="b-void">取り消す</button>
+        <button class="btn-danger" type="button" id="b-delete">削除</button>
+      </div>
+      <p class="why" id="act-why"></p>
+      <div class="btn-row">
+        <button class="btn-ghost" type="button" id="b-back">← 一覧へ戻る</button>
+      </div>
+      <div class="ok" id="edit-ok" style="display:none"></div>
+      <div class="pv-wrap" id="pv-wrap" style="display:none"><iframe class="pv" id="pv" title="請求書の下見"></iframe></div>
+    </div>
+  </section>
+
+  <!-- ═══ ③ 設定 ═══ -->
+  <section class="screen" id="scr-set">
+    <div class="card">
+      <div class="card-h">請求書の決まり</div>
+      <div class="frow">
+        <div class="flabel">番号の形</div>
+        <select class="finput" id="s-format"></select>
+        <p class="hint" id="s-format-hint"></p>
+      </div>
+      <div class="frow">
+        <label class="flabel" style="display:block">
+          <input type="checkbox" id="s-reset"> 年（または年月）が変わったら 1 に戻す
+        </label>
+        <p class="hint">戻さない場合は、年をまたいでも通し番号が続きます。どちらでも「同じ番号を二度使わない」ことは倉庫が守ります。</p>
+      </div>
+      <div class="frow2">
+        <div class="frow">
+          <div class="flabel">税の入れ方（既定）</div>
+          <select class="finput" id="s-taxmode">
+            <option value="exclusive">外税</option>
+            <option value="inclusive">内税</option>
+          </select>
+        </div>
+        <div class="frow">
+          <div class="flabel">円未満の丸め方（既定）</div>
+          <select class="finput" id="s-round"></select>
+        </div>
+      </div>
+      <p class="hint">消費税は、税率ごとに合計してから1回だけ丸めます（国税庁の定め）。丸め方だけが会社ごとの決めごとです。</p>
+      <div class="frow">
+        <div class="flabel">お振込先（紙に出ます）</div>
+        <textarea class="finput" id="s-bank" placeholder="例：伊予銀行 今治支店 普通 1234567 カ）ゼロアクト"></textarea>
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" type="button" id="b-set-save">保存</button>
+      </div>
+      <div class="ok" id="set-ok" style="display:none"></div>
+      <div class="bad" id="set-err" style="display:none"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-h">取引先の「請求書で使う」項目</div>
+      <p class="hint">名称・住所・登録番号は Exally のハブ（共有データ ▸ 取引先）が本体です。ここではそこに無い、請求書だけで使う項目を足します。</p>
+      <div class="frow">
+        <div class="flabel">取引先を選ぶ</div>
+        <select class="finput" id="s-partner"></select>
+      </div>
+      <div class="frow2">
+        <div class="frow">
+          <div class="flabel">取引先コード</div>
+          <input class="finput" id="s-pcode" type="text" placeholder="例：A001">
+        </div>
+        <div class="frow">
+          <div class="flabel">敬称</div>
+          <select class="finput" id="s-phonor">
+            <option>御中</option><option>様</option><option>（なし）</option>
+          </select>
+        </div>
+      </div>
+      <div class="frow2">
+        <div class="frow">
+          <div class="flabel">担当者</div>
+          <input class="finput" id="s-pperson" type="text" placeholder="例：山田">
+        </div>
+        <div class="frow">
+          <div class="flabel">郵便番号</div>
+          <input class="finput" id="s-pzip" type="text" inputmode="numeric" placeholder="例：794-0000">
+        </div>
+      </div>
+      <div class="frow2">
+        <div class="frow">
+          <div class="flabel">電話番号</div>
+          <input class="finput" id="s-ptel" type="tel" placeholder="例：0898-00-0000">
+        </div>
+        <div class="frow">
+          <div class="flabel">いつまでにもらう約束</div>
+          <select class="finput" id="s-pterm"></select>
+          <input class="finput num" id="s-ptermn" type="text" inputmode="numeric" placeholder="日数" style="margin-top:6px;display:none">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" type="button" id="b-pt-save">この取引先を保存</button>
+        <a class="btn-ghost" style="text-decoration:none;display:inline-block" href="../hub.html">ハブで取引先を追加</a>
+      </div>
+      <div class="ok" id="pt-ok" style="display:none"></div>
+      <div class="bad" id="pt-err" style="display:none"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-h">自社の情報</div>
+      <p class="hint" id="org-view">屋号・住所・電話・インボイス登録番号は Exally のハブ（共有データ ▸ 会社）が本体です。ここでは直しません（同じ物を2か所で持たないため）。</p>
+      <div class="btn-row">
+        <a class="btn-ghost" style="text-decoration:none;display:inline-block" href="../hub.html">ハブで会社情報を直す</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<nav class="botnav">
+  <button class="bn on" type="button" data-scr="scr-list"><span class="bn-i">▤</span><span class="bn-l">一覧</span></button>
+  <button class="bn" type="button" data-scr="scr-edit"><span class="bn-i">✎</span><span class="bn-l">作る</span></button>
+  <button class="bn" type="button" data-scr="scr-set"><span class="bn-i">⚙</span><span class="bn-l">設定</span></button>
+</nav>
+
+<!-- ★落とす前に「中身から作った名前」を出して直させる（司さんの決まり）★ -->
+<div class="ov" id="fn-ov">
+  <div class="ov-card">
+    <div class="ov-t">この名前で保存します</div>
+    <p class="hint">中身（日付・相手・種類・金額）から作りました。直してから保存できます。</p>
+    <input class="finput" id="fn-input" type="text">
+    <div class="ov-ext" id="fn-ext"></div>
+    <div class="btn-row">
+      <button class="btn-primary" type="button" id="fn-ok">この名前で保存</button>
+      <button class="btn-ghost" type="button" id="fn-cancel">やめる</button>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supa-config.js?v=915297d9"></script>
+<script src="../lib/xlsx.full.min.js?v=915297d9"></script>
+<script src="../js/file-out.js?v=915297d9"></script>
+<script src="../js/suite-data.js?v=915297d9"></script>
+<script src="../kyuyo/lib/shouhizei-ritsu.js?v=915297d9"></script>
+<script src="lib/seikyu-tax.js?v=915297d9"></script>
+<script src="lib/seikyu-doc.js?v=915297d9"></script>
+<script src="lib/seikyu-name.js?v=915297d9"></script>
+<script src="lib/seikyu-paper.js?v=915297d9"></script>
+<script src="lib/seikyu-aoa.js?v=915297d9"></script>
+<script src="js/seikyu-store.js?v=915297d9"></script>
+<script src="js/seikyu-out.js?v=915297d9"></script>
+<script src="js/seikyu-app.js?v=915297d9"></script>
+<script src="../js/exally-login.js?v=915297d9"></script>
+<script src="js/auth.js?v=915297d9"></script>
+<!-- ★Service Worker は登録しない＝キャッシュで古い版が居座る問題を根絶。
+     開くたびに既存SWを登録解除＋全キャッシュ削除して常に最新にする（給与と同じ）。 -->
+<script>try{if('serviceWorker'in navigator){navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister();});});}if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.delete(k);});});}}catch(e){}</script>
+</body>
+</html>
