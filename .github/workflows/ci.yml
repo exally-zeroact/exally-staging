@@ -141,6 +141,11 @@ jobs:
       #   ここでは【判定そのもの】が正しいかだけ見る(ネットに触らない=CIを外の都合で赤くしない)。
       - name: ★賃金要件撤廃の見張りの判定 (--self-test・ネットに触らない)
         run: node kyuyo/scripts/check-wage88k-removal.mjs --self-test
+      # ★最賃の年度が進んだかの見張り。実際に厚労省を叩くのは週1(source-urls.yml)。
+      #   ここでは【年度の読み取りと判定】だけ見る(ネットに触らない)。
+      #   ★実物のページは全角の「令和７年度」★＝半角だけ見ると1件も拾えない。その罠を検査で固定している。
+      - name: ★最賃の年度の見張りの判定 (--self-test・ネットに触らない)
+        run: node kyuyo/scripts/check-saitei-nendo.mjs --self-test
       - name: Periods golden (期間分割K2が移設前と一致)
         run: node kyuyo/tests/periods-golden.test.mjs
       - name: Fixture reproducibility (入力fixtureが生成スクリプトと一致するか)
