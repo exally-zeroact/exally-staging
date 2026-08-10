@@ -133,21 +133,21 @@ await TA('1. ★3画面ぜんぶのボタンを1つ残らず押しても、JSが
   const screens = ['scr-list', 'scr-edit', 'scr-set'];
   const pressed = [];
   for (const scr of screens) {
-    const nav = doc.querySelector('.bn[data-scr="' + scr + '"]');
+    const nav = doc.querySelector('.ex-bn[data-scr="' + scr + '"]');
     ok(nav, 'ナビ ' + scr + ' が無い');
     nav.click();
     await sleep(10);
     const el = $(scr);
     ok(el.classList.contains('active'), scr + ' が開かない');
     ok(el.innerHTML.length > 400, scr + ' の中身が薄い(' + el.innerHTML.length + ')');
-    for (const b of [...el.querySelectorAll('button'), ...doc.querySelectorAll('.bn')]) {
+    for (const b of [...el.querySelectorAll('button'), ...doc.querySelectorAll('.ex-bn')]) {
       if (b.disabled) { pressed.push((b.id || b.textContent.trim()) + '(押せない)'); continue; }
       b.click();
       await sleep(6);
       pressed.push(b.id || b.getAttribute('data-fil') || b.getAttribute('data-tm') || b.getAttribute('data-nm') || b.textContent.trim());
     }
     // 押した拍子に別の画面へ行っていたら戻す
-    doc.querySelector('.bn[data-scr="' + scr + '"]').click();
+    doc.querySelector('.ex-bn[data-scr="' + scr + '"]').click();
     await sleep(6);
   }
   // ファイル名の小窓のボタンも押す
@@ -158,36 +158,84 @@ await TA('1. ★3画面ぜんぶのボタンを1つ残らず押しても、JSが
   eq(errs.length, before, 'JSが落ちた: ' + errs.slice(before).join(' | '));
 });
 
-/* ═══ 1-b. スマホ幅で潰れない書き方 ═══
+/* ═══ 1-b. 見た目の土台（スイート共通の皮）と、潰れない書き方 ═══
    jsdom は幅を計算しないので、ここでは ★潰れない書き方になっているか★ を見る
    （実物の幅は実機幅の画面で定規を当てて確かめる。この検査はその前段の網）。 */
+const SKIN = fs.readFileSync(path.join(ROOT, 'css/exally-ui.css'), 'utf8');
+const APPCSS = fs.readFileSync(path.join(ROOT, 'seikyu/css/app.css'), 'utf8');
+const CSS = SKIN + '\n' + APPCSS;
+/* 色の検査は「実際に効いている指定」だけを見る（説明文の中の色名を数えない） */
+const CSS_CODE = CSS.replace(/\/\*[\s\S]*?\*\//g, ' ');
+
+T('1-b. ★見た目はスイート共通の皮を読んでいる（請求書だけ別の画面にしない）', () => {
+  ok(/<link rel="stylesheet" href="\.\.\/css\/exally-ui\.css/.test(html), '共通の皮を読んでいない');
+  ok(html.indexOf('exally-ui.css') < html.indexOf('css/app.css'), '皮より先にアプリのCSSを読んでいる（差分が効かない）');
+});
+
+T('1-b. ★うちのミント #52B788 と 差し色 #3D9E72 が実際に効いている（請求書だけ別の緑にしない）', () => {
+  // ★選ばれている物に見た目が付いているか（押しても何も変わらないように見せない）
+  ok(/\.ex-chip\.on\s*\{[^}]*background/.test(CSS_CODE), '選んだチップに色が付かない');
+  ok(/\.ex-mini\.on\s*\{[^}]*background/.test(CSS_CODE), '選んだ小さいボタン（揃えなど）に色が付かない');
+  ok(/#52B788/i.test(CSS_CODE), 'ブランドのミントが1回も使われていない');
+  ok(/#3D9E72/i.test(CSS_CODE), '差し色が1回も使われていない');
+  ok(/#2E7D54/i.test(CSS_CODE), '主色が使われていない');
+  ok(!/#1A4A2E/i.test(CSS_CODE), '使ってはいけない濃い緑がある');
+});
+
+T('1-b. ★皮に無い緑を勝手に足していない（3アプリでバラけた原因）', () => {
+  const allowed = new Set(['#2e7d54', '#3d9e72', '#52b788', '#3d6b53', '#5c7e6c', '#7aa08c',
+    '#d4eae0', '#c8ecd8', '#f0faf4', '#e8f6ee', '#ffffff', '#c0392b', '#f0d5d0', '#fdf0ee',
+    '#92500a', '#f0ddbc', '#fdf3e3']);
+  const used = [...APPCSS.replace(/\/\*[\s\S]*?\*\//g, ' ').matchAll(/#[0-9a-fA-F]{6}\b/g)]
+    .map((m) => m[0].toLowerCase());
+  const stray = [...new Set(used)].filter((c) => !allowed.has(c));
+  ok(stray.length === 0, '皮に無い色を使っている: ' + stray.join(', '));
+});
+
 T('1-b. ★明細の表は「縮めて潰す」のではなく「横に動かす」（実機幅375pxで欄が幅ゼロになった前科）', () => {
-  const css = fs.readFileSync(path.join(ROOT, 'seikyu/css/app.css'), 'utf8');
-  const lines = (/\.lines\s*\{([^}]*)\}/.exec(css) || [])[1] || '';
-  ok(/min-width\s*:\s*\d+px/.test(lines), '.lines に min-width が無い（入れ物に合わせて縮む＝欄が潰れる）');
-  const wrap = (/\.lines-scroll\s*\{([^}]*)\}/.exec(css) || [])[1] || '';
+  const wrap = (/\.lines-scroll\s*\{([^}]*)\}/.exec(CSS) || [])[1] || '';
   ok(/overflow-x\s*:\s*auto/.test(wrap), '.lines-scroll が横に動かせない');
-  ok(!/\.lines\s*\{[^}]*width\s*:\s*100%/.test(css), '.lines に width:100% がある（min-width を打ち消す）');
+  // ★列は会社が足せるので、表そのものではなく「1列ぶんの最低幅」で潰れを止める
+  for (const sel of ['.l-name', '.l-sm', '.l-md', '.l-x']) {
+    const rule = (new RegExp('\\' + sel + '\\s*\\{([^}]*)\\}').exec(CSS) || [])[1] || '';
+    ok(/min-width\s*:\s*\d+px/.test(rule), sel + ' に最低幅が無い（列が幅ゼロまで潰れる）');
+  }
+  ok(!/\.lines\s*\{[^}]*width\s*:\s*100%/.test(CSS), '.lines に width:100% がある（最低幅を打ち消す）');
   ok(/<div class="lines-scroll">/.test(html), '表が横に動く入れ物に入っていない');
 });
 
 T('1-b. ★文が入る箱は block で最低幅を持ち、日本語を1文字ずつ割らない', () => {
-  const css = fs.readFileSync(path.join(ROOT, 'seikyu/css/app.css'), 'utf8');
-  ok(!/word-break\s*:\s*break-all/.test(css), 'break-all がある（日本語が1文字ずつ割れる）');
-  for (const sel of ['.hint', '.warn', '.bad', '.ok', '.why', '.scroll-note']) {
-    const rule = (new RegExp('\\' + sel + '\\s*\\{([^}]*)\\}').exec(css) || [])[1] || '';
+  ok(!/word-break\s*:\s*break-all/.test(CSS), 'break-all がある（日本語が1文字ずつ割れる）');
+  // 皮の側（4つまとめて指定している）
+  const many = (/\.ex-hint,\s*\.ex-warn,\s*\.ex-bad,\s*\.ex-ok,\s*\.ex-why\s*\{([^}]*)\}/.exec(CSS) || [])[1] || '';
+  ok(/display\s*:\s*block/.test(many), '文の箱が block でない');
+  ok(/min-width\s*:\s*\d/.test(many), '文の箱に最低幅が無い');
+  ok(/overflow-wrap\s*:\s*break-word/.test(many), '文の箱に折り返しの指定が無い');
+  // 請求書だけの物
+  for (const sel of ['.scroll-note', '.iv-sub']) {
+    const rule = (new RegExp('\\' + sel + '\\s*\\{([^}]*)\\}').exec(CSS) || [])[1] || '';
     ok(/display\s*:\s*block/.test(rule), sel + ' が block でない');
-    ok(/min-width\s*:\s*\d/.test(rule), sel + ' に最低幅が無い');
+    ok(/min-width\s*:\s*\d|width\s*:\s*100%/.test(rule), sel + ' に幅の確保が無い');
     ok(/overflow-wrap\s*:\s*break-word/.test(rule), sel + ' に折り返しの指定が無い');
   }
-  ok(/\.btn-row\s*\{[^}]*flex-wrap\s*:\s*wrap/.test(css), 'ボタンの行が折り返さない（横にはみ出す）');
+  ok(/\.ex-btn-row\s*\{[^}]*flex-wrap\s*:\s*wrap/.test(CSS), 'ボタンの行が折り返さない（横にはみ出す）');
+  // ★上の帯は flex。中の日本語（アプリ名）が縮んで1文字ずつ縦に割れた前科（実機幅390px）
+  for (const sel of ['.ex-logo', '.ex-back']) {
+    const rule = (new RegExp('\\' + sel + '\\s*\\{([^}]*)\\}').exec(CSS) || [])[1] || '';
+    ok(/white-space\s*:\s*nowrap/.test(rule), sel + ' が折り返す（日本語のアプリ名が縦に割れる）');
+    ok(/flex\s*:\s*0 0 auto/.test(rule), sel + ' が縮む指定になっている（flexの子は既定で縮む）');
+  }
+  const who = (/\.ex-who\s*\{([^}]*)\}/.exec(CSS) || [])[1] || '';
+  ok(/text-overflow\s*:\s*ellipsis/.test(who), '長いメールが「…」で切られない（他を押し出す）');
+  // ★列の編集は flex の行。中の「列の名前」が縦帯にならないよう先に幅を確保している
+  const cn = (/\.col-name\s*\{([^}]*)\}/.exec(CSS) || [])[1] || '';
+  ok(/min-width\s*:\s*\d+px/.test(cn), '列の名前に最低幅が無い（flexの中で1文字ずつ縦に割れる）');
 });
 
 T('1-b. ★入力欄は16px（これより小さいと iPhone が勝手に拡大して画面がズレる）', () => {
-  const css = fs.readFileSync(path.join(ROOT, 'seikyu/css/app.css'), 'utf8');
-  const rule = (/\.finput\s*\{([^}]*)\}/.exec(css) || [])[1] || '';
+  const rule = (/\.ex-input\s*\{([^}]*)\}/.exec(CSS) || [])[1] || '';
   const m = /font-size\s*:\s*(\d+(?:\.\d+)?)px/.exec(rule);
-  ok(m, '.finput に文字の大きさが無い');
+  ok(m, '.ex-input に文字の大きさが無い');
   ok(Number(m[1]) >= 16, '入力欄が ' + m[1] + 'px（16px 未満）');
 });
 
@@ -196,13 +244,16 @@ T('1-b. ★iPhone で持っていない入力（月・週）を使っていな�
 });
 
 /* ═══ 2. 1通 作って発行する ═══ */
+// 1. の総当たりで様式が切り替わっているので、ここで std1 に戻してから測る
+doc.querySelector('#s-tpl [data-tpl="std1"]').click();
+await sleep(10);
 $('b-new').click();
 await sleep(10);
 
 await TA('2. ★新しく作る＝白紙を埋めさせない（今日・既定の税・番号が最初から入る）', async () => {
   ok($('e-issue').value, '請求日が空');
   ok($('e-no').value, '番号が空: ' + $('e-no').value);
-  ok(qa('#e-taxmode .seg-b.on').length === 1, '税の入れ方が選ばれていない');
+  ok(qa('#e-taxmode .ex-chip.on').length === 1, '税の入れ方が選ばれていない');
   ok($('lines-body').querySelectorAll('tr').length >= 1, '明細の行が無い');
 });
 
@@ -267,6 +318,109 @@ await TA('2. ★発行済みは直せない・もう一度発行できない（�
   ok($('edit-locked').style.display !== 'none', '発行済みの断り書きが出ていない');
 });
 
+/* ═══ 2-b. ★どんな項目にも対応できる（列を自分で決める）★ ═══ */
+await TA('2-b. ★列を1本足すと、入力の表にも紙にも出る／金額は1円も動かない', async () => {
+  const before = win.SeikyuApp._state.cur.totals.grandTotal;
+  doc.querySelector('.ex-bn[data-scr="scr-set"]').click();
+  await sleep(20);
+  const n0 = $('col-list').querySelectorAll('.col-row').length;
+  $('col-new').value = '行き先';
+  $('b-col-add').click();
+  await sleep(20);
+  eq($('col-list').querySelectorAll('.col-row').length, n0 + 1, '列が増えていない');
+  ok(/行き先/.test($('col-list').textContent), '足した列が一覧に無い');
+  ok($('col-ok').style.display !== 'none', '足したことを伝えていない');
+
+  // 新しい1通を作ると、その列が入力の表に出る
+  $('b-new').click();
+  await sleep(30);
+  const heads = [...$('lines-head').querySelectorAll('th')].map((th) => th.textContent);
+  ok(heads.indexOf('行き先') >= 0, '入力の表に足した列が出ていない: ' + heads.join('/'));
+
+  // 値を入れて紙に出す
+  setVal('e-partner', 'pt_a');
+  await sleep(20);
+  const tr = $('lines-body').querySelector('tr');
+  tr.querySelector('[data-f="name"]').value = 'あ';
+  tr.querySelector('[data-f="name"]').dispatchEvent(new win.Event('input'));
+  tr.querySelector('[data-f="amount"]').value = '1000';
+  tr.querySelector('[data-f="amount"]').dispatchEvent(new win.Event('input'));
+  const x = tr.querySelector('[data-x="行き先"]');
+  ok(x, '足した列の入力欄が無い');
+  x.value = '今治→松山';
+  x.dispatchEvent(new win.Event('input'));
+  await sleep(20);
+  $('b-preview').click();
+  await sleep(400);
+  const src = $('pv').srcdoc || '';
+  ok(/行き先/.test(src), '紙に足した列の見出しが無い');
+  ok(/今治→松山/.test(src), '紙に足した列の中身が無い');
+  // ★列を足しても、金額は明細だけから出る（列は金額に触らない）
+  ok(before > 0, '前の1通の合計が取れていない');
+  const totText = $('tot-box').textContent.replace(/\s+/g, '');
+  ok(/合計1,100円/.test(totText), '列を足したら合計が変わった: ' + totText);
+});
+
+await TA('2-b. ★幅は 24〜400 から出られない（−を連打しても列が消えない）', async () => {
+  doc.querySelector('.ex-bn[data-scr="scr-set"]').click();
+  await sleep(20);
+  const row = $('col-list').querySelector('.col-row');
+  const minus = row.querySelector('[data-w="-8"]');
+  for (let i = 0; i < 40; i++) { minus.click(); await sleep(2); }
+  await sleep(20);
+  const w1 = Number($('col-list').querySelector('.col-row .col-w').textContent);
+  eq(w1, 24, '下限を割った: ' + w1);
+  const plus = $('col-list').querySelector('.col-row [data-w="8"]');
+  for (let i = 0; i < 80; i++) { plus.click(); await sleep(2); }
+  await sleep(20);
+  const w2 = Number($('col-list').querySelector('.col-row .col-w').textContent);
+  eq(w2, 400, '上限を超えた: ' + w2);
+  // ★どれだけ広げても、紙に割り付ける％の合計は 100 のまま＝はみ出さない
+  const pcts = [...$('col-list').querySelectorAll('.col-row')].map((r) => {
+    const t = r.querySelectorAll('.col-w')[1].textContent;
+    return Number(t.replace('%', ''));
+  });
+  const sum = pcts.reduce((a, b) => a + b, 0);
+  ok(Math.abs(sum - 100) < 0.6, '紙に割り付ける合計が100%でない: ' + sum.toFixed(2));
+});
+
+await TA('2-b. ★揃えを変えられる／列を消せる／既定に戻せる', async () => {
+  const row = $('col-list').querySelector('.col-row');
+  row.querySelector('[data-al="right"]').click();
+  await sleep(20);
+  ok($('col-list').querySelector('.col-row [data-al="right"]').classList.contains('on'), '揃えが変わっていない');
+  const n0 = $('col-list').querySelectorAll('.col-row').length;
+  $('col-list').querySelector('.col-row [data-cdel]').click();
+  await sleep(20);
+  eq($('col-list').querySelectorAll('.col-row').length, n0 - 1, '列が消えない');
+  $('b-col-reset').click();
+  await sleep(20);
+  const heads = [...$('col-list').querySelectorAll('.col-name')].map((e) => e.firstChild.textContent);
+  eq(heads.join('/'), '#/品名・内容/数量/単位/単価/金額/税率', '既定に戻っていない: ' + heads.join('/'));
+});
+
+await TA('2-b. ★様式を替えても金額が1円も動かない（見た目だけ変わる）', async () => {
+  doc.querySelector('.ex-bn[data-scr="scr-list"]').click();
+  await sleep(20);
+  doc.querySelector('#fil-seg [data-fil="issued"]').click();
+  await sleep(10);
+  $('list-body').querySelector('[data-open]').click();
+  await sleep(30);
+  const g0 = win.SeikyuApp._state.cur.totals.grandTotal;
+  $('b-preview').click();
+  await sleep(400);
+  const a = $('pv').srcdoc || '';
+  // 発行済みは様式を選べない（写しで固まっている）
+  ok([...doc.querySelectorAll('#e-tpl .ex-chip')].every((b) => b.disabled), '発行済みなのに様式を変えられる');
+  eq(win.SeikyuApp._state.cur.totals.grandTotal, g0, '見ただけで合計が動いた');
+  const money = String(g0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  ok(a.replace(/\s+/g, '').includes(money), '紙に合計 ' + money + ' が出ていない');
+  // ★発行済みは写しの列で刷る＝あとで会社が列を足しても、出した紙は変わらない
+  const heads = [...a.matchAll(/<th class="c-col"[^>]*>([^<]*)<\/th>/g)].map((m) => m[1]);
+  eq(heads.join('/'), '#/品名・内容/数量/単位/単価/金額/税率', '発行済みの紙の列が後から変わった: ' + heads.join('/'));
+  ok(heads.indexOf('行き先') < 0, '発行後に足した列が、出した紙に入り込んでいる');
+});
+
 /* ═══ 3. 出す（紙・Excel） ═══ */
 await TA('3. ★「中身を見る」で紙の下見が出る（アプリの画面は入らない）', async () => {
   $('b-preview').click();
@@ -283,7 +437,7 @@ await TA('3. ★別の1通に切り替えたら、前の紙の下見は消える
   await sleep(20);
   eq($('pv-wrap').style.display, 'none', '前の紙が残っている');
   // 元の発行済みに戻す
-  doc.querySelector('.bn[data-scr="scr-list"]').click();
+  doc.querySelector('.ex-bn[data-scr="scr-list"]').click();
   await sleep(20);
   doc.querySelector('#fil-seg [data-fil="issued"]').click();
   await sleep(10);
@@ -367,7 +521,7 @@ await TA('4. ★取り消しても番号は空かない（同じ番号は二度�
 
 /* ═══ 5. 一覧 ═══ */
 await TA('5. 一覧に2通出る・絞り込みが効く', async () => {
-  doc.querySelector('.bn[data-scr="scr-list"]').click();
+  doc.querySelector('.ex-bn[data-scr="scr-list"]').click();
   await sleep(20);
   doc.querySelector('#fil-seg [data-fil="all"]').click();   // 1. の総当たりで絞り込みが残っているので戻す
   await sleep(6);
@@ -408,7 +562,7 @@ await TA('5. 一覧から開くと、その1通が出る', async () => {
 
 /* ═══ 6. 設定 ═══ */
 await TA('6. 設定を保存すると自社の棚に入る（番号の形・丸め方・振込先）', async () => {
-  doc.querySelector('.bn[data-scr="scr-set"]').click();
+  doc.querySelector('.ex-bn[data-scr="scr-set"]').click();
   await sleep(20);
   $('s-format').value = 'y-seq'; $('s-format').dispatchEvent(new win.Event('change'));
   $('s-round').value = 'round'; $('s-round').dispatchEvent(new win.Event('change'));
@@ -471,6 +625,80 @@ await TA('7. 支払期限は決め方から自動で入り、手でも直せる'
   await sleep(10);
   setVal('e-due', '2026-11-15');
   eq(win.SeikyuApp._state.cur.due_ymd, '2026-11-15', '手で直した期限が持たれていない');
+});
+
+/* ═══ 6-b. ★列を選べるようになる前に出した紙も、あとから列が増えない★ ═══ */
+await TA('6-b. ★写しに列が無い古い請求書は、会社の「今の列」を当てずに様式の既定で刷る', async () => {
+  // 列を足す前に出した1通を作る（写しに cols が無い＝2026-08-10 より前に出した物と同じ形）
+  const old = JSON.parse(JSON.stringify(db.pay_invoices.find((x) => x.status === 'issued')));
+  old.id = 'iv_old_no_cols';
+  old.no = 'OLD-0001';
+  delete old.snapshot.cols;                 // ★列を覚えていない写し
+  db.pay_invoices.push(old);
+  // 会社の列には「行き先」が入っている状態にする
+  const st = win.SeikyuApp._state;
+  st.org.invoiceCols = { items: ['#', '品名・内容', '金額', '税率', '行き先'], widths: {}, aligns: {} };
+
+  doc.querySelector('.ex-bn[data-scr="scr-list"]').click();
+  await sleep(20);
+  doc.querySelector('#fil-seg [data-fil="all"]').click();
+  await sleep(20);
+  await win.SeikyuApp._state.store.invoices.list('invoice');
+  $('b-reload').click();
+  await sleep(60);
+  const row = [...$('list-body').querySelectorAll('[data-open]')].find((r) => /OLD-0001/.test(r.textContent));
+  ok(row, '作った古い1通が一覧に無い');
+  row.click();
+  await sleep(30);
+  $('b-preview').click();
+  await sleep(400);
+  const heads = [...($('pv').srcdoc || '').matchAll(/<th class="c-col"[^>]*>([^<]*)<\/th>/g)].map((m) => m[1]);
+  eq(heads.join('/'), '#/品名・内容/数量/単位/単価/金額/税率', '古い紙に、あとから足した列が入り込んだ: ' + heads.join('/'));
+  ok(heads.indexOf('行き先') < 0, '★出した紙が、列を足した日に変わってしまっている★');
+});
+
+/* ═══ 7-b. ★読めなかったを「空」にしない（実機で踏んだ401）★ ═══ */
+await TA('7-b. ★自社情報が読めなかった時は、空っぽ扱いにせず「読めなかった」と言い、発行を止める', async () => {
+  // 1回目も2回目（取り直し）も失敗させる＝本当に読めない状態を作る
+  sb._failNext('pay_org');
+  const app = win.SeikyuApp;
+  const st = app._state;
+  const keepOrg = st.org;
+  await app._loadMasters();
+  await sleep(700);
+  sb._failNext('pay_org');
+  await app._loadMasters();
+  await sleep(50);
+  eq(st.org, null, '読めなかったのに空っぽ({})にしている＝紙に「自社情報が未入力」と出る');
+  eq(st.orgReadOk, false, '読めたことになっている');
+  ok($('list-err').style.display !== 'none', '読めなかったことを画面で言っていない');
+  ok(/読めません/.test($('list-err').textContent), '文言が「読めなかった」になっていない: ' + $('list-err').textContent);
+
+  // この状態では発行させない（空の自社が写しに固まると、もう直せない紙になる）
+  $('b-new').click();
+  await sleep(20);
+  setVal('e-partner', 'pt_a');
+  await sleep(20);
+  const tr = $('lines-body').querySelector('tr');
+  tr.querySelector('[data-f="name"]').value = 'あ';
+  tr.querySelector('[data-f="name"]').dispatchEvent(new win.Event('input'));
+  tr.querySelector('[data-f="amount"]').value = '1000';
+  tr.querySelector('[data-f="amount"]').dispatchEvent(new win.Event('input'));
+  await sleep(20);
+  const n0 = db.pay_invoices.length;
+  $('b-issue').click();
+  await sleep(60);
+  eq(db.pay_invoices.length, n0, '自社が読めていないのに発行された');
+  ok(/読めていない/.test($('edit-err').textContent), '止めた理由を言っていない: ' + $('edit-err').textContent);
+
+  // 「読み直す」で直る
+  $('b-back').click();
+  await sleep(10);
+  await win.SeikyuApp._loadMasters();
+  await sleep(50);
+  eq(st.orgReadOk, true, '読み直しても直らない');
+  ok(st.org && st.org.yago, '自社情報が戻っていない');
+  ok(keepOrg !== undefined, '');
 });
 
 /* ═══ 8. まとめ ═══ */

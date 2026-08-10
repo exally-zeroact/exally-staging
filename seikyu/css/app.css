@@ -1,161 +1,95 @@
-/* app.css — 請求書の画面
- * ★色は直hex（このリポジトリの現行。:root 変数は飲み屋だけの話）★
- * ★#1A4A2E は使わない。緑は #2E7D54★
+/* app.css — 請求書だけの差分
+ * ==============================================================================
+ * ★見た目の本体は css/exally-ui.css（スイート共通の皮）★
+ *   色・角丸・ボタン・カード・入力欄・タブはそちらが唯一の正。ここには書かない。
+ *   ここに置くのは ★請求書にしか無い物★ だけ（明細の表・合計欄・紙の下見・列の編集）。
  *
- * ★注意書き・説明文を flex/grid の子に直接入れない★
- *   幅が足りない時に日本語が1文字ずつ縦に割れる（前科2回）。
- *   文は .hint / .note のような block に入れ、min-width を持たせる。
- *   ボタンの行は flex-wrap:wrap で「折り返す」＝はみ出させない。
+ * ★色は直hex／使ってよいのは共通の皮に書いた13色だけ★
  */
 
-* { box-sizing: border-box; }
-html, body {
-  margin: 0; padding: 0; background: #F4FAF6; color: #24422F;
-  font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Kaku Gothic ProN', sans-serif;
-  font-size: 14px; line-height: 1.7;
-  -webkit-text-size-adjust: 100%;
-}
-
-/* ── 上の帯。★iOSの時計に潜らないよう safe-area を足す★ */
-.appbar {
-  position: sticky; top: 0; z-index: 30;
-  display: flex; align-items: center; gap: 10px;
-  padding: calc(8px + env(safe-area-inset-top)) 12px 8px;
-  background: #FFFFFF; border-bottom: 1px solid #D4EAE0;
-}
-.appbar .back { color: #2E7D54; font-size: 12px; text-decoration: none; white-space: nowrap; }
-.appbar .logo { font-family: 'DM Mono', ui-monospace, monospace; font-size: 17px; color: #2E7D54; letter-spacing: 1px; }
-.appbar .grow { flex: 1 1 auto; min-width: 0; }
-.appbar .who { font-size: 11px; color: #7A9A87; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 40vw; }
-.appbar .out { font-size: 11px; color: #2E7D54; cursor: pointer; white-space: nowrap; }
-
-.main { padding: 12px 12px 84px; max-width: 900px; margin: 0 auto; }
+/* 画面の出し入れ */
 .screen { display: none; }
 .screen.active { display: block; }
 
-.card { background: #FFFFFF; border: 1px solid #D4EAE0; border-radius: 14px; padding: 14px; margin-bottom: 12px; }
-.card-h { font-size: 13px; font-weight: 700; color: #2E7D54; margin-bottom: 10px; }
-
-/* 文は block。★幅を確保して1文字ずつ縦に割れないようにする★ */
-.hint { display: block; width: 100%; min-width: 180px; font-size: 12px; color: #5D7C6B; line-height: 1.8;
-  white-space: normal; word-break: normal; overflow-wrap: break-word; margin: 6px 0; }
-.warn { display: block; width: 100%; min-width: 180px; font-size: 12px; color: #92500A; background: #FFF6E8;
-  border: 1px solid #F0DCBC; border-radius: 10px; padding: 8px 10px; line-height: 1.8;
-  white-space: normal; word-break: normal; overflow-wrap: break-word; margin: 8px 0; }
-.bad { display: block; width: 100%; min-width: 180px; font-size: 12px; color: #A32C1C; background: #FDF0EE;
-  border: 1px solid #F1CFC9; border-radius: 10px; padding: 8px 10px; line-height: 1.8;
-  white-space: normal; word-break: normal; overflow-wrap: break-word; margin: 8px 0; }
-.ok { display: block; width: 100%; min-width: 180px; font-size: 12px; color: #1F6B45; background: #EEF7F1;
-  border: 1px solid #CDE7D8; border-radius: 10px; padding: 8px 10px; line-height: 1.8;
-  white-space: normal; word-break: normal; overflow-wrap: break-word; margin: 8px 0; }
-
-.frow { margin-bottom: 10px; }
-.flabel { font-size: 12px; color: #5D7C6B; margin-bottom: 4px; }
-.frow2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-@media (max-width: 480px) { .frow2 { grid-template-columns: 1fr; } }
-
-/* ★入力欄は16px。これより小さいと iOS が勝手に拡大して画面がズレる★ */
-.finput {
-  width: 100%; font-size: 16px; font-family: inherit; padding: 10px 12px;
-  border: 1px solid #D4EAE0; border-radius: 10px; background: #FFFFFF; color: #24422F;
-  outline: none; -webkit-appearance: none; appearance: none; min-width: 0;
-}
-.finput:focus { border-color: #2E7D54; }
-select.finput { padding-right: 30px; background-image: none; }
-textarea.finput { min-height: 76px; line-height: 1.7; resize: vertical; }
-.num { text-align: right; font-family: 'DM Mono', ui-monospace, monospace; }
-
-/* ★ボタンの行は必ず折り返す（理由を足した時に横へはみ出した前科）★ */
-.btn-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-.btn-row > * { flex: 0 1 auto; }
-.btn-primary, .btn-ghost, .btn-danger, .btn-add {
-  font-family: inherit; font-size: 13px; font-weight: 700; padding: 11px 16px;
-  border-radius: 12px; border: 1px solid transparent; cursor: pointer; white-space: nowrap;
-}
-.btn-primary { background: #2E7D54; color: #FFFFFF; }
-.btn-ghost { background: #EEF7F1; color: #2E7D54; border-color: #CDE7D8; }
-.btn-danger { background: #FDF0EE; color: #A32C1C; border-color: #F1CFC9; }
-.btn-add { background: #FFFFFF; color: #2E7D54; border: 1px dashed #9DCBB2; width: 100%; margin-top: 8px; }
-button:disabled { opacity: .5; cursor: default; }
-
-/* 押せない理由は block。★ボタンの隣に入れると1文字ずつ縦に割れる★ */
-.why { display: block; width: 100%; min-width: 180px; font-size: 11.5px; color: #7A9A87;
-  line-height: 1.8; margin-top: 6px; white-space: normal; word-break: normal; overflow-wrap: break-word; }
-
-/* 切り替え */
-.seg { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
-.seg-b {
-  font-family: inherit; font-size: 12.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px;
-  border: 1px solid #CDE7D8; background: #FFFFFF; color: #5D7C6B; cursor: pointer; white-space: nowrap;
-}
-.seg-b.on { background: #2E7D54; color: #FFFFFF; border-color: #2E7D54; }
-
-/* 一覧 */
-.iv-row {
-  display: block; width: 100%; text-align: left; background: #FFFFFF; border: 1px solid #D4EAE0;
-  border-radius: 12px; padding: 11px 12px; margin-bottom: 8px; cursor: pointer; font-family: inherit;
-}
-.iv-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; }
-.iv-no { font-family: 'DM Mono', ui-monospace, monospace; font-size: 12px; color: #7A9A87; white-space: nowrap; }
-.iv-name { font-size: 14px; font-weight: 700; color: #24422F; min-width: 0; overflow-wrap: break-word; }
-.iv-sub { display: block; width: 100%; font-size: 11.5px; color: #7A9A87; line-height: 1.8; margin-top: 2px; }
-.iv-amt { font-family: 'DM Mono', ui-monospace, monospace; font-size: 15px; font-weight: 700; color: #2E7D54; }
-.tag { font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
-.tag-draft { background: #EEF3F7; color: #4A6580; }
-.tag-issued { background: #EEF7F1; color: #1F6B45; }
-.tag-void { background: #F5F1F0; color: #8A6A62; }
-.empty { text-align: center; color: #7A9A87; padding: 26px 12px; }
-
-/* 明細の表
-   ★スマホ幅では表が入り切らない。縮めて潰すのではなく「横にスクロールさせる」★
+/* ── 明細の表 ───────────────────────────────────────────
+   ★スマホ幅では表が入り切らない。縮めて潰すのではなく「横に動かす」★
      （2026-08-10 実機幅375pxで、数量・単価・金額の欄が幅ゼロまで潰れていた）
-   min-width を入れないと table が入れ物に合わせて縮み、overflow-x が効かない。 */
-.lines { border-collapse: collapse; margin-top: 6px; min-width: 620px; }
-.lines th { font-size: 11px; color: #5D7C6B; font-weight: 400; text-align: left; padding: 0 4px 4px; white-space: nowrap; }
-.lines td { padding: 2px 4px 6px; vertical-align: top; }
-.lines .l-name { width: 200px; min-width: 200px; }
-.lines .l-sm { width: 80px; min-width: 80px; }
-.lines .l-rate { width: 100px; min-width: 100px; }
-.lines .l-x { width: 40px; min-width: 40px; text-align: center; }
-.lines .finput { padding: 9px 8px; }
-.l-del { background: #FFFFFF; border: 1px solid #F1CFC9; color: #A32C1C; border-radius: 8px;
-  width: 32px; height: 36px; cursor: pointer; font-size: 14px; font-family: inherit; }
+   min-width を入れないと table が入れ物に合わせて縮み、overflow-x が効かない。
+   ★列は会社が足せるので、幅は「1列ぶん×本数」で JS が決める★ */
 .lines-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.scroll-note { display: block; width: 100%; min-width: 180px; font-size: 11.5px; color: #7A9A87;
-  line-height: 1.8; margin: 4px 0 0; white-space: normal; word-break: normal; overflow-wrap: break-word; }
+.lines { border-collapse: collapse; margin-top: 6px; }
+.lines th {
+  font-size: 11px; color: #5C7E6C; font-weight: 400; text-align: left;
+  padding: 0 4px 4px; white-space: nowrap;
+}
+.lines td { padding: 2px 4px 6px; vertical-align: top; }
+.lines .ex-input { padding: 9px 8px; }
+.l-name { width: 200px; min-width: 200px; }
+.l-sm { width: 84px; min-width: 84px; }
+.l-md { width: 120px; min-width: 120px; }
+.l-x { width: 40px; min-width: 40px; text-align: center; }
+.l-del {
+  background: #FFFFFF; border: 1.5px solid #F0D5D0; color: #C0392B; border-radius: 8px;
+  width: 32px; height: 36px; cursor: pointer; font-size: 14px; font-family: inherit;
+}
+.l-del:disabled { opacity: .5; cursor: default; }
+.scroll-note {
+  display: block; width: 100%; min-width: 180px; font-size: 11.5px; color: #7AA08C;
+  line-height: 1.8; margin: 4px 0 0;
+  white-space: normal; word-break: normal; overflow-wrap: break-word;
+}
 
-/* 合計 */
+/* ── 合計 ─────────────────────────────────────────────── */
 .tot { margin-top: 12px; border-top: 1px solid #D4EAE0; padding-top: 10px; }
 .tot-r { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; padding: 3px 0; }
-.tot-r .tot-l { color: #5D7C6B; white-space: nowrap; }
-.tot-r .tot-v { font-family: 'DM Mono', ui-monospace, monospace; white-space: nowrap; }
-.tot-g { font-size: 17px; font-weight: 700; color: #2E7D54; border-top: 1px solid #D4EAE0; margin-top: 6px; padding-top: 8px; }
-
-/* 下のナビ */
-.botnav {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: flex;
-  background: #FFFFFF; border-top: 1px solid #D4EAE0;
-  padding-bottom: env(safe-area-inset-bottom);
+.tot-l { color: #5C7E6C; white-space: nowrap; }
+.tot-v { font-family: 'DM Mono', ui-monospace, monospace; white-space: nowrap; }
+.tot-g {
+  font-size: 17px; font-weight: 700; color: #2E7D54;
+  border-top: 1px solid #D4EAE0; margin-top: 6px; padding-top: 8px;
 }
-.bn { flex: 1 1 0; background: none; border: none; padding: 8px 2px 9px; cursor: pointer; font-family: inherit; color: #7A9A87; }
-.bn.on { color: #2E7D54; }
-.bn-i { display: block; font-size: 17px; line-height: 1.2; }
-.bn-l { display: block; font-size: 10.5px; font-weight: 700; }
 
-/* ファイル名を先に見せる小窓 */
-.ov { position: fixed; inset: 0; background: rgba(20,50,35,.42); z-index: 60; display: none; align-items: center; justify-content: center; padding: 18px; }
-.ov.open { display: flex; }
-.ov-card { width: 100%; max-width: 420px; background: #FFFFFF; border-radius: 16px; padding: 16px; }
-.ov-t { font-size: 14px; font-weight: 700; color: #2E7D54; margin-bottom: 6px; }
-.ov-ext { font-size: 12px; color: #7A9A87; margin-top: 4px; }
+/* ── 一覧の1行の中身 ─────────────────────────────────── */
+.iv-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; }
+.iv-no { font-family: 'DM Mono', ui-monospace, monospace; font-size: 12px; color: #7AA08C; white-space: nowrap; }
+.iv-name { font-size: 14px; font-weight: 700; color: #2E7D54; min-width: 0; overflow-wrap: break-word; }
+.iv-sub {
+  display: block; width: 100%; font-size: 11.5px; color: #7AA08C;
+  line-height: 1.8; margin-top: 2px;
+  white-space: normal; word-break: normal; overflow-wrap: break-word;
+}
+.iv-amt { font-family: 'DM Mono', ui-monospace, monospace; font-size: 15px; font-weight: 700; color: #2E7D54; }
 
-/* 紙の下見（画面の中で見る用。刷るのは別の窓）
+/* ── 列の編集（★ボタンだけの行なので折り返して潰さない★）───── */
+.col-row {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  border: 1px solid #D4EAE0; border-radius: 12px;
+  padding: 8px 10px; margin-bottom: 8px; background: #FFFFFF;
+}
+/* ★列の名前は flex の子だが、幅を先に確保して縦帯にしない★ */
+.col-name {
+  flex: 1 1 120px; min-width: 120px; font-size: 13px; font-weight: 700; color: #2E7D54;
+  white-space: normal; word-break: normal; overflow-wrap: break-word;
+}
+.col-w {
+  font-family: 'DM Mono', ui-monospace, monospace; font-size: 12px; color: #5C7E6C;
+  min-width: 34px; text-align: right; white-space: nowrap;
+}
+.col-role { font-size: 10.5px; color: #7AA08C; white-space: nowrap; }
+.col-gap { flex: 0 0 6px; }
+
+/* ── 紙の下見 ─────────────────────────────────────────
    ★紙はA4の幅（約190mm）で組んである。スマホの幅にそのまま入れると右が切れて
      「金額が見えない下見」になる（2026-08-10 実機幅375pxで実際に切れていた）。
      だから ★紙は縮めず、まるごと縮小して全体を見せる★（transform: scale）。
-     入れ物の高さは JS が縮小後の高さに合わせる（下に大きな余白を作らない）。 */
-/* ★既定は block。隠すのは HTML 側の style="display:none" で行う
+     入れ物の高さは JS が縮小後の高さに合わせる（下に大きな余白を作らない）。
+   ★既定は block。隠すのは HTML 側の style="display:none" で行う
      （CSSで none にすると、JSが style.display='' に戻した時に「消えたまま」になる）。 */
-.pv-wrap { display: block; overflow: hidden; border: 1px solid #D4EAE0; border-radius: 12px;
-  background: #FFFFFF; margin-top: 10px; }
+.pv-wrap {
+  display: block; overflow: hidden; border: 1px solid #D4EAE0; border-radius: 14px;
+  background: #FFFFFF; margin-top: 10px;
+}
 .pv { display: block; border: 0; background: #FFFFFF; transform-origin: top left; }
+
+/* 保存する名前の小窓の添え書き */
+.ov-ext { font-size: 12px; color: #7AA08C; margin-top: 4px; }

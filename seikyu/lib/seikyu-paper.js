@@ -23,20 +23,37 @@
  * 【利用】ブラウザ window.SeikyuPaper ／ Node require('./seikyu-paper.js')
  */
 (function (root, factory) {
-  if (typeof module === 'object' && module.exports) module.exports = factory();
-  else root.SeikyuPaper = factory();
-})(typeof self !== 'undefined' ? self : this, function () {
+  if (typeof module === 'object' && module.exports) module.exports = factory(require('./seikyu-cols.js'));
+  else root.SeikyuPaper = factory(root.SeikyuCols);
+})(typeof self !== 'undefined' ? self : this, function (COLS) {
   'use strict';
+  if (!COLS) throw new Error('seikyu-cols.js を先に読んでください');
 
   var TEMPLATE_ID = 'std1';
 
   /* 色は★直hex★（このリポジトリの現行。:root 変数は飲み屋だけの話）。
-     ★#1A4A2E は使わない（濃すぎる）。全アプリ #2E7D54★ */
-  var INK = '#24422F';       // 本文
-  var SUB = '#5D7C6B';       // 補足
-  var LINE = '#C9DED2';      // 罫線
-  var ACCENT = '#2E7D54';    // 見出し・強調
-  var BAND = '#EEF7F1';      // 帯の下地
+     ★#1A4A2E は使わない（濃すぎる）。全アプリ #2E7D54★
+     ここは「様式を渡されなかった時の既定」。様式は seikyu-templates.js が持つ。 */
+  var THEME = {
+    ink: '#24422F',       // 本文
+    sub: '#5C7E6C',       // 補足
+    line: '#D4EAE0',      // 罫線
+    accent: '#2E7D54',    // 見出し・強調
+    band: '#F0FAF4',      // 帯の下地
+    headBg: '#F0FAF4',
+    headInk: '#2E7D54',
+    grandInk: '#2E7D54',
+    rule: 'all',
+    titleSpacing: '.32em',
+  };
+  function themeOf(t) { return Object.assign({}, THEME, t || {}); }
+
+  /* 既定の列（様式を渡されなかった時だけ使う初期値） */
+  var DEFAULT_COLS = {
+    items: ['#', '品名・内容', '数量', '単位', '単価', '金額', '税率'],
+    widths: { '#': 28, '品名・内容': 220, '数量': 56, '単位': 44, '単価': 80, '金額': 100, '税率': 56 },
+    aligns: {},
+  };
 
   function esc(s) {
     return String(s == null ? '' : s)
@@ -88,6 +105,12 @@
     var tax = o.tax || {};
     var p = o.partner || {};
     var g = o.org || {};
+    var TH = themeOf(o.theme);
+    /* ★列は渡された物で決まる（items の順・幅・揃え）。渡されなければ既定の初期値。 */
+    var spec = COLS.normalizeSpec((o.cols && o.cols.items && o.cols.items.length) ? o.cols : DEFAULT_COLS);
+    var colErrs = COLS.validate(spec.items);
+    if (colErrs.length) spec = COLS.normalizeSpec(DEFAULT_COLS);   // 壊れた並びで紙を作らない
+    var colW = COLS.widthsOf(spec.items, spec.widths);
     var isQuote = (inv.doc_type === 'quote');
     var heading = isQuote ? '見 積 書' : '請 求 書';
     var totalLabel = isQuote ? 'お見積金額' : 'ご請求金額';
@@ -98,20 +121,33 @@
     var exemptBase = (tax.exempt && Number(tax.exempt.base)) || 0;
     var taxMode = inv.tax_mode === 'inclusive' ? '内税' : '外税';
 
-    /* ── 明細行。★1行も無い時に空の表を出さない（何も無いと分かる文を出す）★ */
+    /* ── 明細の見出し。★items のとおりに、その順で出す★ */
+    var headHtml = spec.items.map(function (k, c) {
+      return '<th class="c-col" style="width:' + colW[c].toFixed(4) + '%;text-align:' + COLS.alignOf(spec, k) + '">' + esc(k) + '</th>';
+    }).join('');
+
+    /* ── 明細行。★1行も無い時に空の表を出さない（何も無いと分かる文を出す）★
+         値は列の役割から取る。値が無い列は空欄のまま（0で埋めない）。 */
     var rowsHtml = lines.length
       ? lines.map(function (ln, i) {
-        return '<tr>'
-          + '<td class="c-no">' + (i + 1) + '</td>'
-          + '<td class="c-name">' + esc(ln.name || '') + (ln.memo ? '<span class="c-memo">' + esc(ln.memo) + '</span>' : '') + '</td>'
-          + '<td class="c-qty">' + num(ln.qty) + '</td>'
-          + '<td class="c-unit">' + esc(ln.unit || '') + '</td>'
-          + '<td class="c-price">' + (ln.price === undefined || ln.price === null || ln.price === '' ? '' : yen(ln.price)) + '</td>'
-          + '<td class="c-amt">' + yen(ln.amount) + '</td>'
-          + '<td class="c-rate">' + (Number(ln.rate) === 0 ? '—' : num(ln.rate) + '%') + '</td>'
-          + '</tr>';
+        return '<tr>' + spec.items.map(function (k, c) {
+          var cell = COLS.cellOf(ln, k, i);
+          var al = COLS.alignOf(spec, k);
+          var role = COLS.roleOf(k);
+          // ★短い印（税率・単位・番号）は折り返さない＝「10」と「%」が上下に割れない
+          var noWrap = (role === 'rate' || role === 'unit' || role === 'index');
+          var body = cell.kind === 'money' ? (cell.text === '' ? '' : yen(cell.text))
+            : cell.kind === 'num' ? (cell.text === '' ? '' : num(cell.text))
+              : esc(cell.text);
+          // 摘要の列が無い時だけ、品名の下に小さく添える（書いた物を黙って落とさない）
+          if (COLS.roleOf(k) === 'name' && ln.memo && !hasRole(spec.items, 'memo')) {
+            body += '<span class="c-memo">' + esc(ln.memo) + '</span>';
+          }
+          return '<td class="c-col c-' + al + ((cell.kind === 'text' && !noWrap) ? ' c-wrap' : '')
+            + (noWrap ? ' c-nowrap' : '') + '">' + body + '</td>';
+        }).join('') + '</tr>';
       }).join('')
-      : '<tr><td class="c-empty" colspan="7">明細がまだ1行もありません</td></tr>';
+      : '<tr><td class="c-empty" colspan="' + spec.items.length + '">明細がまだ1行もありません</td></tr>';
 
     /* ── 税率ごとの区分（適格請求書の要件）。★率の数字はデータから出す★ */
     var rateRows = byRate.map(function (b) {
@@ -140,7 +176,7 @@
       + '<!DOCTYPE html>\n<html lang="ja"><head><meta charset="UTF-8">'
       + '<meta name="viewport" content="width=device-width, initial-scale=1">'
       + '<title>' + esc(docTitle) + '</title>'
-      + '<style>' + css() + '</style></head><body>'
+      + '<style>' + css(TH) + '</style></head><body>'
       + '<div class="sheet">'
 
       /* 見出し */
@@ -178,11 +214,9 @@
 
       + (subject ? '<div class="subject"><span class="subject-h">件名</span><span class="subject-b">' + esc(subject) + '</span></div>' : '')
 
-      /* 明細 */
-      + '<table class="items"><thead><tr>'
-      + '<th class="c-no">#</th><th class="c-name">品名・内容</th><th class="c-qty">数量</th>'
-      + '<th class="c-unit">単位</th><th class="c-price">単価</th><th class="c-amt">金額</th><th class="c-rate">税率</th>'
-      + '</tr></thead><tbody>' + rowsHtml + '</tbody></table>'
+      /* 明細（★列は items のとおり。table-layout:fixed ＋ 幅の合計100%＝はみ出さない★） */
+      + '<table class="items"><thead><tr>' + headHtml + '</tr></thead>'
+      + '<tbody>' + rowsHtml + '</tbody></table>'
 
       /* 合計欄 ＋ 税率ごとの区分 */
       + '<table class="sums"><tbody>'
@@ -197,13 +231,25 @@
       + memoBlock
       + '</div></body></html>';
 
-    return { html: html, title: docTitle, templateId: TEMPLATE_ID };
+    return { html: html, title: docTitle, templateId: inv.template_id || TEMPLATE_ID, cols: spec, colWidths: colW };
+  }
+
+  /* items にその役割の列が居るか */
+  function hasRole(items, role) {
+    for (var i = 0; i < items.length; i++) if (COLS.roleOf(items[i]) === role) return true;
+    return false;
   }
 
   /* ── 紙の見た目 ──────────────────────────────────────────────
      ★文が入る所に flex/grid を使わない★（1文字ずつ縦に割れる事故を作らない）。
      幅は mm で決める＝画面の幅に引きずられない。 */
-  function css() {
+  function css(t) {
+    var TH = themeOf(t);
+    var INK = TH.ink, SUB = TH.sub, LINE = TH.line, ACCENT = TH.accent, BAND = TH.band;
+    var rowsOnly = TH.rule === 'rows';   // すっきり＝横線だけ（縦の罫線を引かない）
+    var cellBorder = rowsOnly
+      ? 'border:0;border-bottom:1px solid ' + LINE + ';'
+      : 'border:1px solid ' + LINE + ';';
     return [
       '*{box-sizing:border-box;}',
       'html,body{margin:0;padding:0;background:#FFFFFF;color:' + INK + ';',
@@ -211,7 +257,7 @@
       '-webkit-print-color-adjust:exact;print-color-adjust:exact;}',
       '.sheet{width:190mm;min-width:190mm;margin:0 auto;padding:12mm 10mm;position:relative;}',
 
-      '.ttl{font-size:22pt;letter-spacing:.32em;text-align:center;color:' + ACCENT + ';',
+      '.ttl{font-size:22pt;letter-spacing:' + TH.titleSpacing + ';text-align:center;color:' + ACCENT + ';',
       'margin:0 0 8mm;font-weight:700;}',
 
       /* 番号・日付（右上）。表なので文が縦に割れない */
@@ -239,7 +285,7 @@
       '.grand{background:' + BAND + ';border:1px solid ' + LINE + ';border-radius:2mm;',
       'padding:4mm 6mm;margin:0 0 5mm;text-align:center;}',
       '.grand-l{font-size:9.5pt;color:' + SUB + ';letter-spacing:.08em;}',
-      '.grand-v{font-size:24pt;font-weight:700;color:' + ACCENT + ';line-height:1.25;',
+      '.grand-v{font-size:24pt;font-weight:700;color:' + TH.grandInk + ';line-height:1.25;',
       "font-family:'DM Mono',ui-monospace,monospace;}",
       '.grand-en{font-size:12pt;margin-left:2mm;}',
       /* ★この1行が「1文字ずつ縦」になった前科の形。block ＋ 折返し可 ＋ 十分な幅で潰さない */
@@ -251,32 +297,37 @@
       '.subject-h{display:inline-block;min-width:14mm;color:' + SUB + ';font-size:9pt;}',
       '.subject-b{font-weight:700;}',
 
-      /* 明細 */
-      '.items{width:100%;border-collapse:collapse;font-size:9.5pt;margin:0 0 4mm;}',
-      '.items th{background:' + BAND + ';color:' + ACCENT + ';font-weight:700;font-size:9pt;',
-      'border:1px solid ' + LINE + ';padding:2mm 2mm;white-space:nowrap;}',
-      '.items td{border:1px solid ' + LINE + ';padding:2mm;vertical-align:top;line-height:1.6;}',
-      '.items .c-no{width:8mm;text-align:center;color:' + SUB + ';}',
-      '.items .c-name{width:auto;min-width:50mm;word-break:normal;overflow-wrap:break-word;}',
-      '.items .c-qty,.items .c-price,.items .c-amt{text-align:right;white-space:nowrap;}',
-      '.items .c-qty{width:16mm;}.items .c-unit{width:12mm;text-align:center;}',
-      '.items .c-price{width:24mm;}.items .c-amt{width:26mm;}',
-      '.items .c-rate{width:14mm;text-align:center;white-space:nowrap;}',
+      /* 明細
+         ★table-layout:fixed ＋ 列幅の合計100%＝列を何本足しても紙からはみ出さない★
+         幅・揃えは1列ずつ style で当てる（items から作る＝列名を知らなくても引ける）。 */
+      '.items{width:100%;table-layout:fixed;border-collapse:collapse;font-size:9.5pt;margin:0 0 4mm;}',
+      '.items th{background:' + TH.headBg + ';color:' + TH.headInk + ';font-weight:700;font-size:9pt;',
+      cellBorder + 'padding:2mm 2mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
+      '.items td{' + cellBorder + 'padding:2mm;vertical-align:top;line-height:1.6;}',
+      (rowsOnly ? '.items thead th{border-bottom:1.5px solid ' + ACCENT + ';}' : ''),
+      '.items .c-left{text-align:left;}',
+      '.items .c-center{text-align:center;}',
+      '.items .c-right{text-align:right;white-space:nowrap;',
+      "font-family:'DM Mono',ui-monospace,monospace;}",
+      /* 文字の列だけ折り返す（数の列は折り返さない＝桁が割れない） */
+      '.items .c-wrap{word-break:normal;overflow-wrap:break-word;}',
+      /* ★短い印（税率・単位・番号）は折り返さない＝「10」と「%」が上下に割れない */
+      '.items .c-nowrap{white-space:nowrap;}',
       '.c-memo{display:block;font-size:8.5pt;color:' + SUB + ';line-height:1.6;margin-top:.5mm;}',
       '.c-empty{text-align:center;color:' + SUB + ';padding:6mm 2mm;}',
 
       /* 合計欄（右）と区分（左）。★float も flex も使わず、幅つきの表を2つ並べる★ */
       '.sums{border-collapse:collapse;font-size:10pt;width:70mm;margin:0 0 4mm auto;}',
-      '.sums th{text-align:left;color:' + SUB + ';font-weight:400;border:1px solid ' + LINE + ';',
+      '.sums th{text-align:left;color:' + SUB + ';font-weight:400;' + cellBorder,
       'padding:1.6mm 3mm;background:#FFFFFF;white-space:nowrap;}',
-      '.sums td{text-align:right;border:1px solid ' + LINE + ';padding:1.6mm 3mm;white-space:nowrap;',
+      '.sums td{text-align:right;' + cellBorder + 'padding:1.6mm 3mm;white-space:nowrap;',
       "font-family:'DM Mono',ui-monospace,monospace;}",
-      '.sums-g th,.sums-g td{background:' + BAND + ';font-weight:700;color:' + ACCENT + ';font-size:11pt;}',
+      '.sums-g th,.sums-g td{background:' + BAND + ';font-weight:700;color:' + TH.grandInk + ';font-size:11pt;}',
 
       '.rates{border-collapse:collapse;font-size:9pt;width:80mm;margin:0 0 5mm;}',
-      '.rates th{background:' + BAND + ';color:' + ACCENT + ';border:1px solid ' + LINE + ';',
+      '.rates th{background:' + TH.headBg + ';color:' + TH.headInk + ';' + cellBorder,
       'padding:1.4mm 3mm;white-space:nowrap;text-align:left;font-weight:700;}',
-      '.rates td{border:1px solid ' + LINE + ';padding:1.4mm 3mm;text-align:right;white-space:nowrap;',
+      '.rates td{' + cellBorder + 'padding:1.4mm 3mm;text-align:right;white-space:nowrap;',
       "font-family:'DM Mono',ui-monospace,monospace;}",
       '.rates tbody th{background:#FFFFFF;font-weight:400;color:' + INK + ';}',
       '.r-none{text-align:center;color:' + SUB + ';}',

@@ -16,10 +16,11 @@
  * 【利用】ブラウザ window.SeikyuAoa ／ Node require('./seikyu-aoa.js')
  */
 (function (root, factory) {
-  if (typeof module === 'object' && module.exports) module.exports = factory();
-  else root.SeikyuAoa = factory();
-})(typeof self !== 'undefined' ? self : this, function () {
+  if (typeof module === 'object' && module.exports) module.exports = factory(require('./seikyu-cols.js'));
+  else root.SeikyuAoa = factory(root.SeikyuCols);
+})(typeof self !== 'undefined' ? self : this, function (COLS) {
   'use strict';
+  if (!COLS) throw new Error('seikyu-cols.js を先に読んでください');
 
   var YEN_FMT = '#,##0';        // 金額（桁区切り・小数なし）
   var NUM_FMT = '#,##0.###';    // 数量（0.5 のような端数も出す）
@@ -75,27 +76,53 @@
     if (inv.data && inv.data.subject) push(['件名', inv.data.subject]);
     push([]);
 
-    push(['#', '品名・内容', '数量', '単位', '単価', '金額', '税率']);
+    /* ★列は会社が決めた並び（items）どおりに出す★ 紙とExcelで並びが違うと突き合わせできない。 */
+    var spec = COLS.normalizeSpec((o.cols && o.cols.items && o.cols.items.length) ? o.cols : {
+      items: ['#', '品名・内容', '数量', '単位', '単価', '金額', '税率'],
+      widths: { '#': 28, '品名・内容': 220, '数量': 56, '単位': 44, '単価': 80, '金額': 100, '税率': 56 },
+      aligns: {},
+    });
+    if (COLS.validate(spec.items).length) {
+      spec = COLS.normalizeSpec({ items: ['#', '品名・内容', '数量', '単位', '単価', '金額', '税率'] });
+    }
+    var items = spec.items;
+
+    push(items.slice());
     var lines = Array.isArray(tax.lines) ? tax.lines : [];
     for (var i = 0; i < lines.length; i++) {
       var ln = lines[i];
-      var r = push([
-        i + 1,
-        ln.name || '',
-        (ln.qty === undefined || ln.qty === null || ln.qty === '') ? '' : Number(ln.qty),
-        ln.unit || '',
-        (ln.price === undefined || ln.price === null || ln.price === '') ? '' : Number(ln.price),
-        Number(ln.amount) || 0,
-        Number(ln.rate) === 0 ? '対象外' : (Number(ln.rate) + '%'),
-      ]);
-      qty(r, 2); money(r, 4); money(r, 5);
+      var row = [];
+      var fmts = [];
+      for (var c = 0; c < items.length; c++) {
+        var cell = COLS.cellOf(ln, items[c], i);
+        if (cell.text === '') { row.push(''); continue; }
+        if (cell.kind === 'money') { row.push(Number(cell.text)); fmts.push([c, 'money']); continue; }
+        if (cell.kind === 'num') {
+          var n = Number(cell.text);
+          if (Number.isFinite(n)) { row.push(n); fmts.push([c, 'qty']); continue; }
+        }
+        row.push(cell.text);
+      }
+      var r = push(row);
+      for (var f = 0; f < fmts.length; f++) {
+        if (fmts[f][1] === 'money') money(r, fmts[f][0]); else qty(r, fmts[f][0]);
+      }
     }
-    if (!lines.length) push(['', '明細がまだ1行もありません', '', '', '', '', '']);
+    if (!lines.length) { var e0 = items.map(function () { return ''; }); e0[Math.min(1, e0.length - 1)] = '明細がまだ1行もありません'; push(e0); }
 
+    /* 合計は「金額の列」に揃えて出す（無ければ右端） */
+    var amtCol = items.findIndex ? items.findIndex(function (k) { return COLS.roleOf(k) === 'amount'; }) : -1;
+    if (amtCol < 0) amtCol = items.length - 1;
+    var labCol = Math.max(0, amtCol - 1);
+    function sumRow(label, v) {
+      var row = items.map(function () { return ''; });
+      row[labCol] = label; row[amtCol] = Number(v) || 0;
+      var r = push(row); money(r, amtCol);
+    }
     push([]);
-    var rs = push(['', '', '', '', '小計', Number(tax.subtotal) || 0, '']); money(rs, 5);
-    var rt = push(['', '', '', '', '消費税', Number(tax.taxTotal) || 0, '']); money(rt, 5);
-    var rg = push(['', '', '', '', '合計', Number(tax.grandTotal) || 0, '']); money(rg, 5);
+    sumRow('小計', tax.subtotal);
+    sumRow('消費税', tax.taxTotal);
+    sumRow('合計', tax.grandTotal);
 
     push([]);
     push(['区分', '対象額', '消費税']);
@@ -112,16 +139,14 @@
     if (g.bank) { push([]); push(['お振込先', g.bank]); }
     if (inv.data && inv.data.memo) { push([]); push(['備考', inv.data.memo]); }
 
-    /* ★列幅★ 品名は広く・金額は桁が入るだけ・日付や長い文字が入る列は余裕を取る */
-    var cols = [
-      { wch: 6 },   // #
-      { wch: 40 },  // 品名・内容
-      { wch: 8 },   // 数量
-      { wch: 6 },   // 単位
-      { wch: 12 },  // 単価
-      { wch: 14 },  // 金額
-      { wch: 10 },  // 税率
-    ];
+    /* ★列幅★ 会社が決めた幅(pt)から Excel の文字幅(wch)に直す。
+       ★これが無いと相手の画面で ######## になる★（列を足しても必ず幅を付ける）。 */
+    var cols = items.map(function (k) {
+      var w = Number((spec.widths || {})[k]);
+      if (!Number.isFinite(w)) w = COLS.BASE_W[k] || 80;
+      w = COLS.clampWidth(w);
+      return { wch: Math.max(6, Math.min(60, Math.round(w / 5.5))) };
+    });
 
     return { aoa: aoa, cols: cols, numFmt: numFmt, name: heading, YEN_FMT: YEN_FMT, NUM_FMT: NUM_FMT };
   }

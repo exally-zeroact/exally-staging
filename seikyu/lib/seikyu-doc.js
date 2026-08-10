@@ -217,6 +217,14 @@
       exempt: t.exempt || { base: 0 },
       hasReduced: !!t.hasReduced,
       templateId: o.templateId || '',
+      // ★どの列で刷ったかも写しに残す★
+      //   snapshot は発行後に固まる列なので、あとで会社が列を足しても
+      //   出した紙は そのままの並びで刷り直せる（紙と控えが食い違わない）。
+      cols: o.cols ? {
+        items: (o.cols.items || []).slice(),
+        widths: Object.assign({}, o.cols.widths || {}),
+        aligns: Object.assign({}, o.cols.aligns || {}),
+      } : null,
     };
   }
 

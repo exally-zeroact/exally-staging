@@ -107,6 +107,10 @@ jobs:
         run: node seikyu/tests/seikyu-name.test.mjs
       - name: ★請求書 推奨ファイル名 (わざと掃除を外して赤になるかの自己確認)
         run: node seikyu/tests/seikyu-name.test.mjs --self-test
+      - name: ★請求書 列を自分で決める (列を足しても紙からはみ出さない/幅は24〜400/様式を替えても金額が1円も動かない)
+        run: node seikyu/tests/seikyu-cols.test.mjs
+      - name: ★請求書 列 (わざと正規化を外す/クランプを外す/様式で金額を変えて赤になるかの自己確認)
+        run: node seikyu/tests/seikyu-cols.test.mjs --self-test
       - name: ★請求書 紙(自作テンプレstd1) (税率ごとの区分が出る/登録番号と請求番号を混ぜない/文が縦に割れない書き方)
         run: node seikyu/tests/seikyu-paper.test.mjs
       - name: ★請求書 紙 (わざと区分を消す/番号を混ぜる/flexにして赤になるかの自己確認)

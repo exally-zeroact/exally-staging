@@ -111,7 +111,13 @@
       var amount = amountOf(ln, rounding);
       if (!Number.isFinite(amount)) { errors.push((i + 1) + '行目の金額が数になりません'); continue; }
       if (!Number.isInteger(amount)) { errors.push((i + 1) + '行目の金額に円未満が残っています（' + amount + '）'); continue; }
-      out.push({ index: i, name: ln.name || '', qty: ln.qty, unit: ln.unit, price: ln.price, amount: amount, rate: rate, taxRef: 0 });
+      // ★計算に使わない項目（摘要・会社が足した自由な列）も そのまま持って出る★
+      //   ここで落とすと、紙に「書いたはずの列」が出なくなる（2026-08-10 実際に落ちていた）。
+      out.push({
+        index: i, name: ln.name || '', qty: ln.qty, unit: ln.unit, price: ln.price,
+        amount: amount, rate: rate, taxRef: 0,
+        memo: ln.memo || '', extra: ln.extra || {},
+      });
     }
     if (errors.length) return zero(errors);
 

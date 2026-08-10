@@ -15,8 +15,10 @@
 
   var DOC = global.SeikyuDoc, TAX = global.SeikyuTax, PAPER = global.SeikyuPaper;
   var NAME = global.SeikyuName, AOA = global.SeikyuAoa, OUT = global.SeikyuOut;
+  var COLS = global.SeikyuCols, TPL = global.SeikyuTemplates;
 
-  var TEMPLATE_ID = 'std1';
+  var TEMPLATE_ID = TPL.DEFAULT_ID;
+  var ALIGN_LABEL = { left: '左', center: '中', right: '右' };
 
   var S = {
     sb: null, store: null, suite: null,
@@ -43,7 +45,7 @@
     ['scr-list', 'scr-edit', 'scr-set'].forEach(function (s) {
       var el = $(s); if (el) el.classList.toggle('active', s === id);
     });
-    Array.prototype.forEach.call(document.querySelectorAll('.bn'), function (b) {
+    Array.prototype.forEach.call(document.querySelectorAll('.ex-bn'), function (b) {
       b.classList.toggle('on', b.getAttribute('data-scr') === id);
     });
     try { global.scrollTo(0, 0); } catch (e) { /* 端末によっては動かないが害はない */ }
@@ -59,7 +61,34 @@
       taxMode: d.taxMode === 'inclusive' ? 'inclusive' : 'exclusive',
       rounding: (['floor', 'ceil', 'round'].indexOf(d.taxRounding) >= 0) ? d.taxRounding : 'floor',
       bank: d.bank || '',
+      template: TPL.get(d.invoiceTemplate) ? d.invoiceTemplate : TPL.DEFAULT_ID,
+      cols: (d.invoiceCols && Array.isArray(d.invoiceCols.items) && d.invoiceCols.items.length) ? d.invoiceCols : null,
     };
+  }
+
+  /* ═══ 列（★どんな項目にも対応する所★） ═══
+     発行済み … 写し(snapshot.cols)＝出した紙と同じ並びで刷り直せる
+     下書き   … その1通の data.cols ／ 無ければ会社の既定 ／ それも無ければ様式の初期値 */
+  function colsOf(inv) {
+    var v = inv || {};
+    var snap = v.snapshot && v.snapshot.cols;
+    if (snap && Array.isArray(snap.items) && snap.items.length) return COLS.normalizeSpec(snap);
+    var s = settings();
+    // ★もう出してしまった紙（発行済み・取り消し済み）は、会社の「今の列」を当てない★
+    //   列を足した日に、去年 出した請求書の紙まで列が増えるのは、控えと紙が食い違うのと同じ。
+    //   写しに列が無い＝列を選べるようになる前に出した物 → その様式の既定（＝当時 刷った並び）で刷る。
+    if (v.id && v.status && v.status !== 'draft') {
+      return COLS.normalizeSpec(TPL.getOrDefault(v.template_id).cols);
+    }
+    var own = v.data && v.data.cols;
+    if (own && Array.isArray(own.items) && own.items.length) return COLS.normalizeSpec(own);
+    if (s.cols) return COLS.normalizeSpec(s.cols);
+    return COLS.normalizeSpec(TPL.getOrDefault(v.template_id || s.template).cols);
+  }
+  function themeOf(inv) {
+    var v = inv || {};
+    var id = v.template_id || settings().template;
+    return TPL.getOrDefault(id).theme;
   }
 
   var ROUND_LABEL = { floor: '切り捨て', ceil: '切り上げ', round: '四捨五入' };
@@ -102,17 +131,17 @@
     var host = $('list-body'); if (!host) return;
     var rows = S.invoices.filter(function (v) { return S.fil === 'all' || v.status === S.fil; });
     if (!rows.length) {
-      host.innerHTML = '<div class="card"><div class="empty">'
+      host.innerHTML = '<div class="ex-card"><div class="ex-empty">'
         + (S.invoices.length ? 'この絞り込みに当てはまる請求書はありません。' : 'まだ請求書がありません。「＋ 新しく作る」から作れます。')
         + '</div></div>';
       return;
     }
     host.innerHTML = rows.map(function (v) {
-      var tag = v.status === 'issued' ? '<span class="tag tag-issued">発行済</span>'
-        : v.status === 'void' ? '<span class="tag tag-void">取り消し</span>'
-          : '<span class="tag tag-draft">下書き</span>';
+      var tag = v.status === 'issued' ? '<span class="ex-tag ex-tag-on">発行済</span>'
+        : v.status === 'void' ? '<span class="ex-tag ex-tag-mute">取り消し</span>'
+          : '<span class="ex-tag ex-tag-off">下書き</span>';
       var g = (v.totals && v.totals.grandTotal);
-      return '<button class="iv-row" type="button" data-open="' + esc(v.id) + '">'
+      return '<button class="ex-row" type="button" data-open="' + esc(v.id) + '">'
         + '<span class="iv-top">' + tag
         + '<span class="iv-no">' + (esc(v.no) || '（未採番）') + '</span>'
         + '<span class="iv-name">' + esc(partnerName(v)) + '</span></span>'
@@ -148,9 +177,15 @@
       id: '', doc_type: 'invoice', no: '', partner_id: '',
       issue_ymd: todayYmd(), due_ymd: '',
       status: 'draft', tax_mode: s.taxMode, rounding: s.rounding,
-      lines: [{ name: '', qty: '', unit: '', price: '', amount: '', rate: firstRate(), memo: '' }],
-      totals: {}, snapshot: {}, data: { subject: '', memo: '', noMode: 'auto', term: { kind: 'none', n: 0 } },
-      template_id: TEMPLATE_ID, quote_from: '',
+      lines: [blankLine()],
+      totals: {}, snapshot: {},
+      // ★列は作った時に「その1通の物」として写しておく★
+      //   あとで会社が列を変えても、作りかけの下書きの並びが勝手に変わらない。
+      data: {
+        subject: '', memo: '', noMode: 'auto', term: { kind: 'none', n: 0 },
+        cols: COLS.normalizeSpec(s.cols || TPL.getOrDefault(s.template).cols),
+      },
+      template_id: s.template || TEMPLATE_ID, quote_from: '',
     };
   }
   function firstRate() {
@@ -174,7 +209,7 @@
     if (!v) { box('list-err', 'この請求書が見つかりませんでした。「読み直す」を押してください。'); return; }
     S.cur = JSON.parse(JSON.stringify(v));
     if (!S.cur.data) S.cur.data = {};
-    if (!Array.isArray(S.cur.lines) || !S.cur.lines.length) S.cur.lines = [{ name: '', qty: '', unit: '', price: '', amount: '', rate: firstRate(), memo: '' }];
+    if (!Array.isArray(S.cur.lines) || !S.cur.lines.length) S.cur.lines = [blankLine()];
     fillEdit();
     goScreen('scr-edit');
   }
@@ -216,6 +251,9 @@
     $('e-subject').value = (v.data && v.data.subject) || '';
     $('e-memo').value = (v.data && v.data.memo) || '';
 
+    // ★この1通の様式（見た目だけ。金額は動かない）
+    drawEditTpl(v.template_id || settings().template);
+
     renderLines();
     recalc();
     lockInputs();
@@ -227,7 +265,7 @@
     ['e-partner', 'e-issue', 'e-term', 'e-termn', 'e-due', 'e-round', 'e-no', 'e-subject', 'e-memo'].forEach(function (id) {
       var el = $(id); if (el) el.disabled = ro;
     });
-    Array.prototype.forEach.call(document.querySelectorAll('#e-taxmode .seg-b, #e-nomode .seg-b'), function (b) { b.disabled = ro; });
+    Array.prototype.forEach.call(document.querySelectorAll('#e-taxmode .ex-chip, #e-nomode .ex-chip, #e-tpl .ex-chip'), function (b) { b.disabled = ro; });
     Array.prototype.forEach.call(document.querySelectorAll('#lines-body input, #lines-body select, #lines-body button'), function (b) { b.disabled = ro; });
     var add = $('b-addline'); if (add) add.disabled = ro;
 
@@ -245,27 +283,54 @@
     setText('act-why', why.join(' '));
   }
 
-  /* ── 明細 ── */
+  /* ── 明細（★列は会社が決めた items のとおりに作る★） ── */
   function renderLines() {
-    var v = S.cur, host = $('lines-body'); if (!host) return;
+    var v = S.cur, host = $('lines-body'), head = $('lines-head'); if (!host || !head) return;
+    var spec = colsOf(v);
     var rates = rateOptions();
+
+    head.innerHTML = spec.items.map(function (k) {
+      var r = COLS.roleOf(k);
+      var cls = (r === 'name') ? 'l-name' : (r === 'rate') ? 'l-md' : 'l-sm';
+      return '<th class="' + cls + '">' + esc(k) + '</th>';
+    }).join('') + '<th class="l-x"></th>';
+
     host.innerHTML = v.lines.map(function (ln, i) {
-      return '<tr data-i="' + i + '">'
-        + '<td class="l-name"><input class="finput" data-f="name" value="' + esc(ln.name || '') + '" placeholder="品名"></td>'
-        + '<td class="l-sm"><input class="finput num" data-f="qty" inputmode="decimal" value="' + esc(ln.qty === undefined || ln.qty === null ? '' : ln.qty) + '"></td>'
-        + '<td class="l-sm"><input class="finput" data-f="unit" value="' + esc(ln.unit || '') + '" placeholder="式"></td>'
-        + '<td class="l-sm"><input class="finput num" data-f="price" inputmode="decimal" value="' + esc(ln.price === undefined || ln.price === null ? '' : ln.price) + '"></td>'
-        + '<td class="l-sm"><input class="finput num" data-f="amount" inputmode="numeric" value="' + esc(ln.amount === undefined || ln.amount === null ? '' : ln.amount) + '"></td>'
-        + '<td class="l-rate"><select class="finput" data-f="rate">'
-        + rates.map(function (r) { return '<option value="' + esc(r.v) + '"' + (String(ln.rate) === r.v ? ' selected' : '') + '>' + esc(r.t) + '</option>'; }).join('')
-        + '</select></td>'
-        + '<td class="l-x"><button class="l-del" type="button" data-del="' + i + '" aria-label="この行を消す">×</button></td>'
-        + '</tr>';
+      var tds = spec.items.map(function (k) {
+        var r = COLS.roleOf(k);
+        var cls = (r === 'name') ? 'l-name' : (r === 'rate') ? 'l-md' : 'l-sm';
+        if (r === 'index') return '<td class="l-x" style="color:#7AA08C;padding-top:12px">' + (i + 1) + '</td>';
+        if (r === 'rate') {
+          return '<td class="' + cls + '"><select class="ex-input" data-f="rate">'
+            + rates.map(function (x) { return '<option value="' + esc(x.v) + '"' + (String(ln.rate) === x.v ? ' selected' : '') + '>' + esc(x.t) + '</option>'; }).join('')
+            + '</select></td>';
+        }
+        var val, mode = '', extra = '';
+        if (r === 'name') { val = ln.name; extra = ' placeholder="品名"'; }
+        else if (r === 'unit') { val = ln.unit; extra = ' placeholder="式"'; }
+        else if (r === 'qty') { val = ln.qty; mode = ' inputmode="decimal"'; }
+        else if (r === 'price') { val = ln.price; mode = ' inputmode="decimal"'; }
+        else if (r === 'amount') { val = ln.amount; mode = ' inputmode="numeric"'; }
+        else if (r === 'memo') { val = ln.memo; }
+        else { val = (ln.extra || {})[k]; }         // ★会社が足した列＝自由枠に入れる
+        var num = (r === 'qty' || r === 'price' || r === 'amount') ? ' ex-num' : '';
+        var f = r ? ('data-f="' + r + '"') : ('data-x="' + esc(k) + '"');
+        return '<td class="' + cls + '"><input class="ex-input' + num + '" ' + f + mode + extra
+          + ' value="' + esc(val === undefined || val === null ? '' : val) + '"></td>';
+      }).join('');
+      return '<tr data-i="' + i + '">' + tds
+        + '<td class="l-x"><button class="l-del" type="button" data-del="' + i + '" aria-label="この行を消す">×</button></td></tr>';
     }).join('');
+
     Array.prototype.forEach.call(host.querySelectorAll('input,select'), function (el) {
       el.oninput = el.onchange = function () {
         var tr = el.closest('tr'), i = +tr.getAttribute('data-i');
-        S.cur.lines[i][el.getAttribute('data-f')] = el.value;
+        var f = el.getAttribute('data-f');
+        if (f) S.cur.lines[i][f] = el.value;
+        else {
+          if (!S.cur.lines[i].extra) S.cur.lines[i].extra = {};
+          S.cur.lines[i].extra[el.getAttribute('data-x')] = el.value;
+        }
         S.dirty = true;
         recalc();
       };
@@ -274,11 +339,30 @@
       b.onclick = function () {
         var i = +b.getAttribute('data-del');
         S.cur.lines.splice(i, 1);
-        if (!S.cur.lines.length) S.cur.lines.push({ name: '', qty: '', unit: '', price: '', amount: '', rate: firstRate(), memo: '' });
+        if (!S.cur.lines.length) S.cur.lines.push(blankLine());
         S.dirty = true;
         renderLines(); recalc(); lockInputs();
       };
     });
+  }
+  function blankLine() {
+    return { name: '', qty: '', unit: '', price: '', amount: '', rate: firstRate(), memo: '', extra: {} };
+  }
+
+  /* この1通の様式を選ぶ（発行済みは選べない＝写しの様式で固まっている） */
+  function drawEditTpl(id) {
+    renderTplSeg('e-tpl', 'e-tpl-note', id, function (pick) {
+      if (!S.cur || locked()) return;
+      S.cur.template_id = pick;
+      // 列をこの1通で決めていなければ、選んだ様式の既定に合わせる
+      if (!(S.cur.data && S.cur.data.cols && S.cur.data.cols.items && S.cur.data.cols.items.length)) {
+        S.cur.data.cols = COLS.normalizeSpec(TPL.getOrDefault(pick).cols);
+      }
+      drawEditTpl(pick);
+      renderLines(); recalc(); lockInputs();
+      // 下見を出したままなら、その場で刷り直す（見た目が変わった事が分かる）
+      if ($('pv-wrap').style.display !== 'none') doPreview();
+    }, locked());
   }
 
   /* 画面の文字を、計算に渡せる形に直す（★空は空のまま＝0にしない★） */
@@ -288,10 +372,18 @@
       if (ln.qty !== '' && ln.qty !== undefined && ln.qty !== null) o.qty = Number(ln.qty);
       if (ln.price !== '' && ln.price !== undefined && ln.price !== null) o.price = Number(ln.price);
       if (ln.amount !== '' && ln.amount !== undefined && ln.amount !== null) o.amount = Number(ln.amount);
+      // ★会社が足した列の中身も落とさずに持つ（空文字だけの物は捨てる＝空欄を保存しない）
+      var ex = {};
+      var src = ln.extra || {};
+      for (var k in src) {
+        if (Object.prototype.hasOwnProperty.call(src, k) && String(src[k] == null ? '' : src[k]).trim() !== '') ex[k] = src[k];
+      }
+      o.extra = ex;
       return o;
     }).filter(function (o) {
       // ★何も入っていない行は数えない（空行で「明細0行」の赤を出さない）
-      return (o.name || o.qty !== undefined || o.price !== undefined || o.amount !== undefined);
+      return (o.name || o.qty !== undefined || o.price !== undefined || o.amount !== undefined
+        || Object.keys(o.extra).length > 0);
     });
   }
 
@@ -308,7 +400,7 @@
     var host = $('tot-box');
     if (!t.ok) {
       box('edit-err', t.errors.join('\n'));
-      if (host) host.innerHTML = '<div class="hint">合計は、明細が直ったら出ます。</div>';
+      if (host) host.innerHTML = '<div class="ex-hint">合計は、明細が直ったら出ます。</div>';
       return t;
     }
     box('edit-err', '');
@@ -385,7 +477,7 @@
     var org = snap ? snap.org : (S.org || {});
     if (!snap && S.org) org = Object.assign({}, S.org, { bank: settings().bank });
     var inv = Object.assign({}, v, { lines: cleanLines(v.lines) });
-    return { inv: inv, tax: t, partner: partner, org: org };
+    return { inv: inv, tax: t, partner: partner, org: org, cols: colsOf(v), theme: themeOf(v) };
   }
 
   function suggestName(ext) {
@@ -496,6 +588,11 @@
     var v = collect();
     var t = recalc();
     if (!t || !t.ok) { box('edit-err', '計算が通らないので発行できません。上の赤い印を直してください。'); return Promise.resolve(); }
+    // ★自社情報が読めていないまま発行しない（写しに空の自社が固まる＝直せない紙になる）
+    if (S.orgReadOk === false) {
+      box('edit-err', '会社の情報が読めていないので発行できません。一覧の「読み直す」を押してから、もう一度お試しください。');
+      return Promise.resolve();
+    }
     var p = partnerById(v.partner_id);
     var chk = DOC.validateInvoice({ inv: Object.assign({}, v, { lines: cleanLines(v.lines) }), partner: p, org: { data: S.org || {} } });
     if (!chk.ok) { box('edit-err', chk.errors.join('\n')); box('edit-warn', ''); return Promise.resolve(); }
@@ -504,13 +601,15 @@
 
     var at = new Date().toISOString();
     var orgData = Object.assign({}, S.org || {}, { bank: settings().bank });
+    var tplId = v.template_id || settings().template;
+    var spec = colsOf(v);
     var snap = DOC.snapshotOf({
-      at: at, partner: p, org: { data: orgData }, tax: t, templateId: TEMPLATE_ID,
+      at: at, partner: p, org: { data: orgData }, tax: t, templateId: tplId, cols: spec,
     });
     var row = Object.assign({}, v, {
       lines: cleanLines(v.lines),
       totals: { subtotal: t.subtotal, taxTotal: t.taxTotal, grandTotal: t.grandTotal, byRate: t.byRate, exempt: t.exempt, hasReduced: t.hasReduced },
-      snapshot: snap, template_id: TEMPLATE_ID,
+      snapshot: snap, template_id: tplId,
     });
     return S.store.invoices.issue(row, at).then(function (r) {
       if (!r.ok) { box('edit-err', '発行できませんでした（' + r.reason + '）'); return; }
@@ -545,6 +644,137 @@
     });
   }
 
+  /* ═══ 様式（テンプレ）を選ぶ ═══
+     ★変わるのは見た目だけ。金額は1円も動かない（seikyu-templates.js が守る）★ */
+  function renderTplSeg(hostId, noteId, current, onPick, disabled) {
+    var host = $(hostId); if (!host) return;
+    host.innerHTML = TPL.list().map(function (t) {
+      return '<button class="ex-chip' + (t.id === current ? ' on' : '') + '" type="button" data-tpl="'
+        + esc(t.id) + '"' + (disabled ? ' disabled' : '') + '>' + esc(t.label) + '</button>';
+    }).join('');
+    var cur = TPL.getOrDefault(current);
+    if (noteId) setText(noteId, cur.note + '（様式で変わるのは見た目だけです。金額・消費税・合計は1円も変わりません）');
+    Array.prototype.forEach.call(host.querySelectorAll('[data-tpl]'), function (b) {
+      b.onclick = function () { onPick(b.getAttribute('data-tpl')); };
+    });
+  }
+
+  /* ═══ 列の編集（★どんな項目にも対応する所★） ═══ */
+  function editCols() {
+    // 編集できるのは下書きだけ。発行済みは写しの並びを見せるだけ。
+    var v = S.cur;
+    if (v && !locked()) {
+      if (!v.data.cols) v.data.cols = COLS.normalizeSpec(colsOf(v));
+      return v.data.cols;
+    }
+    var s = settings();
+    if (!S.org) S.org = {};
+    if (!S.org.invoiceCols) S.org.invoiceCols = COLS.normalizeSpec(s.cols || TPL.getOrDefault(s.template).cols);
+    return S.org.invoiceCols;
+  }
+
+  function renderColEditor() {
+    var host = $('col-list'); if (!host) return;
+    var spec = COLS.normalizeSpec(editCols());
+    var w = COLS.widthsOf(spec.items, spec.widths);
+    host.innerHTML = spec.items.map(function (k, i) {
+      var role = COLS.roleOf(k);
+      var raw = Number(spec.widths[k]);
+      if (!Number.isFinite(raw)) raw = COLS.BASE_W[k] || 80;
+      var al = COLS.alignOf(spec, k);
+      return '<div class="col-row" data-col="' + esc(k) + '">'
+        + '<span class="col-name">' + esc(k)
+        + '<span class="col-role">' + (role ? '（計算に使う）' : '（自由な列）') + '</span></span>'
+        + '<button class="ex-mini" type="button" data-mv="-1"' + (i === 0 ? ' disabled' : '') + ' aria-label="左へ">←</button>'
+        + '<button class="ex-mini" type="button" data-mv="1"' + (i === spec.items.length - 1 ? ' disabled' : '') + ' aria-label="右へ">→</button>'
+        + '<span class="col-gap"></span>'
+        + '<button class="ex-mini" type="button" data-w="-8" aria-label="幅を狭く">−</button>'
+        + '<span class="col-w">' + Math.round(raw) + '</span>'
+        + '<button class="ex-mini" type="button" data-w="8" aria-label="幅を広く">＋</button>'
+        + '<span class="col-w" style="color:#7AA08C">' + w[i].toFixed(1) + '%</span>'
+        + '<span class="col-gap"></span>'
+        + ['left', 'center', 'right'].map(function (a) {
+          return '<button class="ex-mini' + (al === a ? ' on' : '') + '" type="button" data-al="' + a + '">' + ALIGN_LABEL[a] + '</button>';
+        }).join('')
+        + '<span class="col-gap"></span>'
+        + '<button class="l-del" type="button" data-cdel="1" aria-label="この列を消す">×</button>'
+        + '</div>';
+    }).join('');
+
+    Array.prototype.forEach.call(host.querySelectorAll('.col-row'), function (row) {
+      var col = row.getAttribute('data-col');
+      Array.prototype.forEach.call(row.querySelectorAll('[data-mv]'), function (b) {
+        b.onclick = function () { moveCol(col, +b.getAttribute('data-mv')); };
+      });
+      Array.prototype.forEach.call(row.querySelectorAll('[data-w]'), function (b) {
+        b.onclick = function () { widthCol(col, +b.getAttribute('data-w')); };
+      });
+      Array.prototype.forEach.call(row.querySelectorAll('[data-al]'), function (b) {
+        b.onclick = function () { alignCol(col, b.getAttribute('data-al')); };
+      });
+      var del = row.querySelector('[data-cdel]');
+      if (del) del.onclick = function () { removeCol(col); };
+    });
+
+    var errs = COLS.validate(spec.items);
+    box('col-err', errs.join(' '));
+    setText('col-why', '幅は ' + COLS.MIN_W + '〜' + COLS.MAX_W + ' の間だけ。並べた幅の比率で紙に割り付けるので、'
+      + '★列を何本足しても紙からはみ出しません★（今 ' + spec.items.length + ' 本／最大 ' + COLS.MAX_COLS + ' 本）。');
+  }
+
+  function afterColChange() {
+    box('col-ok', '');
+    renderColEditor();
+    if (S.cur && !locked()) { renderLines(); recalc(); lockInputs(); }
+  }
+  function moveCol(col, d) {
+    var spec = editCols();
+    var i = spec.items.indexOf(col);
+    var j = i + d;
+    if (i < 0 || j < 0 || j >= spec.items.length) return;
+    spec.items.splice(j, 0, spec.items.splice(i, 1)[0]);
+    afterColChange();
+  }
+  function widthCol(col, d) {
+    var spec = editCols();
+    spec.widths = COLS.bumpWidth(spec.widths, col, d);
+    afterColChange();
+  }
+  function alignCol(col, a) {
+    var spec = editCols();
+    spec.aligns[col] = a;
+    afterColChange();
+  }
+  function removeCol(col) {
+    var spec = editCols();
+    if (spec.items.length <= 1) { box('col-err', '列を全部は消せません（1本は残ります）。'); return; }
+    spec.items = spec.items.filter(function (k) { return k !== col; });
+    delete spec.widths[col]; delete spec.aligns[col];
+    afterColChange();
+  }
+  function addCol() {
+    var name = String($('col-new').value || '').trim();
+    var spec = editCols();
+    var next = spec.items.concat([name]);
+    var errs = COLS.validate(next);
+    if (errs.length) { box('col-err', errs.join(' ')); return; }
+    spec.items = next;
+    $('col-new').value = '';
+    box('col-err', '');
+    afterColChange();
+    box('col-ok', '「' + name + '」の列を足しました。金額と消費税は変わっていません。');
+  }
+  function resetCols() {
+    var s = settings();
+    var t = TPL.getOrDefault(s.template);
+    var spec = editCols();
+    var fresh = COLS.normalizeSpec(t.cols);
+    spec.items = fresh.items; spec.widths = fresh.widths; spec.aligns = fresh.aligns;
+    box('col-err', '');
+    afterColChange();
+    box('col-ok', '「' + t.label + '」の既定の列に戻しました。');
+  }
+
   /* ═══ 設定の画面 ═══ */
   function fillSettings() {
     var s = settings();
@@ -562,6 +792,22 @@
     })), '');
     fillSelect($('s-pterm'), DOC.PAY_TERMS.map(function (t) { return { v: t.key, t: t.label }; }), 'none');
     fillPartnerForm('');
+
+    // 様式と列（★会社の既定★。作りかけの1通ではなく、これから作る物に効く）
+    drawSetTpl(s.template);
+    renderColEditor();
+  }
+
+  function drawSetTpl(id) {
+    renderTplSeg('s-tpl', 's-tpl-note', id, function (pick) {
+      if (!S.org) S.org = {};
+      S.org.invoiceTemplate = pick;
+      // 列をまだ自分で決めていない会社は、選んだ様式の既定に合わせる
+      if (!settings().cols) S.org.invoiceCols = COLS.normalizeSpec(TPL.getOrDefault(pick).cols);
+      drawSetTpl(pick);
+      box('col-ok', '');
+      renderColEditor();
+    }, false);
   }
 
   function settingsHint() {
@@ -596,8 +842,12 @@
       taxMode: $('s-taxmode').value,
       taxRounding: $('s-round').value,
       bank: $('s-bank').value,
+      invoiceTemplate: settings().template,
+      invoiceCols: COLS.normalizeSpec((S.org && S.org.invoiceCols) || TPL.getOrDefault(settings().template).cols),
     };
     var errs = DOC.validateNumbering({ format: patch.numbering.invoice.format, resetYearly: patch.numbering.invoice.resetYearly, partnerCode: 'A001' });
+    var cerrs = COLS.validate(patch.invoiceCols.items);
+    if (cerrs.length) errs = errs.concat(cerrs);
     if (errs.length) { box('set-err', errs.join(' ')); box('set-ok', ''); return Promise.resolve(); }
     box('set-err', '');
     return S.store.org.save(patch).then(function (r) {
@@ -630,7 +880,7 @@
 
   /* ═══ 配線 ═══ */
   function bind() {
-    Array.prototype.forEach.call(document.querySelectorAll('.bn'), function (b) {
+    Array.prototype.forEach.call(document.querySelectorAll('.ex-bn'), function (b) {
       b.onclick = function () {
         var t = b.getAttribute('data-scr');
         if (t === 'scr-edit' && !S.cur) { newInvoice(); return; }
@@ -646,7 +896,8 @@
       };
     });
     $('b-new').onclick = function () { newInvoice(); };
-    $('b-reload').onclick = function () { return loadList(); };
+    // ★「読み直す」は共有マスタも取り直す（自社が読めなかった時の直し方がこれ）
+    $('b-reload').onclick = function () { return loadMasters().then(loadList); };
     $('b-back').onclick = function () { goScreen('scr-list'); };
 
     $('e-partner').onchange = function () {
@@ -691,7 +942,7 @@
     $('e-subject').oninput = function () { S.cur.data.subject = $('e-subject').value; };
     $('e-memo').oninput = function () { S.cur.data.memo = $('e-memo').value; };
     $('b-addline').onclick = function () {
-      S.cur.lines.push({ name: '', qty: '', unit: '', price: '', amount: '', rate: firstRate(), memo: '' });
+      S.cur.lines.push(blankLine());
       renderLines(); recalc(); lockInputs();
     };
 
@@ -712,6 +963,9 @@
     $('b-void').onclick = function () { return voidIt(); };
     $('b-delete').onclick = function () { return removeDraft(); };
 
+    $('b-col-add').onclick = function () { addCol(); };
+    $('b-col-reset').onclick = function () { resetCols(); };
+    $('col-new').onkeydown = function (e) { if (e.key === 'Enter') { e.preventDefault(); addCol(); } };
     $('s-format').onchange = settingsHint;
     $('s-reset').onchange = settingsHint;
     $('s-partner').onchange = function () { fillPartnerForm($('s-partner').value); };
@@ -732,14 +986,34 @@
     S.suite = global.SuiteData.create({ client: sb });
     S.store = global.SeikyuStore.create({ client: sb, suite: S.suite });
     bind();
+    return loadMasters().then(function () { return loadList(); }).then(function () { return S.store; });
+  }
+
+  /* ★共有マスタ（自社・取引先）を読む★
+     ここで失敗したのを空っぽ扱いにすると、自社情報が入っているのに
+     「（自社情報が未入力）」の紙が出る（2026-08-10 実機で発生：ログイン直後の1回だけ401）。
+     ・1回だけ間を置いて取り直す（トークンが乗る前の1発目で落ちることがある）
+     ・それでも読めなければ ★読めなかったと言う★（空と作り分ける）。発行も止める。 */
+  function loadMasters(retried) {
     return Promise.all([
-      S.suite.org.get().catch(function () { return null; }),
-      S.suite.partners.list().catch(function () { return []; }),
+      S.suite.org.get().then(function (v) { return { ok: true, v: v }; }, function (e) { return { ok: false, e: e }; }),
+      S.suite.partners.list().then(function (v) { return { ok: true, v: v }; }, function (e) { return { ok: false, e: e }; }),
     ]).then(function (r) {
-      S.org = r[0] || {};
-      S.partners = r[1] || [];
-      return loadList();
-    }).then(function () { return S.store; });
+      var bad = r.filter(function (x) { return !x.ok; });
+      if (bad.length && !retried) {
+        return new Promise(function (res) { global.setTimeout(res, 500); }).then(function () { return loadMasters(true); });
+      }
+      S.orgReadOk = r[0].ok;
+      S.org = r[0].ok ? (r[0].v || {}) : null;      // ★読めなかったら null。{} にしない
+      S.partners = r[1].ok ? (r[1].v || []) : [];
+      S.partnersReadOk = r[1].ok;
+      if (bad.length) {
+        box('list-err', '会社の情報（自社・取引先）が読めませんでした（'
+          + ((bad[0].e && bad[0].e.message) || 'error') + '）。'
+          + 'このまま発行すると紙に自社情報が出ません。「読み直す」を押してください。');
+      }
+      return r;
+    });
   }
 
   global.SeikyuApp = {
@@ -748,5 +1022,6 @@
     _go: goScreen,
     _new: newInvoice,
     _fillSettings: fillSettings,
+    _loadMasters: function () { return loadMasters(true); },   // テストから1回だけ読ませる
   };
 })(window);
