@@ -1010,6 +1010,12 @@ T('★② 未確定の月では「Web明細で公開」が押せない＋理由�
     ok(wp, '公開ボタンが無い');
     eq(wp.disabled, true, '★1人も確認していないのに押せてしまう');
     ok(/2名が未確認/.test(wp.textContent), '★理由がボタンの中に無い: ' + wp.textContent);
+    /* ★理由を足すとボタンが長くなり、幅390で行から横にはみ出した（実測）。
+       button-wrap の検査は index.html の【静的な文字】しか見ないので、
+       実行時に付け替えるこの文は見えない＝この行がその穴を塞ぐ。
+       収まらない時は折り返す指定にした（横に隠れて押せない物を作らない）。 */
+    const css = fs.readFileSync(path.join(ROOT, 'css/app.css'), 'utf8');
+    ok(/\.btn-row\{[^}]*flex-wrap:\s*wrap/.test(css), '★ボタン行が折り返さない指定に戻っている（長い文が横に隠れる）');
   });
 });
 

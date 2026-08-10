@@ -271,7 +271,7 @@ input[type="date"].finput:not(.finput-sm),input[type="month"].finput:not(.finput
 .hint{font-size:11px;color:#5C7E6C;line-height:1.6;margin-top:6px;}
 
 /* ---- buttons / chips ---- */
-.btn-row{display:flex;gap:10px;margin-top:6px;}
+.btn-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px;}/* ★収まらない時は折り返す（横に隠れて押せない物を作らない・2026-08-10 実測して追加）★ */
 /* ★スマホで詰める: ラベルと枠の間・列の間を狭くする（「重なって見える」の元） */
 @media (max-width:400px){
   .frow2{gap:8px;}
