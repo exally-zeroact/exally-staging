@@ -102,6 +102,17 @@ input, select, button, textarea { font-family: inherit; }
 /* ── 入力 ───────────────────────────────────────────── */
 .ex-frow { margin-bottom: 10px; min-width: 0; }
 .ex-label { font-size: 12px; color: #3D6B53; font-weight: 700; margin-bottom: 4px; }
+
+/* ★入/切の1行★
+   flex だが、★文の側に最低幅を持たせて縮ませない★。
+   これを忘れると、狭い端末で説明文が1文字ずつ縦に割れる（前科3回）。 */
+.ex-check { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; }
+.ex-check > input[type="checkbox"] { flex: 0 0 auto; width: 20px; height: 20px; margin: 2px 0 0; accent-color: #2E7D54; }
+.ex-check > span {
+  flex: 1 1 auto; min-width: 140px;
+  font-size: 13px; color: #2B3A31; line-height: 1.7;
+  white-space: normal; word-break: normal; overflow-wrap: break-word;
+}
 .ex-frow2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .ex-frow2 > * { min-width: 0; }
 @media (max-width: 480px) { .ex-frow2 { grid-template-columns: 1fr; } }

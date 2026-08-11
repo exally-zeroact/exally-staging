@@ -191,6 +191,36 @@
 
   /** 発行の写し。★紙に出た物をそのまま残す＝あとでマスタを直しても紙は変わらない★
    *  at（発行時刻）は呼ぶ側が渡す＝このlibは時計を持たない。 */
+  /* ═══ ★お金の順番は1か所で決める★ ═══
+     今回請求額 →（＋繰越）→ 合計請求額 →（−源泉）→ 差引お支払額
+
+     ここを紙・Excel・画面の3か所で別々に書くと、必ずどこかで食い違う。
+     2026-08-11 実機で発生：繰越を出しているのに 差引お支払額 が繰越を無視し、
+     ★1,111,000 を請求しながら 997,900 と書いた★（11,000 少なく振り込まれる）。
+
+     ・繰越の入金が読めていない時は合計が出せない → ★null を返す（0にしない）★
+     ・源泉は「この1通の報酬」に掛ける（繰越は前回すでに掛けてある）ので、
+       引く相手は 合計請求額。掛ける相手は 今回の報酬。ここを混ぜない。 */
+
+  /** 実際に請求している額（繰越があれば足したあと）。読めない時は null */
+  function billedOf(tax, carry) {
+    var g = tax && Number(tax.grandTotal);
+    if (!Number.isFinite(g)) return null;
+    if (!carry) return g;
+    if (carry.grandTotal === null || carry.grandTotal === undefined) return null;  // 入金が未確認
+    return Number(carry.grandTotal);
+  }
+
+  /** 実際に振り込んでもらう額（源泉があれば引いたあと）。読めない時は null */
+  function payableOf(tax, carry, gensen) {
+    var billed = billedOf(tax, carry);
+    if (billed === null) return null;
+    if (!gensen || !gensen.on) return billed;
+    var a = Number(gensen.amount);
+    if (!Number.isFinite(a)) return null;
+    return billed - a;
+  }
+
   function snapshotOf(o) {
     o = o || {};
     var pd = (o.partner && o.partner.data) || {};
@@ -368,6 +398,7 @@
     formatNo: formatNo, nextNo: nextNo, bumpNo: bumpNo, validateNumbering: validateNumbering,
     dueDateFrom: dueDateFrom, parseYmd: parseYmd,
     canEdit: canEdit, canDelete: canDelete, canVoid: canVoid, statusOf: statusOf,
+    billedOf: billedOf, payableOf: payableOf,
     snapshotOf: snapshotOf, partnerNameOf: partnerNameOf,
     validateSeal: validateSeal, sealSizeMm: sealSizeMm,
     SEAL_DEFAULT_MM: SEAL_DEFAULT_MM, SEAL_MIN_MM: SEAL_MIN_MM, SEAL_MAX_MM: SEAL_MAX_MM, SEAL_MAX_BYTES: SEAL_MAX_BYTES,

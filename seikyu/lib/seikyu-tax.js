@@ -65,7 +65,7 @@
   function zero(errors) {
     return {
       ok: false, errors: errors, lines: [], byRate: [],
-      exempt: { base: 0 }, hasReduced: false,
+      exempt: { base: 0 }, nontaxable: { base: 0 }, hasReduced: false,
       subtotal: 0, taxTotal: 0, grandTotal: 0,
     };
   }
@@ -117,16 +117,20 @@
         index: i, name: ln.name || '', qty: ln.qty, unit: ln.unit, price: ln.price,
         amount: amount, rate: rate, taxRef: 0,
         memo: ln.memo || '', extra: ln.extra || {},
+        gensen: !!ln.gensen,   // ★源泉の対象か（印だけを持って出る。金額や名前から当てない）
+        // ★非課税の印は 0% の行にだけ効く（税率のある行に付いても税は消さない）
+        nontax: (rate === 0 && !!ln.nontax),
       });
     }
     if (errors.length) return zero(errors);
 
     // ── 税率ごとに束ねる（★ここで初めて丸める。1回だけ★）
     var buckets = {};
-    var exemptBase = 0;
+    var exemptBase = 0;      // 不課税（対象外）＝そもそも取引でない（立替金・給与・寄付）
+    var nontaxBase = 0;      // ★非課税★＝住宅の家賃・保険料・切手・印紙（取引だが消費税がかからない）
     for (var j = 0; j < out.length; j++) {
       var r = out[j];
-      if (r.rate === 0) { exemptBase += r.amount; continue; }
+      if (r.rate === 0) { if (r.nontax) nontaxBase += r.amount; else exemptBase += r.amount; continue; }
       if (!buckets[r.rate]) buckets[r.rate] = { pct: r.rate, sum: 0, rows: [] };
       buckets[r.rate].sum += r.amount;
       buckets[r.rate].rows.push(r);
@@ -162,13 +166,14 @@
       }
     }
 
-    var subtotal = taxableBase + exemptBase;
+    var subtotal = taxableBase + exemptBase + nontaxBase;
     var redPct = rates.length > 1 ? rates[1] : null;
     return {
       ok: true, errors: [],
       lines: out,
       byRate: byRate,
       exempt: { base: exemptBase },
+      nontaxable: { base: nontaxBase },
       hasReduced: redPct !== null && byRate.some(function (x) { return x.pct === redPct; }),
       subtotal: subtotal,
       taxTotal: taxTotal,

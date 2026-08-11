@@ -833,6 +833,303 @@ await TA('7-b. ★自社情報が読めなかった時は、空っぽ扱いに�
   ok(keepOrg !== undefined, '');
 });
 
+
+/* ═══ 9. ②-b 源泉徴収 / 繰越 / 非課税 ═══
+   ★合格条件（指示役 2026-08-11 追加）★
+     ・この3つを足しても「前回から当てる」が壊れない
+     ・押す回数が2回のまま（設問を増やさない。増えるなら設定へ） */
+
+/* 新しい1通から始める（前の検査の続きを引きずらない） */
+doc.querySelector('.ex-bn[data-scr="scr-list"]').click();
+await sleep(10);
+$('b-new').click();
+await sleep(20);
+
+T('9-a. ★非課税と対象外は別物＝選び所に両方ある（新しい設問は作っていない）', () => {
+  const sel = doc.querySelector('#lines-body [data-f="rate"]');
+  ok(sel, '税率の選び所が無い');
+  const opts = [...sel.options].map((o) => o.textContent);
+  ok(opts.includes('非課税'), '「非課税」が無い: ' + opts.join('/'));
+  ok(opts.includes('対象外'), '「対象外」が無い: ' + opts.join('/'));
+  // ★増えたのは選択肢だけ＝行に入力は1つも増えていない（列の数は前の検査で変わり得るので数えない）
+  const cols = win.SeikyuApp._state.cur.data.cols;
+  const want = (cols && cols.items ? cols.items.length : 7) + 1;   // ＋消す列
+  eq(doc.querySelectorAll('#lines-head th').length, want, '明細の列が増えている');
+  eq(doc.querySelectorAll('#lines-body tr [data-f="rate"]').length, 1, '税率の選び所が増えている');
+  eq(doc.querySelectorAll('#lines-body input[type="checkbox"]').length, 0, '行にチェックが増えている（設問が増える）');
+});
+
+await TA('9-a. ★非課税を選ぶと「非課税」として数える（対象外と混ぜない）', async () => {
+  const row = () => doc.querySelector('#lines-body tr');
+  const setF = (k, v) => { const e = row().querySelector('[data-f="' + k + '"]'); e.value = v; e.dispatchEvent(new win.Event('input')); e.dispatchEvent(new win.Event('change')); };
+  setF('name', '住宅家賃 9月分');
+  setF('amount', '80000');
+  const sel = row().querySelector('[data-f="rate"]');
+  sel.value = [...sel.options].find((o) => o.textContent === '非課税').value;
+  sel.dispatchEvent(new win.Event('change'));
+  await sleep(30);
+  const st = win.SeikyuApp._state;
+  eq(st.cur.lines[0].nontax, true, '非課税の印が立っていない');
+  eq(String(st.cur.lines[0].rate), '0', '税率が0になっていない');
+  const t = st.cur.totals || win.SeikyuApp._recalcForTest();
+  ok(/非課税/.test($('tot-box').textContent), '画面に「非課税」が出ていない: ' + $('tot-box').textContent);
+  ok(!/消費税の対象外/.test($('tot-box').textContent), '非課税なのに「対象外」と出ている');
+  ok(t !== undefined, '');
+});
+
+await TA('9-a. ★対象外に切り替えると「対象外」に戻る（印が残らない）', async () => {
+  const sel = doc.querySelector('#lines-body [data-f="rate"]');
+  sel.value = [...sel.options].find((o) => o.textContent === '対象外').value;
+  sel.dispatchEvent(new win.Event('change'));
+  await sleep(30);
+  eq(!!win.SeikyuApp._state.cur.lines[0].nontax, false, '非課税の印が残っている');
+  ok(/消費税の対象外/.test($('tot-box').textContent), '「対象外」が出ていない');
+  ok(!/非課税/.test($('tot-box').textContent), '「非課税」が残っている');
+});
+
+T('9-b. ★源泉は「細かく決める」の中／繰越は「設定」の中（入力に設問を増やさない）', () => {
+  const gen = $('e-gensen');
+  ok(gen, '源泉の入/切が無い');
+  ok(gen.closest('details') && gen.closest('details').id === 'more-box', '源泉が畳みの外に出ている（設問が増える）');
+  ok(!$('scr-edit').querySelector('#s-carry'), '繰越が入力の画面に出ている');
+  ok($('scr-set').querySelector('#s-carry'), '繰越が設定に無い');
+  ok($('scr-set').querySelector('#s-pgensen'), '取引先ごとの源泉の既定が設定に無い');
+});
+
+T('9-b. ★率と式は給与の lib が持つ（請求書側に率を1文字も書かない）', () => {
+  const app = fs.readFileSync(path.join(ROOT, 'seikyu/js/seikyu-app.js'), 'utf8');
+  const gen = fs.readFileSync(path.join(ROOT, 'seikyu/lib/seikyu-gensen.js'), 'utf8');
+  for (const [name, code] of [['seikyu-app.js', app], ['seikyu-gensen.js', gen]]) {
+    ok(!/10\.21|20\.42|102,?100/.test(code), name + ' に源泉の率か境目の実数が書いてある');
+    ok(!/1000000|1,000,000/.test(code), name + ' に100万円の境目が書いてある');
+  }
+  ok(/shiharai-chosho/.test(fs.readFileSync(path.join(ROOT, 'seikyu/index.html'), 'utf8')),
+    '給与の lib を読み込んでいない＝率をどこかで自前に持っている');
+});
+
+await TA('9-b. ★源泉を入れると「引いたあと」まで画面に出る（紙にだけ出さない）', async () => {
+  const row = () => doc.querySelector('#lines-body tr');
+  const setF = (k, v) => { const e = row().querySelector('[data-f="' + k + '"]'); e.value = v; e.dispatchEvent(new win.Event('input')); e.dispatchEvent(new win.Event('change')); };
+  const sel = row().querySelector('[data-f="rate"]');
+  sel.value = [...sel.options].find((o) => /%$/.test(o.textContent)).value;
+  sel.dispatchEvent(new win.Event('change'));
+  setF('name', '原稿料'); setF('amount', '100000');
+  $('e-gensen').checked = true;
+  $('e-gensen').dispatchEvent(new win.Event('change'));
+  await sleep(40);
+  const txt = $('tot-box').textContent;
+  ok(/源泉徴収税額/.test(txt), '画面に源泉が出ていない: ' + txt);
+  ok(/差引お支払額/.test(txt), '画面に差引が出ていない: ' + txt);
+  // 実額：給与の lib と1円も違わない
+  const CHOSHO = require_(path.join(ROOT, 'kyuyo/lib/shiharai-chosho.js'));
+  const want = CHOSHO.gensenA(100000);
+  ok(txt.includes(want.toLocaleString('ja-JP')), '源泉の額が給与の lib と違う（欲しい ' + want + '）: ' + txt);
+});
+
+await TA('9-b. ★源泉の対象は報酬の行だけ（立替＝対象外の行には掛からない）', async () => {
+  $('b-addline').click();
+  await sleep(20);
+  const rows = doc.querySelectorAll('#lines-body tr');
+  const r2 = rows[1];
+  const setF = (k, v) => { const e = r2.querySelector('[data-f="' + k + '"]'); e.value = v; e.dispatchEvent(new win.Event('input')); e.dispatchEvent(new win.Event('change')); };
+  setF('name', '立替金'); setF('amount', '5000');
+  const sel = r2.querySelector('[data-f="rate"]');
+  sel.value = [...sel.options].find((o) => o.textContent === '対象外').value;
+  sel.dispatchEvent(new win.Event('change'));
+  await sleep(40);
+  const CHOSHO = require_(path.join(ROOT, 'kyuyo/lib/shiharai-chosho.js'));
+  const want = CHOSHO.gensenA(100000);   // 立替の5,000は入らない
+  ok($('tot-box').textContent.includes(want.toLocaleString('ja-JP')),
+    '立替が源泉の対象額に入っている: ' + $('tot-box').textContent);
+  // 後片付け（この行は次の検査に持ち越さない）
+  doc.querySelectorAll('#lines-body [data-del]')[1].click();
+  await sleep(20);
+});
+
+await TA('9-c. ★繰越＝「前回が無い」と「入金が読めない」を作り分ける（どちらも0にしない）', async () => {
+  const st = win.SeikyuApp._state;
+  const keepR = st.receipts;
+  // ★倉庫の側にも入れる（この検査の途中で読み直すと、画面だけの設定は消えるため）
+  db.pay_org[0].data = Object.assign({}, db.pay_org[0].data, { invoiceCarry: true });
+  st.org.invoiceCarry = true;                       // 繰越を出す
+
+  /* ① 前回が無い（初回）＝「前回の請求はありません」。★「未確認」とは言わない★ */
+  st.receipts = [];                                  // 読めた上で0件
+  win.SeikyuApp._recalcForTest();
+  await sleep(20);
+  let txt = $('tot-box').textContent;
+  ok(/前回の請求はありません/.test(txt), '初回だと言っていない: ' + txt);
+  ok(!/未確認/.test(txt), '★初回なのに「未確認」と出ている（無いのと読めないのを混ぜた）★: ' + txt);
+  ok(!/前回請求額/.test(txt), '初回なのに空の繰越の表を出している: ' + txt);
+
+  /* ② 前回が有る・入金が読めていない＝「未確認」。★0と書かない★ */
+  db.pay_invoices.push({
+    id: 'iv_carry_prev', account_id: 'u1', doc_type: 'invoice', no: 'CARRY-001',
+    partner_id: 'pt_c1', status: 'issued', issue_ymd: '2026-07-31',
+    totals: { grandTotal: 50000 }, lines: [], data: {}, snapshot: {}, deleted_at: null,
+  });
+  db.pay_partners.push({ id: 'pt_c1', account_id: 'u1', sort: 8, data: { name: '繰越あり商店', keisho: '御中' }, deleted_at: null });
+  await win.SeikyuApp._loadMasters();
+  await win.SeikyuApp._state.store.invoices.list('invoice').then((v) => { st.invoices = v; });
+  st.cur.partner_id = 'pt_c1';
+  st.receipts = null;                                // ★読めていない★
+  win.SeikyuApp._recalcForTest();
+  await sleep(20);
+  txt = $('tot-box').textContent;
+  ok(/前回請求額/.test(txt), '前回があるのに繰越の表が出ていない: ' + txt);
+  ok(/未確認/.test(txt), '入金が読めないのに「未確認」と出ていない: ' + txt);
+  ok(!/入金額0 円/.test(txt), '★読めていないのに 0 と書いている★: ' + txt);
+  ok(!/前回の請求はありません/.test(txt), '前回があるのに「ありません」と出ている');
+
+  /* ③ 前回が有る・入金が読めた＝実額。合計＝繰越＋今回 */
+  st.receipts = [{ id: 'rc1', invoice_id: 'iv_carry_prev', amount: 20000, deleted_at: null }];
+  win.SeikyuApp._recalcForTest();
+  await sleep(20);
+  txt = $('tot-box').textContent;
+  ok(/20,000/.test(txt), '入金の実額が出ていない: ' + txt);
+  ok(/30,000/.test(txt), '繰越額（50,000−20,000）が出ていない: ' + txt);
+  ok(!/未確認/.test(txt), '読めているのに「未確認」と出ている: ' + txt);
+
+  st.receipts = keepR;
+  delete db.pay_org[0].data.invoiceCarry;
+  st.org.invoiceCarry = false;
+  st.cur.partner_id = '';
+  win.SeikyuApp._recalcForTest();
+  await sleep(20);
+});
+
+await TA('9-d. ★①「前回から当てる」が源泉ありでも壊れない・②押す回数は2回のまま', async () => {
+  const st = win.SeikyuApp._state;
+  /* ★この検査だけの取引先を足す★
+     前の検査が pt_a / pt_b に何通も入れているので、そのまま使うと
+     「前回」がどれになるか検査ごとに変わる（＝当てにならない検査になる）。 */
+  db.pay_partners.push({
+    id: 'pt_g', account_id: 'u1', sort: 9,
+    data: { name: '源泉あり商店', keisho: '御中', addr: '今治市9-9', gensen: true },
+    deleted_at: null,
+  });
+  await win.SeikyuApp._loadMasters();
+  await sleep(30);
+
+  doc.querySelector('.ex-bn[data-scr="scr-list"]').click(); await sleep(10);
+  $('b-new').click(); await sleep(20);
+
+  /* ── ここから ★押した回数を数える★ ── */
+  let taps = 0;
+
+  // 押す1：取引先を選ぶ
+  setVal('e-partner', 'pt_g'); taps++;
+  await sleep(60);
+  // 打鍵（明細）は「押す回数」に数えない
+  const row = () => doc.querySelector('#lines-body tr');
+  const setF = (k, v) => { const e = row().querySelector('[data-f="' + k + '"]'); e.value = v; e.dispatchEvent(new win.Event('input')); e.dispatchEvent(new win.Event('change')); };
+  setF('name', '原稿料 9月分'); setF('amount', '200000');
+  await sleep(30);
+
+  // ★取引先の既定から、源泉が最初から入っている＝ここで押す必要が無い★
+  eq($('e-gensen').checked, true, '取引先の既定から源泉が入っていない（押す回数が増える）');
+  ok(/源泉徴収税額/.test($('tot-box').textContent), '源泉が効いていない');
+
+  // 押す2：発行する
+  $('b-issue').click(); taps++;
+  await sleep(80);
+  eq(st.cur.status, 'issued', '発行できていない: ' + $('edit-err').textContent);
+  eq(taps, 2, '★押す回数が2回を超えた★: ' + taps);
+  // 写しに源泉が固まっている（あとで率が変わっても、出した紙は動かない）
+  ok(st.cur.snapshot && st.cur.snapshot.gensen, '写しに源泉が残っていない');
+  const CHOSHO = require_(path.join(ROOT, 'kyuyo/lib/shiharai-chosho.js'));
+  eq(st.cur.snapshot.gensen.amount, CHOSHO.gensenA(200000), '写しの源泉が給与の lib と違う');
+
+  /* ── 2通目：★前回から当てる が源泉ありでも正しく当たる★ ── */
+  doc.querySelector('.ex-bn[data-scr="scr-list"]').click(); await sleep(10);
+  $('b-new').click(); await sleep(20);
+  let taps2 = 0;
+  setVal('e-partner', 'pt_g'); taps2++;
+  await sleep(60);
+  ok(win.getComputedStyle($('guess-card')).display !== 'none', '「前回と同じで作りますか？」が出ていない');
+  ok(/源泉徴収/.test($('guess-list').textContent), '当てた中身に源泉が出ていない: ' + $('guess-list').textContent);
+
+  $('b-guess-ok').click(); taps2++;
+  await sleep(40);
+  eq($('e-gensen').checked, true, '✓ を押したのに源泉が入っていない');
+  ok(win.getComputedStyle($('tag-gensen')).display !== 'none', '「前回から」の印が源泉に付いていない');
+  setF('name', '原稿料 10月分'); setF('amount', '150000');
+  await sleep(30);
+  $('b-issue').click(); taps2++;
+  await sleep(80);
+  eq(st.cur.status, 'issued', '2通目が発行できていない: ' + $('edit-err').textContent);
+  eq(taps2, 3, '★2通目の押す回数が3回を超えた（取引先・✓・発行）★: ' + taps2);
+  eq(st.cur.snapshot.gensen.amount, CHOSHO.gensenA(150000), '2通目の源泉が違う');
+});
+
+await TA('9-f. ★「前回と同じ」で源泉を消さない（振り込まれる額が黙って変わらない）', async () => {
+  const st = win.SeikyuApp._state;
+  /* 前回＝源泉なしで出した1通。そのあとで取引先を「源泉の対象」に決めた、という順番。
+     ここで ✓ を押した時に源泉が外れると、★同じ画面のまま振込額だけ変わる★。 */
+  db.pay_partners.push({
+    id: 'pt_h', account_id: 'u1', sort: 10,
+    data: { name: 'あとから源泉商店', keisho: '御中' }, deleted_at: null,
+  });
+  await win.SeikyuApp._loadMasters();
+  await sleep(30);
+
+  // 1通目：源泉なしで発行
+  doc.querySelector('.ex-bn[data-scr="scr-list"]').click(); await sleep(10);
+  $('b-new').click(); await sleep(20);
+  setVal('e-partner', 'pt_h'); await sleep(50);
+  const setF = (k, v) => { const e = doc.querySelector('#lines-body tr').querySelector('[data-f="' + k + '"]'); e.value = v; e.dispatchEvent(new win.Event('input')); e.dispatchEvent(new win.Event('change')); };
+  setF('name', '9月分'); setF('amount', '100000');
+  eq($('e-gensen').checked, false, '前提が崩れている（1通目から源泉が入っている）');
+  await sleep(20);
+  $('b-issue').click(); await sleep(60);
+  eq(st.cur.status, 'issued', '1通目が出せていない: ' + $('edit-err').textContent);
+
+  // ここで取引先を「源泉の対象」に決める（前回より後の決めごと）
+  const ph = db.pay_partners.find((x) => x.id === 'pt_h');
+  ph.data = Object.assign({}, ph.data, { gensen: true });
+  await win.SeikyuApp._loadMasters();
+  await sleep(30);
+
+  // 2通目：取引先の既定で源泉が入る → ✓ を押しても外れない
+  doc.querySelector('.ex-bn[data-scr="scr-list"]').click(); await sleep(10);
+  $('b-new').click(); await sleep(20);
+  setVal('e-partner', 'pt_h'); await sleep(60);
+  eq($('e-gensen').checked, true, '取引先の既定で源泉が入っていない');
+  ok(/源泉徴収/.test($('guess-list').textContent),
+    '★押したらどうなるかを言っていない（前回に無い物は黙って変わる）★: ' + $('guess-list').textContent);
+
+  $('b-guess-ok').click(); await sleep(40);
+  eq($('e-gensen').checked, true, '★✓ を押したら源泉が消えた（振込額が黙って変わる）★');
+  eq(!!st.cur.data.gensen, true, '中の値も消えている');
+
+  setF('name', '10月分'); setF('amount', '100000');
+  await sleep(30);
+  const CHOSHO = require_(path.join(ROOT, 'kyuyo/lib/shiharai-chosho.js'));
+  ok($('tot-box').textContent.includes(CHOSHO.gensenA(100000).toLocaleString('ja-JP')),
+    '源泉が効いていない: ' + $('tot-box').textContent);
+});
+
+await TA('9-f. ★源泉の説明は、打つたびに直る（古い文が残らない）', async () => {
+  const hint = () => $('e-gensen-hint').textContent;
+  ok(/対象額/.test(hint()), '★明細を打ったのに「対象になる行がまだありません」のまま★: ' + hint());
+  const CHOSHO = require_(path.join(ROOT, 'kyuyo/lib/shiharai-chosho.js'));
+  ok(hint().includes(CHOSHO.gensenA(100000).toLocaleString('ja-JP')), '説明の額が画面と違う: ' + hint());
+  // 対象を消したら説明も戻る
+  const sel = doc.querySelector('#lines-body [data-f="rate"]');
+  sel.value = [...sel.options].find((o) => o.textContent === '対象外').value;
+  sel.dispatchEvent(new win.Event('change'));
+  await sleep(40);
+  ok(/対象になる行がまだありません/.test(hint()), '対象が無くなったのに説明が古いまま: ' + hint());
+});
+
+T('9-e. ★税率のある行は非課税にならない（印だけ立てても数え違えない）', () => {
+  const TAX = require_(path.join(ROOT, 'seikyu/lib/seikyu-tax.js'));
+  const SR = require_(path.join(ROOT, 'kyuyo/lib/shouhizei-ritsu.js'));
+  const STD = Math.round(SR.hyojun * 10000) / 100;
+  const r = TAX.compute({ lines: [{ name: 'あ', amount: 10000, rate: STD, nontax: true }], taxMode: 'exclusive', rounding: 'floor' });
+  eq(r.nontaxable.base, 0, '税率のある行が非課税に入った');
+});
+
 /* ═══ 8. まとめ ═══ */
 T('8. ★最後まで JS が1つも落ちていない', () => {
   eq(errs.length, 0, errs.join(' | '));

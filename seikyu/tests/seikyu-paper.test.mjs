@@ -16,6 +16,7 @@
  * 使い方: node seikyu/tests/seikyu-paper.test.mjs
  *         node seikyu/tests/seikyu-paper.test.mjs --self-test
  */
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
@@ -315,6 +316,60 @@ T('★紙に [object Object] を刷らない（読めない物は出さない）
   ok(!/\[object Object\]/.test(h2), '備考に [object Object] が出ている');
   // ★ちゃんとした文字列は今までどおり出る（消しすぎない）
   ok(/伊予銀行 今治支店 普通 1234567/.test(H1), '文字列の振込先まで消している');
+});
+
+/* ★紙でも「前回が無い」と「入金が読めていない」を作り分ける★
+   初回に 前回請求額 — ／ 入金額 — の表を出すと、受け取った人には
+   「読めなかった」のか「元から無い」のか分からない（2026-08-11 検査で発生）。 */
+/* 2026-08-11：carryBlock() は書かれていたのに ★1度も呼ばれていなかった★。
+   関数の中身の検査は緑、lib も緑、それでも紙には1行も出ない。
+   ＝「作った物が組み立てに並んでいるか」を機械で見る。 */
+T('★紙の部品が、作られただけで並んでいない物が無い', () => {
+  const raw = fs.readFileSync(path.join(ROOT, 'seikyu/lib/seikyu-paper.js'), 'utf8');
+  /* ★コメントを落としてから数える★
+     コメントに「carryBlock() は…」と書いてあるだけで数が1増え、
+     本当は呼ばれていないのに緑になる（この検査自身が空振りしていた）。 */
+  const src = raw.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^[ \t]*\/\/.*$/gm, '');
+  const defined = [...src.matchAll(/function\s+(\w+Block)\s*\(/g)].map((m) => m[1]);
+  ok(defined.length >= 5, '紙の部品が見つからない（数え方が壊れている）: ' + defined.join(','));
+  defined.forEach((fn) => {
+    const calls = src.split(fn + '(').length - 1;   // 定義の1回＋呼び出しの回数
+    ok(calls >= 2, '★' + fn + '() は作られただけで紙に並んでいない★');
+  });
+});
+
+T('★繰越：初回は1行だけ言う（空の表を出さない・「未確認」と書かない）', () => {
+  const CARRY = require_(path.join(ROOT, 'seikyu/lib/seikyu-carry.js'));
+  const c = CARRY.compute({ thisTotal: 110000, prev: null, receipts: [] });
+  eq(c.state, 'first');
+  const h = PAPER.build(sample({ carry: c })).html;
+  ok(/前回の請求はありません/.test(h), '初回だと言っていない');
+  ok(!/前回請求額/.test(h), '初回なのに空の繰越の表を出している');
+  ok(!/未確認/.test(h), '★初回なのに「未確認」と書いている★');
+});
+
+T('★繰越：入金が読めていない時は「未確認」と刷る（0や — にしない）', () => {
+  const CARRY = require_(path.join(ROOT, 'seikyu/lib/seikyu-carry.js'));
+  const c = CARRY.compute({ thisTotal: 110000, prev: { id: 'p1', no: 'CARRY-001', totals: { grandTotal: 50000 } }, receipts: null });
+  eq(c.state, 'unknown');
+  const h = PAPER.build(sample({ carry: c })).html;
+  ok(/前回請求額/.test(h), '繰越の表が出ていない');
+  ok(/（未確認）/.test(h), '「未確認」と刷っていない');
+  ok(!/入金額<\/th><td>0</.test(h), '★読めていないのに 0 と刷っている★');
+  ok(!/前回の請求はありません/.test(h), '前回があるのに「ありません」と刷っている');
+});
+
+T('★繰越：読めた時は実額（前回50,000−入金20,000＝繰越30,000）', () => {
+  const CARRY = require_(path.join(ROOT, 'seikyu/lib/seikyu-carry.js'));
+  const c = CARRY.compute({
+    thisTotal: 110000,
+    prev: { id: 'p1', no: 'CARRY-001', totals: { grandTotal: 50000 } },
+    receipts: [{ invoice_id: 'p1', amount: 20000 }],
+  });
+  const h = PAPER.build(sample({ carry: c })).html;
+  ok(flat(h).includes(PAPER.yen(30000)), '繰越額が紙に無い');
+  ok(flat(h).includes(PAPER.yen(140000)), '合計請求額（繰越30,000＋今回110,000）が紙に無い');
+  ok(!/未確認/.test(h), '読めているのに「未確認」と刷っている');
 });
 
 T('★小計・消費税・合計は枠なし、合計の上に線', () => {

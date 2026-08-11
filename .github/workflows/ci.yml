@@ -95,6 +95,14 @@ jobs:
         run: node seikyu/tests/seikyu-tax.test.mjs
       - name: ★請求書 消費税 (わざと「明細ごとに丸める」等に壊して赤になるかの自己確認)
         run: node seikyu/tests/seikyu-tax.test.mjs --self-test
+      - name: ★請求書 源泉徴収 (国税庁 No.2798・100万円の境目・1円未満切捨・率は説明文に書かない)
+        run: node seikyu/tests/seikyu-gensen.test.mjs
+      - name: ★請求書 源泉徴収 (わざと境目をズラす/丸めを変えて赤になるかの自己確認)
+        run: node seikyu/tests/seikyu-gensen.test.mjs --self-test
+      - name: ★請求書 繰越 (前回・入金・繰越の5行/初回と未確認と0を分ける/写しに残す)
+        run: node seikyu/tests/seikyu-carry.test.mjs
+      - name: ★請求書 繰越 (わざと未確認を0にして赤になるかの自己確認)
+        run: node seikyu/tests/seikyu-carry.test.mjs --self-test
       - name: ★請求書の決まり (番号の重複を作らない/発行したら固まる/過入金を0にしない/未確認と0件を分ける)
         run: node seikyu/tests/seikyu-doc.test.mjs
       - name: ★請求書の決まり (わざと壊して赤になるかの自己確認)

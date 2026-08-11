@@ -12,8 +12,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@500&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 <!-- ★見た目の本体はスイート共通の皮。請求書の app.css は差分だけ（読む順は皮が先） -->
-<link rel="stylesheet" href="../css/exally-ui.css?v=9c0f883a">
-<link rel="stylesheet" href="css/app.css?v=9c0f883a">
+<link rel="stylesheet" href="../css/exally-ui.css?v=1e1e0e89">
+<link rel="stylesheet" href="css/app.css?v=1e1e0e89">
 </head>
 <body>
 
@@ -123,6 +123,10 @@
           <textarea class="ex-input" id="e-memo" placeholder="例：振込手数料は貴社にてご負担ください"></textarea>
         </div>
       </div>
+      <div class="ex-frow">
+        <label class="ex-check"><input type="checkbox" id="e-gensen"><span>源泉徴収する<span class="guess-tag" id="tag-gensen" style="display:none">前回から</span></span></label>
+        <p class="ex-hint" id="e-gensen-hint"></p>
+      </div>
       <p class="ex-hint">税の入れ方・円未満の丸め方・紙の様式は「設定」で1回 決めたら、以後は聞きません。</p>
     </details>
 
@@ -197,6 +201,10 @@
       </div>
       <p class="ex-hint">消費税は、税率ごとに合計してから1回だけ丸めます（国税庁の定め）。丸め方だけが会社ごとの決めごとです。</p>
       <div class="ex-frow">
+        <label class="ex-check"><input type="checkbox" id="s-carry"><span>紙に「繰越」を出す（前回請求額・入金額・繰越額）</span></label>
+        <p class="ex-hint" id="s-carry-hint">毎月まとめて払われる相手に使います。入金が読めない時は ★0と書かず「未確認」と出します★。</p>
+      </div>
+      <div class="ex-frow">
         <div class="ex-label">お振込先（紙に出ます）</div>
         <textarea class="ex-input" id="s-bank" placeholder="例：伊予銀行 今治支店 普通 1234567 カ）ゼロアクト"></textarea>
       </div>
@@ -246,6 +254,10 @@
           <select class="ex-input" id="s-pterm"></select>
           <input class="ex-input ex-num" id="s-ptermn" type="text" inputmode="numeric" placeholder="日数" style="margin-top:6px;display:none">
         </div>
+      </div>
+      <div class="ex-frow">
+        <label class="ex-check"><input type="checkbox" id="s-pgensen"><span>この取引先は源泉徴収の対象（新しく作る1通に最初から入る）</span></label>
+        <p class="ex-hint">対象かどうかは相手（払う側）が決めます。1通ごとに変える時は、入力の「細かく決める」から。</p>
       </div>
       <div class="ex-btn-row">
         <button class="ex-b1" type="button" id="b-pt-save">この取引先を保存</button>
@@ -325,28 +337,33 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../js/supa-config.js?v=9c0f883a"></script>
-<script src="../lib/xlsx.full.min.js?v=9c0f883a"></script>
-<script src="../js/file-out.js?v=9c0f883a"></script>
-<script src="../js/suite-data.js?v=9c0f883a"></script>
-<script src="../kyuyo/lib/shouhizei-ritsu.js?v=9c0f883a"></script>
-<script src="lib/seikyu-tax.js?v=9c0f883a"></script>
-<script src="lib/seikyu-cols.js?v=9c0f883a"></script>
-<script src="lib/seikyu-templates.js?v=9c0f883a"></script>
-<script src="lib/seikyu-doc.js?v=9c0f883a"></script>
-<script src="lib/seikyu-name.js?v=9c0f883a"></script>
-<script src="lib/seikyu-paper.js?v=9c0f883a"></script>
-<script src="lib/seikyu-aoa.js?v=9c0f883a"></script>
-<script src="js/seikyu-store.js?v=9c0f883a"></script>
-<script src="js/seikyu-out.js?v=9c0f883a"></script>
-<script src="js/seikyu-app.js?v=9c0f883a"></script>
-<script src="../js/exally-login.js?v=9c0f883a"></script>
-<script src="js/auth.js?v=9c0f883a"></script>
+<script src="../js/supa-config.js?v=1e1e0e89"></script>
+<script src="../lib/xlsx.full.min.js?v=1e1e0e89"></script>
+<script src="../js/file-out.js?v=1e1e0e89"></script>
+<script src="../js/suite-data.js?v=1e1e0e89"></script>
+<script src="../kyuyo/lib/shouhizei-ritsu.js?v=1e1e0e89"></script>
+<!-- ★源泉徴収の率と式は【給与の lib】が持つ＝請求書側には率を1つも書かない★
+     （国税庁 No.2798。100万円の境目も、1円未満の切り捨ても、あちらの gensenA が唯一の正） -->
+<script src="../kyuyo/lib/shiharai-chosho.js?v=1e1e0e89"></script>
+<script src="lib/seikyu-tax.js?v=1e1e0e89"></script>
+<script src="lib/seikyu-gensen.js?v=1e1e0e89"></script>
+<script src="lib/seikyu-carry.js?v=1e1e0e89"></script>
+<script src="lib/seikyu-cols.js?v=1e1e0e89"></script>
+<script src="lib/seikyu-templates.js?v=1e1e0e89"></script>
+<script src="lib/seikyu-doc.js?v=1e1e0e89"></script>
+<script src="lib/seikyu-name.js?v=1e1e0e89"></script>
+<script src="lib/seikyu-paper.js?v=1e1e0e89"></script>
+<script src="lib/seikyu-aoa.js?v=1e1e0e89"></script>
+<script src="js/seikyu-store.js?v=1e1e0e89"></script>
+<script src="js/seikyu-out.js?v=1e1e0e89"></script>
+<script src="js/seikyu-app.js?v=1e1e0e89"></script>
+<script src="../js/exally-login.js?v=1e1e0e89"></script>
+<script src="js/auth.js?v=1e1e0e89"></script>
 <!-- ★Service Worker は登録しない＝キャッシュで古い版が居座る問題を根絶。
      開くたびに既存SWを登録解除＋全キャッシュ削除して常に最新にする（給与と同じ）。 -->
 <script>try{if('serviceWorker'in navigator){navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister();});});}if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.delete(k);});});}}catch(e){}</script>
 <!-- ★テスト環境の帯★ 本番の倉庫では出ない。今どの倉庫かは js/supa-config.js が唯一の正。
      ホスト名では決めない（配り方は変わるが「本番のデータか」は変わらないため）。 -->
-<script src="../js/env-badge.js?v=9c0f883a"></script>
+<script src="../js/env-badge.js?v=1e1e0e89"></script>
 </body>
 </html>

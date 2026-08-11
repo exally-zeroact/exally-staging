@@ -16,6 +16,7 @@
   var DOC = global.SeikyuDoc, TAX = global.SeikyuTax, PAPER = global.SeikyuPaper;
   var NAME = global.SeikyuName, AOA = global.SeikyuAoa, OUT = global.SeikyuOut;
   var COLS = global.SeikyuCols, TPL = global.SeikyuTemplates;
+  var GENSEN = global.SeikyuGensen, CARRY = global.SeikyuCarry;
 
   var TEMPLATE_ID = TPL.DEFAULT_ID;
   var ALIGN_LABEL = { left: '左', center: '中', right: '右' };
@@ -64,6 +65,7 @@
       taxMode: d.taxMode === 'inclusive' ? 'inclusive' : 'exclusive',
       rounding: (['floor', 'ceil', 'round'].indexOf(d.taxRounding) >= 0) ? d.taxRounding : 'floor',
       bank: d.bank || '',
+      carry: !!d.invoiceCarry,      // ★繰越を紙に出すか（既定は切＝今までどおり）
       template: TPL.get(d.invoiceTemplate) ? d.invoiceTemplate : TPL.DEFAULT_ID,
       cols: (d.invoiceCols && Array.isArray(d.invoiceCols.items) && d.invoiceCols.items.length) ? d.invoiceCols : null,
     };
@@ -104,12 +106,29 @@
     if (value !== undefined && value !== null) el.value = value;
   }
 
-  /* 税率の選択肢。★数字は書かない＝唯一の正から作る★ */
+  /* 税率の選択肢。★数字は書かない＝唯一の正から作る★
+     ★非課税と対象外(不課税)は別物★（国税庁）。どちらも消費税は付かないが、
+     非課税＝本来は課税の取引だが政策で課さない（住宅家賃・保険料など）、
+     対象外＝そもそも取引ではない（立替金・寄付など）。紙では別の行に出す。
+     選び所は既にあるので、★ここに1つ足すだけ＝聞く回数は増えない★。 */
+  var NONTAX_V = '0!nontax';
   function rateOptions() {
     var rs = TAX.rates() || [];
-    return rs.map(function (p) {
-      return { v: String(p), t: (Number(p) === 0 ? '対象外' : p + '%') };
+    var out = [];
+    rs.forEach(function (p) {
+      if (Number(p) === 0) {
+        out.push({ v: NONTAX_V, t: '非課税' });
+        out.push({ v: String(p), t: '対象外' });
+        return;
+      }
+      out.push({ v: String(p), t: p + '%' });
     });
+    return out;
+  }
+  /** 行が今どれを選んでいるか（選び所の value に直す） */
+  function rateValueOf(ln) {
+    if (Number(ln.rate) === 0 && ln.nontax) return NONTAX_V;
+    return String(ln.rate);
   }
 
   /* ═══ 取引先 ═══ */
@@ -251,6 +270,8 @@
 
     $('e-subject').value = (v.data && v.data.subject) || '';
     $('e-memo').value = (v.data && v.data.memo) || '';
+    $('e-gensen').checked = !!(v.data && v.data.gensen);
+    drawGensenHint();
 
     renderGuess();
     renderLines();
@@ -288,6 +309,8 @@
       memo: d.memo || '',
       taxMode: prev.tax_mode,
       rounding: prev.rounding,
+      gensen: !!(d.gensen),                       // ★源泉あり／なしも前回のまま
+      carryOn: !!(prev.snapshot && prev.snapshot.carry),
       templateId: prev.template_id || '',
       cols: (snapCols && snapCols.items && snapCols.items.length) ? snapCols : (d.cols || null),
       lineCount: Array.isArray(prev.lines) ? prev.lines.length : 0,
@@ -333,6 +356,10 @@
       ['明細の列', esc((g.cols && g.cols.items ? g.cols.items : colsOf(v).items).join('・'))],
       ['税の入れ方', g.taxMode === 'inclusive' ? '内税' : '外税'],
     ];
+    // ★源泉・繰越は「有る時だけ」出す（無い人の画面に増やさない）
+    if (g.gensen) rows.push(['源泉徴収', 'する（前回と同じ）']);
+    else if (partnerGensen(v.partner_id)) rows.push(['源泉徴収', 'する（この取引先の設定）']);
+    if (g.carryOn) rows.push(['繰越', '前回の残りを紙に出す']);
     $('guess-list').innerHTML = '<table class="guess-t"><tbody>'
       + rows.map(function (r) { return '<tr><th>' + r[0] + '</th><td>' + r[1] + '</td></tr>'; }).join('')
       + '</tbody></table>';
@@ -352,12 +379,19 @@
     if (g.rounding) v.rounding = g.rounding;
     if (g.templateId) v.template_id = g.templateId;
     if (g.cols) v.data.cols = COLS.normalizeSpec(g.cols);
-    S.guessApplied = { subject: !!g.subject, term: !!(g.term && g.term.kind !== 'none') };
+    /* ★「前回と同じ」で源泉を消さない★
+       取引先の設定で「源泉徴収の対象」にしてあるのに、前回（設定より古い1通）が
+       源泉なしだと、✓ を押した瞬間に源泉が外れる＝★振り込まれる額が黙って変わる★。
+       前回で足す事はあっても、★引く事はしない★（消したい時は畳みの中で自分で外す）。 */
+    var wantGensen = !!g.gensen || !!(v.data && v.data.gensen) || partnerGensen(v.partner_id);
+    v.data.gensen = wantGensen;
+    S.guessApplied = { subject: !!g.subject, term: !!(g.term && g.term.kind !== 'none'), gensen: !!g.gensen };
     S.guessDone = true;
     recalcDue();
     fillEdit();
     show($('tag-subject'), !!S.guessApplied.subject);
     show($('tag-term'), !!S.guessApplied.term);
+    show($('tag-gensen'), !!S.guessApplied.gensen);
     box('edit-ok', '前回と同じ内容を入れました。明細を打てば発行できます（直したい所は「細かく決める」から）。');
   }
 
@@ -426,7 +460,7 @@
         if (r === 'index') return '<td class="l-x" style="color:#7AA08C;padding-top:12px">' + (i + 1) + '</td>';
         if (r === 'rate') {
           return '<td class="' + cls + '"><select class="ex-input" data-f="rate">'
-            + rates.map(function (x) { return '<option value="' + esc(x.v) + '"' + (String(ln.rate) === x.v ? ' selected' : '') + '>' + esc(x.t) + '</option>'; }).join('')
+            + rates.map(function (x) { return '<option value="' + esc(x.v) + '"' + (rateValueOf(ln) === x.v ? ' selected' : '') + '>' + esc(x.t) + '</option>'; }).join('')
             + '</select></td>';
         }
         var val, mode = '', extra = '';
@@ -450,7 +484,12 @@
       el.oninput = el.onchange = function () {
         var tr = el.closest('tr'), i = +tr.getAttribute('data-i');
         var f = el.getAttribute('data-f');
-        if (f) S.cur.lines[i][f] = el.value;
+        if (f === 'rate') {
+          // ★非課税は「税率0＋非課税の印」の2つで表す（0だけでは対象外と見分けが付かない）
+          var non = el.value === NONTAX_V;
+          S.cur.lines[i].rate = non ? '0' : el.value;
+          S.cur.lines[i].nontax = non;
+        } else if (f) S.cur.lines[i][f] = el.value;
         else {
           if (!S.cur.lines[i].extra) S.cur.lines[i].extra = {};
           S.cur.lines[i].extra[el.getAttribute('data-x')] = el.value;
@@ -470,7 +509,7 @@
     });
   }
   function blankLine() {
-    return { name: '', qty: '', unit: '', price: '', amount: '', rate: firstRate(), memo: '', extra: {} };
+    return { name: '', qty: '', unit: '', price: '', amount: '', rate: firstRate(), nontax: false, memo: '', extra: {} };
   }
 
 
@@ -479,6 +518,10 @@
   function cleanLines(lines) {
     return (lines || []).map(function (ln) {
       var o = { name: ln.name || '', unit: ln.unit || '', rate: ln.rate, memo: ln.memo || '' };
+      // ★非課税の印は必ず持って回る（落とすと非課税が対象外に化けて、紙の区分が変わる）
+      if (ln.nontax) o.nontax = true;
+      // ★源泉の対象か（1通の入/切から、報酬の行にだけ立てる。立替＝対象外の行には立てない）
+      if (gensenOn() && !(Number(ln.rate) === 0 && !ln.nontax)) o.gensen = true;
       if (ln.qty !== '' && ln.qty !== undefined && ln.qty !== null) o.qty = Number(ln.qty);
       if (ln.price !== '' && ln.price !== undefined && ln.price !== null) o.price = Number(ln.price);
       if (ln.amount !== '' && ln.amount !== undefined && ln.amount !== null) o.amount = Number(ln.amount);
@@ -495,6 +538,57 @@
       return (o.name || o.qty !== undefined || o.price !== undefined || o.amount !== undefined
         || Object.keys(o.extra).length > 0);
     });
+  }
+
+  /* ★この1通は源泉徴収するか★
+     決まり方は3段： ① この1通の入/切（畳みの中）
+                     ② 無ければ 取引先の既定（設定 ▸ 取引先ごと）
+                     ③ 発行済みは写しに固まっている
+     ★入力の画面に新しい設問は出さない★（既定で入るので、ふつうは触らない）。 */
+  function gensenOn() {
+    var v = S.cur; if (!v) return false;
+    return !!(v.data && v.data.gensen);
+  }
+  function partnerGensen(partnerId) {
+    var p = partnerById(partnerId);
+    return !!(p && p.data && p.data.gensen);
+  }
+  /* ★源泉の説明は1か所で作る★（画面の数字と説明が食い違わないように、
+     数え直した結果 g をそのまま渡す。ここで数え直さない＝二度数えて違う答えを出さない） */
+  function gensenHintText(g, c) {
+    if (!$('e-gensen-hint')) return;
+    if (!gensenOn()) { setText('e-gensen-hint', '相手（払う側）が源泉徴収する時に入れます。取引先ごとの既定は「設定」で決められます。'); return; }
+    if (!g || !g.on) { setText('e-gensen-hint', '源泉の対象になる行がまだありません（立替など対象外だけの時は掛かりません）。'); return; }
+    var t = null;
+    try { t = currentTax(); } catch (e) { t = null; }
+    var pay = (t && t.ok) ? DOC.payableOf(t, c || null, g) : null;
+    setText('e-gensen-hint', '対象額 ' + yen(g.base) + ' 円 → ' + g.label + ' ' + yen(g.amount) + ' 円 → '
+      + g.netLabel + ' ' + (pay === null ? '（未確認）' : yen(pay) + ' 円'));
+  }
+  function drawGensenHint() { gensenHintText(currentGensen(), currentCarry()); }
+  function currentGensen() {
+    var v = S.cur; if (!v) return null;
+    if (v.snapshot && v.snapshot.gensen) return GENSEN.fromSnapshot(v.snapshot.gensen, v.totals && v.totals.grandTotal);
+    if (!gensenOn()) return null;
+    var t;
+    try { t = currentTax(); } catch (e) { return null; }
+    if (!t || !t.ok) return null;
+    return GENSEN.compute({ lines: cleanLines(v.lines), tax: t, taxMode: v.tax_mode, rounding: v.rounding });
+  }
+
+  /* ★繰越★ 会社ごとの入/切。入力の画面では聞かない（前回と入金から機械が出す）。 */
+  function carryOn() { return !!settings().carry; }
+  function currentCarry() {
+    var v = S.cur; if (!v) return null;
+    if (v.snapshot && v.snapshot.carry) return CARRY.fromSnapshot(v.snapshot.carry);
+    if (!carryOn()) return null;
+    var t;
+    try { t = currentTax(); } catch (e) { return null; }
+    if (!t || !t.ok) return null;
+    var prev = CARRY.prevOf(S.invoices, v);
+    /* ★入金が読めていない時は null のまま渡す（0にしない＝紙に「未確認」と出る）★
+       S.receipts が唯一の正：null＝読めていない／[]＝読めた上で0件。作り分けを2か所に持たない。 */
+    return CARRY.compute({ thisTotal: t.grandTotal, prev: prev, receipts: S.receipts });
   }
 
   function currentTax() {
@@ -518,14 +612,45 @@
       return '<div class="tot-r"><span class="tot-l">' + esc(b.pct) + '% 対象</span><span class="tot-v">'
         + yen(b.base) + ' 円（消費税 ' + yen(b.tax) + ' 円）</span></div>';
     }).join('');
+    /* ★非課税と対象外は別の行に出す（同じ0円でも意味が違う）★ */
+    if (t.nontaxable && t.nontaxable.base) {
+      rows += '<div class="tot-r"><span class="tot-l">非課税</span><span class="tot-v">' + yen(t.nontaxable.base) + ' 円</span></div>';
+    }
     if (t.exempt && t.exempt.base) {
       rows += '<div class="tot-r"><span class="tot-l">消費税の対象外</span><span class="tot-v">' + yen(t.exempt.base) + ' 円</span></div>';
     }
     if (host) {
-      host.innerHTML = rows
+      var html = rows
         + '<div class="tot-r"><span class="tot-l">小計</span><span class="tot-v">' + yen(t.subtotal) + ' 円</span></div>'
         + '<div class="tot-r"><span class="tot-l">消費税</span><span class="tot-v">' + yen(t.taxTotal) + ' 円</span></div>'
         + '<div class="tot-r tot-g"><span class="tot-l">合計</span><span class="tot-v">' + yen(t.grandTotal) + ' 円</span></div>';
+      /* ★源泉があるなら、画面にも「引いたあと」まで出す★
+         紙にだけ出して画面に出さないと、見ている数字と振り込まれる額が食い違う。 */
+      var g = currentGensen();
+      var c = currentCarry();
+      if (g && g.on) {
+        /* ★差引は「合計請求額（繰越こみ）− 源泉」★ 順番は seikyu-doc.js が唯一の正 */
+        var pay = DOC.payableOf(t, c, g);
+        html += '<div class="tot-r"><span class="tot-l">' + esc(g.label) + '</span><span class="tot-v">− ' + yen(g.amount) + ' 円</span></div>'
+          + '<div class="tot-r tot-g"><span class="tot-l">' + esc(g.netLabel) + '</span><span class="tot-v">'
+          + (pay === null ? '（未確認）' : yen(pay) + ' 円') + '</span></div>';
+      }
+      gensenHintText(g, c);   // ★明細を打つたびに説明も直す（古い文を残さない）
+      /* ★繰越があるなら、前回の残りを足したあとまで出す★ */
+      if (c && c.state === 'first') {
+        // ★初回は1行だけ言う（「未確認」と書かない＝読めなかったのと作り分ける）
+        html += '<div class="ex-hint">' + esc(c.label) + '</div>';
+      } else if (c) {
+        CARRY.ROWS.forEach(function (r) {
+          if (r.key === 'thisTotal') return;                       // 今回請求額＝上の「合計」と同じ
+          var val = c[r.key];
+          var txt = (val === null || val === undefined) ? '（未確認）' : yen(val) + ' 円';
+          html += '<div class="tot-r' + (r.key === 'grandTotal' ? ' tot-g' : '') + '"><span class="tot-l">'
+            + esc(r.label) + '</span><span class="tot-v">' + txt + '</span></div>';
+        });
+        if (c.label) html += '<div class="ex-hint">' + esc(c.label) + (c.prevNo ? '（前回 No.　' + esc(c.prevNo) + '）' : '') + '</div>';
+      }
+      host.innerHTML = html;
     }
     return t;
   }
@@ -577,6 +702,8 @@
       v.data.term = { kind: t.kind, n: t.n || 0 };
       recalcDue();
     }
+    // ★源泉の対象かは相手が決める＝取引先の既定を入れておく（打つ前に聞かない）
+    if (!v.id) v.data.gensen = partnerGensen(v.partner_id);
   }
 
   /* ── 紙・Excel ── */
@@ -592,7 +719,10 @@
     if (!snap && S.org) org = Object.assign({}, S.org, { bank: settings().bank },
       sealPending ? { sealDataUrl: sealPending } : {});
     var inv = Object.assign({}, v, { lines: cleanLines(v.lines) });
-    return { inv: inv, tax: t, partner: partner, org: org, cols: colsOf(v), theme: themeOf(v) };
+    return {
+      inv: inv, tax: t, partner: partner, org: org, cols: colsOf(v), theme: themeOf(v),
+      gensen: currentGensen(), carry: currentCarry(),
+    };
   }
 
   function suggestName(ext) {
@@ -668,6 +798,7 @@
     var v = S.cur;
     v.data.subject = $('e-subject').value;
     v.data.memo = $('e-memo').value;
+    v.data.gensen = $('e-gensen').checked;
     v.no = $('e-no').value.trim();
     v.issue_ymd = $('e-issue').value || '';
     v.due_ymd = $('e-due').value || '';
@@ -721,9 +852,20 @@
     var snap = DOC.snapshotOf({
       at: at, partner: p, org: { data: orgData }, tax: t, templateId: tplId, cols: spec,
     });
+    /* ★源泉と繰越も写しに固める★
+       繰越は「その時 読めていた入金」で出した数字。あとで入金が入っても、
+       出してしまった紙は変わってはいけない（＝写しから読む）。
+       源泉も同じ。率が将来変わっても、出した紙の金額は動かない。 */
+    var gen = currentGensen();
+    var car = currentCarry();
+    if (gen && gen.on) snap.gensen = GENSEN.snapshotOf(gen);
+    if (car) snap.carry = CARRY.snapshotOf(car);
     var row = Object.assign({}, v, {
       lines: cleanLines(v.lines),
-      totals: { subtotal: t.subtotal, taxTotal: t.taxTotal, grandTotal: t.grandTotal, byRate: t.byRate, exempt: t.exempt, hasReduced: t.hasReduced },
+      totals: {
+        subtotal: t.subtotal, taxTotal: t.taxTotal, grandTotal: t.grandTotal,
+        byRate: t.byRate, exempt: t.exempt, nontaxable: t.nontaxable, hasReduced: t.hasReduced,
+      },
       snapshot: snap, template_id: tplId,
     });
     return S.store.invoices.issue(row, at).then(function (r) {
@@ -963,6 +1105,7 @@
     $('s-taxmode').value = s.taxMode;
     fillSelect($('s-round'), TAX.ROUNDINGS.map(function (k) { return { v: k, t: ROUND_LABEL[k] }; }), s.rounding);
     $('s-bank').value = s.bank;
+    $('s-carry').checked = s.carry;
     settingsHint();
 
     fillSelect($('s-partner'), [{ v: '', t: '（選んでください）' }].concat(S.partners.map(function (p) {
@@ -1008,8 +1151,9 @@
     $('s-pterm').value = t.kind || 'none';
     $('s-ptermn').value = t.n || '';
     show($('s-ptermn'), t.kind === 'days' || t.kind === 'nextDay');
+    $('s-pgensen').checked = !!d.gensen;
     var on = !!p;
-    ['s-pcode', 's-phonor', 's-pperson', 's-pzip', 's-ptel', 's-pterm', 's-ptermn'].forEach(function (x) { $(x).disabled = !on; });
+    ['s-pcode', 's-phonor', 's-pperson', 's-pzip', 's-ptel', 's-pterm', 's-ptermn', 's-pgensen'].forEach(function (x) { $(x).disabled = !on; });
     $('b-pt-save').disabled = !on;
   }
 
@@ -1021,6 +1165,7 @@
       taxMode: $('s-taxmode').value,
       taxRounding: $('s-round').value,
       bank: $('s-bank').value,
+      invoiceCarry: $('s-carry').checked,
       invoiceTemplate: settings().template,
       invoiceCols: COLS.normalizeSpec((S.org && S.org.invoiceCols) || TPL.getOrDefault(settings().template).cols),
     };
@@ -1048,6 +1193,7 @@
       zip: $('s-pzip').value.trim(),
       tel: $('s-ptel').value.trim(),
       payTerm: { kind: kind, n: Math.trunc(Number($('s-ptermn').value) || 0) },
+      gensen: $('s-pgensen').checked,   // ★源泉の対象かは相手が決める（この相手の既定）
     };
     box('pt-err', '');
     return S.store.partners.patch(id, add).then(function (r) {
@@ -1082,6 +1228,17 @@
       S.cur.partner_id = $('e-partner').value;
       S.guessDone = false;          // 相手を変えたら、また前回から当て直す
       applyPartnerDefaults();
+      /* ★取引先の既定（源泉の対象か・支払期限）を画面へ戻す★
+         ここを忘れると、中では源泉ありなのにチェックが外れて見える＝
+         人が「入れ直す」ために1回 余計に押すことになる（2026-08-11 検査で発生）。 */
+      $('e-gensen').checked = !!(S.cur.data && S.cur.data.gensen);
+      var term = (S.cur.data && S.cur.data.term) || { kind: 'none', n: 0 };
+      $('e-term').value = term.kind || 'none';
+      $('e-termn').value = term.n || '';
+      show($('e-termn'), term.kind === 'days' || term.kind === 'nextDay');
+      $('e-due').value = S.cur.due_ymd || '';
+      recalc();
+      drawGensenHint();
       renderGuess();
       return autoNumber();
     };
@@ -1123,6 +1280,13 @@
       renderLines(); recalc(); lockInputs();
     };
 
+    $('e-gensen').onchange = function () {
+      S.cur.data.gensen = $('e-gensen').checked;
+      S.dirty = true;
+      recalc();
+      drawGensenHint();
+    };
+    $('s-carry').onchange = function () { settingsHint(); };
     $('b-guess-ok').onclick = function () { applyGuess(); };
     $('b-guess-edit').onclick = function () {
       S.guessDone = true;
@@ -1215,6 +1379,7 @@
     _new: newInvoice,
     _fillSettings: fillSettings,
     _loadMasters: function () { return loadMasters(true); },   // テストから1回だけ読ませる
+    _recalcForTest: function () { return recalc(); },          // テスト用: 数え直しだけ走らせる
     _pickSealUrl: function (url) {           // テスト用: ファイル選択の代わりに data URL を渡す
       var chk = DOC.validateSeal(url);
       if (!chk.ok) { box('seal-err', chk.reason); sealPending = null; fillSeal(); return chk; }

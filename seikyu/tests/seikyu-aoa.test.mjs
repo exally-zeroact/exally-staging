@@ -217,5 +217,143 @@ T('★網羅：税率の組み合わせ×内外×丸め を全部書き出して
   console.log('     実測: ' + n + '通りを書き出して読み戻し、矛盾0件');
 });
 
+/* ═══ ②-b 源泉徴収 / 繰越 / 非課税 が Excel にも出る ═══
+   ★紙にだけ出して Excel に出さないと、Excel で数えた人だけ違う額を振り込む★ */
+const GENSEN = require_(path.join(ROOT, 'seikyu/lib/seikyu-gensen.js'));
+const CARRY = require_(path.join(ROOT, 'seikyu/lib/seikyu-carry.js'));
+const CHOSHO = require_(path.join(ROOT, 'kyuyo/lib/shiharai-chosho.js'));
+const PAPER_ = require_(path.join(ROOT, 'seikyu/lib/seikyu-paper.js'));
+const flat_ = (x) => String(x).replace(/\s+/g, '');
+
+/* 書き出して読み戻した「行の配列」を返す */
+function roundTripRows(sheet) {
+  const ws = roundTrip(sheet);
+  return XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: '' });
+}
+
+T('★源泉徴収が Excel にも出る（紙と1円も違わない）', () => {
+  const lines = [{ name: '原稿料', amount: 100000, rate: STD, gensen: true }];
+  const tax = TAX.compute({ lines, taxMode: 'exclusive', rounding: 'floor' });
+  const gen = GENSEN.compute({ lines, tax, taxMode: 'exclusive', rounding: 'floor' });
+  ok(gen.on, '源泉が効いていない');
+  const rows = roundTripRows(AOA.build(Object.assign({}, sample(), { tax, gensen: gen })));
+  const g = rows.find((r) => r.includes(gen.label));
+  const nrow = rows.find((r) => r.includes(gen.netLabel));
+  ok(g, 'Excel に源泉の行が無い');
+  ok(nrow, 'Excel に差引の行が無い');
+  eq(Math.abs(g[g.indexOf(gen.label) + 1]), CHOSHO.gensenA(100000), '源泉の額が給与の lib と違う');
+  eq(nrow[nrow.indexOf(gen.netLabel) + 1], gen.net, '差引の額が違う');
+  const h = PAPER_.build(Object.assign({}, sample(), { tax, gensen: gen })).html;
+  ok(flat_(h).includes(PAPER_.yen(gen.net)), '紙の差引と Excel が食い違う');
+});
+
+T('★繰越が Excel にも出る／読めていない所は 0 にせず「（未確認）」', () => {
+  const tax = sample().tax;
+  const prev = { id: 'p1', no: 'C-1', totals: { grandTotal: 50000 } };
+  const unknown = CARRY.compute({ thisTotal: tax.grandTotal, prev, receipts: null });
+  const rowsU = roundTripRows(AOA.build(Object.assign({}, sample(), { carry: unknown })));
+  const paid = rowsU.find((r) => r.includes('入金額'));
+  ok(paid, 'Excel に入金額の行が無い');
+  eq(paid[paid.indexOf('入金額') + 1], '（未確認）', '★読めていないのに 0 が入っている★');
+
+  const okc = CARRY.compute({ thisTotal: tax.grandTotal, prev, receipts: [{ invoice_id: 'p1', amount: 20000 }] });
+  const rowsO = roundTripRows(AOA.build(Object.assign({}, sample(), { carry: okc })));
+  const c = rowsO.find((r) => r.includes('繰越額'));
+  eq(c[c.indexOf('繰越額') + 1], 30000, '繰越額が違う');
+  const gt = rowsO.find((r) => r.includes('合計請求額'));
+  eq(gt[gt.indexOf('合計請求額') + 1], okc.grandTotal, '合計請求額が違う');
+});
+
+T('★繰越が初回の時は、空の表を出さず1行だけ言う（Excel も紙と同じ）', () => {
+  const tax = sample().tax;
+  const first = CARRY.compute({ thisTotal: tax.grandTotal, prev: null, receipts: [] });
+  const rows = roundTripRows(AOA.build(Object.assign({}, sample(), { carry: first })));
+  ok(rows.some((r) => r.some((c) => /前回の請求はありません/.test(String(c)))), '初回だと言っていない');
+  ok(!rows.some((r) => r.includes('前回請求額')), '初回なのに空の繰越の表を出している');
+  ok(!rows.some((r) => r.some((c) => /未確認/.test(String(c)))), '★初回なのに「未確認」と書いている★');
+});
+
+T('★非課税と対象外が Excel の区分で別の行になる', () => {
+  const lines = [
+    { name: '住宅家賃', amount: 80000, rate: 0, nontax: true },
+    { name: '立替金', amount: 500, rate: 0 },
+    { name: '運転代行', amount: 10000, rate: STD },
+  ];
+  const tax = TAX.compute({ lines, taxMode: 'exclusive', rounding: 'floor' });
+  const rows = roundTripRows(AOA.build(Object.assign({}, sample(), { tax })));
+  const nt = rows.find((r) => r[0] === '非課税');
+  const ex = rows.find((r) => r[0] === '消費税の対象外');
+  ok(nt, 'Excel に「非課税」の行が無い');
+  ok(ex, 'Excel に「対象外」の行が無い');
+  eq(nt[1], 80000, '非課税の額が違う');
+  eq(ex[1], 500, '対象外の額が違う');
+});
+
+/* ═══ ★お金の順番は 紙・Excel で同じ★ ═══
+   2026-08-11 実機で発生：繰越を出しているのに 差引お支払額 が繰越を無視し、
+   ★1,111,000 を請求しながら 997,900 と書いた★（11,000 少なく振り込まれる）。
+   足し引きの順番を紙とExcelで別々に書くと、必ずどちらかが間違う。 */
+const DOC_ = require_(path.join(ROOT, 'seikyu/lib/seikyu-doc.js'));
+
+T('★繰越と源泉が両方ある時：差引＝合計請求額（繰越こみ）− 源泉', () => {
+  const lines = [{ name: 'デザイン料', amount: 1000000, rate: STD, gensen: true }];
+  const tax = TAX.compute({ lines, taxMode: 'exclusive', rounding: 'floor' });
+  const gen = GENSEN.compute({ lines, tax, taxMode: 'exclusive', rounding: 'floor' });
+  const carry = CARRY.compute({
+    thisTotal: tax.grandTotal,
+    prev: { id: 'p1', no: 'C-1', totals: { grandTotal: 11000 } },
+    receipts: [],
+  });
+  eq(carry.grandTotal, tax.grandTotal + 11000, '合計請求額が繰越を足していない');
+
+  const want = carry.grandTotal - gen.amount;      // ★これが振り込まれる額★
+  eq(DOC_.payableOf(tax, carry, gen), want, '順番の唯一の正がズレている');
+  ok(want !== gen.net, '前提が崩れている（繰越を足しても同じ額になっている）');
+
+  // 紙
+  const h = PAPER_.build(Object.assign({}, sample(), { tax, gensen: gen, carry })).html;
+  ok(flat_(h).includes(PAPER_.yen(want)), '★紙の差引が繰越を無視している★（欲しい ' + want + '）');
+  ok(!flat_(h).includes('>' + PAPER_.yen(gen.net) + '<'), '紙に繰越を無視した差引が残っている');
+  // 見出しの額も、実際に請求している額（★見出しの中だけを見る★＝
+  // 紙のどこかに同じ数字があるだけでは、見出しが直っている証明にならない）
+  const head = (/<span class="grand-v">([^<]*)<\/span>/.exec(h) || [])[1];
+  eq(head, PAPER_.yen(carry.grandTotal), '★紙の見出しが繰越を無視している★');
+
+  // Excel
+  const rows = roundTripRows(AOA.build(Object.assign({}, sample(), { tax, gensen: gen, carry })));
+  const nrow = rows.find((r) => r.includes(gen.netLabel));
+  ok(nrow, 'Excel に差引の行が無い');
+  eq(nrow[nrow.indexOf(gen.netLabel) + 1], want, '★Excel の差引が紙と食い違う★');
+});
+
+T('★繰越の入金が読めていない時：差引も「（未確認）」（0にも 今回分にもしない）', () => {
+  const lines = [{ name: 'デザイン料', amount: 1000000, rate: STD, gensen: true }];
+  const tax = TAX.compute({ lines, taxMode: 'exclusive', rounding: 'floor' });
+  const gen = GENSEN.compute({ lines, tax, taxMode: 'exclusive', rounding: 'floor' });
+  const carry = CARRY.compute({
+    thisTotal: tax.grandTotal,
+    prev: { id: 'p1', no: 'C-1', totals: { grandTotal: 11000 } },
+    receipts: null,                                  // ★読めていない★
+  });
+  eq(DOC_.payableOf(tax, carry, gen), null, '読めていないのに額を作っている');
+
+  const h = PAPER_.build(Object.assign({}, sample(), { tax, gensen: gen, carry })).html;
+  ok(/（未確認）/.test(h), '紙が「未確認」と言っていない');
+  ok(!flat_(h).includes('>' + PAPER_.yen(gen.net) + '<'), '★読めていないのに今回分だけの差引を刷っている★');
+
+  const rows = roundTripRows(AOA.build(Object.assign({}, sample(), { tax, gensen: gen, carry })));
+  const nrow = rows.find((r) => r.includes(gen.netLabel));
+  eq(nrow[nrow.indexOf(gen.netLabel) + 1], '（未確認）', '★Excel が 0 か今回分を書いている★');
+});
+
+T('★繰越が無い時は今までどおり（源泉だけ引く）', () => {
+  const lines = [{ name: '原稿料', amount: 100000, rate: STD, gensen: true }];
+  const tax = TAX.compute({ lines, taxMode: 'exclusive', rounding: 'floor' });
+  const gen = GENSEN.compute({ lines, tax, taxMode: 'exclusive', rounding: 'floor' });
+  eq(DOC_.payableOf(tax, null, gen), gen.net, '繰越が無い時に額が変わった');
+  eq(DOC_.billedOf(tax, null), tax.grandTotal, '繰越が無い時の請求額が変わった');
+  eq(DOC_.payableOf(tax, null, null), tax.grandTotal, '源泉も繰越も無い時に額が変わった');
+});
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

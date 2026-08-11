@@ -267,5 +267,88 @@ T('★内税は税込合計が入力額と1円もずれない（割戻しの誤�
   }
 });
 
+/* ── ★非課税★（家賃・保険・切手）─────────────────────────────────
+   ★「非課税」と「不課税（対象外）」は別物★。
+     非課税 … 消費税の性質になじまない/政策的に非課税（住宅の家賃・保険料・切手・印紙）
+     不課税 … そもそも取引でない（立替金・給与・寄付）
+   紙の区分表で分けて出す必要があるので、集計も分ける。
+   ★足すのは「区分の種類」であって「率」ではない★（率の一覧 shouhizei-ritsu.js は触らない）。 */
+T('★非課税と対象外を別々に集計する（同じ0%でも混ぜない）', () => {
+  const r = TAX.compute({
+    lines: [
+      { name: '事務所家賃', amount: 100000, rate: STD },
+      { name: '住宅家賃', amount: 80000, rate: 0, nontax: true },
+      { name: '立替金', amount: 5000, rate: 0 },
+    ],
+    taxMode: 'exclusive', rounding: 'floor',
+  });
+  ok(r.ok, r.errors.join(','));
+  eq(r.exempt.base, 5000, '対象外（立替）');
+  eq(r.nontaxable.base, 80000, '非課税（住宅家賃）');
+  eq(r.subtotal, 185000, '小計は3つとも入る');
+  eq(r.taxTotal, 10000, '非課税・対象外に消費税は付かない');
+  eq(r.grandTotal, 195000);
+});
+
+T('★非課税だけの請求書（家賃だけ）でも成り立つ', () => {
+  const r = TAX.compute({
+    lines: [{ name: '住宅家賃 9月分', amount: 80000, rate: 0, nontax: true }],
+    taxMode: 'exclusive', rounding: 'floor',
+  });
+  ok(r.ok);
+  eq(r.nontaxable.base, 80000);
+  eq(r.exempt.base, 0, '対象外に混ざっている');
+  eq(r.taxTotal, 0);
+  eq(r.grandTotal, 80000);
+  eq(r.byRate.length, 0, '税率の区分は出ない');
+});
+
+T('★非課税の印は 0% の行にだけ効く（税率のある行に付いても税は消えない）', () => {
+  const r = TAX.compute({
+    lines: [{ name: 'あ', amount: 10000, rate: STD, nontax: true }],
+    taxMode: 'exclusive', rounding: 'floor',
+  });
+  ok(r.ok);
+  eq(r.taxTotal, 1000, '★税率のある行の税が消えた★');
+  eq(r.nontaxable.base, 0, '税率のある行が非課税に入った');
+});
+
+T('★非課税は行にそのまま持って出る（紙で印を出せる）', () => {
+  const r = TAX.compute({
+    lines: [{ name: '住宅家賃', amount: 80000, rate: 0, nontax: true }, { name: '立替', amount: 100, rate: 0 }],
+    taxMode: 'exclusive', rounding: 'floor',
+  });
+  eq(r.lines[0].nontax, true);
+  eq(!!r.lines[1].nontax, false);
+});
+
+T('★網羅：非課税を混ぜても 税抜+消費税=税込 が必ず一致・NaNゼロ', () => {
+  let n = 0;
+  for (const mode of ['inclusive', 'exclusive']) {
+    for (const rd of ['floor', 'ceil', 'round']) {
+      for (const a of [0, 1, 105, 80000, -1000]) {
+        const r = TAX.compute({
+          lines: [
+            { name: 'x', amount: 12345, rate: STD },
+            { name: 'y', amount: a, rate: 0, nontax: true },
+            { name: 'z', amount: 500, rate: 0 },
+          ],
+          taxMode: mode, rounding: rd,
+        });
+        n++;
+        if (!r.ok) throw new Error('通らない: ' + r.errors.join(','));
+        if (r.subtotal + r.taxTotal !== r.grandTotal) throw new Error('税抜+消費税≠税込');
+        if (r.nontaxable.base !== a) throw new Error('非課税の集計がずれた: ' + r.nontaxable.base);
+        if (r.exempt.base !== 500) throw new Error('対象外の集計がずれた: ' + r.exempt.base);
+        for (const v of [r.subtotal, r.taxTotal, r.grandTotal, r.nontaxable.base, r.exempt.base]) {
+          if (!Number.isFinite(v)) throw new Error('NaN');
+        }
+      }
+    }
+  }
+  if (n < 25) throw new Error('組合せが少なすぎる（検査が空振り）: ' + n);
+  console.log('     実測: ' + n + '通りで矛盾0件');
+});
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

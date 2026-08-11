@@ -16,9 +16,9 @@
  * 【利用】ブラウザ window.SeikyuAoa ／ Node require('./seikyu-aoa.js')
  */
 (function (root, factory) {
-  if (typeof module === 'object' && module.exports) module.exports = factory(require('./seikyu-cols.js'));
-  else root.SeikyuAoa = factory(root.SeikyuCols);
-})(typeof self !== 'undefined' ? self : this, function (COLS) {
+  if (typeof module === 'object' && module.exports) module.exports = factory(require('./seikyu-cols.js'), require('./seikyu-carry.js'), require('./seikyu-doc.js'));
+  else root.SeikyuAoa = factory(root.SeikyuCols, root.SeikyuCarry, root.SeikyuDoc);
+})(typeof self !== 'undefined' ? self : this, function (COLS, CARRY, DOC) {
   'use strict';
   if (!COLS) throw new Error('seikyu-cols.js を先に読んでください');
 
@@ -124,6 +124,48 @@
     sumRow('消費税', tax.taxTotal);
     sumRow('合計', tax.grandTotal);
 
+    /* ★源泉徴収は Excel にも出す★
+       紙にだけ出して Excel に出さないと、Excel で数えた人だけ違う額を振り込む。 */
+    var gen = o.gensen || null;
+    var carry = o.carry || null;
+    if (gen && gen.on) {
+      sumRow(gen.label, -Math.abs(Number(gen.amount) || 0));
+      /* ★差引は「合計請求額（繰越こみ）− 源泉」★ 順番は seikyu-doc.js が唯一の正。
+         紙と Excel で別々に足し引きすると、必ずどちらかが間違う。 */
+      var pay = DOC.payableOf(tax, carry, gen);
+      if (pay === null) {
+        var rp = items.map(function () { return ''; });
+        rp[labCol] = gen.netLabel; rp[amtCol] = '（未確認）';   // ★0を作らない★
+        push(rp);
+      } else {
+        sumRow(gen.netLabel, pay);
+      }
+    }
+
+    /* ★繰越も同じ★ 読めていない所は ★0にせず「（未確認）」と字で置く★ */
+    if (carry && carry.state === 'first') {
+      sumRow('', '');
+      var rf = push((function () { var r = items.map(function () { return ''; }); r[labCol] = carry.label || '前回の請求はありません'; return r; })());
+      if (rf) { /* 文字なので金額の書式は付けない */ }
+    } else if (carry) {
+      CARRY.ROWS.forEach(function (r) {
+        if (r.key === 'thisTotal') return;                 // 上の「合計」と同じ
+        var val = carry[r.key];
+        if (val === null || val === undefined) {
+          var row = items.map(function () { return ''; });
+          row[labCol] = r.label; row[amtCol] = '（未確認）';   // ★0を作らない★
+          push(row);
+          return;
+        }
+        sumRow(r.label, val);
+      });
+      if (carry.label) {
+        var rn = items.map(function () { return ''; });
+        rn[labCol] = carry.label + (carry.prevNo ? '（前回 No. ' + carry.prevNo + '）' : '');
+        push(rn);
+      }
+    }
+
     push([]);
     push(['区分', '対象額', '消費税']);
     var byRate = Array.isArray(tax.byRate) ? tax.byRate : [];
@@ -132,9 +174,12 @@
       var rr = push([Number(b.pct) + '% 対象', Number(b.base) || 0, Number(b.tax) || 0]);
       money(rr, 1); money(rr, 2);
     }
+    // ★非課税と対象外は別の行（同じ0%でも意味が違う）
+    var nt = (tax.nontaxable && Number(tax.nontaxable.base)) || 0;
+    if (nt !== 0) { var rn2 = push(['非課税', nt, '']); money(rn2, 1); }
     var ex = (tax.exempt && Number(tax.exempt.base)) || 0;
     if (ex !== 0) { var re = push(['消費税の対象外', ex, '']); money(re, 1); }
-    if (!byRate.length && ex === 0) push(['区分はまだありません', '', '']);
+    if (!byRate.length && ex === 0 && nt === 0) push(['区分はまだありません', '', '']);
 
     if (g.bank) { push([]); push(['お振込先', g.bank]); }
     if (inv.data && inv.data.memo) { push([]); push(['備考', inv.data.memo]); }

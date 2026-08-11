@@ -27,11 +27,17 @@
  * 【利用】ブラウザ window.SeikyuPaper ／ Node require('./seikyu-paper.js')
  */
 (function (root, factory) {
-  if (typeof module === 'object' && module.exports) module.exports = factory(require('./seikyu-cols.js'));
-  else root.SeikyuPaper = factory(root.SeikyuCols);
-})(typeof self !== 'undefined' ? self : this, function (COLS) {
+  if (typeof module === 'object' && module.exports) module.exports = factory(require('./seikyu-cols.js'), require('./seikyu-carry.js'), require('./seikyu-doc.js'));
+  else root.SeikyuPaper = factory(root.SeikyuCols, root.SeikyuCarry, root.SeikyuDoc);
+})(typeof self !== 'undefined' ? self : this, function (COLS, CARRY, DOC) {
   'use strict';
   if (!COLS) throw new Error('seikyu-cols.js を先に読んでください');
+  if (!CARRY) throw new Error('seikyu-carry.js を先に読んでください');
+  if (!DOC) throw new Error('seikyu-doc.js を先に読んでください');
+
+  /* ★繰越の行の名前は「繰越 lib」が持ち主★
+     紙の側に書き写すと、片方だけ直した時に画面と紙で名前が食い違う。 */
+  var CARRY_ROWS = CARRY.ROWS;
 
   var TEMPLATE_ID = 'std1';
 
@@ -180,6 +186,9 @@
     var lines = Array.isArray(tax.lines) ? tax.lines : [];
     var byRate = Array.isArray(tax.byRate) ? tax.byRate : [];
     var exemptBase = (tax.exempt && Number(tax.exempt.base)) || 0;
+    var nontaxBase = (tax.nontaxable && Number(tax.nontaxable.base)) || 0;
+    var gen = o.gensen || null;     // ★源泉徴収（引く紙だけ）★
+    var carry = o.carry || null;    // ★繰越（前回の残り）★
     var pages = paginate(lines, o.page);
     var multi = pages.length > 1;
 
@@ -252,19 +261,56 @@
 
     /* ── 御請求金額（★枠なし・ラベル＋大きい金額・下に線★） ── */
     function grandBlock() {
+      /* ★見出しの額は「実際に請求している額」＝繰越があれば足したあと★
+         ここだけ今回分のままにすると、下の 合計請求額 と食い違う。 */
+      var billed = DOC.billedOf(tax, carry);
       return '<div class="grand">'
         + '<span class="grand-l">' + grandLabel + '</span>'
-        + '<span class="grand-v">' + yen(tax.grandTotal) + '</span>'
+        + '<span class="grand-v">' + (billed === null ? '（未確認）' : yen(billed)) + '</span>'
         + '</div>';
     }
 
-    /* ── 小計・消費税・合計（★枠なし・合計の上に線★） ── */
+    /* ── 小計・消費税・合計（★枠なし・合計の上に線★）
+         源泉徴収を引く紙は、合計の下に ★源泉徴収税額★ と ★差引お支払額★ を足す。
+         ★足した2行が迷子にならないよう、合計の直下に続けて並べ、
+           いちばん下（実際に払う額）を太くする★ */
     function totalsBlock() {
       var rows = ''
         + '<tr><th>小計</th><td>' + yen(tax.subtotal) + '</td></tr>'
-        + '<tr><th>' + taxLabel(tax, inv.tax_mode) + '</th><td>' + yen(tax.taxTotal) + '</td></tr>'
-        + '<tr class="sums-g"><th>合計</th><td>' + yen(tax.grandTotal) + '</td></tr>';
+        + '<tr><th>' + taxLabel(tax, inv.tax_mode) + '</th><td>' + yen(tax.taxTotal) + '</td></tr>';
+      if (gen && gen.on) {
+        /* ★差引お支払額は「合計請求額（繰越こみ）− 源泉」★
+           gen.net は この1通だけで出した額なので、繰越があると足りない。
+           順番は seikyu-doc.js が唯一の正。 */
+        var pay = DOC.payableOf(tax, carry, gen);
+        rows += '<tr class="sums-g"><th>合計</th><td>' + yen(tax.grandTotal) + '</td></tr>'
+          + '<tr class="sums-minus"><th>' + esc(gen.label) + '</th><td>-' + yen(gen.amount) + '</td></tr>'
+          + '<tr class="sums-net"><th>' + esc(gen.netLabel) + '</th><td>' + (pay === null ? '（未確認）' : yen(pay)) + '</td></tr>';
+      } else {
+        rows += '<tr class="sums-g"><th>合計</th><td>' + yen(tax.grandTotal) + '</td></tr>';
+      }
       return '<table class="sums"><tbody>' + rows + '</tbody></table>';
+    }
+
+    /* ── 繰越（前回の残り）★紙の頭・箱で囲まない★
+         ★取れなかったを0にしない★＝読めなければ「入金は未確認」、初回は「前回の請求はありません」 */
+    function carryBlock() {
+      if (!carry) return '';
+      /* ★「前回が無い」と「前回の入金が読めていない」は別物★
+         初回に 前回請求額 — ／ 入金額 — ／ 繰越額 — の表を出すと、
+         読めなかったのか元から無いのか、受け取った人に分からない。
+         初回は ★1行だけ言う★（表は出さない）。 */
+      if (carry.state === 'first') {
+        return '<div class="carry"><div class="carry-n">' + esc(carry.label || '前回の請求はありません') + '</div></div>';
+      }
+      var v = function (x) { return (x === null || x === undefined) ? '（未確認）' : yen(x); };
+      var rows = CARRY_ROWS.map(function (r) {
+        return '<tr><th>' + r.label + '</th><td>' + v(carry[r.key]) + '</td></tr>';
+      }).join('');
+      var note = carry.label
+        ? '<div class="carry-n">' + esc(carry.label) + (carry.prevNo ? '（前回 No.　' + esc(carry.prevNo) + '）' : '') + '</div>'
+        : (carry.prevNo ? '<div class="carry-n">前回 No.　' + esc(carry.prevNo) + '</div>' : '');
+      return '<div class="carry"><table class="carry-t"><tbody>' + rows + '</tbody></table>' + note + '</div>';
     }
 
     /* ── （内訳）＝税率ごとの区分（適格請求書の要件）★枠で囲まない★ ── */
@@ -307,7 +353,10 @@
       var pageSum = pageLines.reduce(function (a, x) { return a + (Number(x.amount) || 0); }, 0);
       var body = ''
         + headBlock(idx)
-        + (idx === 0 ? leadBlock() + grandBlock() : '')
+        /* ★繰越は1ページ目の金額のすぐ下★（前回の残りを含む額なので、金額の根拠として先に見せる）
+           ここに並べないと carryBlock() は作られるだけで紙に載らない
+           （2026-08-11：関数はあるのに1度も呼ばれていなかった＝lib緑でも紙に出ない） */
+        + (idx === 0 ? leadBlock() + grandBlock() + carryBlock() : '')
         + (caption ? '<div class="cap">【' + esc(caption) + '】</div>' : '')
         + '<table class="items"><thead><tr>' + headHtml + '</tr></thead>'
         + '<tbody>' + rowsHtmlOf(pageLines, offset) + '</tbody></table>'
