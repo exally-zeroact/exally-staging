@@ -26,6 +26,20 @@ export const ALLOWED_TABLES = ['pay_invoices', 'pay_receipts'];
 export const ALLOWED_FUNCTIONS = ['pay_invoices_freeze', 'pay_invoices_no_delete', 'pay_receipts_touch'];
 export const PROD_WAREHOUSE_REF = 'tnfwipbgfgjaymlszeid'; // ★本番。ここへは当てない
 
+/* ★storage の穴（2026-08-11・指示役の裁定 A）★
+   客が上げた自社Excelの置き場は、倉庫の列(text)ではなく Storage の bucket に置くと決めた。
+   bucket を作るには storage.buckets への insert が要る＝この門番の「insert into は止める」に当たる。
+   ⇒ ★この置き場1つ分だけ★ 穴を開ける。それ以外の storage.* は今までどおり止める。
+
+   通す物（全部そろって初めて通す）
+     ・storage.buckets への insert が ★1文だけ★
+     ・その中の bucket 名が ★下の文字列と1文字も違わない★（変数・組み立ては通さない）
+     ・storage.objects への policy（許可）は、その bucket に限った物だけ
+   止めたままにする物
+     ・別の bucket 名 ／ storage.objects への insert ／ public など他の部屋への insert
+     ・drop table / truncate / delete from / drop column（今までどおり） */
+export const ALLOWED_BUCKET = 'seikyu-templates';
+
 /** コメントを外す（門番がコメントの文字で判断しないように） */
 export function stripComments(sql) {
   return String(sql)
@@ -53,6 +67,42 @@ const DANGER = [
 ];
 
 /**
+ * ★置き場を1つ作る文として、通してよい形か★
+ * 1つでも外れたら false（＝穴は開かない＝今までどおり止まる）。
+ * 見つけた「違う所」は reasons に足す（黙って通さない・黙って落とさない）。
+ */
+function isAllowedStorageSetup(s, reasons) {
+  const hasStorage = /\bstorage\s*\./i.test(s);
+  const inserts = [...s.matchAll(/\binsert\s+into\s+([a-z_][a-z0-9_]*)\.([a-z_][a-z0-9_]*)/gi)];
+  if (!hasStorage && !inserts.length) return false;          // ふつうの設計図＝穴は要らない
+
+  let bad = 0;
+  const say = (why) => { bad++; reasons.push('置き場を作る文として通せません: ' + why); };
+
+  // insert は storage.buckets への1文だけ
+  if (inserts.length > 1) say('insert が ' + inserts.length + '文あります（1文だけ）');
+  for (const m of inserts) {
+    const sch = m[1].toLowerCase(), name = m[2].toLowerCase();
+    if (sch !== 'storage' || name !== 'buckets') say('insert の先が storage.buckets ではありません: ' + sch + '.' + name);
+  }
+
+  // bucket 名は文字列で固定（変数・組み立ては通さない）
+  const names = [...s.matchAll(/'([a-z0-9][a-z0-9._-]*)'/gi)].map((m) => m[1]);
+  const buckets = names.filter((x) => x === ALLOWED_BUCKET);
+  if (inserts.length && !buckets.length) say('bucket 名 ' + ALLOWED_BUCKET + ' が文字列で書かれていません');
+  // bucket_id を他の名前に向けていないか
+  for (const m of s.matchAll(/bucket_id\s*=\s*'([^']*)'/gi)) {
+    if (m[1] !== ALLOWED_BUCKET) say('別の置き場を指しています: ' + m[1]);
+  }
+  // storage.objects へ行を入れていないか（許可を作るのは policy であって insert ではない）
+  if (/\binsert\s+into\s+storage\s*\.\s*objects\b/i.test(s)) say('storage.objects へ行を入れようとしています');
+  // 公開しない
+  if (/\bpublic\s*=\s*true\b/i.test(s) || /,\s*true\s*,\s*\d+/.test(s)) say('公開(public=true)になっています');
+
+  return bad === 0;
+}
+
+/**
  * inspect(sql) → { ok, reasons[], stats }
  *   ok=false なら1文字も当てない。
  */
@@ -63,23 +113,37 @@ export function inspect(sql) {
 
   if (!s.trim()) reasons.push('中身が空です');
 
+  /* ★storage の置き場を作る文か（穴を通してよい形か）を先に見る★
+     ここで true になった時だけ、insert into と storage.* を通す。 */
+  const storageOk = isAllowedStorageSetup(s, reasons);
+
   // ① 消す系・危ない書き方
   for (const [re, why] of DANGER) {
-    if (re.test(s)) reasons.push('消す系/危ない書き方が混ざっています: ' + why);
+    if (!re.test(s)) continue;
+    // ★穴：置き場を1つ作る insert だけは通す（形は isAllowedStorageSetup で確かめ済み）
+    if (storageOk && why.indexOf('insert into') === 0) continue;
+    reasons.push('消す系/危ない書き方が混ざっています: ' + why);
   }
 
   // ② 部屋・棚の名前（schema.table の形を全部拾って、許した物だけか見る）
-  const refs = [...s.matchAll(/\b([a-z_][a-z0-9_]*)\.([a-z_][a-z0-9_]*)\b/gi)];
+  /* ★引用符の中は棚の名前ではない★
+     'application/vnd.openxmlformats-…' のような文字列を棚と読み違えると、
+     正しいSQLまで止まる（2026-08-11 実測で7件 誤検知した）。 */
+  const noStr = s.replace(/'[^']*'/g, "''");
+  const refs = [...noStr.matchAll(/\b([a-z_][a-z0-9_]*)\.([a-z_][a-z0-9_]*)\b/gi)];
   const seen = new Set();
   for (const m of refs) {
     const sch = m[1].toLowerCase(), name = m[2].toLowerCase();
     // 関数の中の new./old. と、変数っぽい物は棚ではない
-    if (sch === 'new' || sch === 'old' || sch === 'pg_catalog' || sch === 'information_schema') continue;
+    // new. / old. は仕掛けの中の仮の名前。excluded. は on conflict の中の仮の名前（棚ではない）
+    if (sch === 'new' || sch === 'old' || sch === 'excluded' || sch === 'pg_catalog' || sch === 'information_schema') continue;
     // Supabase の作り付け。既存の棚(pay_employees 等)と同じ書き方＝ここだけは通す。
     //   auth.users … 参照だけ（誰の行かを繋ぐ）  auth.uid() … 「今ログインしている人」
     if (sch === 'auth' && (name === 'users' || name === 'uid')) continue;
     if (sch === 'jsonb' || sch === 'text') continue;
     seen.add(sch + '.' + name);
+    // ★穴：置き場を作る文の中の storage.buckets / storage.objects / storage.foldername だけ通す
+    if (storageOk && sch === 'storage' && ['buckets', 'objects', 'foldername'].includes(name)) continue;
     if (sch !== ALLOWED_SCHEMA && sch !== 'public') {
       reasons.push('許していない部屋が出てきました: ' + sch + '.' + name);
       continue;
