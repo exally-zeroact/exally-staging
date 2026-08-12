@@ -23,7 +23,7 @@
   padding: 0 4px 4px; white-space: nowrap;
 }
 .lines td { padding: 2px 4px 6px; vertical-align: top; }
-.lines .ex-input { padding: 9px 8px; }
+.lines .finput { padding: 9px 8px; }
 .l-name { width: 200px; min-width: 200px; }
 .l-sm { width: 84px; min-width: 84px; }
 .l-md { width: 120px; min-width: 120px; }

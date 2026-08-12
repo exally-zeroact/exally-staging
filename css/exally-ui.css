@@ -53,7 +53,7 @@ html, body {
 input, select, button, textarea { font-family: inherit; }
 
 /* ── 上の帯 ─────────────────────────────────────────── */
-.ex-appbar {
+.appbar {
   position: sticky; top: 0; z-index: 30;
   display: flex; align-items: center; gap: 10px;
   padding: calc(8px + env(safe-area-inset-top)) 16px 8px;
@@ -64,139 +64,139 @@ input, select, button, textarea { font-family: inherit; }
    flex の子は既定で縮むので、日本語のアプリ名（例：請求書）が
    1文字ずつ縦に割れる（2026-08-10 実機幅390pxで実際に3行に割れた・これで3度目の形）。
    縮んでよいのは ★メールアドレスだけ★（…で切る）。 */
-.ex-logo {
+.logo {
   flex: 0 0 auto; white-space: nowrap;
   font-family: 'DM Mono', ui-monospace, monospace;
   font-size: 20px; font-weight: 500; letter-spacing: -0.5px; color: #52B788;
 }
-.ex-back { flex: 0 0 auto; color: #2E7D54; font-size: 12px; text-decoration: none; white-space: nowrap; }
-.ex-grow { flex: 1 1 auto; min-width: 0; }
+.back { flex: 0 0 auto; color: #2E7D54; font-size: 12px; text-decoration: none; white-space: nowrap; }
+.grow { flex: 1 1 auto; min-width: 0; }
 /* ★ログイン中の人は「設定」の中に出す（頭には出さない＝給与と同じ）★
    頭に置くと、狭い端末でメールが見出しを押し出す。 */
-.ex-who { color: #2B3A31; font-weight: 500; overflow-wrap: break-word; }
-.ex-note { margin: 0 0 10px; font-size: 13px; color: #4A5D52; }
+.who { color: #2B3A31; font-weight: 500; overflow-wrap: break-word; }
+.note { margin: 0 0 10px; font-size: 13px; color: #4A5D52; }
 
 /* ── 器 ─────────────────────────────────────────────── */
-.ex-main { padding: 12px 12px 84px; max-width: 900px; margin: 0 auto; }
-.ex-card {
+.main { padding: 12px 12px 84px; max-width: 900px; margin: 0 auto; }
+.card {
   background: #FFFFFF; border: 1px solid #D4EAE0; border-radius: 16px;
   padding: 14px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(30,80,46,.06);
 }
-.ex-card-h {
+.card-h {
   display: flex; align-items: center; gap: 8px;
   font-size: 13px; font-weight: 700; color: #2E7D54; margin-bottom: 10px;
 }
 
 /* ── 文（★block・最低幅・折り返し可。ここを守らないと縦帯になる★）── */
-.ex-hint, .ex-warn, .ex-bad, .ex-ok, .ex-why {
+.hint, .warn, .bad, .ok, .why {
   display: block; width: 100%; min-width: 180px;
   line-height: 1.8; margin: 6px 0;
   white-space: normal; word-break: normal; overflow-wrap: break-word;
 }
-.ex-hint { font-size: 12px; color: #5C7E6C; }
-.ex-why  { font-size: 11.5px; color: #7AA08C; margin-top: 6px; }
-.ex-warn { font-size: 12px; color: #92500A; background: #FDF3E3; border: 1px solid #F0DDBC; border-radius: 10px; padding: 8px 10px; }
-.ex-bad  { font-size: 12px; color: #C0392B; background: #FDF0EE; border: 1px solid #F0D5D0; border-radius: 10px; padding: 8px 10px; }
-.ex-ok   { font-size: 12px; color: #2E7D54; background: #F0FAF4; border: 1px solid #C8ECD8; border-radius: 10px; padding: 8px 10px; }
+.hint { font-size: 12px; color: #5C7E6C; }
+.why  { font-size: 11.5px; color: #7AA08C; margin-top: 6px; }
+.warn { font-size: 12px; color: #92500A; background: #FDF3E3; border: 1px solid #F0DDBC; border-radius: 10px; padding: 8px 10px; }
+.bad  { font-size: 12px; color: #C0392B; background: #FDF0EE; border: 1px solid #F0D5D0; border-radius: 10px; padding: 8px 10px; }
+.ok   { font-size: 12px; color: #2E7D54; background: #F0FAF4; border: 1px solid #C8ECD8; border-radius: 10px; padding: 8px 10px; }
 
 /* ── 入力 ───────────────────────────────────────────── */
-.ex-frow { margin-bottom: 10px; min-width: 0; }
-.ex-label { font-size: 12px; color: #3D6B53; font-weight: 700; margin-bottom: 4px; }
+.frow { margin-bottom: 10px; min-width: 0; }
+.flabel { font-size: 12px; color: #3D6B53; font-weight: 700; margin-bottom: 4px; }
 
 /* ★入/切の1行★
    flex だが、★文の側に最低幅を持たせて縮ませない★。
    これを忘れると、狭い端末で説明文が1文字ずつ縦に割れる（前科3回）。 */
-.ex-check { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; }
-.ex-check > input[type="checkbox"] { flex: 0 0 auto; width: 20px; height: 20px; margin: 2px 0 0; accent-color: #2E7D54; }
-.ex-check > span {
+.check { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; }
+.check > input[type="checkbox"] { flex: 0 0 auto; width: 20px; height: 20px; margin: 2px 0 0; accent-color: #2E7D54; }
+.check > span {
   flex: 1 1 auto; min-width: 140px;
   font-size: 13px; color: #2B3A31; line-height: 1.7;
   white-space: normal; word-break: normal; overflow-wrap: break-word;
 }
-.ex-frow2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.ex-frow2 > * { min-width: 0; }
-@media (max-width: 480px) { .ex-frow2 { grid-template-columns: 1fr; } }
+.frow2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.frow2 > * { min-width: 0; }
+@media (max-width: 480px) { .frow2 { grid-template-columns: 1fr; } }
 
 /* ★16px。これより小さいと iPhone が勝手に拡大して画面がズレる★ */
-.ex-input {
+.finput {
   width: 100%; min-width: 0; font-size: 16px; padding: 10px 12px;
   border: 1.5px solid #D4EAE0; border-radius: 10px;
   background: #FFFFFF; color: #2E7D54;
   outline: none; -webkit-appearance: none; appearance: none;
 }
-.ex-input:focus { border-color: #52B788; }
-select.ex-input { padding-right: 30px; background-image: none; }
-textarea.ex-input { min-height: 76px; line-height: 1.7; resize: vertical; }
-.ex-num { text-align: right; font-family: 'DM Mono', ui-monospace, monospace; }
+.finput:focus { border-color: #52B788; }
+select.finput { padding-right: 30px; background-image: none; }
+textarea.finput { min-height: 76px; line-height: 1.7; resize: vertical; }
+.num { text-align: right; font-family: 'DM Mono', ui-monospace, monospace; }
 
 /* ── ボタン（★行は必ず折り返す＝横にはみ出させない★）──────── */
-.ex-btn-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-.ex-btn-row > * { flex: 0 1 auto; }
-.ex-b1, .ex-b2, .ex-bdel, .ex-badd {
+.btn-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.btn-row > * { flex: 0 1 auto; }
+.btn-primary, .btn-ghost, .bdel, .btn-add {
   font-family: inherit; font-size: 14px; font-weight: 700;
   padding: 12px 16px; border-radius: 12px; border: 1px solid transparent;
   cursor: pointer; white-space: nowrap;
 }
-.ex-b1 { background: #3D9E72; color: #FFFFFF; border: none; box-shadow: 0 3px 12px rgba(61,158,114,.32); }
-.ex-b1:hover { background: #357F5F; }
-.ex-b2 { background: #FFFFFF; color: #2E7D54; border: 1.5px solid #C8ECD8; }
-.ex-b2:hover { background: #F0FAF4; }
-.ex-bdel { background: #FFFFFF; color: #C0392B; border: 1.5px solid #F0D5D0; }
-.ex-badd { background: #FFFFFF; color: #2E7D54; border: 1px dashed #52B788; width: 100%; margin-top: 8px; }
-.ex-b1:disabled, .ex-b2:disabled, .ex-bdel:disabled, .ex-badd:disabled { opacity: .5; cursor: default; }
+.btn-primary { background: #3D9E72; color: #FFFFFF; border: none; box-shadow: 0 3px 12px rgba(61,158,114,.32); }
+.btn-primary:hover { background: #357F5F; }
+.btn-ghost { background: #FFFFFF; color: #2E7D54; border: 1.5px solid #C8ECD8; }
+.btn-ghost:hover { background: #F0FAF4; }
+.bdel { background: #FFFFFF; color: #C0392B; border: 1.5px solid #F0D5D0; }
+.btn-add { background: #FFFFFF; color: #2E7D54; border: 1px dashed #52B788; width: 100%; margin-top: 8px; }
+.btn-primary:disabled, .btn-ghost:disabled, .bdel:disabled, .btn-add:disabled { opacity: .5; cursor: default; }
 
 /* 丸い切り替え（チップ／セグメント） */
-.ex-seg { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
-.ex-chip {
+.seg { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.seg-b {
   font-family: inherit; font-size: 12.5px; font-weight: 700;
   padding: 8px 14px; border-radius: 999px;
   border: 1px solid #C8ECD8; background: #FFFFFF; color: #2E7D54;
   cursor: pointer; white-space: nowrap;
 }
-.ex-chip.on { background: #52B788; border-color: #52B788; color: #FFFFFF; }
-.ex-chip:disabled { opacity: .5; cursor: default; }
-.ex-mini {
+.seg-b.on { background: #52B788; border-color: #52B788; color: #FFFFFF; }
+.seg-b:disabled { opacity: .5; cursor: default; }
+.mini {
   font-family: inherit; font-size: 11px; font-weight: 700;
   padding: 4px 9px; border-radius: 8px;
   border: 1px solid #C8ECD8; background: #FFFFFF; color: #3D6B53; cursor: pointer;
 }
 /* ★選ばれている物は必ず見て分かるようにする（押したのに何も変わらない、に見せない） */
-.ex-mini.on { background: #2E7D54; border-color: #2E7D54; color: #FFFFFF; }
-.ex-mini:disabled { opacity: .5; cursor: default; }
+.mini.on { background: #2E7D54; border-color: #2E7D54; color: #FFFFFF; }
+.mini:disabled { opacity: .5; cursor: default; }
 
 /* ── 一覧の行 ───────────────────────────────────────── */
-.ex-row {
+.row {
   display: block; width: 100%; text-align: left; font-family: inherit;
   background: #FFFFFF; border: 1px solid #D4EAE0; border-radius: 14px;
   padding: 12px 14px; margin-bottom: 8px; cursor: pointer;
   box-shadow: 0 1px 4px rgba(30,80,46,.05);
 }
-.ex-row:hover { background: #F0FAF4; }
-.ex-tag { font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
-.ex-tag-on { background: #F0FAF4; color: #2E7D54; }
-.ex-tag-off { background: #E8F6EE; color: #5C7E6C; }
-.ex-tag-mute { background: #F0FAF4; color: #7AA08C; }
-.ex-empty { text-align: center; color: #7AA08C; padding: 26px 12px; }
+.row:hover { background: #F0FAF4; }
+.tag { font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.tag-on { background: #F0FAF4; color: #2E7D54; }
+.tag-off { background: #E8F6EE; color: #5C7E6C; }
+.tag-mute { background: #F0FAF4; color: #7AA08C; }
+.empty { text-align: center; color: #7AA08C; padding: 26px 12px; }
 
 /* ── 下のナビ ───────────────────────────────────────── */
-.ex-botnav {
+.botnav {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: flex;
   background: #FFFFFF; border-top: 1px solid #D4EAE0;
   padding-bottom: env(safe-area-inset-bottom);
 }
-.ex-bn { flex: 1 1 0; background: none; border: none; padding: 8px 2px 9px; cursor: pointer; color: #7AA08C; font-family: inherit; }
-.ex-bn.on { color: #2E7D54; }
-.ex-bn-i { display: block; font-size: 17px; line-height: 1.2; }
-.ex-bn-l { display: block; font-size: 10.5px; font-weight: 700; }
+.bn { flex: 1 1 0; background: none; border: none; padding: 8px 2px 9px; cursor: pointer; color: #7AA08C; font-family: inherit; }
+.bn.on { color: #2E7D54; }
+.bn-i { display: block; font-size: 17px; line-height: 1.2; }
+.bn-l { display: block; font-size: 10.5px; font-weight: 700; }
 
 /* ── かぶせる小窓 ───────────────────────────────────── */
-.ex-ov {
+.ov {
   position: fixed; inset: 0; background: rgba(30,60,40,.42); z-index: 60;
   display: none; align-items: center; justify-content: center; padding: 18px;
 }
-.ex-ov.open { display: flex; }
-.ex-ov-card { width: 100%; max-width: 420px; background: #FFFFFF; border-radius: 16px; padding: 16px; }
-.ex-ov-t { font-size: 14px; font-weight: 700; color: #2E7D54; margin-bottom: 6px; }
+.ov.open { display: flex; }
+.ov-card { width: 100%; max-width: 420px; background: #FFFFFF; border-radius: 16px; padding: 16px; }
+.ov-t { font-size: 14px; font-weight: 700; color: #2E7D54; margin-bottom: 6px; }
 
 /* ── 目に見えるフォーカス（キーボード/スイッチ操作で現在地が分かる）── */
 a:focus-visible, button:focus-visible, select:focus-visible,
@@ -207,20 +207,20 @@ input:focus-visible, textarea:focus-visible, [tabindex]:focus-visible {
 /* ── 主ボタン（画面にひとつだけ大きく）────────────────────────
    ★出す口をたくさん並べない★。押す物が7個 横に並ぶと、どれが本命か分からなくなる。
    本命だけ大きく、ほかは「畳む」に入れる。 */
-.ex-b-big { font-size: 16px; padding: 15px 28px; flex: 1 1 auto; min-width: 200px; }
+.btn-big { font-size: 16px; padding: 15px 28px; flex: 1 1 auto; min-width: 200px; }
 
 /* ── 畳む（開くまで画面に出さない）──────────────────────────
    ★説明で画面を埋めない★。細かい設定・ほかの出し方はここに入れる。 */
-.ex-more { padding: 0; }
-.ex-more > summary {
+.more { padding: 0; }
+.more > summary {
   list-style: none; cursor: pointer; padding: 12px 14px;
   font-size: 13px; font-weight: 700; color: #3D6B53;
   display: block; white-space: normal; word-break: normal; overflow-wrap: break-word;
 }
-.ex-more > summary::-webkit-details-marker { display: none; }
-.ex-more > summary::before { content: "▸ "; color: #7AA08C; }
-.ex-more[open] > summary::before { content: "▾ "; }
-.ex-more[open] > summary { border-bottom: 1px solid #D4EAE0; margin-bottom: 10px; }
-.ex-more > *:not(summary) { padding: 0 14px 12px; }
-.ex-card.ex-more > *:not(summary) { padding: 0 0 12px; }
-.ex-card.ex-more > summary { padding: 2px 0 12px; }
+.more > summary::-webkit-details-marker { display: none; }
+.more > summary::before { content: "▸ "; color: #7AA08C; }
+.more[open] > summary::before { content: "▾ "; }
+.more[open] > summary { border-bottom: 1px solid #D4EAE0; margin-bottom: 10px; }
+.more > *:not(summary) { padding: 0 14px 12px; }
+.card.more > *:not(summary) { padding: 0 0 12px; }
+.card.more > summary { padding: 2px 0 12px; }

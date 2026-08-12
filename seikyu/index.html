@@ -12,8 +12,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@500&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 <!-- ★見た目の本体はスイート共通の皮。請求書の app.css は差分だけ（読む順は皮が先） -->
-<link rel="stylesheet" href="../css/exally-ui.css?v=1e1e0e89">
-<link rel="stylesheet" href="css/app.css?v=1e1e0e89">
+<link rel="stylesheet" href="../css/exally-ui.css?v=59b0c5ad">
+<link rel="stylesheet" href="css/app.css?v=59b0c5ad">
 </head>
 <body>
 
@@ -21,31 +21,31 @@
      JSが動かない・接続設定が読めない端末でも、中身が露出したままにならない。 -->
 <div id="app" hidden>
 
-<header class="ex-appbar">
-  <a class="ex-back" href="../hub.html">← Exally</a>
-  <div class="ex-logo">請求書</div>
-  <div class="ex-grow"></div>
+<header class="appbar">
+  <a class="back" href="../hub.html">← Exally</a>
+  <div class="logo">請求書</div>
+  <div class="grow"></div>
 </header>
 
-<main class="ex-main">
+<main class="main">
 
   <!-- ═══ ① 一覧 ═══ -->
   <section class="screen" id="scr-list">
-    <div class="ex-card">
-      <div class="ex-card-h">請求書</div>
-      <div class="ex-seg" id="fil-seg">
-        <button class="ex-chip on" type="button" data-fil="live">出した物</button>
-        <button class="ex-chip" type="button" data-fil="all">すべて</button>
-        <button class="ex-chip" type="button" data-fil="draft">下書き</button>
-        <button class="ex-chip" type="button" data-fil="issued">発行済</button>
-        <button class="ex-chip" type="button" data-fil="void">取り消し</button>
+    <div class="card">
+      <div class="card-h">請求書</div>
+      <div class="seg" id="fil-seg">
+        <button class="seg-b on" type="button" data-fil="live">出した物</button>
+        <button class="seg-b" type="button" data-fil="all">すべて</button>
+        <button class="seg-b" type="button" data-fil="draft">下書き</button>
+        <button class="seg-b" type="button" data-fil="issued">発行済</button>
+        <button class="seg-b" type="button" data-fil="void">取り消し</button>
       </div>
-      <div class="ex-btn-row">
-        <button class="ex-b1" type="button" id="b-new">＋ 新しい請求書</button>
-        <button class="ex-b2" type="button" id="b-reload">読み直す</button>
+      <div class="btn-row">
+        <button class="btn-primary" type="button" id="b-new">＋ 新しい請求書</button>
+        <button class="btn-ghost" type="button" id="b-reload">読み直す</button>
       </div>
-      <p class="ex-hint" id="list-hint">発行した請求書は、あとから中身を直せません（取り消して作り直します）。番号は同じ物を二度使いません。</p>
-      <div class="ex-bad" id="list-err" style="display:none"></div>
+      <p class="hint" id="list-hint">発行した請求書は、あとから中身を直せません（取り消して作り直します）。番号は同じ物を二度使いません。</p>
+      <div class="bad" id="list-err" style="display:none"></div>
     </div>
     <div id="list-body"></div>
   </section>
@@ -55,281 +55,281 @@
        ・取引先を選んだら ★前回から当てて「✓を押すだけ」★
        ・出すボタンは ★「発行する」1つだけ★。ほかは畳む。押せない物は出さない -->
   <section class="screen active" id="scr-edit">
-    <div class="ex-card">
-      <div class="ex-card-h" id="edit-h">新しい請求書</div>
-      <div class="ex-warn" id="edit-locked" style="display:none">この請求書は発行済みです。中身は直せません。直すときは取り消してから作り直してください。</div>
+    <div class="card">
+      <div class="card-h" id="edit-h">新しい請求書</div>
+      <div class="warn" id="edit-locked" style="display:none">この請求書は発行済みです。中身は直せません。直すときは取り消してから作り直してください。</div>
 
-      <div class="ex-frow">
-        <div class="ex-label">だれに</div>
-        <select class="ex-input" id="e-partner"></select>
-        <p class="ex-hint" id="e-partner-hint" style="display:none"></p>
+      <div class="frow">
+        <div class="flabel">だれに</div>
+        <select class="finput" id="e-partner"></select>
+        <p class="hint" id="e-partner-hint" style="display:none"></p>
       </div>
-      <div class="ex-frow2">
-        <div class="ex-frow">
-          <div class="ex-label">請求日</div>
-          <input class="ex-input" id="e-issue" type="date">
+      <div class="frow2">
+        <div class="frow">
+          <div class="flabel">請求日</div>
+          <input class="finput" id="e-issue" type="date">
         </div>
-        <div class="ex-frow">
-          <div class="ex-label">番号</div>
+        <div class="frow">
+          <div class="flabel">番号</div>
           <div class="no-row">
             <span class="no-v" id="e-no-view">（自動）</span>
-            <button class="ex-mini" type="button" id="b-no-edit">変える</button>
+            <button class="mini" type="button" id="b-no-edit">変える</button>
           </div>
-          <input class="ex-input" id="e-no" type="text" style="margin-top:6px;display:none">
+          <input class="finput" id="e-no" type="text" style="margin-top:6px;display:none">
         </div>
       </div>
     </div>
 
     <!-- ★前回から当てて確かめる（空欄を並べて埋めさせない）★ -->
-    <div class="ex-card" id="guess-card" style="display:none">
-      <div class="ex-card-h" id="guess-h">前回と同じで作りますか？</div>
+    <div class="card" id="guess-card" style="display:none">
+      <div class="card-h" id="guess-h">前回と同じで作りますか？</div>
       <div id="guess-list"></div>
-      <div class="ex-btn-row">
-        <button class="ex-b1" type="button" id="b-guess-ok">✓ はい、これで</button>
-        <button class="ex-b2" type="button" id="b-guess-edit">ちがう内容にする</button>
+      <div class="btn-row">
+        <button class="btn-primary" type="button" id="b-guess-ok">✓ はい、これで</button>
+        <button class="btn-ghost" type="button" id="b-guess-edit">ちがう内容にする</button>
       </div>
     </div>
 
-    <div class="ex-card">
-      <div class="ex-card-h">なにを</div>
+    <div class="card">
+      <div class="card-h">なにを</div>
       <div class="lines-scroll">
         <table class="lines">
           <thead><tr id="lines-head"></tr></thead>
           <tbody id="lines-body"></tbody>
         </table>
       </div>
-      <button class="ex-badd" type="button" id="b-addline">＋ 行を足す</button>
+      <button class="btn-add" type="button" id="b-addline">＋ 行を足す</button>
       <div class="tot" id="tot-box"></div>
-      <div class="ex-bad" id="edit-err" style="display:none"></div>
-      <div class="ex-warn" id="edit-warn" style="display:none"></div>
+      <div class="bad" id="edit-err" style="display:none"></div>
+      <div class="warn" id="edit-warn" style="display:none"></div>
     </div>
 
     <!-- ★細かい所は畳む（開くまで画面に出さない）★ -->
-    <details class="ex-card ex-more" id="more-box">
-      <summary class="ex-more-s">細かく決める（件名・支払期限・備考）</summary>
-      <div class="ex-frow">
-        <div class="ex-label">件名<span class="guess-tag" id="tag-subject" style="display:none">前回から</span></div>
-        <input class="ex-input" id="e-subject" type="text" placeholder="例：9月分 運転代行ご利用料金">
+    <details class="card more" id="more-box">
+      <summary class="more-s">細かく決める（件名・支払期限・備考）</summary>
+      <div class="frow">
+        <div class="flabel">件名<span class="guess-tag" id="tag-subject" style="display:none">前回から</span></div>
+        <input class="finput" id="e-subject" type="text" placeholder="例：9月分 運転代行ご利用料金">
       </div>
-      <div class="ex-frow2">
-        <div class="ex-frow">
-          <div class="ex-label">支払期限<span class="guess-tag" id="tag-term" style="display:none">前回から</span></div>
-          <select class="ex-input" id="e-term"></select>
-          <input class="ex-input ex-num" id="e-termn" type="text" inputmode="numeric" placeholder="日数" style="margin-top:6px;display:none">
-          <input class="ex-input" id="e-due" type="date" style="margin-top:6px">
+      <div class="frow2">
+        <div class="frow">
+          <div class="flabel">支払期限<span class="guess-tag" id="tag-term" style="display:none">前回から</span></div>
+          <select class="finput" id="e-term"></select>
+          <input class="finput num" id="e-termn" type="text" inputmode="numeric" placeholder="日数" style="margin-top:6px;display:none">
+          <input class="finput" id="e-due" type="date" style="margin-top:6px">
         </div>
-        <div class="ex-frow">
-          <div class="ex-label">備考</div>
-          <textarea class="ex-input" id="e-memo" placeholder="例：振込手数料は貴社にてご負担ください"></textarea>
+        <div class="frow">
+          <div class="flabel">備考</div>
+          <textarea class="finput" id="e-memo" placeholder="例：振込手数料は貴社にてご負担ください"></textarea>
         </div>
       </div>
-      <div class="ex-frow">
-        <label class="ex-check"><input type="checkbox" id="e-gensen"><span>源泉徴収する<span class="guess-tag" id="tag-gensen" style="display:none">前回から</span></span></label>
-        <p class="ex-hint" id="e-gensen-hint"></p>
+      <div class="frow">
+        <label class="check"><input type="checkbox" id="e-gensen"><span>源泉徴収する<span class="guess-tag" id="tag-gensen" style="display:none">前回から</span></span></label>
+        <p class="hint" id="e-gensen-hint"></p>
       </div>
-      <p class="ex-hint">税の入れ方・円未満の丸め方・紙の様式は「設定」で1回 決めたら、以後は聞きません。</p>
+      <p class="hint">税の入れ方・円未満の丸め方・紙の様式は「設定」で1回 決めたら、以後は聞きません。</p>
     </details>
 
-    <div class="ex-card">
-      <div class="ex-btn-row">
-        <button class="ex-b1 ex-b-big" type="button" id="b-issue">発行する</button>
+    <div class="card">
+      <div class="btn-row">
+        <button class="btn-primary btn-big" type="button" id="b-issue">発行する</button>
       </div>
-      <p class="ex-why" id="act-why"></p>
-      <details class="ex-more" id="out-box">
-        <summary class="ex-more-s" id="out-sum">ほかの出し方（下書き・下見・印刷・Excel）</summary>
-        <div class="ex-btn-row">
-          <button class="ex-b2" type="button" id="b-save">下書きを保存</button>
-          <button class="ex-b2" type="button" id="b-preview">中身を見る</button>
-          <button class="ex-b2" type="button" id="b-print">印刷 / PDF保存</button>
-          <button class="ex-b2" type="button" id="b-xlsx">Excel</button>
+      <p class="why" id="act-why"></p>
+      <details class="more" id="out-box">
+        <summary class="more-s" id="out-sum">ほかの出し方（下書き・下見・印刷・Excel）</summary>
+        <div class="btn-row">
+          <button class="btn-ghost" type="button" id="b-save">下書きを保存</button>
+          <button class="btn-ghost" type="button" id="b-preview">中身を見る</button>
+          <button class="btn-ghost" type="button" id="b-print">印刷 / PDF保存</button>
+          <button class="btn-ghost" type="button" id="b-xlsx">Excel</button>
         </div>
-        <div class="ex-btn-row" id="danger-row"></div>
+        <div class="btn-row" id="danger-row"></div>
       </details>
-      <div class="ex-ok" id="edit-ok" style="display:none"></div>
+      <div class="ok" id="edit-ok" style="display:none"></div>
       <div class="pv-wrap" id="pv-wrap" style="display:none"><iframe class="pv" id="pv" title="請求書の下見"></iframe></div>
     </div>
   </section>
 
   <!-- ═══ ③ 設定 ═══ -->
   <section class="screen" id="scr-set">
-    <div class="ex-card">
-      <div class="ex-card-h">紙の様式</div>
-      <div class="ex-seg" id="s-tpl"></div>
-      <p class="ex-hint" id="s-tpl-note"></p>
-      <p class="ex-hint">様式で変わるのは見た目だけです。★金額・消費税・合計は1円も変わりません。★</p>
+    <div class="card">
+      <div class="card-h">紙の様式</div>
+      <div class="seg" id="s-tpl"></div>
+      <p class="hint" id="s-tpl-note"></p>
+      <p class="hint">様式で変わるのは見た目だけです。★金額・消費税・合計は1円も変わりません。★</p>
     </div>
 
-    <div class="ex-card">
-      <div class="ex-card-h">明細の列</div>
-      <p class="ex-hint">請求書に並べる列は、会社ごとに自由に決められます。足す・消す・並べ替える・幅を変える・揃えを変える。知らない名前の列（例：行き先・距離・担当者）も足せます。</p>
+    <div class="card">
+      <div class="card-h">明細の列</div>
+      <p class="hint">請求書に並べる列は、会社ごとに自由に決められます。足す・消す・並べ替える・幅を変える・揃えを変える。知らない名前の列（例：行き先・距離・担当者）も足せます。</p>
       <div id="col-list"></div>
-      <div class="ex-btn-row">
-        <input class="ex-input" id="col-new" type="text" placeholder="例：行き先" style="flex:1 1 150px">
-        <button class="ex-b2" type="button" id="b-col-add">＋ 列を足す</button>
-        <button class="ex-b2" type="button" id="b-col-reset">様式の既定に戻す</button>
+      <div class="btn-row">
+        <input class="finput" id="col-new" type="text" placeholder="例：行き先" style="flex:1 1 150px">
+        <button class="btn-ghost" type="button" id="b-col-add">＋ 列を足す</button>
+        <button class="btn-ghost" type="button" id="b-col-reset">様式の既定に戻す</button>
       </div>
-      <p class="ex-why" id="col-why"></p>
-      <div class="ex-ok" id="col-ok" style="display:none"></div>
-      <div class="ex-bad" id="col-err" style="display:none"></div>
+      <p class="why" id="col-why"></p>
+      <div class="ok" id="col-ok" style="display:none"></div>
+      <div class="bad" id="col-err" style="display:none"></div>
     </div>
 
-    <div class="ex-card">
-      <div class="ex-card-h">請求書の決まり</div>
-      <div class="ex-frow">
-        <div class="ex-label">番号の形</div>
-        <select class="ex-input" id="s-format"></select>
-        <p class="ex-hint" id="s-format-hint"></p>
+    <div class="card">
+      <div class="card-h">請求書の決まり</div>
+      <div class="frow">
+        <div class="flabel">番号の形</div>
+        <select class="finput" id="s-format"></select>
+        <p class="hint" id="s-format-hint"></p>
       </div>
-      <div class="ex-frow">
-        <label class="ex-label" style="display:block">
+      <div class="frow">
+        <label class="flabel" style="display:block">
           <input type="checkbox" id="s-reset"> 年（または年月）が変わったら 1 に戻す
         </label>
-        <p class="ex-hint">戻さない場合は、年をまたいでも通し番号が続きます。どちらでも「同じ番号を二度使わない」ことは倉庫が守ります。</p>
+        <p class="hint">戻さない場合は、年をまたいでも通し番号が続きます。どちらでも「同じ番号を二度使わない」ことは倉庫が守ります。</p>
       </div>
-      <div class="ex-frow2">
-        <div class="ex-frow">
-          <div class="ex-label">税の入れ方（既定）</div>
-          <select class="ex-input" id="s-taxmode">
+      <div class="frow2">
+        <div class="frow">
+          <div class="flabel">税の入れ方（既定）</div>
+          <select class="finput" id="s-taxmode">
             <option value="exclusive">外税</option>
             <option value="inclusive">内税</option>
           </select>
         </div>
-        <div class="ex-frow">
-          <div class="ex-label">円未満の丸め方（既定）</div>
-          <select class="ex-input" id="s-round"></select>
+        <div class="frow">
+          <div class="flabel">円未満の丸め方（既定）</div>
+          <select class="finput" id="s-round"></select>
         </div>
       </div>
-      <p class="ex-hint">消費税は、税率ごとに合計してから1回だけ丸めます（国税庁の定め）。丸め方だけが会社ごとの決めごとです。</p>
-      <div class="ex-frow">
-        <label class="ex-check"><input type="checkbox" id="s-carry"><span>紙に「繰越」を出す（前回請求額・入金額・繰越額）</span></label>
-        <p class="ex-hint" id="s-carry-hint">毎月まとめて払われる相手に使います。入金が読めない時は ★0と書かず「未確認」と出します★。</p>
+      <p class="hint">消費税は、税率ごとに合計してから1回だけ丸めます（国税庁の定め）。丸め方だけが会社ごとの決めごとです。</p>
+      <div class="frow">
+        <label class="check"><input type="checkbox" id="s-carry"><span>紙に「繰越」を出す（前回請求額・入金額・繰越額）</span></label>
+        <p class="hint" id="s-carry-hint">毎月まとめて払われる相手に使います。入金が読めない時は ★0と書かず「未確認」と出します★。</p>
       </div>
-      <div class="ex-frow">
-        <div class="ex-label">お振込先（紙に出ます）</div>
-        <textarea class="ex-input" id="s-bank" placeholder="例：伊予銀行 今治支店 普通 1234567 カ）ゼロアクト"></textarea>
+      <div class="frow">
+        <div class="flabel">お振込先（紙に出ます）</div>
+        <textarea class="finput" id="s-bank" placeholder="例：伊予銀行 今治支店 普通 1234567 カ）ゼロアクト"></textarea>
       </div>
-      <div class="ex-btn-row">
-        <button class="ex-b1" type="button" id="b-set-save">保存</button>
+      <div class="btn-row">
+        <button class="btn-primary" type="button" id="b-set-save">保存</button>
       </div>
-      <div class="ex-ok" id="set-ok" style="display:none"></div>
-      <div class="ex-bad" id="set-err" style="display:none"></div>
+      <div class="ok" id="set-ok" style="display:none"></div>
+      <div class="bad" id="set-err" style="display:none"></div>
     </div>
 
-    <div class="ex-card">
-      <div class="ex-card-h">取引先の「請求書で使う」項目</div>
-      <p class="ex-hint">名称・住所・登録番号は Exally のハブ（共有データ ▸ 取引先）が本体です。ここではそこに無い、請求書だけで使う項目を足します。</p>
-      <div class="ex-frow">
-        <div class="ex-label">取引先を選ぶ</div>
-        <select class="ex-input" id="s-partner"></select>
+    <div class="card">
+      <div class="card-h">取引先の「請求書で使う」項目</div>
+      <p class="hint">名称・住所・登録番号は Exally のハブ（共有データ ▸ 取引先）が本体です。ここではそこに無い、請求書だけで使う項目を足します。</p>
+      <div class="frow">
+        <div class="flabel">取引先を選ぶ</div>
+        <select class="finput" id="s-partner"></select>
       </div>
-      <div class="ex-frow2">
-        <div class="ex-frow">
-          <div class="ex-label">取引先コード</div>
-          <input class="ex-input" id="s-pcode" type="text" placeholder="例：A001">
+      <div class="frow2">
+        <div class="frow">
+          <div class="flabel">取引先コード</div>
+          <input class="finput" id="s-pcode" type="text" placeholder="例：A001">
         </div>
-        <div class="ex-frow">
-          <div class="ex-label">敬称</div>
-          <select class="ex-input" id="s-phonor">
+        <div class="frow">
+          <div class="flabel">敬称</div>
+          <select class="finput" id="s-phonor">
             <option>御中</option><option>様</option><option>（なし）</option>
           </select>
         </div>
       </div>
-      <div class="ex-frow2">
-        <div class="ex-frow">
-          <div class="ex-label">担当者</div>
-          <input class="ex-input" id="s-pperson" type="text" placeholder="例：山田">
+      <div class="frow2">
+        <div class="frow">
+          <div class="flabel">担当者</div>
+          <input class="finput" id="s-pperson" type="text" placeholder="例：山田">
         </div>
-        <div class="ex-frow">
-          <div class="ex-label">郵便番号</div>
-          <input class="ex-input" id="s-pzip" type="text" inputmode="numeric" placeholder="例：794-0000">
-        </div>
-      </div>
-      <div class="ex-frow2">
-        <div class="ex-frow">
-          <div class="ex-label">電話番号</div>
-          <input class="ex-input" id="s-ptel" type="tel" placeholder="例：0898-00-0000">
-        </div>
-        <div class="ex-frow">
-          <div class="ex-label">いつまでにもらう約束</div>
-          <select class="ex-input" id="s-pterm"></select>
-          <input class="ex-input ex-num" id="s-ptermn" type="text" inputmode="numeric" placeholder="日数" style="margin-top:6px;display:none">
+        <div class="frow">
+          <div class="flabel">郵便番号</div>
+          <input class="finput" id="s-pzip" type="text" inputmode="numeric" placeholder="例：794-0000">
         </div>
       </div>
-      <div class="ex-frow">
-        <label class="ex-check"><input type="checkbox" id="s-pgensen"><span>この取引先は源泉徴収の対象（新しく作る1通に最初から入る）</span></label>
-        <p class="ex-hint">対象かどうかは相手（払う側）が決めます。1通ごとに変える時は、入力の「細かく決める」から。</p>
+      <div class="frow2">
+        <div class="frow">
+          <div class="flabel">電話番号</div>
+          <input class="finput" id="s-ptel" type="tel" placeholder="例：0898-00-0000">
+        </div>
+        <div class="frow">
+          <div class="flabel">いつまでにもらう約束</div>
+          <select class="finput" id="s-pterm"></select>
+          <input class="finput num" id="s-ptermn" type="text" inputmode="numeric" placeholder="日数" style="margin-top:6px;display:none">
+        </div>
       </div>
-      <div class="ex-btn-row">
-        <button class="ex-b1" type="button" id="b-pt-save">この取引先を保存</button>
-        <a class="ex-b2" style="text-decoration:none;display:inline-block" href="../hub.html">ハブで取引先を追加</a>
+      <div class="frow">
+        <label class="check"><input type="checkbox" id="s-pgensen"><span>この取引先は源泉徴収の対象（新しく作る1通に最初から入る）</span></label>
+        <p class="hint">対象かどうかは相手（払う側）が決めます。1通ごとに変える時は、入力の「細かく決める」から。</p>
       </div>
-      <div class="ex-ok" id="pt-ok" style="display:none"></div>
-      <div class="ex-bad" id="pt-err" style="display:none"></div>
+      <div class="btn-row">
+        <button class="btn-primary" type="button" id="b-pt-save">この取引先を保存</button>
+        <a class="btn-ghost" style="text-decoration:none;display:inline-block" href="../hub.html">ハブで取引先を追加</a>
+      </div>
+      <div class="ok" id="pt-ok" style="display:none"></div>
+      <div class="bad" id="pt-err" style="display:none"></div>
     </div>
 
-    <div class="ex-card">
-      <div class="ex-card-h">自社の情報</div>
-      <p class="ex-hint" id="org-view">屋号・住所・電話・インボイス登録番号は Exally のハブ（共有データ ▸ 会社）が本体です。ここでは直しません（同じ物を2か所で持たないため）。</p>
-      <div class="ex-btn-row">
-        <a class="ex-b2" style="text-decoration:none;display:inline-block" href="../hub.html">ハブで会社情報を直す</a>
+    <div class="card">
+      <div class="card-h">自社の情報</div>
+      <p class="hint" id="org-view">屋号・住所・電話・インボイス登録番号は Exally のハブ（共有データ ▸ 会社）が本体です。ここでは直しません（同じ物を2か所で持たないため）。</p>
+      <div class="btn-row">
+        <a class="btn-ghost" style="text-decoration:none;display:inline-block" href="../hub.html">ハブで会社情報を直す</a>
       </div>
     </div>
 
-    <div class="ex-card">
-      <div class="ex-card-h">角印（会社の印）</div>
-      <p class="ex-hint">紙の自社名の下に、薄く重ねて刷ります。PNG か JPEG の画像を選んでください（背景が透けている PNG がいちばんきれいです）。</p>
+    <div class="card">
+      <div class="card-h">角印（会社の印）</div>
+      <p class="hint">紙の自社名の下に、薄く重ねて刷ります。PNG か JPEG の画像を選んでください（背景が透けている PNG がいちばんきれいです）。</p>
       <div class="seal-row">
         <img class="seal-pv" id="seal-pv" alt="角印の下見" style="display:none">
-        <span class="ex-hint" id="seal-none">まだ入れていません（印を押さずに刷ります）。</span>
+        <span class="hint" id="seal-none">まだ入れていません（印を押さずに刷ります）。</span>
       </div>
-      <div class="ex-frow2">
-        <div class="ex-frow">
-          <div class="ex-label">大きさ（mm）</div>
-          <input class="ex-input ex-num" id="seal-mm" type="text" inputmode="numeric" placeholder="21">
+      <div class="frow2">
+        <div class="frow">
+          <div class="flabel">大きさ（mm）</div>
+          <input class="finput num" id="seal-mm" type="text" inputmode="numeric" placeholder="21">
         </div>
-        <div class="ex-frow">
-          <div class="ex-label">画像を選ぶ</div>
-          <input class="ex-input" id="seal-file" type="file" accept="image/png,image/jpeg">
+        <div class="frow">
+          <div class="flabel">画像を選ぶ</div>
+          <input class="finput" id="seal-file" type="file" accept="image/png,image/jpeg">
         </div>
       </div>
-      <div class="ex-btn-row">
-        <button class="ex-b1" type="button" id="b-seal-save">保存</button>
-        <button class="ex-bdel" type="button" id="b-seal-clear">印を消す</button>
+      <div class="btn-row">
+        <button class="btn-primary" type="button" id="b-seal-save">保存</button>
+        <button class="bdel" type="button" id="b-seal-clear">印を消す</button>
       </div>
-      <p class="ex-why" id="seal-why"></p>
-      <div class="ex-ok" id="seal-ok" style="display:none"></div>
-      <div class="ex-bad" id="seal-err" style="display:none"></div>
+      <p class="why" id="seal-why"></p>
+      <div class="ok" id="seal-ok" style="display:none"></div>
+      <div class="bad" id="seal-err" style="display:none"></div>
     </div>
 
     <!-- ★ログイン中の人とログアウトは「設定」の中★（給与と同じ置き場所。
          頭に出すと、狭い端末で 屋号やメールが見出しを押し出す） -->
-    <div class="ex-card">
-      <div class="ex-card-h">ログイン</div>
-      <p class="ex-note">ログイン中: <span class="ex-who" id="who"></span></p>
-      <div class="ex-btn-row">
-        <button class="ex-b2" type="button" id="b-logout">ログアウト</button>
+    <div class="card">
+      <div class="card-h">ログイン</div>
+      <p class="note">ログイン中: <span class="who" id="who"></span></p>
+      <div class="btn-row">
+        <button class="btn-ghost" type="button" id="b-logout">ログアウト</button>
       </div>
     </div>
   </section>
 
 </main>
 
-<nav class="ex-botnav">
-  <button class="ex-bn" type="button" data-scr="scr-set"><span class="ex-bn-i">⚙</span><span class="ex-bn-l">設定</span></button>
-  <button class="ex-bn on" type="button" data-scr="scr-edit"><span class="ex-bn-i">✎</span><span class="ex-bn-l">入力</span></button>
-  <button class="ex-bn" type="button" data-scr="scr-list"><span class="ex-bn-i">▤</span><span class="ex-bn-l">一覧</span></button>
+<nav class="botnav">
+  <button class="bn" type="button" data-scr="scr-set"><span class="bn-i">⚙</span><span class="bn-l">設定</span></button>
+  <button class="bn on" type="button" data-scr="scr-edit"><span class="bn-i">✎</span><span class="bn-l">入力</span></button>
+  <button class="bn" type="button" data-scr="scr-list"><span class="bn-i">▤</span><span class="bn-l">一覧</span></button>
 </nav>
 
 <!-- ★落とす前に「中身から作った名前」を出して直させる（司さんの決まり）★ -->
-<div class="ex-ov" id="fn-ov">
-  <div class="ex-ov-card">
-    <div class="ex-ov-t">この名前で保存します</div>
-    <p class="ex-hint">中身（日付・相手・種類・金額）から作りました。直してから保存できます。</p>
-    <input class="ex-input" id="fn-input" type="text">
+<div class="ov" id="fn-ov">
+  <div class="ov-card">
+    <div class="ov-t">この名前で保存します</div>
+    <p class="hint">中身（日付・相手・種類・金額）から作りました。直してから保存できます。</p>
+    <input class="finput" id="fn-input" type="text">
     <div class="ov-ext" id="fn-ext"></div>
-    <div class="ex-btn-row">
-      <button class="ex-b1" type="button" id="fn-ok">この名前で保存</button>
-      <button class="ex-b2" type="button" id="fn-cancel">やめる</button>
+    <div class="btn-row">
+      <button class="btn-primary" type="button" id="fn-ok">この名前で保存</button>
+      <button class="btn-ghost" type="button" id="fn-cancel">やめる</button>
     </div>
   </div>
 </div>
@@ -337,33 +337,33 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../js/supa-config.js?v=1e1e0e89"></script>
-<script src="../lib/xlsx.full.min.js?v=1e1e0e89"></script>
-<script src="../js/file-out.js?v=1e1e0e89"></script>
-<script src="../js/suite-data.js?v=1e1e0e89"></script>
-<script src="../kyuyo/lib/shouhizei-ritsu.js?v=1e1e0e89"></script>
+<script src="../js/supa-config.js?v=59b0c5ad"></script>
+<script src="../lib/xlsx.full.min.js?v=59b0c5ad"></script>
+<script src="../js/file-out.js?v=59b0c5ad"></script>
+<script src="../js/suite-data.js?v=59b0c5ad"></script>
+<script src="../kyuyo/lib/shouhizei-ritsu.js?v=59b0c5ad"></script>
 <!-- ★源泉徴収の率と式は【給与の lib】が持つ＝請求書側には率を1つも書かない★
      （国税庁 No.2798。100万円の境目も、1円未満の切り捨ても、あちらの gensenA が唯一の正） -->
-<script src="../kyuyo/lib/shiharai-chosho.js?v=1e1e0e89"></script>
-<script src="lib/seikyu-tax.js?v=1e1e0e89"></script>
-<script src="lib/seikyu-gensen.js?v=1e1e0e89"></script>
-<script src="lib/seikyu-carry.js?v=1e1e0e89"></script>
-<script src="lib/seikyu-cols.js?v=1e1e0e89"></script>
-<script src="lib/seikyu-templates.js?v=1e1e0e89"></script>
-<script src="lib/seikyu-doc.js?v=1e1e0e89"></script>
-<script src="lib/seikyu-name.js?v=1e1e0e89"></script>
-<script src="lib/seikyu-paper.js?v=1e1e0e89"></script>
-<script src="lib/seikyu-aoa.js?v=1e1e0e89"></script>
-<script src="js/seikyu-store.js?v=1e1e0e89"></script>
-<script src="js/seikyu-out.js?v=1e1e0e89"></script>
-<script src="js/seikyu-app.js?v=1e1e0e89"></script>
-<script src="../js/exally-login.js?v=1e1e0e89"></script>
-<script src="js/auth.js?v=1e1e0e89"></script>
+<script src="../kyuyo/lib/shiharai-chosho.js?v=59b0c5ad"></script>
+<script src="lib/seikyu-tax.js?v=59b0c5ad"></script>
+<script src="lib/seikyu-gensen.js?v=59b0c5ad"></script>
+<script src="lib/seikyu-carry.js?v=59b0c5ad"></script>
+<script src="lib/seikyu-cols.js?v=59b0c5ad"></script>
+<script src="lib/seikyu-templates.js?v=59b0c5ad"></script>
+<script src="lib/seikyu-doc.js?v=59b0c5ad"></script>
+<script src="lib/seikyu-name.js?v=59b0c5ad"></script>
+<script src="lib/seikyu-paper.js?v=59b0c5ad"></script>
+<script src="lib/seikyu-aoa.js?v=59b0c5ad"></script>
+<script src="js/seikyu-store.js?v=59b0c5ad"></script>
+<script src="js/seikyu-out.js?v=59b0c5ad"></script>
+<script src="js/seikyu-app.js?v=59b0c5ad"></script>
+<script src="../js/exally-login.js?v=59b0c5ad"></script>
+<script src="js/auth.js?v=59b0c5ad"></script>
 <!-- ★Service Worker は登録しない＝キャッシュで古い版が居座る問題を根絶。
      開くたびに既存SWを登録解除＋全キャッシュ削除して常に最新にする（給与と同じ）。 -->
 <script>try{if('serviceWorker'in navigator){navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister();});});}if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.delete(k);});});}}catch(e){}</script>
 <!-- ★テスト環境の帯★ 本番の倉庫では出ない。今どの倉庫かは js/supa-config.js が唯一の正。
      ホスト名では決めない（配り方は変わるが「本番のデータか」は変わらないため）。 -->
-<script src="../js/env-badge.js?v=1e1e0e89"></script>
+<script src="../js/env-badge.js?v=59b0c5ad"></script>
 </body>
 </html>

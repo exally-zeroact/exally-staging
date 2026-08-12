@@ -149,21 +149,21 @@ await TA('1. ★3画面ぜんぶのボタンを1つ残らず押しても、JSが
   const screens = ['scr-list', 'scr-edit', 'scr-set'];
   const pressed = [];
   for (const scr of screens) {
-    const nav = doc.querySelector('.ex-bn[data-scr="' + scr + '"]');
+    const nav = doc.querySelector('.bn[data-scr="' + scr + '"]');
     ok(nav, 'ナビ ' + scr + ' が無い');
     nav.click();
     await sleep(10);
     const el = $(scr);
     ok(el.classList.contains('active'), scr + ' が開かない');
     ok(el.innerHTML.length > 400, scr + ' の中身が薄い(' + el.innerHTML.length + ')');
-    for (const b of [...el.querySelectorAll('button'), ...doc.querySelectorAll('.ex-bn')]) {
+    for (const b of [...el.querySelectorAll('button'), ...doc.querySelectorAll('.bn')]) {
       if (b.disabled) { pressed.push((b.id || b.textContent.trim()) + '(押せない)'); continue; }
       b.click();
       await sleep(6);
       pressed.push(b.id || b.getAttribute('data-fil') || b.getAttribute('data-tm') || b.getAttribute('data-nm') || b.textContent.trim());
     }
     // 押した拍子に別の画面へ行っていたら戻す
-    doc.querySelector('.ex-bn[data-scr="' + scr + '"]').click();
+    doc.querySelector('.bn[data-scr="' + scr + '"]').click();
     await sleep(6);
   }
   // ファイル名の小窓のボタンも押す
@@ -195,8 +195,8 @@ T('1-b. ★見た目はスイート共通の皮を読んでいる（請求書だ
 
 T('1-b. ★うちのミント #52B788 と 差し色 #3D9E72 が実際に効いている（請求書だけ別の緑にしない）', () => {
   // ★選ばれている物に見た目が付いているか（押しても何も変わらないように見せない）
-  ok(/\.ex-chip\.on\s*\{[^}]*background/.test(CSS_CODE), '選んだチップに色が付かない');
-  ok(/\.ex-mini\.on\s*\{[^}]*background/.test(CSS_CODE), '選んだ小さいボタン（揃えなど）に色が付かない');
+  ok(/\.seg-b\.on\s*\{[^}]*background/.test(CSS_CODE), '選んだチップに色が付かない');
+  ok(/\.mini\.on\s*\{[^}]*background/.test(CSS_CODE), '選んだ小さいボタン（揃えなど）に色が付かない');
   ok(/#52B788/i.test(CSS_CODE), 'ブランドのミントが1回も使われていない');
   ok(/#3D9E72/i.test(CSS_CODE), '差し色が1回も使われていない');
   ok(/#2E7D54/i.test(CSS_CODE), '主色が使われていない');
@@ -228,7 +228,7 @@ T('1-b. ★明細の表は「縮めて潰す」のではなく「横に動かす
 T('1-b. ★文が入る箱は block で最低幅を持ち、日本語を1文字ずつ割らない', () => {
   ok(!/word-break\s*:\s*break-all/.test(CSS), 'break-all がある（日本語が1文字ずつ割れる）');
   // 皮の側（4つまとめて指定している）
-  const many = (/\.ex-hint,\s*\.ex-warn,\s*\.ex-bad,\s*\.ex-ok,\s*\.ex-why\s*\{([^}]*)\}/.exec(CSS) || [])[1] || '';
+  const many = (/\.hint,\s*\.warn,\s*\.bad,\s*\.ok,\s*\.why\s*\{([^}]*)\}/.exec(CSS) || [])[1] || '';
   ok(/display\s*:\s*block/.test(many), '文の箱が block でない');
   ok(/min-width\s*:\s*\d/.test(many), '文の箱に最低幅が無い');
   ok(/overflow-wrap\s*:\s*break-word/.test(many), '文の箱に折り返しの指定が無い');
@@ -239,9 +239,9 @@ T('1-b. ★文が入る箱は block で最低幅を持ち、日本語を1文字�
     ok(/min-width\s*:\s*\d|width\s*:\s*100%/.test(rule), sel + ' に幅の確保が無い');
     ok(/overflow-wrap\s*:\s*break-word/.test(rule), sel + ' に折り返しの指定が無い');
   }
-  ok(/\.ex-btn-row\s*\{[^}]*flex-wrap\s*:\s*wrap/.test(CSS), 'ボタンの行が折り返さない（横にはみ出す）');
+  ok(/\.btn-row\s*\{[^}]*flex-wrap\s*:\s*wrap/.test(CSS), 'ボタンの行が折り返さない（横にはみ出す）');
   // ★上の帯は flex。中の日本語（アプリ名）が縮んで1文字ずつ縦に割れた前科（実機幅390px）
-  for (const sel of ['.ex-logo', '.ex-back']) {
+  for (const sel of ['.logo', '.back']) {
     const rule = (new RegExp('\\' + sel + '\\s*\\{([^}]*)\\}').exec(CSS) || [])[1] || '';
     ok(/white-space\s*:\s*nowrap/.test(rule), sel + ' が折り返す（日本語のアプリ名が縦に割れる）');
     ok(/flex\s*:\s*0 0 auto/.test(rule), sel + ' が縮む指定になっている（flexの子は既定で縮む）');
@@ -252,7 +252,7 @@ T('1-b. ★文が入る箱は block で最低幅を持ち、日本語を1文字�
   const headTag = (/<header[\s\S]*?<\/header>/.exec(html) || [''])[0];
   ok(!/id="who"|id="b-logout"/.test(headTag), '頭にメールかログアウトが戻っている: ' + headTag.slice(0, 160));
   ok(/<section class="screen" id="scr-set">[\s\S]*id="who"[\s\S]*?<\/section>/.test(html), 'ログイン中の人が「設定」の中に無い');
-  const who = (/\.ex-who\s*\{([^}]*)\}/.exec(CSS) || [])[1] || '';
+  const who = (/\.who\s*\{([^}]*)\}/.exec(CSS) || [])[1] || '';
   ok(/overflow-wrap\s*:\s*break-word/.test(who), '長いメールが箱からはみ出す');
   ok(!/word-break\s*:\s*break-all/.test(who), 'break-all（1文字ずつ割れる）');
   // ★列の編集は flex の行。中の「列の名前」が縦帯にならないよう先に幅を確保している
@@ -261,9 +261,9 @@ T('1-b. ★文が入る箱は block で最低幅を持ち、日本語を1文字�
 });
 
 T('1-b. ★入力欄は16px（これより小さいと iPhone が勝手に拡大して画面がズレる）', () => {
-  const rule = (/\.ex-input\s*\{([^}]*)\}/.exec(CSS) || [])[1] || '';
+  const rule = (/\.finput\s*\{([^}]*)\}/.exec(CSS) || [])[1] || '';
   const m = /font-size\s*:\s*(\d+(?:\.\d+)?)px/.exec(rule);
-  ok(m, '.ex-input に文字の大きさが無い');
+  ok(m, '.finput に文字の大きさが無い');
   ok(Number(m[1]) >= 16, '入力欄が ' + m[1] + 'px（16px 未満）');
 });
 
@@ -301,7 +301,7 @@ T('2-a. ★入力の画面で「毎回 聞く物」を出さない（設定で1�
 
 T('2-a. ★出すボタンは1つだけ大きく・ほかは畳む（7個 横並びをやめた）', () => {
   const big = $('b-issue');
-  ok(big && /ex-b-big/.test(big.className), '本命のボタンが大きくない');
+  ok(big && /btn-big/.test(big.className), '本命のボタンが大きくない');
   const box = $('out-box');
   ok(box && box.tagName === 'DETAILS', 'ほかの出し方が畳まれていない');
   ok(!box.open, '最初から開いている（画面が説明とボタンで埋まる）');
@@ -311,9 +311,9 @@ T('2-a. ★出すボタンは1つだけ大きく・ほかは畳む（7個 横並
 });
 
 T('2-a. ★タブの順と動詞を給与にそろえた（設定→入力→一覧・「作る」ではなく「入力」）', () => {
-  const tabs = [...doc.querySelectorAll('.ex-bn')].map((b) => b.getAttribute('data-scr') + ':' + b.querySelector('.ex-bn-l').textContent);
+  const tabs = [...doc.querySelectorAll('.bn')].map((b) => b.getAttribute('data-scr') + ':' + b.querySelector('.bn-l').textContent);
   eq(tabs.join(' '), 'scr-set:設定 scr-edit:入力 scr-list:一覧', 'タブの順か言葉が給与と違う');
-  ok(!/作る/.test([...doc.querySelectorAll('.ex-bn')].map((b) => b.textContent).join('')), 'タブに「作る」が残っている（給与は「入力」）');
+  ok(!/作る/.test([...doc.querySelectorAll('.bn')].map((b) => b.textContent).join('')), 'タブに「作る」が残っている（給与は「入力」）');
   // 開いた時に出ているのは入力（初めての人がそのまま1通 出せる）
   ok(/<section class="screen active" id="scr-edit">/.test(html), '開いた時の画面が入力でない');
 });
@@ -388,7 +388,7 @@ await TA('2. ★発行済みは直せない・もう一度発行できない（�
 /* ═══ 2-b. ★どんな項目にも対応できる（列を自分で決める）★ ═══ */
 await TA('2-b. ★列を1本足すと、入力の表にも紙にも出る／金額は1円も動かない', async () => {
   const before = win.SeikyuApp._state.cur.totals.grandTotal;
-  doc.querySelector('.ex-bn[data-scr="scr-set"]').click();
+  doc.querySelector('.bn[data-scr="scr-set"]').click();
   await sleep(20);
   const n0 = $('col-list').querySelectorAll('.col-row').length;
   $('col-new').value = '行き先';
@@ -429,7 +429,7 @@ await TA('2-b. ★列を1本足すと、入力の表にも紙にも出る／金�
 });
 
 await TA('2-b. ★幅は 24〜400 から出られない（−を連打しても列が消えない）', async () => {
-  doc.querySelector('.ex-bn[data-scr="scr-set"]').click();
+  doc.querySelector('.bn[data-scr="scr-set"]').click();
   await sleep(20);
   const row = $('col-list').querySelector('.col-row');
   const minus = row.querySelector('[data-w="-8"]');
@@ -467,7 +467,7 @@ await TA('2-b. ★揃えを変えられる／列を消せる／既定に戻せ�
 });
 
 await TA('2-b. ★様式を替えても金額が1円も動かない（見た目だけ変わる）', async () => {
-  doc.querySelector('.ex-bn[data-scr="scr-list"]').click();
+  doc.querySelector('.bn[data-scr="scr-list"]').click();
   await sleep(20);
   doc.querySelector('#fil-seg [data-fil="issued"]').click();
   await sleep(10);
@@ -478,7 +478,7 @@ await TA('2-b. ★様式を替えても金額が1円も動かない（見た目�
   await sleep(400);
   const a = $('pv').srcdoc || '';
   // 発行済みは様式を選べない（写しで固まっている）
-  ok([...doc.querySelectorAll('#e-tpl .ex-chip')].every((b) => b.disabled), '発行済みなのに様式を変えられる');
+  ok([...doc.querySelectorAll('#e-tpl .seg-b')].every((b) => b.disabled), '発行済みなのに様式を変えられる');
   eq(win.SeikyuApp._state.cur.totals.grandTotal, g0, '見ただけで合計が動いた');
   const money = String(g0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   ok(a.replace(/\s+/g, '').includes(money), '紙に合計 ' + money + ' が出ていない');
@@ -504,7 +504,7 @@ await TA('3. ★別の1通に切り替えたら、前の紙の下見は消える
   await sleep(20);
   eq($('pv-wrap').style.display, 'none', '前の紙が残っている');
   // 元の発行済みに戻す
-  doc.querySelector('.ex-bn[data-scr="scr-list"]').click();
+  doc.querySelector('.bn[data-scr="scr-list"]').click();
   await sleep(20);
   doc.querySelector('#fil-seg [data-fil="issued"]').click();
   await sleep(10);
@@ -588,7 +588,7 @@ await TA('4. ★取り消しても番号は空かない（同じ番号は二度�
 
 /* ═══ 5. 一覧 ═══ */
 await TA('5. 一覧に2通出る・絞り込みが効く', async () => {
-  doc.querySelector('.ex-bn[data-scr="scr-list"]').click();
+  doc.querySelector('.bn[data-scr="scr-list"]').click();
   await sleep(20);
   doc.querySelector('#fil-seg [data-fil="all"]').click();   // 1. の総当たりで絞り込みが残っているので戻す
   await sleep(6);
@@ -633,7 +633,7 @@ await TA('5. 一覧から開くと、その1通が出る', async () => {
 
 /* ═══ 6. 設定 ═══ */
 await TA('6. 設定を保存すると自社の棚に入る（番号の形・丸め方・振込先）', async () => {
-  doc.querySelector('.ex-bn[data-scr="scr-set"]').click();
+  doc.querySelector('.bn[data-scr="scr-set"]').click();
   await sleep(20);
   $('s-format').value = 'y-seq'; $('s-format').dispatchEvent(new win.Event('change'));
   $('s-round').value = 'round'; $('s-round').dispatchEvent(new win.Event('change'));
@@ -700,7 +700,7 @@ await TA('7. 支払期限は決め方から自動で入り、手でも直せる'
 
 /* ═══ 6-c. ★角印（会社の印）★ ═══ */
 await TA('6-c. ★角印を入れると紙に出る／大きさを変えられる／消せる', async () => {
-  doc.querySelector('.ex-bn[data-scr="scr-set"]').click();
+  doc.querySelector('.bn[data-scr="scr-set"]').click();
   await sleep(30);
   ok($('seal-none').style.display !== 'none', '最初から印が入っていることになっている');
   ok($('b-seal-clear').disabled, '印が無いのに「消す」が押せる');
@@ -737,7 +737,7 @@ await TA('6-c. ★角印を入れると紙に出る／大きさを変えられ�
 });
 
 await TA('6-c. ★大きすぎる画像・PNG/JPEG でない物は入らない（理由を出す）', async () => {
-  doc.querySelector('.ex-bn[data-scr="scr-set"]').click();
+  doc.querySelector('.bn[data-scr="scr-set"]').click();
   await sleep(30);
   const bad = win.SeikyuApp._pickSealUrl('https://example.com/hanko.png');
   ok(!bad.ok, '外のURLが通った');
@@ -771,7 +771,7 @@ await TA('6-b. ★写しに列が無い古い請求書は、会社の「今の�
   const st = win.SeikyuApp._state;
   st.org.invoiceCols = { items: ['#', '品名・内容', '金額', '税率', '行き先'], widths: {}, aligns: {} };
 
-  doc.querySelector('.ex-bn[data-scr="scr-list"]').click();
+  doc.querySelector('.bn[data-scr="scr-list"]').click();
   await sleep(20);
   doc.querySelector('#fil-seg [data-fil="all"]').click();
   await sleep(20);
@@ -824,7 +824,7 @@ await TA('7-b. ★自社情報が読めなかった時は、空っぽ扱いに�
   ok(/読めていない/.test($('edit-err').textContent), '止めた理由を言っていない: ' + $('edit-err').textContent);
 
   // 「読み直す」で直る
-  doc.querySelector('.ex-bn[data-scr="scr-list"]').click();
+  doc.querySelector('.bn[data-scr="scr-list"]').click();
   await sleep(10);
   await win.SeikyuApp._loadMasters();
   await sleep(50);
@@ -840,7 +840,7 @@ await TA('7-b. ★自社情報が読めなかった時は、空っぽ扱いに�
      ・押す回数が2回のまま（設問を増やさない。増えるなら設定へ） */
 
 /* 新しい1通から始める（前の検査の続きを引きずらない） */
-doc.querySelector('.ex-bn[data-scr="scr-list"]').click();
+doc.querySelector('.bn[data-scr="scr-list"]').click();
 await sleep(10);
 $('b-new').click();
 await sleep(20);
@@ -1011,7 +1011,7 @@ await TA('9-d. ★①「前回から当てる」が源泉ありでも壊れな�
   await win.SeikyuApp._loadMasters();
   await sleep(30);
 
-  doc.querySelector('.ex-bn[data-scr="scr-list"]').click(); await sleep(10);
+  doc.querySelector('.bn[data-scr="scr-list"]').click(); await sleep(10);
   $('b-new').click(); await sleep(20);
 
   /* ── ここから ★押した回数を数える★ ── */
@@ -1041,7 +1041,7 @@ await TA('9-d. ★①「前回から当てる」が源泉ありでも壊れな�
   eq(st.cur.snapshot.gensen.amount, CHOSHO.gensenA(200000), '写しの源泉が給与の lib と違う');
 
   /* ── 2通目：★前回から当てる が源泉ありでも正しく当たる★ ── */
-  doc.querySelector('.ex-bn[data-scr="scr-list"]').click(); await sleep(10);
+  doc.querySelector('.bn[data-scr="scr-list"]').click(); await sleep(10);
   $('b-new').click(); await sleep(20);
   let taps2 = 0;
   setVal('e-partner', 'pt_g'); taps2++;
@@ -1074,7 +1074,7 @@ await TA('9-f. ★「前回と同じ」で源泉を消さない（振り込ま�
   await sleep(30);
 
   // 1通目：源泉なしで発行
-  doc.querySelector('.ex-bn[data-scr="scr-list"]').click(); await sleep(10);
+  doc.querySelector('.bn[data-scr="scr-list"]').click(); await sleep(10);
   $('b-new').click(); await sleep(20);
   setVal('e-partner', 'pt_h'); await sleep(50);
   const setF = (k, v) => { const e = doc.querySelector('#lines-body tr').querySelector('[data-f="' + k + '"]'); e.value = v; e.dispatchEvent(new win.Event('input')); e.dispatchEvent(new win.Event('change')); };
@@ -1091,7 +1091,7 @@ await TA('9-f. ★「前回と同じ」で源泉を消さない（振り込ま�
   await sleep(30);
 
   // 2通目：取引先の既定で源泉が入る → ✓ を押しても外れない
-  doc.querySelector('.ex-bn[data-scr="scr-list"]').click(); await sleep(10);
+  doc.querySelector('.bn[data-scr="scr-list"]').click(); await sleep(10);
   $('b-new').click(); await sleep(20);
   setVal('e-partner', 'pt_h'); await sleep(60);
   eq($('e-gensen').checked, true, '取引先の既定で源泉が入っていない');

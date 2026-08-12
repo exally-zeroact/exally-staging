@@ -49,7 +49,7 @@
     ['scr-list', 'scr-edit', 'scr-set'].forEach(function (s) {
       var el = $(s); if (el) el.classList.toggle('active', s === id);
     });
-    Array.prototype.forEach.call(document.querySelectorAll('.ex-bn'), function (b) {
+    Array.prototype.forEach.call(document.querySelectorAll('.bn'), function (b) {
       b.classList.toggle('on', b.getAttribute('data-scr') === id);
     });
     try { global.scrollTo(0, 0); } catch (e) { /* 端末によっては動かないが害はない */ }
@@ -156,17 +156,17 @@
       return S.fil === 'all' || v.status === S.fil;
     });
     if (!rows.length) {
-      host.innerHTML = '<div class="ex-card"><div class="ex-empty">'
+      host.innerHTML = '<div class="card"><div class="empty">'
         + (S.invoices.length ? 'この絞り込みに当てはまる請求書はありません。' : 'まだ請求書がありません。「＋ 新しい請求書」から出せます。')
         + '</div></div>';
       return;
     }
     host.innerHTML = rows.map(function (v) {
-      var tag = v.status === 'issued' ? '<span class="ex-tag ex-tag-on">発行済</span>'
-        : v.status === 'void' ? '<span class="ex-tag ex-tag-mute">取り消し</span>'
-          : '<span class="ex-tag ex-tag-off">下書き</span>';
+      var tag = v.status === 'issued' ? '<span class="tag tag-on">発行済</span>'
+        : v.status === 'void' ? '<span class="tag tag-mute">取り消し</span>'
+          : '<span class="tag tag-off">下書き</span>';
       var g = (v.totals && v.totals.grandTotal);
-      return '<button class="ex-row" type="button" data-open="' + esc(v.id) + '">'
+      return '<button class="row" type="button" data-open="' + esc(v.id) + '">'
         + '<span class="iv-top">' + tag
         + '<span class="iv-no">' + (esc(v.no) || '（未採番）') + '</span>'
         + '<span class="iv-name">' + esc(partnerName(v)) + '</span></span>'
@@ -341,7 +341,7 @@
     if (!g) {
       // ★初回は「前回の請求はありません」＝空欄を並べない・0と書かない
       setText('guess-h', '前回の請求はありません');
-      $('guess-list').innerHTML = '<p class="ex-hint">この取引先へは初めての請求です。'
+      $('guess-list').innerHTML = '<p class="hint">この取引先へは初めての請求です。'
         + 'このまま明細を打てば出せます（支払期限や件名は「細かく決める」で足せます）。</p>';
       show($('b-guess-ok'), false);
       show($('b-guess-edit'), false);
@@ -415,8 +415,8 @@
     var host = $('danger-row');
     if (host) {
       var html = '';
-      if (DOC.canVoid(v)) html += '<button class="ex-b2" type="button" id="b-void">この請求書を取り消す</button>';
-      if (DOC.canDelete(v) && v.id) html += '<button class="ex-bdel" type="button" id="b-delete">下書きを削除</button>';
+      if (DOC.canVoid(v)) html += '<button class="btn-ghost" type="button" id="b-void">この請求書を取り消す</button>';
+      if (DOC.canDelete(v) && v.id) html += '<button class="bdel" type="button" id="b-delete">下書きを削除</button>';
       host.innerHTML = html;
       var bv = $('b-void'); if (bv) bv.onclick = function () { return voidIt(); };
       var bd = $('b-delete'); if (bd) bd.onclick = function () { return removeDraft(); };
@@ -459,7 +459,7 @@
         var cls = (r === 'name') ? 'l-name' : (r === 'rate') ? 'l-md' : 'l-sm';
         if (r === 'index') return '<td class="l-x" style="color:#7AA08C;padding-top:12px">' + (i + 1) + '</td>';
         if (r === 'rate') {
-          return '<td class="' + cls + '"><select class="ex-input" data-f="rate">'
+          return '<td class="' + cls + '"><select class="finput" data-f="rate">'
             + rates.map(function (x) { return '<option value="' + esc(x.v) + '"' + (rateValueOf(ln) === x.v ? ' selected' : '') + '>' + esc(x.t) + '</option>'; }).join('')
             + '</select></td>';
         }
@@ -471,9 +471,9 @@
         else if (r === 'amount') { val = ln.amount; mode = ' inputmode="numeric"'; }
         else if (r === 'memo') { val = ln.memo; }
         else { val = (ln.extra || {})[k]; }         // ★会社が足した列＝自由枠に入れる
-        var num = (r === 'qty' || r === 'price' || r === 'amount') ? ' ex-num' : '';
+        var num = (r === 'qty' || r === 'price' || r === 'amount') ? ' num' : '';
         var f = r ? ('data-f="' + r + '"') : ('data-x="' + esc(k) + '"');
-        return '<td class="' + cls + '"><input class="ex-input' + num + '" ' + f + mode + extra
+        return '<td class="' + cls + '"><input class="finput' + num + '" ' + f + mode + extra
           + ' value="' + esc(val === undefined || val === null ? '' : val) + '"></td>';
       }).join('');
       return '<tr data-i="' + i + '">' + tds
@@ -604,7 +604,7 @@
     var host = $('tot-box');
     if (!t.ok) {
       box('edit-err', t.errors.join('\n'));
-      if (host) host.innerHTML = '<div class="ex-hint">合計は、明細が直ったら出ます。</div>';
+      if (host) host.innerHTML = '<div class="hint">合計は、明細が直ったら出ます。</div>';
       return t;
     }
     box('edit-err', '');
@@ -639,7 +639,7 @@
       /* ★繰越があるなら、前回の残りを足したあとまで出す★ */
       if (c && c.state === 'first') {
         // ★初回は1行だけ言う（「未確認」と書かない＝読めなかったのと作り分ける）
-        html += '<div class="ex-hint">' + esc(c.label) + '</div>';
+        html += '<div class="hint">' + esc(c.label) + '</div>';
       } else if (c) {
         CARRY.ROWS.forEach(function (r) {
           if (r.key === 'thisTotal') return;                       // 今回請求額＝上の「合計」と同じ
@@ -648,7 +648,7 @@
           html += '<div class="tot-r' + (r.key === 'grandTotal' ? ' tot-g' : '') + '"><span class="tot-l">'
             + esc(r.label) + '</span><span class="tot-v">' + txt + '</span></div>';
         });
-        if (c.label) html += '<div class="ex-hint">' + esc(c.label) + (c.prevNo ? '（前回 No.　' + esc(c.prevNo) + '）' : '') + '</div>';
+        if (c.label) html += '<div class="hint">' + esc(c.label) + (c.prevNo ? '（前回 No.　' + esc(c.prevNo) + '）' : '') + '</div>';
       }
       host.innerHTML = html;
     }
@@ -906,7 +906,7 @@
   function renderTplSeg(hostId, noteId, current, onPick, disabled) {
     var host = $(hostId); if (!host) return;
     host.innerHTML = TPL.list().map(function (t) {
-      return '<button class="ex-chip' + (t.id === current ? ' on' : '') + '" type="button" data-tpl="'
+      return '<button class="seg-b' + (t.id === current ? ' on' : '') + '" type="button" data-tpl="'
         + esc(t.id) + '"' + (disabled ? ' disabled' : '') + '>' + esc(t.label) + '</button>';
     }).join('');
     var cur = TPL.getOrDefault(current);
@@ -942,16 +942,16 @@
       return '<div class="col-row" data-col="' + esc(k) + '">'
         + '<span class="col-name">' + esc(k)
         + '<span class="col-role">' + (role ? '（計算に使う）' : '（自由な列）') + '</span></span>'
-        + '<button class="ex-mini" type="button" data-mv="-1"' + (i === 0 ? ' disabled' : '') + ' aria-label="左へ">←</button>'
-        + '<button class="ex-mini" type="button" data-mv="1"' + (i === spec.items.length - 1 ? ' disabled' : '') + ' aria-label="右へ">→</button>'
+        + '<button class="mini" type="button" data-mv="-1"' + (i === 0 ? ' disabled' : '') + ' aria-label="左へ">←</button>'
+        + '<button class="mini" type="button" data-mv="1"' + (i === spec.items.length - 1 ? ' disabled' : '') + ' aria-label="右へ">→</button>'
         + '<span class="col-gap"></span>'
-        + '<button class="ex-mini" type="button" data-w="-8" aria-label="幅を狭く">−</button>'
+        + '<button class="mini" type="button" data-w="-8" aria-label="幅を狭く">−</button>'
         + '<span class="col-w">' + Math.round(raw) + '</span>'
-        + '<button class="ex-mini" type="button" data-w="8" aria-label="幅を広く">＋</button>'
+        + '<button class="mini" type="button" data-w="8" aria-label="幅を広く">＋</button>'
         + '<span class="col-w" style="color:#7AA08C">' + w[i].toFixed(1) + '%</span>'
         + '<span class="col-gap"></span>'
         + ['left', 'center', 'right'].map(function (a) {
-          return '<button class="ex-mini' + (al === a ? ' on' : '') + '" type="button" data-al="' + a + '">' + ALIGN_LABEL[a] + '</button>';
+          return '<button class="mini' + (al === a ? ' on' : '') + '" type="button" data-al="' + a + '">' + ALIGN_LABEL[a] + '</button>';
         }).join('')
         + '<span class="col-gap"></span>'
         + '<button class="l-del" type="button" data-cdel="1" aria-label="この列を消す">×</button>'
@@ -1205,7 +1205,7 @@
 
   /* ═══ 配線 ═══ */
   function bind() {
-    Array.prototype.forEach.call(document.querySelectorAll('.ex-bn'), function (b) {
+    Array.prototype.forEach.call(document.querySelectorAll('.bn'), function (b) {
       b.onclick = function () {
         var t = b.getAttribute('data-scr');
         if (t === 'scr-edit' && !S.cur) { newInvoice(); return; }

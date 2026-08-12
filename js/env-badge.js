@@ -49,7 +49,7 @@
   /* 帯の見た目。★色は共通の皮に無い「注意」の色を使う（緑と混ぜない＝気づける）★
      文字は白・地は橙。うちの警告の橙(#92500A)より濃く、UIの緑とはっきり違う色にする。 */
   var CSS = [
-    '#ex-envbar{position:fixed;top:0;left:0;right:0;z-index:2147483000;',
+    '#envbar{position:fixed;top:0;left:0;right:0;z-index:2147483000;',
     'background:#92500A;color:#FFFFFF;',
     "font-family:'Noto Sans JP',system-ui,-apple-system,sans-serif;",
     'font-size:12px;font-weight:700;line-height:1.5;text-align:center;',
@@ -57,26 +57,26 @@
     'box-shadow:0 1px 4px rgba(0,0,0,.18);',
     /* ★文は1文字ずつ縦に割れない書き方（block・折り返し可・最低幅）★ */
     'white-space:normal;word-break:normal;overflow-wrap:break-word;}',
-    '#ex-envbar b{font-weight:700;}',
-    '#ex-envbar .ex-envbar-sub{display:block;font-weight:400;font-size:10.5px;opacity:.92;}',
-    '@media print{#ex-envbar{display:none !important;}}',
+    '#envbar b{font-weight:700;}',
+    '#envbar .envbar-sub{display:block;font-weight:400;font-size:10.5px;opacity:.92;}',
+    '@media print{#envbar{display:none !important;}}',
   ].join('');
 
   function mount() {
     if (!shouldShow(global.SUPA)) return null;
     var d = global.document;
-    if (!d || d.getElementById('ex-envbar')) return null;
+    if (!d || d.getElementById('envbar')) return null;
 
     var st = d.createElement('style');
-    st.id = 'ex-envbar-css';
+    st.id = 'envbar-css';
     st.textContent = CSS;
     d.head.appendChild(st);
 
     var bar = d.createElement('div');
-    bar.id = 'ex-envbar';
+    bar.id = 'envbar';
     bar.setAttribute('role', 'status');
     bar.innerHTML = '<b>テスト環境</b>'
-      + '<span class="ex-envbar-sub">ここで入れた内容は本番には入りません（練習用の倉庫です）</span>';
+      + '<span class="envbar-sub">ここで入れた内容は本番には入りません（練習用の倉庫です）</span>';
     d.body.insertBefore(bar, d.body.firstChild);
 
     fit(bar);
@@ -99,7 +99,7 @@
     var all = d.querySelectorAll('body *');
     for (var i = 0; i < all.length; i++) {
       var el = all[i];
-      if (el.id === 'ex-envbar') continue;
+      if (el.id === 'envbar') continue;
       var cs = global.getComputedStyle(el);
       if (cs.position !== 'sticky') continue;
       if (cs.top !== '0px' && el.getAttribute('data-envbar-top') !== '1') continue;

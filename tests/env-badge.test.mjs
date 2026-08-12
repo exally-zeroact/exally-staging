@@ -155,7 +155,7 @@ T('★帯の文が1文字ずつ縦に割れない書き方（前科3回）', () 
 });
 
 T('★紙には出さない（印刷したら消える）', () => {
-  ok(/@mediaprint\{#ex-envbar\{display:none/.test(BADGE.CSS.replace(/\s/g, '')), '刷った紙に帯が出る');
+  ok(/@mediaprint\{#envbar\{display:none/.test(BADGE.CSS.replace(/\s/g, '')), '刷った紙に帯が出る');
 });
 
 T('★文言が「何が起きるか」を言っている（ただの札にしない）', () => {
