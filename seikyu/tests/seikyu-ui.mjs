@@ -818,10 +818,14 @@ await TA('7-b. ★自社情報が読めなかった時は、空っぽ扱いに�
   tr.querySelector('[data-f="amount"]').dispatchEvent(new win.Event('input'));
   await sleep(20);
   const n0 = db.pay_invoices.length;
+  /* ★主役の操作が塞がっている時は「灰色にして理由をボタンの中」★（2026-08-12 の決まり）
+     ＝押しても何も起きない。理由は押す前から見えている（押して初めて分かる、にしない）。 */
+  eq($('b-issue').disabled, true, '★自社が読めていないのに「発行する」が押せる★');
+  ok(/自社情報が読めません/.test($('b-issue').textContent),
+    '★押せない理由がボタンの中に無い★: ' + $('b-issue').textContent);
   $('b-issue').click();
   await sleep(60);
   eq(db.pay_invoices.length, n0, '自社が読めていないのに発行された');
-  ok(/読めていない/.test($('edit-err').textContent), '止めた理由を言っていない: ' + $('edit-err').textContent);
 
   // 「読み直す」で直る
   doc.querySelector('.bn[data-scr="scr-list"]').click();
@@ -1128,6 +1132,53 @@ T('9-e. ★税率のある行は非課税にならない（印だけ立てても
   const STD = Math.round(SR.hyojun * 10000) / 100;
   const r = TAX.compute({ lines: [{ name: 'あ', amount: 10000, rate: STD, nontax: true }], taxMode: 'exclusive', rounding: 'floor' });
   eq(r.nontaxable.base, 0, '税率のある行が非課税に入った');
+});
+
+/* ═══ 10. ★主役の操作は隠さない・塞がっている時は灰色＋理由★ ═══
+   決まり（2026-08-12・指示役）:
+     ・その画面の主役の操作が塞がっている → ★出す。灰色にして理由をボタンの中★（隠さない）
+     ・その状態に存在しない操作（下書きに「取り消す」等） → ★出さない★ */
+
+doc.querySelector('.bn[data-scr="scr-list"]').click();
+await sleep(10);
+$('b-new').click();
+await sleep(30);
+
+await TA('10. ★「発行する」は隠さず、押せない理由を中に入れる（打つほど理由が変わる）', async () => {
+  // 取引先も明細も無い＝押せない
+  ok($('b-issue'), '★発行するが消えている（主役の操作を隠してはいけない）★');
+  eq(win.getComputedStyle($('b-issue')).display !== 'none', true, '★発行するが隠れている★');
+  eq($('b-issue').disabled, true, '中身が無いのに押せる');
+  ok(/発行する（/.test($('b-issue').textContent), '理由がボタンの中に無い: ' + $('b-issue').textContent);
+
+  // 取引先を選ぶ → 理由が「明細」側へ変わる
+  const before = $('b-issue').textContent;
+  setVal('e-partner', 'pt_a');
+  await sleep(60);
+  ok($('b-issue').textContent !== before, '★取引先を選んでも理由が変わらない（塗り直していない）★');
+
+  // 明細を入れる → 押せるようになる
+  const tr = $('lines-body').querySelector('tr');
+  const setF = (k, v) => { const e = tr.querySelector('[data-f="' + k + '"]'); e.value = v; e.dispatchEvent(new win.Event('input')); };
+  setF('name', 'テスト'); setF('amount', '1000');
+  await sleep(60);
+  eq($('b-issue').disabled, false, '中身がそろったのに押せないまま: ' + $('b-issue').textContent);
+  eq($('b-issue').textContent, '発行する', '押せるのに理由が残っている: ' + $('b-issue').textContent);
+});
+
+T('10. ★理由を入れてもボタンが横へはみ出さない書き方（折り返す）', () => {
+  const rule = (/\.btn-big\s*\{([^}]*)\}/.exec(CSS) || [])[1] || '';
+  ok(/white-space\s*:\s*normal/.test(rule), '★btn-big が折り返せない（理由を入れるとはみ出す）★: ' + rule);
+  ok(/overflow-wrap\s*:\s*break-word/.test(rule), 'btn-big に折り返しの指定が無い');
+  ok(!/word-break\s*:\s*break-all/.test(rule), 'break-all（1文字ずつ割れる）');
+  // ほかのボタンは短い言葉しか入らないので nowrap のままでよい
+  const base = (/\.btn-primary,\s*\.btn-ghost,\s*\.bdel,\s*\.btn-add\s*\{([^}]*)\}/.exec(CSS) || [])[1] || '';
+  ok(/white-space\s*:\s*nowrap/.test(base), 'ほかのボタンの nowrap が外れている');
+});
+
+T('10. ★存在しない操作は出さない（下書きに「取り消す」を出さない）', () => {
+  ok(!$('b-void'), '下書きなのに「取り消す」が出ている');
+  ok(!!$('b-issue'), '主役の操作まで消している');
 });
 
 /* ═══ 8. まとめ ═══ */

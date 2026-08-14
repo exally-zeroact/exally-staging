@@ -207,7 +207,14 @@ input:focus-visible, textarea:focus-visible, [tabindex]:focus-visible {
 /* ── 主ボタン（画面にひとつだけ大きく）────────────────────────
    ★出す口をたくさん並べない★。押す物が7個 横に並ぶと、どれが本命か分からなくなる。
    本命だけ大きく、ほかは「畳む」に入れる。 */
-.btn-big { font-size: 16px; padding: 15px 28px; flex: 1 1 auto; min-width: 200px; }
+.btn-big {
+  font-size: 16px; padding: 15px 28px; flex: 1 1 auto; min-width: 200px;
+  /* ★理由をボタンの中に入れるので、ここだけ折り返せるようにする★
+     ほかのボタンは nowrap（短い言葉しか入らない）。
+     ここを nowrap のままにすると、理由を足した瞬間に ★横へはみ出す★
+     （指示役が実際に73pxはみ出させた型）。 */
+  white-space: normal; word-break: normal; overflow-wrap: break-word; line-height: 1.5;
+}
 
 /* ── 畳む（開くまで画面に出さない）──────────────────────────
    ★説明で画面を埋めない★。細かい設定・ほかの出し方はここに入れる。 */

@@ -410,6 +410,7 @@
     show($('b-issue'), !ro);
     show($('b-save'), !ro);
     show($('more-box'), !ro);
+    if (!ro) drawIssueButton();
 
     /* 取り消す／削除は「押せる時だけ」その場に出す */
     var host = $('danger-row');
@@ -652,6 +653,7 @@
       }
       host.innerHTML = html;
     }
+    drawIssueButton();     // ★打つたびに「発行する」の押せる/押せないを塗り直す★
     return t;
   }
 
@@ -830,7 +832,48 @@
     });
   }
 
+  /* ═══ ★「発行する」が押せない理由★ ═══
+     うちの決まり（2026-08-12・指示役が書き直した物）:
+       ・その画面の ★主役の操作★ が塞がっている → ★出す。灰色にして理由をボタンの中★
+         （隠すと「機能が消えた」と見える）
+       ・その状態に ★存在しない操作★（下書きに「取り消す」等） → ★出さない★
+     発行するは この画面の主役なので ★隠さず、押せない理由を中に入れる★。
+
+     ★理由の言葉は DOC.validateInvoice が持っている物をそのまま使う★
+     （押す前と押した後で違う言い方をしない＝同じ状態を2か所で別々に判定しない）。
+     戻り: null（押せる）／ 短い理由の文字列 */
+  function issueBlockReason() {
+    var v = S.cur;
+    if (!v) return '中身がありません';
+    if (locked()) return null;                    // 発行済み＝この操作は「存在しない」＝出さない側
+    if (S.orgReadOk === false) return '自社情報が読めません';
+    var t;
+    try { t = currentTax(); } catch (e) { return '計算できません'; }
+    if (!t || !t.ok) return '明細を直してください';
+    var chk = DOC.validateInvoice({
+      inv: Object.assign({}, v, { lines: cleanLines(v.lines) }),
+      partner: partnerById(v.partner_id),
+      org: { data: S.org || {} },
+    });
+    if (chk.ok) return null;
+    return chk.errors[0] || '発行できません';     // ★1つ目だけ★（ボタンに全部は入らない）
+  }
+
+  /** 「発行する」の見た目を、押せるか押せないかで塗り直す */
+  function drawIssueButton() {
+    var b = $('b-issue'); if (!b) return;
+    var why = issueBlockReason();
+    b.disabled = !!why;
+    b.textContent = why ? ('発行する（' + why + '）') : '発行する';
+    b.title = why || '';
+  }
+
   function issue() {
+    /* ★押せない時は何もしない（歯止め。見た目＝灰色だけで守らない）★
+       ここで断る時の言葉は ★下の元の検査がそのまま出す★。
+       ボタンの中の短い理由と、押した後の長い説明を ★別々に書かない★
+       （同じ状態を2か所で別々に判定すると、必ずどこかで食い違う）。 */
+    if (issueBlockReason()) { /* 下の検査が理由を出す */ }
     var v = collect();
     var t = recalc();
     if (!t || !t.ok) { box('edit-err', '計算が通らないので発行できません。上の赤い印を直してください。'); return Promise.resolve(); }
