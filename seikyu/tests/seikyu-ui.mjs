@@ -294,7 +294,12 @@ await TA('2. ★新しく作る＝白紙を埋めさせない（今日・番号�
 
 T('2-a. ★入力の画面で「毎回 聞く物」を出さない（設定で1回 決めた物は聞かない）', () => {
   const edit = $('scr-edit');
-  ok(!edit.querySelector('#e-taxmode'), '税の入れ方を毎回 聞いている');
+  /* ★税の入れ方は「設定」で1回 決める物★＝★主線には出さない★。
+     ただし ★取引先ごとに違う★のが実物（税抜の相手・税込の相手が混ざる）なので、
+     この1通だけ変える道を ★畳みの中★ に置くのは可（開くまで画面に出ない）。 */
+  ok(!!edit.querySelector('#e-taxmode'), 'この1通だけ変える道が無い（実物は相手ごとに違う）');
+  ok(edit.querySelector('#e-taxmode').closest('details'), '★税の入れ方を主線で毎回 聞いている★');
+  ok(edit.querySelector('#e-lead').closest('details'), '★「◯年◯月分」を主線で毎回 聞いている★');
   ok(!edit.querySelector('#e-round'), '円未満の丸め方を毎回 聞いている');
   ok(!edit.querySelector('#e-tpl'), '紙の様式を毎回 聞いている');
   ok(!edit.querySelector('#e-nomode'), '番号の決め方を毎回 聞いている');
@@ -314,7 +319,9 @@ T('2-a. ★出すボタンは1つだけ大きく・ほかは畳む（7個 横並
      ★DOMに在る＝見えている ではない★ので、隠れている箱の中は数えない
      （入金の箱は発行してから出る。下書きの画面には1つも出ていないことを、ここで併せて測る）。 */
   const shown = (el) => { for (let e = el; e && e !== doc.body; e = e.parentElement) { if (e.style && e.style.display === 'none') return false; } return true; };
-  const outside = [...$('scr-edit').querySelectorAll('button')].filter((b) => shown(b) && !b.closest('details') && !b.closest('#lines-body') && b.id !== 'b-addline' && b.id !== 'b-no-edit' && !b.id.startsWith('b-guess'));
+  /* ★「＋ 足す」は "出す口" ではない★（行を足す・控除を足す）＝数に入れない。
+     ここで数えたいのは ★紙を出すボタンが横に並んでいないか★ だけ。 */
+  const outside = [...$('scr-edit').querySelectorAll('button')].filter((b) => shown(b) && !b.closest('details') && !b.closest('#lines-body') && !/btn-add/.test(b.className) && b.id !== 'b-no-edit' && !b.id.startsWith('b-guess'));
   eq(outside.map((b) => b.id).join(','), 'b-issue', '畳みの外にボタンが多い: ' + outside.map((b) => b.id));
   eq(shown($('b-pay-add')), false, '★下書きなのに「入金を記録」が出ている（まだ請求していない）★');
 });
@@ -472,7 +479,7 @@ await TA('2-b. ★揃えを変えられる／列を消せる／既定に戻せ�
   $('b-col-reset').click();
   await sleep(20);
   const heads = [...$('col-list').querySelectorAll('.col-name')].map((e) => e.firstChild.textContent);
-  eq(heads.join('/'), '#/品名・内容/数量/単位/単価/金額/税率', '既定に戻っていない: ' + heads.join('/'));
+  eq(heads.join('/'), '#/品名・内容/数量/単位/単価/金額/消費税', '既定に戻っていない: ' + heads.join('/'));
 });
 
 await TA('2-b. ★様式を替えても金額が1円も動かない（見た目だけ変わる）', async () => {
@@ -493,7 +500,7 @@ await TA('2-b. ★様式を替えても金額が1円も動かない（見た目�
   ok(a.replace(/\s+/g, '').includes(money), '紙に合計 ' + money + ' が出ていない');
   // ★発行済みは写しの列で刷る＝あとで会社が列を足しても、出した紙は変わらない
   const heads = [...a.matchAll(/<th class="c-col"[^>]*>([^<]*)<\/th>/g)].map((m) => m[1]);
-  eq(heads.join('/'), '#/品名・内容/数量/単位/単価/金額/税率', '発行済みの紙の列が後から変わった: ' + heads.join('/'));
+  eq(heads.join('/'), '#/品名・内容/数量/単位/単価/金額/消費税', '発行済みの紙の列が後から変わった: ' + heads.join('/'));
   ok(heads.indexOf('行き先') < 0, '発行後に足した列が、出した紙に入り込んでいる');
 });
 
@@ -794,7 +801,7 @@ await TA('6-b. ★写しに列が無い古い請求書は、会社の「今の�
   $('b-preview').click();
   await sleep(400);
   const heads = [...($('pv').srcdoc || '').matchAll(/<th class="c-col"[^>]*>([^<]*)<\/th>/g)].map((m) => m[1]);
-  eq(heads.join('/'), '#/品名・内容/数量/単位/単価/金額/税率', '古い紙に、あとから足した列が入り込んだ: ' + heads.join('/'));
+  eq(heads.join('/'), '#/品名・内容/数量/単位/単価/金額/消費税', '古い紙に、あとから足した列が入り込んだ: ' + heads.join('/'));
   ok(heads.indexOf('行き先') < 0, '★出した紙が、列を足した日に変わってしまっている★');
 });
 
@@ -866,11 +873,18 @@ T('9-a. ★非課税と対象外は別物＝選び所に両方ある（新しい
   ok(opts.includes('対象外'), '「対象外」が無い: ' + opts.join('/'));
   // ★増えたのは選択肢だけ＝行に入力は1つも増えていない（列の数は前の検査で変わり得るので数えない）
   const cols = win.SeikyuApp._state.cur.data.cols;
-  // ＋並べ替えの列 ＋消す列（どちらも「打つ所」ではないので、入力欄は増えていない）
-  const want = (cols && cols.items ? cols.items.length : 7) + 2;
+  const C = require_(path.join(ROOT, 'seikyu/lib/seikyu-cols.js'));
+  /* ＋並べ替えの列 ＋消す列（どちらも「打つ所」ではない）
+     ＋★紙に税率の列が無い時だけ、入力にだけ税率を出す★
+       （実物32枚は税率の列を持たない＝紙はそれに合わせる。でも税率は計算に要る入力） */
+  const paperHasRate = cols.items.some((k) => C.roleOfIn(cols, k) === 'rate');
+  const want = cols.items.length + 2 + (paperHasRate ? 0 : 1);
   eq(doc.querySelectorAll('#lines-head th').length, want, '明細の列が増えている');
-  eq(doc.querySelectorAll('#lines-body tr:first-child input,#lines-body tr:first-child select').length,
-    cols.items.filter((k) => k !== '#').length, '★行の「打つ所」が増えている★');
+  ok(doc.querySelector('#lines-body [data-f="rate"]'), '★税率を選ぶ所が消えた（軽減税率も非課税も入れられない）★');
+  /* ★行ごとの消費税は「打つ所」ではなく「出る所」★
+     打てると 行ごとに丸めた数を足す道ができる＝国税庁 Q&A 問57 で認められていない形。 */
+  const taxCol = cols.items.filter((k) => C.roleOfIn(cols, k) === 'tax');
+  if (taxCol.length) ok(doc.querySelector('#lines-body .l-ro'), '★消費税の列が打てる欄になっている★');
   eq(doc.querySelectorAll('#lines-body tr [data-f="rate"]').length, 1, '税率の選び所が増えている');
   eq(doc.querySelectorAll('#lines-body input[type="checkbox"]').length, 0, '行にチェックが増えている（設問が増える）');
 });
@@ -1629,6 +1643,202 @@ await TA('12-h. ★まるごと空の行は止めないが「消した」と言�
   ok(/行目は何も入っていない/.test($('edit-warn').textContent),
     '★空行を黙って捨てている（消したと言っていない）★: ' + $('edit-warn').textContent);
   eq(win.SeikyuApp._state.cur.status, 'issued', '発行できていない: ' + $('edit-err').textContent);
+});
+
+/* ═══ 13. ★実物の器（32枚を数えて分かった形）★ ═══
+   ★押す物の一覧（先に書く）★
+     一覧「請求書」チップ ／ ＋新しい請求書 ／ 取引先 ／ 請求日 ／
+     明細の 品名・数量・単価・金額 ／ 税率の選び所 ／
+     「細かく決める」を開く ／ この1通の金額の入れ方（税込／税抜）／「◯年◯月分」の欄 ／
+     ＋差し引く行を足す ／ 控除の名前 ／ 控除の金額 ／ 発行する ／ 入金を記録
+   ここで止めたい事故:
+     ・値引き（税も減る）と控除（税は動かない）を混ぜて 消費税がズレる
+     ・控除を引いたのに ★入金の「残り」が0にならない★
+     ・行ごとに丸めた税額を足して ★合計と食い違う紙★ を出す（国税庁 Q&A 問57）
+     ・「◯年◯月分」を当月にして ★8月に出す紙に「8月分」★ と書く（実物は前月） */
+
+const setLine = (i, k, v) => {
+  const tr = $('lines-body').querySelectorAll('tr')[i];
+  const e = tr.querySelector('[data-f="' + k + '"]');
+  ok(e, i + '行目の ' + k + ' が無い');
+  e.value = v; e.dispatchEvent(new win.Event('input')); e.dispatchEvent(new win.Event('change'));
+};
+async function newInvoiceFor(pid, ymd) {
+  doc.querySelector('.bn[data-scr="scr-list"]').click(); await sleep(20);
+  doc.querySelector('#kind-seg [data-kind="invoice"]').click(); await sleep(60);
+  $('b-new').click(); await sleep(40);
+  setVal('e-partner', pid); await sleep(80);
+  if (win.getComputedStyle($('guess-card')).display !== 'none') { $('b-guess-edit').click(); await sleep(30); }
+  setVal('e-issue', ymd); await sleep(60);
+}
+
+await TA('13-a. ★実物の形：単価の列が無くても 金額を直に打てる（実物9枚がこの形）', async () => {
+  db.pay_partners.push({ id: 'pt_e', account_id: 'u1', sort: 40, data: { name: 'ENEOSグローブエナジー株式会社', keisho: '御中' }, deleted_at: null });
+  await win.SeikyuApp._loadMasters(); await sleep(30);
+  await newInvoiceFor('pt_e', '2026-08-01');
+  // ★税率を選ぶ所は 紙に税率の列が無くても 入力には必ず在る★
+  ok(doc.querySelector('#lines-body [data-f="rate"]'), '★税率を選ぶ所が無い（軽減税率も非課税も入れられない）★');
+  // ★行ごとの消費税は「読むだけ」★（打てると 行ごとに丸めて足す道ができる）
+  ok(doc.querySelector('#lines-body .l-ro'), '消費税の列が読むだけになっていない');
+  setLine(0, 'name', 'エアコン取替'); setLine(0, 'qty', '1'); setLine(0, 'unit', '式'); setLine(0, 'amount', '20000');
+  $('b-addline').click(); await sleep(30);
+  setLine(1, 'name', 'エアコン取替'); setLine(1, 'qty', '1'); setLine(1, 'unit', '式'); setLine(1, 'amount', '15000');
+  await sleep(80);
+  // ★手計算＝実物 ENEOS★ 20,000＋15,000＝35,000 ／ 税3,500 ／ 合計38,500
+  const tot = $('tot-box').textContent.replace(/\s+/g, '');
+  ok(tot.includes('35,000'), '小計が実物と違う: ' + tot);
+  ok(tot.includes('3,500'), '消費税が実物と違う: ' + tot);
+  ok(tot.includes('38,500'), '★合計が実物(38,500)と違う★: ' + tot);
+  // ★行ごとの税額も実物の =E*0.1 と同じ★
+  const cells = [...$('lines-body').querySelectorAll('.l-ro')].map((x) => x.textContent);
+  eq(cells.join(','), '2,000,1,500', '★行ごとの税額が実物と違う★: ' + cells.join(' / '));
+});
+
+await TA('13-b. ★「◯年◯月分」は請求日の前月（実物32枚と同じ）', async () => {
+  $('more-box').open = true; await sleep(20);
+  ok($('e-lead'), '「◯年◯月分」の欄が無い');
+  eq($('e-lead').value, '', '最初から何か入っている（自動なので空でよい）');
+  ok(/2026年7月分/.test($('e-lead-hint').textContent), '★前月から自動で入ると言っていない★: ' + $('e-lead-hint').textContent);
+  // 請求日を1月にすると 前年12月分になる（境界）
+  setVal('e-issue', '2026-01-10'); await sleep(80);
+  ok(/2025年12月分/.test($('e-lead-hint').textContent), '★1月の紙が前年12月分になっていない★: ' + $('e-lead-hint').textContent);
+  setVal('e-issue', '2026-08-01'); await sleep(80);
+  // 紙にも出る
+  $('b-preview').click(); await sleep(150);
+  const pv = String($('pv').srcdoc || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+  ok(/2026年7月分/.test(pv), '★紙に「◯年◯月分」が出ていない（または当月になっている）★');
+  ok(!/2026年8月分/.test(pv), '★当月になっている（実物は前月）★');
+});
+
+await TA('13-c. ★この1通だけ「税込で入れる」に変えられる（税抜＋税額＝入れた税込）', async () => {
+  const st = win.SeikyuApp._state;
+  setVal('e-taxmode', 'inclusive'); await sleep(100);
+  eq(st.cur.tax_mode, 'inclusive', '切り替わっていない');
+  ok(/税込/.test($('taxmode-note').textContent), '★どちらで入れているか画面に出ていない★: ' + $('taxmode-note').textContent);
+  /* ★丸め方はこの1通の物として はっきり決めてから測る★
+     （会社の既定は前の検査で変わっている事がある＝★何で丸めたか分からないまま
+       手計算の数を書くと、検査が「たまたま合った」になる★） */
+  st.cur.rounding = 'floor';
+  win.SeikyuApp._recalcForTest();
+  await sleep(60);
+  // ★手計算★ 税込 20,000＋15,000＝35,000 → 税 = floor(35,000×10÷110)=3,181 ／ 税抜 31,819
+  const tot = $('tot-box').textContent.replace(/\s+/g, '');
+  ok(tot.includes('35,000'), '入れた税込が合計になっていない: ' + tot);
+  ok(tot.includes('3,181'), '割り戻した消費税が違う: ' + tot);
+  ok(tot.includes('31,819'), '割り戻した税抜が違う: ' + tot);
+  // ★恒等式③ 税抜 ＋ 税額 ＝ 入れた税込（1円もずれない）★
+  eq(31819 + 3181, 35000, '手計算そのものが合っていない');
+  setVal('e-taxmode', 'exclusive'); await sleep(80);
+  eq(st.cur.tax_mode, 'exclusive');
+});
+
+let yagiInv = null;
+
+await TA('13-d. ★★控除の箱＝税込から引く／消費税は動かない（八木 281,260）★★', async () => {
+  const st = win.SeikyuApp._state;
+  db.pay_partners.push({ id: 'pt_y', account_id: 'u1', sort: 41, data: { name: '八木工業 株式会社', keisho: '御中' }, deleted_at: null });
+  await win.SeikyuApp._loadMasters(); await sleep(30);
+  await newInvoiceFor('pt_y', '2026-07-21');
+  // ★人工（常傭）＝数量×単価★ 実物は単価を式に直書きしているが、器では ふつうの1行
+  setLine(0, 'name', '工事代金'); setLine(0, 'qty', '140'); setLine(0, 'price', '1900');
+  await sleep(80);
+  let tot = $('tot-box').textContent.replace(/\s+/g, '');
+  ok(tot.includes('266,000'), '工事代金が実物と違う: ' + tot);
+  ok(tot.includes('26,600'), '消費税が実物と違う: ' + tot);
+  ok(tot.includes('292,600'), '税込の合計が実物と違う: ' + tot);
+
+  // ★控除を1行 足す（明細の外）★
+  ok($('b-ded-add'), '差し引く行を足すボタンが無い');
+  $('b-ded-add').click(); await sleep(40);
+  const dn = $('ded-list').querySelector('[data-dn="0"]'), da = $('ded-list').querySelector('[data-da="0"]');
+  ok(dn && da, '控除の行が出ていない');
+  dn.value = '弁当代　矢原'; dn.dispatchEvent(new win.Event('input'));
+  da.value = '11340'; da.dispatchEvent(new win.Event('input'));
+  await sleep(100);
+  tot = $('tot-box').textContent.replace(/\s+/g, '');
+  ok(tot.includes('11,340'), '控除が合計欄に出ていない: ' + tot);
+  ok(tot.includes('281,260'), '★請求額が実物(281,260)と違う★: ' + tot);
+  ok(tot.includes('26,600'), '★控除で消費税が動いた★: ' + tot);
+
+  $('b-issue').click(); await sleep(180);
+  eq(st.cur.status, 'issued', '発行できていない: ' + $('edit-err').textContent);
+  yagiInv = st.cur.id;
+  const row = db.pay_invoices.find((x) => x.id === yagiInv);
+  eq(row.totals.gross, 292600, '倉庫の「小計＋消費税」');
+  eq(row.totals.deduct, 11340, '倉庫の控除');
+  eq(row.totals.grandTotal, 281260, '★倉庫の請求額（＝入金の残りが見る数）★');
+  eq(row.totals.taxTotal, 26600, '倉庫の消費税が動いた');
+  eq(row.totals.deductLines[0].name, '弁当代　矢原', '何を引いたかが残っていない');
+});
+
+await TA('13-e. ★★控除が在る紙でも、全額もらえば「残り」が0になる★★', async () => {
+  // ★ここが噛み合わないと、引いた後の額を払ってもらっても いつまでも未入金に見える★
+  setVal('pay-ymd', '2026-08-31'); setVal('pay-amt', '281260'); setVal('pay-method', '振込');
+  await sleep(40); $('b-pay-add').click(); await sleep(180);
+  const sum = $('pay-sum').textContent.replace(/\s+/g, '');
+  ok(sum.includes('281,260'), '請求額が入金の箱に出ていない: ' + sum);
+  ok(/残り0円/.test(sum), '★控除を引いた額を全部もらったのに 残りが0になっていない★: ' + sum);
+  // 一覧でも「入金済」
+  doc.querySelector('.bn[data-scr="scr-list"]').click(); await sleep(40);
+  doc.querySelector('#fil-seg [data-fil="issued"]').click(); await sleep(40);
+  const row = [...$('list-body').querySelectorAll('[data-open]')].find((b) => b.getAttribute('data-open') === yagiInv);
+  ok(row && /入金済/.test(row.textContent), '★一覧が未入金のまま★: ' + (row && row.textContent));
+});
+
+await TA('13-f. ★値引き行（明細の中のマイナス）は 税も一緒に減る＝控除と別物', async () => {
+  await newInvoiceFor('pt_y', '2026-08-05');
+  setLine(0, 'name', '本体'); setLine(0, 'amount', '402000');
+  $('b-addline').click(); await sleep(30);
+  setLine(1, 'name', '※出精値引'); setLine(1, 'amount', '-4110');
+  await sleep(100);
+  // ★手計算★ 402,000−4,110＝397,890 ／ 税 397,890×10%＝39,789
+  const tot = $('tot-box').textContent.replace(/\s+/g, '');
+  ok(tot.includes('397,890'), '値引きが小計に効いていない: ' + tot);
+  ok(tot.includes('39,789'), '★値引きで税額が減っていない（控除と混ざっている）★: ' + tot);
+  // ★行ごとの税額も マイナス★
+  const cells = [...$('lines-body').querySelectorAll('.l-ro')].map((x) => x.textContent);
+  eq(cells[1], '-411', '★値引き行の税額が出ていない／符号が違う★: ' + cells.join(' / '));
+});
+
+await TA('13-g. ★1円の端数を最後の行に寄せたら、黙らずに言う（Q&A 問57）', async () => {
+  await newInvoiceFor('pt_y', '2026-08-06');
+  $('more-box').open = true;
+  setVal('e-taxmode', 'inclusive'); await sleep(80);
+  setLine(0, 'name', 'a'); setLine(0, 'amount', '1005');
+  $('b-addline').click(); await sleep(30); setLine(1, 'name', 'b'); setLine(1, 'amount', '1005');
+  $('b-addline').click(); await sleep(30); setLine(2, 'name', 'c'); setLine(2, 'amount', '1005');
+  await sleep(120);
+  const cells = [...$('lines-body').querySelectorAll('.l-ro')].map((x) => x.textContent);
+  eq(cells.join(','), '91,91,92', '★端数の寄せ先が最後の行でない★: ' + cells.join(' / '));
+  const tot = $('tot-box').textContent;
+  ok(/寄せました/.test(tot), '★黙って寄せている★: ' + tot.replace(/\s+/g, ' '));
+  ok(/3行目/.test(tot), '何行目に寄せたか言っていない');
+  ok(tot.replace(/\s+/g, '').includes('274'), '消費税が税率ごとに1回 処理した額(274)でない');
+});
+
+
+await TA('13-h. ★控除の赤は 埋めた瞬間に消える（古い文を残さない）', async () => {
+  await newInvoiceFor('pt_y', '2026-08-07');
+  setLine(0, 'name', '工事代金'); setLine(0, 'amount', '100000');
+  await sleep(80);
+  $('b-ded-add').click(); await sleep(60);
+  // 足した直後は「名前がありません」＝正しい
+  ok(/名前がありません/.test($('ded-err').textContent), '空の控除で赤が出ていない');
+  const dn = $('ded-list').querySelector('[data-dn="0"]'), da = $('ded-list').querySelector('[data-da="0"]');
+  dn.value = '弁当代'; dn.dispatchEvent(new win.Event('input'));
+  await sleep(60);
+  ok(!/名前がありません/.test($('ded-err').textContent),
+    '★名前を打ったのに「名前がありません」が残っている★: ' + $('ded-err').textContent);
+  ok(/金額が空/.test($('ded-err').textContent), '金額が空なのに赤が消えた');
+  da.value = '5000'; da.dispatchEvent(new win.Event('input'));
+  await sleep(60);
+  eq($('ded-err').style.display, 'none', '★埋めたのに赤が残っている★: ' + $('ded-err').textContent);
+  eq($('b-issue').disabled, false, '埋めたのに発行できない: ' + $('b-issue').textContent);
+  // 名前を消すと また赤に戻り、発行も止まる
+  dn.value = ''; dn.dispatchEvent(new win.Event('input'));
+  await sleep(80);
+  ok(/名前がありません/.test($('ded-err').textContent), '空に戻したのに赤が出ない');
+  eq($('b-issue').disabled, true, '★名前の無い控除のまま発行できる★: ' + $('b-issue').textContent);
 });
 
 /* ═══ 10. ★主役の操作は隠さない・塞がっている時は灰色＋理由★ ═══

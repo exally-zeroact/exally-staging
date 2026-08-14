@@ -699,5 +699,98 @@ T('★rawLines を渡さない呼び方も壊れていない（今までの検�
   eq(chk.ok, true, chk.errors.join('/'));
 });
 
+
+/* ── ③ ★実物の器：控除・前月ラベル★ ────────────────────────────
+   ★引き算は2種類ある。混ぜると消費税がズレる★（実物の式で確かめた）
+     値引き行 … 明細の中。課税の対象が減る＝税額も減る（seikyu-tax.js の受け持ち）
+     控除     … 明細の外。★税込の合計から引く＝税額は動かない★ */
+
+/* ★恒等式② 請求額 ＝（税抜＋値引き）＋ 消費税 − 控除★
+   ★1円一致（実物）★ 八木工業：266,000 ＋ 26,600 ＝ 292,600 − 11,340 ＝ 281,260 */
+T('★★八木工業の実物と1円も違わない（控除の箱＝税込から引く・税額は動かない）★★', () => {
+  const TAX = require_(path.join(ROOT, 'seikyu/lib/seikyu-tax.js'));
+  const SR = require_(path.join(ROOT, 'kyuyo/lib/shouhizei-ritsu.js'));
+  const STD = Math.round(SR.hyojun * 10000) / 100;
+  // ★人工（常傭）＝数量×単価★ 実物は =1900*I11（単価が式に直書き・人数は表に出ない列）だが、
+  //   器では ★ふつうの1行★ として出せる。
+  const t = TAX.compute({ lines: [{ name: '工事代金', qty: 140, price: 1900, rate: STD }], taxMode: 'exclusive', rounding: 'floor' });
+  ok(t.ok, t.errors.join('/'));
+  eq(t.subtotal, 266000, '工事代金');
+  eq(t.taxTotal, 26600, '消費税');
+  eq(t.grandTotal, 292600, '税込の合計');
+
+  const inv = { data: { deductions: [{ name: '弁当代　矢原', amount: 11340 }] } };
+  const ded = D.deductTotalOf(inv);
+  eq(ded, 11340, '控除の合計');
+  eq(D.billedOf(t, null, ded), 281260, '★請求額（実物 281,260）★');
+  // ★控除は税額を動かさない★
+  eq(t.taxTotal, 26600, '控除で消費税が動いた');
+});
+
+T('★控除は「読めない行が1つでもあれば null」（0にしない＝引き忘れた紙を出さない）', () => {
+  eq(D.deductTotalOf({ data: { deductions: [] } }), 0, '0件は0');
+  eq(D.deductTotalOf({ data: { deductions: [{ name: 'a', amount: 100 }, { name: 'b', amount: 200 }] } }), 300);
+  eq(D.deductTotalOf({ data: { deductions: [{ name: 'a', amount: 'あ' }] } }), null, '★読めない控除を0にしている★');
+  eq(D.deductTotalOf({ data: { deductions: [{ name: 'a', amount: 1.5 }] } }), null, '1円未満を通している');
+  eq(D.deductTotalOf({}), 0);
+  // ★読めない控除がある紙は、請求額を出さない（null）
+  eq(D.billedOf({ grandTotal: 1000 }, null, null), 1000, '控除を渡さない時は今までどおり');
+  eq(D.billedOf({ grandTotal: 1000 }, null, NaN), null, '★読めない控除で数を作っている★');
+});
+
+T('★控除は 名前が要る／0円・マイナスは止める（何を引いたか分からない紙を出さない）', () => {
+  const of = (d) => D.validateDeductions({ data: { deductions: d } });
+  eq(of([{ name: '弁当代', amount: 11340 }]).ok, true);
+  eq(of([{ name: '', amount: 100 }]).ok, false, '名前が空で通っている');
+  ok(hasErr(of([{ name: '', amount: 100 }]).errors, '名前'), '理由が名前の話になっていない');
+  eq(of([{ name: 'a', amount: '' }]).ok, false, '金額が空で通っている');
+  eq(of([{ name: 'a', amount: 0 }]).ok, false, '0円が通っている');
+  eq(of([{ name: 'a', amount: -100 }]).ok, false, '★マイナスの控除が通っている（足すなら明細の行）★');
+  eq(of([{ name: 'a', amount: 1.5 }]).ok, false, '1円未満が通っている');
+  // 何行目かを言う
+  ok(hasErr(of([{ name: 'a', amount: 1 }, { name: '', amount: 1 }]).errors, '2行目'), '何行目か言っていない');
+  // 蓋
+  const many = Array.from({ length: D.MAX_DEDUCTIONS + 1 }, () => ({ name: 'x', amount: 1 }));
+  eq(of(many).ok, false, '控除の行数に蓋が無い');
+});
+
+T('★控除が在る紙は 発行前の検査でも止まる（画面と別々に判定しない）', () => {
+  const bad = { ...goodInv(), data: { deductions: [{ name: '', amount: 100 }] } };
+  const r = D.validateInvoice({ inv: bad, partner: goodPartner, org: goodOrg });
+  eq(r.ok, false, '★名前の無い控除のまま発行できてしまう★');
+  ok(hasErr(r.errors, '控除'), '理由が控除の話になっていない: ' + r.errors.join('/'));
+});
+
+/* ★「◯年◯月分」＝請求日の前月★（実物32枚の =TEXT(EDATE(請求日,-1),"yyyy年m月分")） */
+T('★★「◯年◯月分」は請求日の前月（1月→前年12月・うるう年・月末）★★', () => {
+  eq(D.periodLabelOf('2026-08-01'), '2026年7月分', '実物 ENEOS と同じ');
+  eq(D.periodLabelOf('2026-07-31'), '2026年6月分');
+  eq(D.periodLabelOf('2026-01-01'), '2025年12月分', '★1月に出す紙が前年12月分になっていない★');
+  eq(D.periodLabelOf('2026-01-31'), '2025年12月分');
+  eq(D.periodLabelOf('2024-03-01'), '2024年2月分', 'うるう年');
+  eq(D.periodLabelOf('2024-03-31'), '2024年2月分');
+  eq(D.periodLabelOf('2026-12-31'), '2026年11月分');
+  // ★読めない日付は でっち上げない★
+  eq(D.periodLabelOf(''), '');
+  eq(D.periodLabelOf('2026-02-30'), '', '存在しない日で月を作っている');
+  eq(D.periodLabelOf('2026/08/01'), '', '形の違う日付で月を作っている');
+});
+
+T('★品名は在るのに金額も「数量×単価」も無い行は止める（黙って0円にしない）', () => {
+  // ★実物32枚のうち9枚は単価の列が無い★＝「単価が空」は普通。金額を直に打つ。
+  eq(D.rowIssuesOf([{ name: 'a', amount: '1000' }]).noAmount.length, 0, '金額を直に打った行を止めている');
+  eq(D.rowIssuesOf([{ name: 'a', qty: '2', price: '500' }]).noAmount.length, 0, '数量×単価の行を止めている');
+  eq(D.rowIssuesOf([{ name: 'a', qty: '2' }]).noAmount.join(','), '1', '★数量だけで0円の行が通る★');
+  eq(D.rowIssuesOf([{ name: 'a' }]).noAmount.join(','), '1', '★品名だけの行が0円で通る★');
+  eq(D.rowIssuesOf([{ name: 'a', unit: '式' }]).noAmount.join(','), '1');
+  const chk = D.validateInvoice({
+    inv: { ...goodInv(), lines: [{ name: 'a', amount: 1000, rate: 10 }] },
+    rawLines: [{ name: 'a', amount: '1000' }, { name: 'b' }],
+    partner: goodPartner, org: goodOrg,
+  });
+  eq(chk.ok, false, '★金額の無い行のまま発行できてしまう★');
+  ok(hasErr(chk.errors, '2行目'), '何行目か言っていない: ' + chk.errors.join('/'));
+});
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

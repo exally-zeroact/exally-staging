@@ -12,8 +12,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@500&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 <!-- ★見た目の本体はスイート共通の皮。請求書の app.css は差分だけ（読む順は皮が先） -->
-<link rel="stylesheet" href="../css/exally-ui.css?v=5d34f994">
-<link rel="stylesheet" href="css/app.css?v=5d34f994">
+<link rel="stylesheet" href="../css/exally-ui.css?v=eeb0ea2b">
+<link rel="stylesheet" href="css/app.css?v=eeb0ea2b">
 </head>
 <body>
 
@@ -107,9 +107,25 @@
         </table>
       </div>
       <button class="btn-add" type="button" id="b-addline">＋ 行を足す</button>
+      <p class="hint" id="taxmode-note"></p>
       <div class="tot" id="tot-box"></div>
       <div class="bad" id="edit-err" style="display:none"></div>
       <div class="warn" id="edit-warn" style="display:none"></div>
+    </div>
+
+    <!-- ═══ 差し引く（控除） ═══
+         ★引き算は2種類ある。混ぜると消費税がズレる★（実物の式で確かめた）
+           ・値引き … ★明細の中★のマイナス行。課税の対象が減る＝★税額も一緒に減る★
+           ・控除   … ★ここ★。★税込の合計から引く＝税額は動かない★
+             実物: 八木工業「控除明細／弁当代 矢原 11,340」小計292,600 − 11,340 ＝ 281,260
+         ★名前は会社が決める★（「弁当代」「立替」は現場の言い方＝器に焼き込まない） -->
+    <div class="card" id="ded-card">
+      <div class="card-h">差し引く（控除）</div>
+      <div id="ded-list"></div>
+      <button class="btn-add" type="button" id="b-ded-add">＋ 差し引く行を足す</button>
+      <p class="hint" id="ded-why">値引き（税も一緒に減る物）は ★明細にマイナスの行★ で入れてください。
+        ここは ★税込の合計から引く物★（立替の弁当代など）です。消費税は動きません。</p>
+      <div class="bad" id="ded-err" style="display:none"></div>
     </div>
 
     <!-- ═══ 入金（★1回＝1行。上書きしない★） ═══
@@ -168,6 +184,21 @@
           <div class="flabel">備考</div>
           <textarea class="finput" id="e-memo" placeholder="例：振込手数料は貴社にてご負担ください"></textarea>
         </div>
+      </div>
+      <div class="frow">
+        <div class="flabel">「◯年◯月分」の行（紙の頭に出ます）</div>
+        <input class="finput" id="e-lead" type="text" placeholder="（請求日の前月から自動）">
+        <p class="hint" id="e-lead-hint"></p>
+      </div>
+      <!-- ★税の入れ方は「設定」で1回 決める物★。ただし ★取引先ごとに違う★ のが実物なので、
+           この1通だけ変える道を ★畳みの中に★ 置く（入力の主線に設問を増やさない）。 -->
+      <div class="frow">
+        <div class="flabel">この1通の金額の入れ方</div>
+        <select class="finput" id="e-taxmode">
+          <option value="exclusive">税抜で入れる（消費税を足す）</option>
+          <option value="inclusive">税込で入れる（中から消費税を出す）</option>
+        </select>
+        <p class="hint" id="e-taxmode-hint"></p>
       </div>
       <div class="frow">
         <label class="check"><input type="checkbox" id="e-gensen"><span>源泉徴収する<span class="guess-tag" id="tag-gensen" style="display:none">前回から</span></span></label>
@@ -387,33 +418,33 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../js/supa-config.js?v=5d34f994"></script>
-<script src="../lib/xlsx.full.min.js?v=5d34f994"></script>
-<script src="../js/file-out.js?v=5d34f994"></script>
-<script src="../js/suite-data.js?v=5d34f994"></script>
-<script src="../kyuyo/lib/shouhizei-ritsu.js?v=5d34f994"></script>
+<script src="../js/supa-config.js?v=eeb0ea2b"></script>
+<script src="../lib/xlsx.full.min.js?v=eeb0ea2b"></script>
+<script src="../js/file-out.js?v=eeb0ea2b"></script>
+<script src="../js/suite-data.js?v=eeb0ea2b"></script>
+<script src="../kyuyo/lib/shouhizei-ritsu.js?v=eeb0ea2b"></script>
 <!-- ★源泉徴収の率と式は【給与の lib】が持つ＝請求書側には率を1つも書かない★
      （国税庁 No.2798。100万円の境目も、1円未満の切り捨ても、あちらの gensenA が唯一の正） -->
-<script src="../kyuyo/lib/shiharai-chosho.js?v=5d34f994"></script>
-<script src="lib/seikyu-tax.js?v=5d34f994"></script>
-<script src="lib/seikyu-gensen.js?v=5d34f994"></script>
-<script src="lib/seikyu-carry.js?v=5d34f994"></script>
-<script src="lib/seikyu-cols.js?v=5d34f994"></script>
-<script src="lib/seikyu-templates.js?v=5d34f994"></script>
-<script src="lib/seikyu-doc.js?v=5d34f994"></script>
-<script src="lib/seikyu-name.js?v=5d34f994"></script>
-<script src="lib/seikyu-paper.js?v=5d34f994"></script>
-<script src="lib/seikyu-aoa.js?v=5d34f994"></script>
-<script src="js/seikyu-store.js?v=5d34f994"></script>
-<script src="js/seikyu-out.js?v=5d34f994"></script>
-<script src="js/seikyu-app.js?v=5d34f994"></script>
-<script src="../js/exally-login.js?v=5d34f994"></script>
-<script src="js/auth.js?v=5d34f994"></script>
+<script src="../kyuyo/lib/shiharai-chosho.js?v=eeb0ea2b"></script>
+<script src="lib/seikyu-tax.js?v=eeb0ea2b"></script>
+<script src="lib/seikyu-gensen.js?v=eeb0ea2b"></script>
+<script src="lib/seikyu-carry.js?v=eeb0ea2b"></script>
+<script src="lib/seikyu-cols.js?v=eeb0ea2b"></script>
+<script src="lib/seikyu-templates.js?v=eeb0ea2b"></script>
+<script src="lib/seikyu-doc.js?v=eeb0ea2b"></script>
+<script src="lib/seikyu-name.js?v=eeb0ea2b"></script>
+<script src="lib/seikyu-paper.js?v=eeb0ea2b"></script>
+<script src="lib/seikyu-aoa.js?v=eeb0ea2b"></script>
+<script src="js/seikyu-store.js?v=eeb0ea2b"></script>
+<script src="js/seikyu-out.js?v=eeb0ea2b"></script>
+<script src="js/seikyu-app.js?v=eeb0ea2b"></script>
+<script src="../js/exally-login.js?v=eeb0ea2b"></script>
+<script src="js/auth.js?v=eeb0ea2b"></script>
 <!-- ★Service Worker は登録しない＝キャッシュで古い版が居座る問題を根絶。
      開くたびに既存SWを登録解除＋全キャッシュ削除して常に最新にする（給与と同じ）。 -->
 <script>try{if('serviceWorker'in navigator){navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister();});});}if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.delete(k);});});}}catch(e){}</script>
 <!-- ★テスト環境の帯★ 本番の倉庫では出ない。今どの倉庫かは js/supa-config.js が唯一の正。
      ホスト名では決めない（配り方は変わるが「本番のデータか」は変わらないため）。 -->
-<script src="../js/env-badge.js?v=5d34f994"></script>
+<script src="../js/env-badge.js?v=eeb0ea2b"></script>
 </body>
 </html>

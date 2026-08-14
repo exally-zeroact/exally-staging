@@ -158,3 +158,21 @@
   padding: 5px 0; color: #2E7D54; font-weight: 700; vertical-align: top;
   white-space: normal; word-break: normal; overflow-wrap: break-word;
 }
+
+/* ── 差し引く（控除）＝明細の外・税込から引く ─────────────────
+   ★flex の子に文を直接置かない★（1文字ずつ縦に割れる事故を作らない）＝
+   名前と金額は入力欄なので折り返しの心配は無いが、行そのものは折り返す。 */
+.ded-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 8px; }
+.ded-n { flex: 1 1 150px; min-width: 150px; }
+.ded-a { flex: 0 1 110px; min-width: 110px; text-align: right; }
+
+/* 明細の「消費税」は ★出る物（読むだけ）★＝打てる欄と見た目で分ける */
+.l-ro {
+  font-family: 'DM Mono', ui-monospace, monospace; font-size: 13px; color: #5C7E6C;
+  text-align: right; padding-top: 13px; white-space: nowrap;
+}
+/* 紙には出さないが 入力には要る列（税率）の印 */
+.l-only {
+  display: inline-block; margin-left: 4px; padding: 0 5px; border-radius: 999px;
+  background: #F0FAF4; border: 1px solid #C8ECD8; color: #7AA08C; font-size: 9.5px; font-weight: 400;
+}

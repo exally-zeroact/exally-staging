@@ -14,8 +14,20 @@
  * ★率の数字はこのファイルに1つも書かない★
  *   kyuyo/lib/shouhizei-ritsu.js（唯一の正）から取る。率が変わってもここは直さない。
  *
- * ★行ごとの税額(taxRef)も返すが、それは「参考」。合計をそこから作らない。★
- *   （紙に行ごとの税額を載せるのは自由。載せても合計はここで出した額を使う）
+ * ★出典（一次情報・確認日 2026-08-15）★
+ *   国税庁 インボイス制度に関するQ&A 問57「適格請求書に記載する消費税額等の端数処理」
+ *     https://www.nta.go.jp/taxes/shiraberu/zeimokubetsu/shohi/keigenzeiritsu/pdf/qa/57.pdf
+ *     ・「一の適格請求書につき、★税率ごとに1回の端数処理★を行う」
+ *     ・「★個々の商品ごとに消費税額等を計算し、1円未満の端数処理を行い、
+ *        その合計額を消費税額等として記載することは 認められません★」
+ *     ・端数の寄せ方（切上げ・切捨て・四捨五入）は ★会社が選んでよい★
+ *   同 問59（税抜と税込が混ざる場合も同じ扱い）
+ *
+ * ★行ごとの税額(line.tax)も返す★（うちの実物32枚は全部この列を持っている）。
+ *   ただし ★足したら必ず「税率ごとに1回 端数処理した額」に一致させる★。
+ *   ＝行ごとに丸めて足す道は作らない（上のQ&Aで認められていない）。
+ *   端数は最後の行に寄せ、寄せた事は spread に残す（★黙って寄せない★）。
+ *   taxRef は「行ごとに丸めただけの生の値」＝寄せる前（比べる時に使う）。
  *
  * ★画面に依らない（DOMを1つも触らない）★＝素のNodeで全パターン回せる。
  *
@@ -64,7 +76,7 @@
 
   function zero(errors) {
     return {
-      ok: false, errors: errors, lines: [], byRate: [],
+      ok: false, errors: errors, lines: [], byRate: [], spread: [],
       exempt: { base: 0 }, nontaxable: { base: 0 }, hasReduced: false,
       subtotal: 0, taxTotal: 0, grandTotal: 0,
     };
@@ -137,6 +149,7 @@
     }
 
     var byRate = [];
+    var spread = [];      // ★端数を最後の行に寄せた記録（黙って寄せない）★
     var taxTotal = 0, taxableBase = 0;
     var pcts = Object.keys(buckets).map(Number).sort(function (a, b) { return b - a; });
     for (var k = 0; k < pcts.length; k++) {
@@ -157,12 +170,30 @@
       byRate.push({ pct: b.pct, base: base, tax: tax, gross: gross });
       taxTotal += tax;
       taxableBase += base;
-      // 行ごとの税額＝★参考★（紙に載せてもよいが、合計はここから作らない）
+      /* ★行ごとの税額★
+         うちの実物32枚は ★全部★ 明細に「消費税」の列を持っている（=E12*0.1）。
+         ＝行ごとの税額は「参考」ではなく ★紙に出る本番の数字★。
+
+         ★足したら必ず その税率の税額に一致させる★
+           行ごとに丸めた物を足すと、税率ごとに1回だけ丸めた額と ★1円ずれる事がある★。
+           ずれたまま列を出すと ★合計 ＝ 小計 ＋ 消費税 が崩れる★（紙の中で辻褄が合わない）。
+         ★端数は最後の行に寄せる★。寄せたら ★spread に残して 黙って寄せない★。
+         （taxRef は「行ごとに丸めただけの生の値」＝寄せる前。比べる時に要るので残す） */
+      var acc = 0;
       for (var q = 0; q < b.rows.length; q++) {
         var row = b.rows[q];
-        row.taxRef = taxMode === 'inclusive'
+        var t = taxMode === 'inclusive'
           ? roundYen(row.amount * num / (10000 + num), rounding)
           : roundYen(row.amount * num / 10000, rounding);
+        row.taxRef = t;
+        row.tax = t;
+        acc += t;
+      }
+      var lastRow = b.rows[b.rows.length - 1];
+      var resid = tax - acc;
+      if (lastRow && resid !== 0) {
+        lastRow.tax += resid;
+        spread.push({ pct: b.pct, residual: resid, line: lastRow.index + 1, name: lastRow.name || '' });
       }
     }
 
@@ -178,6 +209,7 @@
       subtotal: subtotal,
       taxTotal: taxTotal,
       grandTotal: subtotal + taxTotal,
+      spread: spread,        // ★1円の端数を最後の行に寄せた時だけ中身が入る★
     };
   }
 

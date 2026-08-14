@@ -210,17 +210,27 @@
        引く相手は 合計請求額。掛ける相手は 今回の報酬。ここを混ぜない。 */
 
   /** 実際に請求している額（繰越があれば足したあと）。読めない時は null */
-  function billedOf(tax, carry) {
+  function billedOf(tax, carry, deduct) {
     var g = tax && Number(tax.grandTotal);
     if (!Number.isFinite(g)) return null;
+    /* ★控除は「税込の合計」から引く（税額は動かさない）★
+       ★読めない控除が1つでもあれば null（0にしない）★＝引き忘れた紙を出さない。 */
+    if (deduct !== undefined && deduct !== null) {
+      var d = Number(deduct);
+      if (!Number.isFinite(d)) return null;
+      g = g - d;
+    }
     if (!carry) return g;
     if (carry.grandTotal === null || carry.grandTotal === undefined) return null;  // 入金が未確認
-    return Number(carry.grandTotal);
+    /* 繰越は「前回の残り＋今回」。今回ぶんから控除を引いた形にそろえる。 */
+    var c = Number(carry.grandTotal);
+    if (deduct !== undefined && deduct !== null) c = c - Number(deduct);
+    return c;
   }
 
   /** 実際に振り込んでもらう額（源泉があれば引いたあと）。読めない時は null */
-  function payableOf(tax, carry, gensen) {
-    var billed = billedOf(tax, carry);
+  function payableOf(tax, carry, gensen, deduct) {
+    var billed = billedOf(tax, carry, deduct);
     if (billed === null) return null;
     if (!gensen || !gensen.on) return billed;
     var a = Number(gensen.amount);
@@ -474,6 +484,70 @@
     return { ok: true, reason: '' };
   }
 
+  /* ── ★控除（明細の外で、税込の合計から引く）★ ────────────────────
+     ★引き算は2種類ある。混ぜたら消費税がズレる★（実物の式で確かめた）
+       ★値引き行★ … ★明細の中★のマイナス行。★課税の対象を減らす＝税額も一緒に減る★
+                     実物: ちから「※出精値引 −4,110／税 −410」／八勝亭「出精値引 −21,000」
+                     ＝これは明細なので、ここではなく seikyu-tax.js が数える。
+       ★控除★     … ★明細の外★。★税込の合計から引く＝税額は動かない★
+                     実物: 八木工業「控除明細／弁当代 矢原 11,340」
+                     小計(税込)292,600 − 11,340 ＝ 281,260
+     ★恒等式★ 請求額 ＝（税抜＋値引き）＋ 消費税 − 控除
+     ★名前は会社が決める★（「弁当代」「出精値引」は現場の言い方＝器に焼き込まない）
+     置き場所は pay_invoices.data（自由枠）＝★棚は増やさない★ */
+  var MAX_DEDUCTIONS = 20;
+
+  /** 1通に付いている控除。★読めない物は落とさず、検査で赤にする★ */
+  function deductionsOf(inv) {
+    var d = (inv && inv.data && inv.data.deductions) || [];
+    return Array.isArray(d) ? d : [];
+  }
+  /** 控除の合計（円）。★読めない行が1つでもあれば null（0にしない）★ */
+  function deductTotalOf(inv) {
+    var list = deductionsOf(inv);
+    var t = 0;
+    for (var i = 0; i < list.length; i++) {
+      var n = Number((list[i] || {}).amount);
+      if (!Number.isFinite(n) || !Number.isInteger(n)) return null;
+      t += n;
+    }
+    return t;
+  }
+  /** 控除1件が入れられる形か。返り = { ok, errors[] } */
+  function validateDeductions(inv) {
+    var list = deductionsOf(inv);
+    var errors = [];
+    if (list.length > MAX_DEDUCTIONS) errors.push('控除が' + list.length + '行あります（' + MAX_DEDUCTIONS + '行までです）');
+    for (var i = 0; i < list.length; i++) {
+      var d = list[i] || {};
+      var no = i + 1;
+      if (!String(d.name == null ? '' : d.name).trim()) errors.push('控除の' + no + '行目に名前がありません（何を引いたか分からない紙は出せません）');
+      if (String(d.name || '').length > 40) errors.push('控除の' + no + '行目の名前が長すぎます（40文字まで）');
+      var raw = String(d.amount == null ? '' : d.amount).trim();
+      if (!raw) errors.push('控除の' + no + '行目の金額が空です');
+      else {
+        var n = Number(raw.replace(/[,\s]/g, ''));
+        if (!Number.isFinite(n) || !Number.isInteger(n)) errors.push('控除の' + no + '行目の金額は1円単位の数字で入れてください');
+        else if (n === 0) errors.push('控除の' + no + '行目が0円です（引かないなら行ごと消してください）');
+        else if (n < 0) errors.push('控除の' + no + '行目がマイナスです（足すなら明細の行にしてください）');
+      }
+    }
+    return { ok: errors.length === 0, errors: errors };
+  }
+
+  /* ── ★「◯年◯月分」＝請求日の前月★ ──────────────────────────────
+     実物32枚のうち標準様式は全部 =TEXT(EDATE(請求日,-1),"yyyy年m月分")。
+     ★毎回 手で打たせない★。読めない日付なら空（それらしい月をでっち上げない）。 */
+  function prevMonthOf(ymd) {
+    var p = parseYmd(ymd);
+    if (!p) return null;
+    return p.m === 1 ? { y: p.y - 1, m: 12 } : { y: p.y, m: p.m - 1 };
+  }
+  function periodLabelOf(ymd) {
+    var q = prevMonthOf(ymd);
+    return q ? (q.y + '年' + q.m + '月分') : '';
+  }
+
   /* ── 発行前の検査（空欄のまま出させない） ──────────────────────── */
   /* ★黙って小さくならないようにする★
      今までは「何も入っていない行」を計算の前に黙って捨てていた。
@@ -484,8 +558,9 @@
        ・まるごと空の行                        → ★消したと言う★（黙って消さない）
      返り = { blankName:[行番号…], dropped:[行番号…] }（★人が見る1始まりの行番号★） */
   function rowIssuesOf(rawLines) {
-    var blankName = [], dropped = [];
+    var blankName = [], dropped = [], noAmount = [];
     var list = Array.isArray(rawLines) ? rawLines : [];
+    var has = function (v) { return String(v == null ? '' : v).trim() !== ''; };
     for (var i = 0; i < list.length; i++) {
       var ln = list[i] || {};
       var name = String(ln.name == null ? '' : ln.name).trim();
@@ -493,13 +568,16 @@
       var ex = ln.extra || {};
       for (var k in ex) if (Object.prototype.hasOwnProperty.call(ex, k)) vals.push(ex[k]);
       var hasSomething = false;
-      for (var j = 0; j < vals.length; j++) {
-        if (String(vals[j] == null ? '' : vals[j]).trim() !== '') { hasSomething = true; break; }
-      }
-      if (name) continue;
-      if (hasSomething) blankName.push(i + 1); else dropped.push(i + 1);
+      for (var j = 0; j < vals.length; j++) { if (has(vals[j])) { hasSomething = true; break; } }
+      if (!name) { if (hasSomething) blankName.push(i + 1); else dropped.push(i + 1); continue; }
+      /* ★品名は在るのに 金額も「数量×単価」も無い行★
+         seikyu-tax.js の amountOf は この形を ★0円★ として通す。
+         ＝★黙って0円の行が紙に載る★（「空なのに金額が在る＝赤」の 裏側）。
+         実物32枚は ★単価の無い様式が9枚★＝金額を直に打つのが普通なので、
+         「単価が空」は赤にしない。★金額を出す手立てが1つも無い★時だけ止める。 */
+      if (!has(ln.amount) && !(has(ln.qty) && has(ln.price))) noAmount.push(i + 1);
     }
-    return { blankName: blankName, dropped: dropped };
+    return { blankName: blankName, dropped: dropped, noAmount: noAmount };
   }
 
   function validateInvoice(o) {
@@ -516,7 +594,14 @@
       if (ri.dropped.length) {
         warnings.push(ri.dropped.join('・') + '行目は何も入っていないので数えません（' + ri.dropped.length + '行）');
       }
+      if (ri.noAmount.length) {
+        errors.push(ri.noAmount.join('・') + '行目の金額が空です（0円として出しません）');
+      }
     }
+
+    /* ★控除（明細の外・税込から引く）★ 名前の無い控除・0円・マイナスは止める */
+    var dchk = validateDeductions(inv);
+    if (!dchk.ok) errors = errors.concat(dchk.errors);
 
     if (DOC_TYPES.indexOf(inv.doc_type || 'invoice') < 0) errors.push('書類の種類が不明です（' + inv.doc_type + '）');
     if (!String(inv.no || '').trim()) errors.push('請求番号が空です');
@@ -603,6 +688,8 @@
     stampNeeded: stampNeeded, stampNote: stampNote, stampBaseOf: stampBaseOf,
     STAMP_FREE_UNDER: STAMP_FREE_UNDER, canReceipt: canReceipt,
     rowIssuesOf: rowIssuesOf,
+    deductionsOf: deductionsOf, deductTotalOf: deductTotalOf, validateDeductions: validateDeductions,
+    MAX_DEDUCTIONS: MAX_DEDUCTIONS, periodLabelOf: periodLabelOf, prevMonthOf: prevMonthOf,
     NUMBER_FORMATS: NUMBER_FORMATS, PAY_TERMS: PAY_TERMS, PAY_STATE_LABEL: PAY_STATE_LABEL,
     PAY_METHODS: PAY_METHODS, receiptAmountOf: receiptAmountOf, validateReceipt: validateReceipt,
     formatNo: formatNo, nextNo: nextNo, bumpNo: bumpNo, validateNumbering: validateNumbering,

@@ -211,9 +211,9 @@
       }
       return pageLines.map(function (ln, i) {
         return '<tr>' + spec.items.map(function (k) {
-          var cell = COLS.cellOf(ln, k, offset + i);
+          var cell = COLS.cellOf(ln, k, offset + i, spec);
           var al = COLS.alignOf(spec, k);
-          var role = COLS.roleOf(k);
+          var role = COLS.roleOfIn(spec, k);
           var noWrap = (role === 'rate' || role === 'unit' || role === 'index');
           var body = cell.kind === 'money' ? (cell.text === '' ? '' : comma(cell.text))
             : cell.kind === 'num' ? (cell.text === '' ? '' : num(cell.text))
@@ -260,9 +260,12 @@
 
     /* ── 挨拶（★下記の通り御請求申し上げます。★） ── */
     function leadBlock() {
+      /* ★「◯年◯月分」＝請求日の★前月★★
+         うちの実物32枚の標準様式は全部 =TEXT(EDATE(請求日,-1),"yyyy年m月分")。
+         ここが「当月」だと、7月に出す紙に「7月分」と書いてしまう（★実物は6月分★）。
+         決め方は seikyu-doc.js が唯一の正。読めない日付なら出さない（でっち上げない）。 */
       var lead = (inv.data && inv.data.lead) || '';
-      var mm = /^(\d{4})-(\d{2})-/.exec(String(inv.issue_ymd || ''));
-      if (!lead && mm) lead = (+mm[2]) + '月分のご利用分です。';
+      if (!lead) lead = DOC.periodLabelOf(inv.issue_ymd);
       var greet = isQuote ? '下記の通り御見積申し上げます。' : '下記の通り御請求申し上げます。';
       return '<div class="lead">'
         + (lead ? '<div class="lead-l">' + esc(lead) + '</div>' : '')

@@ -308,8 +308,14 @@
     $('e-gensen').checked = !!(v.data && v.data.gensen);
     drawGensenHint();
 
+    // ★この1通の金額の入れ方（設定の既定を引き継ぐ／取引先ごとに違うので1通だけ変えられる）
+    if ($('e-taxmode')) $('e-taxmode').value = (v.tax_mode === 'inclusive') ? 'inclusive' : 'exclusive';
+    // ★「◯年◯月分」＝請求日の前月（実物32枚と同じ）。空なら自動で入る
+    if ($('e-lead')) $('e-lead').value = (v.data && v.data.lead) || '';
+    drawLeadHint();
     renderGuess();
     renderLines();
+    renderDeductions();
     recalc();
     lockInputs();
     // ★入金は「発行した1通」にだけ出す（下書きには請求そのものが無い）
@@ -442,6 +448,8 @@
     var noEdit = $('b-no-edit'); if (noEdit) noEdit.disabled = ro;
     Array.prototype.forEach.call(document.querySelectorAll('#lines-body input, #lines-body select, #lines-body button'), function (b) { b.disabled = ro; });
     var add = $('b-addline'); if (add) add.disabled = ro;
+    ['e-taxmode', 'e-lead'].forEach(function (id) { var el = $(id); if (el) el.disabled = ro; });
+    renderDeductions();
 
     var v = S.cur || {};
     // ★押せない物は出さない（説明で補わない）★
@@ -489,6 +497,70 @@
     if (ro && v.status === 'issued') why = 'この請求書は発行済みです。直すには取り消してから作り直します。';
     else if (ro && v.status === 'void') why = 'この請求書は取り消し済みです。新しく作り直してください。';
     setText('act-why', why);
+  }
+
+  /* ═══ ★差し引く（控除）★ ═══
+     ★引き算は2種類。混ぜると消費税がズレる★（実物の式で確かめた）
+       値引き行（明細の中）… 課税の対象が減る＝税額も減る（seikyu-tax.js が数える）
+       控除（ここ）        … ★税込の合計から引く＝税額は動かない★
+     決まりは seikyu-doc.js が唯一の正。ここは画面の配線だけ。
+     置き場所は data の自由枠＝★棚は増やさない★ */
+  function deductions() {
+    var v = S.cur; if (!v) return [];
+    if (!v.data) v.data = {};
+    if (!Array.isArray(v.data.deductions)) v.data.deductions = [];
+    return v.data.deductions;
+  }
+  function renderDeductions() {
+    var host = $('ded-list'); if (!host) return;
+    var v = S.cur;
+    var ro = locked();
+    var list = deductions();
+    show($('ded-card'), !!v && (list.length > 0 || !ro));
+    show($('b-ded-add'), !ro);
+    if (!list.length) {
+      host.innerHTML = '<p class="hint">差し引く物はありません。</p>';
+    } else {
+      host.innerHTML = list.map(function (d, i) {
+        return '<div class="ded-row">'
+          + '<input class="finput ded-n" data-dn="' + i + '" type="text" placeholder="例：弁当代" value="' + esc(d.name || '') + '"' + (ro ? ' disabled' : '') + '>'
+          + '<input class="finput num ded-a" data-da="' + i + '" type="text" inputmode="numeric" placeholder="0" value="' + esc(d.amount === undefined || d.amount === null ? '' : d.amount) + '"' + (ro ? ' disabled' : '') + '>'
+          + (ro ? '' : '<button class="l-del" type="button" data-dd="' + i + '" aria-label="この行を消す">×</button>')
+          + '</div>';
+      }).join('');
+      Array.prototype.forEach.call(host.querySelectorAll('[data-dn]'), function (el) {
+        el.oninput = function () { deductions()[+el.getAttribute('data-dn')].name = el.value; S.dirty = true; recalc(); };
+      });
+      Array.prototype.forEach.call(host.querySelectorAll('[data-da]'), function (el) {
+        el.oninput = function () { deductions()[+el.getAttribute('data-da')].amount = el.value; S.dirty = true; recalc(); };
+      });
+      Array.prototype.forEach.call(host.querySelectorAll('[data-dd]'), function (b) {
+        b.onclick = function () { deductions().splice(+b.getAttribute('data-dd'), 1); S.dirty = true; renderDeductions(); recalc(); };
+      });
+    }
+    drawDedErr();
+  }
+  /* ★赤い印だけを塗り直す★（行を作り直さない＝打っている途中で欄が飛ばない）
+     ★古い文を残さない★＝名前や金額を打った瞬間に赤が消える。
+     （2026-08-15 実測：足した直後の「名前がありません」が、埋めても残ったままだった＝
+       同じ状態を2か所で別々に出していた） */
+  function drawDedErr() {
+    if (!$('ded-err')) return;
+    var chk = DOC.validateDeductions(S.cur || {});
+    box('ded-err', chk.ok ? '' : chk.errors.join('\n'));
+  }
+  /** 控除の合計。★読めない行が1つでもあれば null（0にしない）★ */
+  function currentDeduct() {
+    var v = S.cur; if (!v) return null;
+    var list = deductions();
+    if (!list.length) return 0;
+    var t = 0;
+    for (var i = 0; i < list.length; i++) {
+      var n = DOC.receiptAmountOf(list[i].amount);
+      if (n === null) return null;      // ★読めない＝0にしない（引き忘れた紙を出さない）
+      t += n;
+    }
+    return t;
   }
 
   /* ═══ ★見積 → 請求 のつながり★ ═══
@@ -804,23 +876,39 @@
     var v = S.cur, host = $('lines-body'), head = $('lines-head'); if (!host || !head) return;
     var spec = colsOf(v);
     var rates = rateOptions();
+    var role = function (k) { return COLS.roleOfIn(spec, k); };
+    /* ★税率は「紙に出す列」とは別に、入力では必ず選べる★
+       うちの実物32枚は ★税率の列を持たず、消費税（税額）の列を持つ★。
+       紙をそれに合わせた結果、★税率を選ぶ所が消えた★（＝軽減税率も非課税も入れられない）。
+       税率は ★計算に要る入力★なので、紙に出さなくても ★入力の表には必ず出す★。
+       （適用税率そのものは 紙の「（内訳）」に必ず出るので、適格請求書の要件は落ちない） */
+    var hasRate = spec.items.some(function (k) { return role(k) === 'rate'; });
+    var rateHead = hasRate ? '' : '<th class="l-md">税率<span class="l-only">入力だけ</span></th>';
 
     head.innerHTML = spec.items.map(function (k) {
-      var r = COLS.roleOf(k);
+      var r = role(k);
       var cls = (r === 'name') ? 'l-name' : (r === 'rate') ? 'l-md' : 'l-sm';
       return '<th class="' + cls + '">' + esc(k) + '</th>';
-    }).join('') + '<th class="l-x"></th><th class="l-x"></th>';
+    }).join('') + rateHead + '<th class="l-x"></th><th class="l-x"></th>';
 
     var list = v.lines;
     host.innerHTML = list.map(function (ln, i) {
+      var rateCell = function (cls) {
+        return '<td class="' + cls + '"><select class="finput" data-f="rate">'
+          + rates.map(function (x) { return '<option value="' + esc(x.v) + '"' + (rateValueOf(ln) === x.v ? ' selected' : '') + '>' + esc(x.t) + '</option>'; }).join('')
+          + '</select></td>';
+      };
       var tds = spec.items.map(function (k) {
-        var r = COLS.roleOf(k);
+        var r = role(k);
         var cls = (r === 'name') ? 'l-name' : (r === 'rate') ? 'l-md' : 'l-sm';
         if (r === 'index') return '<td class="l-x" style="color:#7AA08C;padding-top:12px">' + (i + 1) + '</td>';
-        if (r === 'rate') {
-          return '<td class="' + cls + '"><select class="finput" data-f="rate">'
-            + rates.map(function (x) { return '<option value="' + esc(x.v) + '"' + (rateValueOf(ln) === x.v ? ' selected' : '') + '>' + esc(x.t) + '</option>'; }).join('')
-            + '</select></td>';
+        if (r === 'rate') return rateCell(cls);
+        /* ★行ごとの税額は「打つ物」ではなく「出る物」★
+           打てるようにすると ★行ごとに丸めた数を足す道★ ができる＝
+           国税庁 Q&A 問57 で認められていない形になる。★読むだけで出す★。 */
+        if (r === 'tax') {
+          var tx = lineTaxOf(i);
+          return '<td class="' + cls + ' l-ro">' + (tx === null ? '—' : yen(tx)) + '</td>';
         }
         var val, mode = '', extra = '';
         if (r === 'name') { val = ln.name; extra = ' placeholder="品名"'; }
@@ -840,6 +928,7 @@
       var up = i > 0 ? '<button class="l-mv" type="button" data-up="' + i + '" aria-label="この行を上へ">▲</button>' : '';
       var dn = i < list.length - 1 ? '<button class="l-mv" type="button" data-down="' + i + '" aria-label="この行を下へ">▼</button>' : '';
       return '<tr data-i="' + i + '">' + tds
+        + (hasRate ? '' : rateCell('l-md'))
         + '<td class="l-x l-ord">' + up + dn + '</td>'
         + '<td class="l-x"><button class="l-del" type="button" data-del="' + i + '" aria-label="この行を消す">×</button></td></tr>';
     }).join('');
@@ -969,9 +1058,70 @@
     return CARRY.compute({ thisTotal: t.grandTotal, prev: prev, receipts: S.receipts });
   }
 
+  /** 「◯年◯月分」の説明。★空なら 請求日の前月から自動で入る事を言う★ */
+  function drawLeadHint() {
+    var v = S.cur; if (!v || !$('e-lead-hint')) return;
+    var auto = DOC.periodLabelOf(v.issue_ymd);
+    setText('e-lead-hint', ($('e-lead') && $('e-lead').value)
+      ? '打った言葉をそのまま紙に出します。'
+      : (auto ? '空のままなら「' + auto + '」と出ます（請求日の前月）。' : '請求日が読めないので、この行は出ません。'));
+  }
+  /** 金額の入れ方を、打つ人の言葉で言う（★数字の意味を取り違えさせない★） */
+  function drawTaxModeNote() {
+    var v = S.cur; if (!v || !$('taxmode-note')) return;
+    var inc = v.tax_mode === 'inclusive';
+    setText('taxmode-note', inc
+      ? '金額は ★税込★ で入れています（中から消費税を出します）。変えるときは「細かく決める」から。'
+      : '金額は ★税抜★ で入れています（消費税を足します）。変えるときは「細かく決める」から。');
+    if ($('e-taxmode-hint')) {
+      setText('e-taxmode-hint', inc
+        ? '税込でいくら、が先に決まっている相手はこちら。★入れた税込と合計は1円もずれません★。'
+        : '単価や金額を税抜で持っている相手はこちら。');
+    }
+  }
+
+  /** 倉庫に残す合計。★grandTotal は「請求額」＝控除を引いた後★
+   *  理由＝入金の残り(paymentStateOf)も繰越(CARRY)も この数を見る。
+   *        ここが控除前だと ★全額 払っても「残り」が残る★。
+   *  紙に出る「合計＝小計＋消費税」は gross（控除前）。恒等式は両方 残す。 */
+  function totalsOf(t) {
+    var ded = currentDeduct();
+    var gross = t.grandTotal;
+    var billed = (ded === null) ? gross : (gross - ded);
+    return {
+      subtotal: t.subtotal, taxTotal: t.taxTotal,
+      gross: gross,                    // 小計＋消費税（控除前）
+      deduct: (ded === null) ? 0 : ded,
+      deductLines: DOC.deductionsOf(S.cur).map(function (d) {
+        return { name: String(d.name || ''), amount: DOC.receiptAmountOf(d.amount) };
+      }),
+      grandTotal: billed,              // ★請求額（控除を引いた後）★
+      byRate: t.byRate, exempt: t.exempt, nontaxable: t.nontaxable, hasReduced: t.hasReduced,
+    };
+  }
+
+  /** その行の税額（★seikyu-tax.js が出した物をそのまま読む★・数え直さない）
+   *  数え直すと ★端数の寄せ★ が効かず、足しても消費税の合計に一致しなくなる。 */
+  var lastTax = null;
+  function lineTaxOf(i) {
+    if (!lastTax || !lastTax.ok) return null;
+    for (var k = 0; k < lastTax.lines.length; k++) if (lastTax.lines[k].index === i) return lastTax.lines[k].tax;
+    return null;   // 計算に入らなかった行（空行）＝0にしない
+  }
+
   function currentTax() {
     var v = S.cur;
     return TAX.compute({ lines: cleanLines(v.lines), taxMode: v.tax_mode, rounding: v.rounding });
+  }
+
+  /** 明細の表の「消費税」の欄を塗り直す（★行を作り直さない＝打っている途中で欄が飛ばない★） */
+  function paintLineTax() {
+    var host = $('lines-body'); if (!host) return;
+    Array.prototype.forEach.call(host.querySelectorAll('tr'), function (tr) {
+      var cell = tr.querySelector('.l-ro'); if (!cell) return;
+      var tx = lineTaxOf(+tr.getAttribute('data-i'));
+      cell.textContent = (tx === null) ? '—' : yen(tx);
+    });
   }
 
   function recalc() {
@@ -986,6 +1136,10 @@
       return t;
     }
     box('edit-err', '');
+    lastTax = t;                 // ★行ごとの税額はここから読む（数え直さない）
+    drawDedErr();                // ★古い赤を残さない（同じ状態を2か所で別々に出さない）
+    paintLineTax();
+    drawTaxModeNote();
     var rows = t.byRate.map(function (b) {
       return '<div class="tot-r"><span class="tot-l">' + esc(b.pct) + '% 対象</span><span class="tot-v">'
         + yen(b.base) + ' 円（消費税 ' + yen(b.tax) + ' 円）</span></div>';
@@ -1006,12 +1160,31 @@
          紙にだけ出して画面に出さないと、見ている数字と振り込まれる額が食い違う。 */
       var g = currentGensen();
       var c = currentCarry();
+      var ded = currentDeduct();
+      /* ★控除（明細の外・税込から引く）★ 税額は動かさない。
+         ★読めない控除は 0 にしない★＝「（未確認）」と出して、引き忘れた紙を出さない。 */
+      if (ded === null || ded > 0) {
+        html += '<div class="tot-r"><span class="tot-l">控除</span><span class="tot-v">'
+          + (ded === null ? '（未確認）' : '− ' + yen(ded) + ' 円') + '</span></div>';
+        var billed = DOC.billedOf(t, null, ded);
+        html += '<div class="tot-r tot-g"><span class="tot-l">請求額</span><span class="tot-v">'
+          + (billed === null ? '（未確認）' : yen(billed) + ' 円') + '</span></div>';
+      }
       if (g && g.on) {
         /* ★差引は「合計請求額（繰越こみ）− 源泉」★ 順番は seikyu-doc.js が唯一の正 */
-        var pay = DOC.payableOf(t, c, g);
+        var pay = DOC.payableOf(t, c, g, ded);
         html += '<div class="tot-r"><span class="tot-l">' + esc(g.label) + '</span><span class="tot-v">− ' + yen(g.amount) + ' 円</span></div>'
           + '<div class="tot-r tot-g"><span class="tot-l">' + esc(g.netLabel) + '</span><span class="tot-v">'
           + (pay === null ? '（未確認）' : yen(pay) + ' 円') + '</span></div>';
+      }
+      /* ★1円の端数を最後の行に寄せた時は 黙らない★
+         （税率ごとに1回だけ端数処理する＝国税庁 Q&A 問57。行ごとに丸めて足す道は作らない） */
+      if (t.spread && t.spread.length) {
+        html += '<div class="hint">' + t.spread.map(function (x) {
+          return esc(x.pct) + '% の消費税の端数 ' + yen(x.residual) + ' 円を、'
+            + x.line + '行目' + (x.name ? '「' + esc(x.name) + '」' : '') + 'に寄せました'
+            + '（税率ごとに1回だけ端数処理するため）。';
+        }).join('<br>') + '</div>';
       }
       gensenHintText(g, c);   // ★明細を打つたびに説明も直す（古い文を残さない）
       /* ★繰越があるなら、前回の残りを足したあとまで出す★ */
@@ -1198,10 +1371,7 @@
     var v = collect();
     var t = recalc();
     v.lines = cleanLines(v.lines);
-    v.totals = (t && t.ok) ? {
-      subtotal: t.subtotal, taxTotal: t.taxTotal, grandTotal: t.grandTotal,
-      byRate: t.byRate, exempt: t.exempt, hasReduced: t.hasReduced,
-    } : {};
+    v.totals = (t && t.ok) ? totalsOf(t) : {};
     if (!v.issue_ymd) { box('edit-err', '請求日を入れてください（下書きでも日付は要ります）。'); return Promise.resolve(); }
     if (!v.no) { box('edit-err', '請求番号が空です。「自動」に戻すか、自分で番号を入れてください。'); return Promise.resolve(); }
     box('edit-err', '');
@@ -1294,10 +1464,7 @@
     if (car) snap.carry = CARRY.snapshotOf(car);
     var row = Object.assign({}, v, {
       lines: cleanLines(v.lines),
-      totals: {
-        subtotal: t.subtotal, taxTotal: t.taxTotal, grandTotal: t.grandTotal,
-        byRate: t.byRate, exempt: t.exempt, nontaxable: t.nontaxable, hasReduced: t.hasReduced,
-      },
+      totals: totalsOf(t),
       snapshot: snap, template_id: tplId,
     });
     return S.store.invoices.issue(row, at).then(function (r) {
@@ -1689,6 +1856,7 @@
     $('e-issue').onchange = function () {
       S.cur.issue_ymd = $('e-issue').value;
       recalcDue();
+      drawLeadHint();          // ★「◯年◯月分」は請求日から作る＝日付を変えたら言い直す
       return autoNumber();
     };
     $('e-term').onchange = function () {
@@ -1754,6 +1922,22 @@
     $('b-issue').onclick = function () { return issue(); };
 
     /* ★入金★ 打つたびに「押せる/押せない」を塗り直す（黙って無反応にしない） */
+    /* ★差し引く（控除）★ 明細の外・税込から引く。値引き（税も減る物）は明細のマイナス行。 */
+    $('b-ded-add').onclick = function () {
+      deductions().push({ name: '', amount: '' });
+      S.dirty = true; renderDeductions(); recalc();
+    };
+    /* ★この1通の金額の入れ方★（設定の既定を、この1通だけ変える） */
+    $('e-taxmode').onchange = function () {
+      S.cur.tax_mode = $('e-taxmode').value === 'inclusive' ? 'inclusive' : 'exclusive';
+      S.dirty = true;
+      renderLines(); recalc();
+    };
+    /* ★「◯年◯月分」★ 空なら請求日の前月から自動で入る */
+    $('e-lead').oninput = function () {
+      S.cur.data.lead = $('e-lead').value;
+      S.dirty = true; drawLeadHint();
+    };
     $('b-pay-add').onclick = function () { return addReceipt(); };
     ['pay-ymd', 'pay-amt', 'pay-memo'].forEach(function (id) {
       var el = $(id); if (el) el.oninput = el.onchange = drawPayButton;

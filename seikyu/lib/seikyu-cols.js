@@ -29,31 +29,52 @@
   'use strict';
 
   var PAPER_WIDTH = 100;   // 表の幅（％）。ここに合計を必ず合わせる＝はみ出さない
-  var MIN_W = 24;          // 代行請求と同じ下限（これ未満だと列が読めない）
-  var MAX_W = 400;         // 代行請求と同じ上限
+  var MIN_W = 24;          // これ未満だと列が読めない
+  var MAX_W = 400;         // これを超えると他の列が潰れる
   var MAX_COLS = 12;       // 1枚の紙に並べられる列の上限（超えると字が潰れて読めない）
   var DEFAULT_W = 80;
 
   /* 列の「役割」。★名前ではなく役割で明細と結ぶ★
      ＝列名を並べ替えても・消しても、金額や税率が迷子にならない。 */
+  var ROLE_KEYS = ['index', 'name', 'qty', 'unit', 'price', 'amount', 'rate', 'tax', 'date', 'memo'];
   var ROLES = {
     '#': 'index',
     '品名・内容': 'name',
     '品名': 'name',
+    '項目': 'name',        // ★うちの実物32枚は全部この呼び方★
     '数量': 'qty',
     '単位': 'unit',
     '単価': 'price',
     '金額': 'amount',
     '税率': 'rate',
+    /* ★消費税＝行ごとの税額の列★
+       うちの実物32枚は ★1枚残らず★ この列を持っている（=E12*0.1）。
+       ＝「税率の列」より ★こちらが標準★。足したら必ず消費税の合計に一致する
+       （端数の寄せは seikyu-tax.js が1か所でやる）。 */
+    '消費税': 'tax',
+    '日付': 'date',        // ★実物1枚（リエット請求書）が持っている★
     '摘要': 'memo',
     '備考': 'memo',
   };
 
-  /* 幅の目安（代行請求の base をそのまま持ち込み、請求書で使う列を足した） */
+  /* 幅の目安。★うちの実物32枚の列に合わせた物★
+     （以前ここには「代行請求の base をそのまま持ち込み」と書いてあった＝★他アプリの器を
+       持ち込んだ跡★。跡が残っていると次の人も引っ張られるので消した） */
   var BASE_W = {
     '日付': 64, '行き先': 240, '金額': 100, '備考': 80, '距離': 80, '人数': 64, '名前': 96,
-    '#': 28, '品名・内容': 220, '品名': 220, '数量': 56, '単位': 44, '単価': 80, '税率': 56, '摘要': 100,
+    '#': 28, '品名・内容': 220, '品名': 220, '項目': 220, '数量': 56, '単位': 44, '単価': 80, '税率': 56, '消費税': 72, '摘要': 100,
   };
+
+  /** ★会社が付けた列にも「役割」を与えられる★
+   *  実物の「備考」は ★現場名★（東予市 川本邸／菊水ホテル／株式会社朝蔵）。
+   *  会社が「現場」「物件」「車番」と名前を変えても ★役割で結べば紙と表がズレない★。
+   *  spec.roles = { '現場': 'memo' }（★列名は会社の物・役割は器の物★） */
+  function roleOfIn(spec, name) {
+    var own = (spec && spec.roles && Object.prototype.hasOwnProperty.call(spec.roles, String(name)))
+      ? spec.roles[String(name)] : null;
+    if (own && ROLE_KEYS.indexOf(own) >= 0) return own;
+    return roleOf(name);
+  }
 
   function roleOf(name) {
     return Object.prototype.hasOwnProperty.call(ROLES, String(name)) ? ROLES[String(name)] : null;
@@ -77,7 +98,7 @@
 
   /**
    * 列幅（％）。★合計は必ず PAPER_WIDTH★ ＝ 何本足しても紙からはみ出さない。
-   * 打った幅は「比率」としてだけ使う（代行請求の colWidths と同じ考え方）。
+   * 打った幅は「比率」としてだけ使う（★何本 足しても紙からはみ出さない★ための決め方）。
    */
   function widthsOf(items, widths) {
     var list = Array.isArray(items) ? items : [];
@@ -99,12 +120,12 @@
   function alignOf(spec, col) {
     var a = spec && spec.aligns && spec.aligns[col];
     if (a === 'left' || a === 'center' || a === 'right') return a;
-    var r = roleOf(col);
-    if (r === 'amount' || r === 'qty' || r === 'price') return 'right';
+    var r = roleOfIn(spec, col);
+    if (r === 'amount' || r === 'qty' || r === 'price' || r === 'tax') return 'right';
     if (r === 'index') return 'center';
     if (r === 'unit') return 'center';
     if (r === 'rate') return 'center';
-    if (String(col) === '日付') return 'center';
+    if (r === 'date') return 'center';
     return 'left';
   }
 
@@ -153,9 +174,9 @@
    *   line … seikyu-tax.compute が返した行（amount は円の整数）
    *   i    … 0始まりの行番号
    */
-  function cellOf(line, col, i) {
+  function cellOf(line, col, i, spec) {
     var ln = line || {};
-    var r = roleOf(col);
+    var r = spec ? roleOfIn(spec, col) : roleOf(col);
     if (r === 'index') return { text: String((i || 0) + 1), kind: 'num' };
     if (r === 'name') return { text: str(ln.name), kind: 'text' };
     if (r === 'unit') return { text: str(ln.unit), kind: 'text' };
@@ -167,6 +188,11 @@
       if (ln.rate === undefined || ln.rate === null || ln.rate === '') return { text: '', kind: 'text' };
       return { text: Number(ln.rate) === 0 ? '—' : String(Number(ln.rate)) + '%', kind: 'text' };
     }
+    /* ★行ごとの税額★（実物32枚が全部この列を持つ）
+       ★seikyu-tax.js が出した ln.tax をそのまま出す★＝ここで数え直さない。
+       数え直すと ★足しても消費税の合計に一致しない★（端数の寄せが効かなくなる）。 */
+    if (r === 'tax') return { text: blankOrNum(ln.tax), kind: 'money' };
+    if (r === 'date') return { text: str(ln.date || (ln.extra || {})[col]), kind: 'text' };
     // 知らない列＝明細の自由枠から取る（無ければ空欄。0にしない）
     var ex = ln.extra || {};
     return { text: str(ex[col]), kind: 'text' };
@@ -185,13 +211,15 @@
       items: Array.isArray(s.items) ? s.items.slice() : [],
       widths: Object.assign({}, s.widths || {}),
       aligns: Object.assign({}, s.aligns || {}),
+      // ★会社が付けた役割も落とさない（落とすと列名を変えた瞬間に金額が迷子になる）
+      roles: Object.assign({}, s.roles || {}),
     };
   }
 
   return {
     PAPER_WIDTH: PAPER_WIDTH, MIN_W: MIN_W, MAX_W: MAX_W, MAX_COLS: MAX_COLS,
     ROLES: ROLES, BASE_W: BASE_W,
-    roleOf: roleOf, clampWidth: clampWidth, bumpWidth: bumpWidth,
+    roleOf: roleOf, roleOfIn: roleOfIn, ROLE_KEYS: ROLE_KEYS, clampWidth: clampWidth, bumpWidth: bumpWidth,
     widthsOf: widthsOf, alignOf: alignOf, validate: validate, hasContentColumn: hasContentColumn,
     cellOf: cellOf, normalizeSpec: normalizeSpec,
   };

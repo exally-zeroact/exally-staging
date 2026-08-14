@@ -350,5 +350,93 @@ T('★網羅：非課税を混ぜても 税抜+消費税=税込 が必ず一致�
   console.log('     実測: ' + n + '通りで矛盾0件');
 });
 
+
+/* ── ★恒等式④ 行ごとの税額の合計 ＝ 税率ごとに1回 端数処理した税額★ ────────
+   国税庁 インボイスQ&A 問57（確認日 2026-08-15）
+     「一の適格請求書につき、★税率ごとに1回の端数処理★を行う」
+     「★個々の商品ごとに…端数処理を行い、その合計額を消費税額等として記載することは
+       認められません★」
+   ＝★行ごとの税額を紙に出してもよいが、足したら 税率ごとに1回 処理した額に一致させる★
+   （うちの実物32枚は行ごとの税額の列を持つが、たまたま端数が出ていないだけ） */
+T('★★行ごとの税額を足すと、税率ごとに1回 端数処理した額に必ず一致する（端数が出る実数で）★★', () => {
+  // ★手計算★ 税込1,005×3＝3,015 → 税 = floor(3015×10/110) = floor(274.09) = 274
+  //           行ごとに丸めると floor(1005×10/110)=91 ×3 = 273 ＝★1円 足りない★
+  const r = TAX.compute({
+    lines: [1, 2, 3].map((i) => ({ name: 'x' + i, amount: 1005, rate: STD })),
+    taxMode: 'inclusive', rounding: 'floor',
+  });
+  ok(r.ok, r.errors.join('/'));
+  eq(r.taxTotal, 274, '税率ごとに1回 処理した額');
+  eq(r.lines.reduce((a, l) => a + l.taxRef, 0), 273, '行ごとに丸めただけだと1円 足りない（前提の確認）');
+  eq(r.lines.reduce((a, l) => a + l.tax, 0), 274, '★行ごとの税額を足すと合わない＝紙の中で辻褄が合わない★');
+  eq(JSON.stringify(r.lines.map((l) => l.tax)), JSON.stringify([91, 91, 92]), '端数の寄せ先が最後の行でない');
+  eq(r.spread.length, 1, '★寄せたのに記録が無い（黙って寄せている）★');
+  eq(r.spread[0].residual, 1);
+  eq(r.spread[0].line, 3, '寄せた行が最後でない');
+});
+
+T('★8%と10%が混ざる紙は、税率ごとに1回ずつ寄せる（1回にまとめない）', () => {
+  const r = TAX.compute({
+    lines: [
+      { name: 'a', amount: 1005, rate: STD }, { name: 'b', amount: 1005, rate: STD }, { name: 'c', amount: 1005, rate: STD },
+      { name: 'd', amount: 1005, rate: RED }, { name: 'e', amount: 1005, rate: RED }, { name: 'f', amount: 1005, rate: RED },
+    ],
+    taxMode: 'inclusive', rounding: 'floor',
+  });
+  ok(r.ok, r.errors.join('/'));
+  const std = r.byRate.filter((b) => b.pct === STD)[0], red = r.byRate.filter((b) => b.pct === RED)[0];
+  ok(std && red, '税率ごとに分かれていない');
+  eq(r.taxTotal, std.tax + red.tax, '合計が税率ごとの和でない');
+  for (const b of [std, red]) {
+    const sum = r.lines.filter((l) => l.rate === b.pct).reduce((a, l) => a + l.tax, 0);
+    eq(sum, b.tax, b.pct + '% の行ごとの税額の合計が、その税率の税額と違う');
+  }
+  ok(r.spread.length >= 1, '端数が出ているのに寄せた記録が無い');
+  eq(r.subtotal + r.taxTotal, r.grandTotal, '恒等式① 合計＝小計＋消費税');
+});
+
+/* ★恒等式③ 税抜 ＋ 税額 ＝ 入れた税込★（案C＝税込から割り戻す道・実物の順序） */
+T('★★税込で入れたら、税抜＋税額 が 入れた税込と1円もずれない★★', () => {
+  for (const gross of [670000, 132000, 38500, 1, 999999, 52800]) {
+    const r = TAX.compute({ lines: [{ name: '一式', amount: gross, rate: STD }], taxMode: 'inclusive', rounding: 'floor' });
+    ok(r.ok, gross + ': ' + r.errors.join('/'));
+    eq(r.subtotal + r.taxTotal, gross, '★' + gross + ' を入れたのに 税抜＋税額 が違う★');
+    eq(r.grandTotal, gross, '★入れた税込と合計が違う★');
+  }
+});
+
+T('★値引き行（明細の中のマイナス）は、課税の対象も税額も一緒に減る', () => {
+  /* ★実物★ ちから「※出精値引 −4,110」は明細の中＝税も減る。
+     実物の税は −410 と ★手打ち★（正しくは −411）＝★手で曲げた数は再現しない★。
+     ここでは ★正しい計算★ を固定する。 */
+  const r = TAX.compute({
+    lines: [{ name: '本体', amount: 402000, rate: STD }, { name: '※出精値引', amount: -4110, rate: STD }],
+    taxMode: 'exclusive', rounding: 'floor',
+  });
+  ok(r.ok, r.errors.join('/'));
+  eq(r.subtotal, 397890, '値引きが小計に効いていない');
+  eq(r.taxTotal, 39789, '値引きが税額に効いていない');
+  eq(r.lines[1].tax, -411, '値引き行の税額（★−4,110×10%＝−411★）');
+  eq(r.subtotal + r.taxTotal, r.grandTotal);
+});
+
+/* ★1円一致（実物2枚）★ ENEOS＝標準・単価なし・行ごとの税額 */
+T('★★ENEOS の実物と1円も違わない（35,000 ＋ 3,500 ＝ 38,500）★★', () => {
+  const r = TAX.compute({
+    lines: [
+      { name: 'エアコン取替', qty: 1, unit: '式', amount: 20000, rate: STD, memo: '石井町　岡田加代子　邸' },
+      { name: 'エアコン取替', qty: 1, unit: '式', amount: 15000, rate: STD, memo: '株式会社朝蔵' },
+    ],
+    taxMode: 'exclusive', rounding: 'floor',
+  });
+  ok(r.ok, r.errors.join('/'));
+  eq(r.subtotal, 35000, '小計');
+  eq(r.taxTotal, 3500, '消費税');
+  eq(r.grandTotal, 38500, '合計');
+  // ★実物の =E12*0.1 / =E13*0.1 と同じ数が 行ごとの税額に出る★
+  eq(JSON.stringify(r.lines.map((l) => l.tax)), JSON.stringify([2000, 1500]), '行ごとの税額が実物と違う');
+  eq(r.spread.length, 0, '端数が出ないはずなのに寄せている');
+});
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
