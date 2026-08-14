@@ -12,8 +12,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@500&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 <!-- ★見た目の本体はスイート共通の皮。請求書の app.css は差分だけ（読む順は皮が先） -->
-<link rel="stylesheet" href="../css/exally-ui.css?v=070a9fa0">
-<link rel="stylesheet" href="css/app.css?v=070a9fa0">
+<link rel="stylesheet" href="../css/exally-ui.css?v=5d34f994">
+<link rel="stylesheet" href="css/app.css?v=5d34f994">
 </head>
 <body>
 
@@ -32,7 +32,13 @@
   <!-- ═══ ① 一覧 ═══ -->
   <section class="screen" id="scr-list">
     <div class="card">
-      <div class="card-h">請求書</div>
+      <div class="card-h" id="list-h">請求書</div>
+      <!-- ★種類の切替（請求書／見積書）★
+           見積は 紙も棚も変換も前から在ったのに、★どの画面からも作れなかった★。入口はここ。 -->
+      <div class="seg" id="kind-seg">
+        <button class="seg-b on" type="button" data-kind="invoice">請求書</button>
+        <button class="seg-b" type="button" data-kind="quote">見積書</button>
+      </div>
       <div class="seg" id="fil-seg">
         <button class="seg-b on" type="button" data-fil="live">出した物</button>
         <button class="seg-b" type="button" data-fil="all">すべて</button>
@@ -58,6 +64,8 @@
     <div class="card">
       <div class="card-h" id="edit-h">新しい請求書</div>
       <div class="warn" id="edit-locked" style="display:none">この請求書は発行済みです。中身は直せません。直すときは取り消してから作り直してください。</div>
+      <!-- ★どこから来た紙かを出す（見積 → 請求 のつながりを画面に見せる）★ -->
+      <p class="hint" id="from-quote" style="display:none"></p>
 
       <div class="frow">
         <div class="flabel">だれに</div>
@@ -171,6 +179,10 @@
     <div class="card">
       <div class="btn-row">
         <button class="btn-primary btn-big" type="button" id="b-issue">発行する</button>
+        <!-- ★出した見積の「次の一手」＝請求書にする★
+             発行済みの見積では 発行するが消えるので、ここが主役の操作になる。
+             ★隠さない・塞がっている時は灰色＋理由をボタンの中★ -->
+        <button class="btn-primary btn-big" type="button" id="b-toinv" style="display:none">この見積から請求書を作る</button>
       </div>
       <p class="why" id="act-why"></p>
       <details class="more" id="out-box">
@@ -375,33 +387,33 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../js/supa-config.js?v=070a9fa0"></script>
-<script src="../lib/xlsx.full.min.js?v=070a9fa0"></script>
-<script src="../js/file-out.js?v=070a9fa0"></script>
-<script src="../js/suite-data.js?v=070a9fa0"></script>
-<script src="../kyuyo/lib/shouhizei-ritsu.js?v=070a9fa0"></script>
+<script src="../js/supa-config.js?v=5d34f994"></script>
+<script src="../lib/xlsx.full.min.js?v=5d34f994"></script>
+<script src="../js/file-out.js?v=5d34f994"></script>
+<script src="../js/suite-data.js?v=5d34f994"></script>
+<script src="../kyuyo/lib/shouhizei-ritsu.js?v=5d34f994"></script>
 <!-- ★源泉徴収の率と式は【給与の lib】が持つ＝請求書側には率を1つも書かない★
      （国税庁 No.2798。100万円の境目も、1円未満の切り捨ても、あちらの gensenA が唯一の正） -->
-<script src="../kyuyo/lib/shiharai-chosho.js?v=070a9fa0"></script>
-<script src="lib/seikyu-tax.js?v=070a9fa0"></script>
-<script src="lib/seikyu-gensen.js?v=070a9fa0"></script>
-<script src="lib/seikyu-carry.js?v=070a9fa0"></script>
-<script src="lib/seikyu-cols.js?v=070a9fa0"></script>
-<script src="lib/seikyu-templates.js?v=070a9fa0"></script>
-<script src="lib/seikyu-doc.js?v=070a9fa0"></script>
-<script src="lib/seikyu-name.js?v=070a9fa0"></script>
-<script src="lib/seikyu-paper.js?v=070a9fa0"></script>
-<script src="lib/seikyu-aoa.js?v=070a9fa0"></script>
-<script src="js/seikyu-store.js?v=070a9fa0"></script>
-<script src="js/seikyu-out.js?v=070a9fa0"></script>
-<script src="js/seikyu-app.js?v=070a9fa0"></script>
-<script src="../js/exally-login.js?v=070a9fa0"></script>
-<script src="js/auth.js?v=070a9fa0"></script>
+<script src="../kyuyo/lib/shiharai-chosho.js?v=5d34f994"></script>
+<script src="lib/seikyu-tax.js?v=5d34f994"></script>
+<script src="lib/seikyu-gensen.js?v=5d34f994"></script>
+<script src="lib/seikyu-carry.js?v=5d34f994"></script>
+<script src="lib/seikyu-cols.js?v=5d34f994"></script>
+<script src="lib/seikyu-templates.js?v=5d34f994"></script>
+<script src="lib/seikyu-doc.js?v=5d34f994"></script>
+<script src="lib/seikyu-name.js?v=5d34f994"></script>
+<script src="lib/seikyu-paper.js?v=5d34f994"></script>
+<script src="lib/seikyu-aoa.js?v=5d34f994"></script>
+<script src="js/seikyu-store.js?v=5d34f994"></script>
+<script src="js/seikyu-out.js?v=5d34f994"></script>
+<script src="js/seikyu-app.js?v=5d34f994"></script>
+<script src="../js/exally-login.js?v=5d34f994"></script>
+<script src="js/auth.js?v=5d34f994"></script>
 <!-- ★Service Worker は登録しない＝キャッシュで古い版が居座る問題を根絶。
      開くたびに既存SWを登録解除＋全キャッシュ削除して常に最新にする（給与と同じ）。 -->
 <script>try{if('serviceWorker'in navigator){navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister();});});}if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.delete(k);});});}}catch(e){}</script>
 <!-- ★テスト環境の帯★ 本番の倉庫では出ない。今どの倉庫かは js/supa-config.js が唯一の正。
      ホスト名では決めない（配り方は変わるが「本番のデータか」は変わらないため）。 -->
-<script src="../js/env-badge.js?v=070a9fa0"></script>
+<script src="../js/env-badge.js?v=5d34f994"></script>
 </body>
 </html>

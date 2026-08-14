@@ -24,8 +24,14 @@
   var S = {
     sb: null, store: null, suite: null,
     org: null, partners: [], invoices: [], receipts: null,
+    // ★見積は一覧の裏でも持つ★（請求書を開いた時に「どの見積から作ったか」を名前で出すため）
+    quotes: [],
     cur: null,            // 今 開いている1通（画面の下書き）
     fil: 'live',      // ★既定は「取り消し以外」＝出した紙が上に来る
+    /* ★今 見ている種類（請求書／見積書）★
+       見積は 紙も棚も変換も前から在ったのに、どの画面からも作れなかった。ここが入口。
+       ★領収書はここに入らない★＝doc_type ではなく、入金1行から出す紙。 */
+    docType: 'invoice',
     dirty: false,
   };
 
@@ -193,14 +199,30 @@
     });
   }
 
+  /** 一覧の見出し・ボタンの言葉を、今 見ている種類にそろえる（呼び名は DOC が唯一の正） */
+  function drawKind() {
+    var lb = DOC.docLabel(S.docType);
+    setText('list-h', lb);
+    var b = $('b-new'); if (b) b.textContent = '＋ 新しい' + lb;
+    setText('list-hint', '発行した' + lb + 'は、あとから中身を直せません（取り消して作り直します）。'
+      + '番号は同じ物を二度使いません（' + DOC.docLabel('invoice') + 'と' + DOC.docLabel('quote') + 'は別の系列です）。');
+    Array.prototype.forEach.call(document.querySelectorAll('#kind-seg [data-kind]'), function (x) {
+      x.classList.toggle('on', x.getAttribute('data-kind') === S.docType);
+    });
+  }
+
   function loadList() {
     box('list-err', '');
     return Promise.all([
-      S.store.invoices.list('invoice'),
+      S.store.invoices.list(S.docType),
       S.store.receipts.list(),
+      // ★見積の一覧も持つ（請求書に「どの見積から作ったか」を番号で出すため）
+      S.docType === 'quote' ? Promise.resolve(null) : S.store.invoices.list('quote'),
     ]).then(function (r) {
       S.invoices = r[0] || [];
       S.receipts = r[1];                     // ★null のまま持つ＝「未確認」と「0件」を作り分ける
+      S.quotes = (S.docType === 'quote') ? S.invoices : (r[2] || []);
+      drawKind();
       renderList();
     }).catch(function (e) {
       box('list-err', '請求書の一覧が読めませんでした（' + ((e && e.message) || 'error') + '）。ネットの状態を確かめて「読み直す」を押してください。');
@@ -208,10 +230,11 @@
   }
 
   /* ═══ 1通の編集 ═══ */
-  function blankInvoice() {
+  function blankInvoice(o) {
     var s = settings();
     return {
-      id: '', doc_type: 'invoice', no: '', partner_id: '',
+      // ★今 見ている種類で作る（見積の入口）★
+      id: '', doc_type: (o && o.docType) || S.docType || 'invoice', no: '', partner_id: '',
       issue_ymd: todayYmd(), due_ymd: '',
       status: 'draft', tax_mode: s.taxMode, rounding: s.rounding,
       lines: [blankLine()],
@@ -427,6 +450,17 @@
     show($('more-box'), !ro);
     if (!ro) drawIssueButton();
 
+    /* ★出した見積の主役の操作＝「請求書を作る」★（発行するが消えた後のここが次の一手）
+       ★存在しない時は出さない／在るのに塞がっている時は灰色＋理由をボタンの中★ */
+    var toinv = $('b-toinv');
+    if (toinv) {
+      var isIssuedQuote = (v.doc_type === 'quote' && v.status === 'issued');
+      show(toinv, isIssuedQuote);
+      if (isIssuedQuote) drawToInvButton();
+    }
+    // ★どこから来た紙か（見積 → 請求 のつながり）を出す
+    drawFromQuote();
+
     /* 取り消す／削除は「押せる時だけ」その場に出す */
     var host = $('danger-row');
     if (host) {
@@ -455,6 +489,127 @@
     if (ro && v.status === 'issued') why = 'この請求書は発行済みです。直すには取り消してから作り直します。';
     else if (ro && v.status === 'void') why = 'この請求書は取り消し済みです。新しく作り直してください。';
     setText('act-why', why);
+  }
+
+  /* ═══ ★見積 → 請求 のつながり★ ═══
+     見積で決めた物を、請求で もう一度 打たせない（引き継ぎの中身は seikyu-doc.js が唯一の正）。
+     ★どこから来た紙かを画面に出す★＝あとから見て辿れるようにする。 */
+  function quoteById(id) {
+    for (var i = 0; i < S.quotes.length; i++) if (S.quotes[i].id === id) return S.quotes[i];
+    return null;
+  }
+  function drawFromQuote() {
+    var v = S.cur, el = $('from-quote');
+    if (!el) return;
+    var qid = (v && v.quote_from) || '';
+    if (!qid) { show(el, false); return; }
+    var q = quoteById(qid);
+    // ★見積が見つからなくても「無い」で済ませない（元が消えた事も言う）★
+    setText('from-quote', 'この' + DOC.docLabel('invoice') + 'は '
+      + DOC.docLabel('quote') + ' ' + (q ? ('No.　' + (q.no || '（未採番）')) : '（元の見積が見つかりません）')
+      + ' から作りました。');
+    show(el, true);
+  }
+
+  /** 「この見積から請求書を作る」が押せない理由（★理由はボタンの中★） */
+  function toInvBlockReason() {
+    var v = S.cur;
+    if (!v || v.doc_type !== 'quote') return 'この紙は見積ではありません';
+    if (v.status !== 'issued') return '見積を発行してから作れます';
+    var made = null;
+    for (var i = 0; i < S.invoices.length; i++) if (S.invoices[i].quote_from === v.id) made = S.invoices[i];
+    // ★同じ見積から2通目を作るのは止めない（作り直しは在る）が、在る事は言う★
+    if (made) return null;
+    return null;
+  }
+  function drawToInvButton() {
+    var b = $('b-toinv'); if (!b) return;
+    var why = toInvBlockReason();
+    b.disabled = !!why;
+    b.textContent = why ? ('この見積から請求書を作る（' + why + '）') : 'この見積から請求書を作る';
+    b.title = why || '';
+  }
+
+  /** 見積 → 請求（★品目・数量・単価・税区分・件名・備考・源泉・列をそのまま持っていく★） */
+  function toInvoice() {
+    var q = S.cur;
+    var why = toInvBlockReason();
+    if (why) { box('edit-err', why); return Promise.resolve(); }
+    var draft = DOC.convertQuoteToInvoice(q);
+    draft.issue_ymd = todayYmd();
+    S.docType = 'invoice';
+    drawKind();
+    S.cur = Object.assign(blankInvoice({ docType: 'invoice' }), draft);
+    S.cur.data = Object.assign({}, draft.data || {});
+    if (!S.cur.data.cols) S.cur.data.cols = COLS.normalizeSpec(settings().cols || TPL.getOrDefault(settings().template).cols);
+    S.guessDone = true;              // ★見積から当てたので「前回と同じで作りますか？」は出さない
+    S.dirty = true;
+    return loadList().then(function () {
+      fillEdit();
+      return autoNumber();
+    }).then(function () {
+      goScreen('scr-edit');
+      box('edit-ok', DOC.docLabel('quote') + ' ' + (q.no || '') + ' の中身をそのまま写しました。'
+        + '請求日と番号は新しく取り直しています。中身を確かめて「発行する」を押してください。');
+    });
+  }
+
+  /* ═══ ★請求 → 領収（入金1行から出す紙）★ ═══
+     ★棚を増やさない★＝①で作った pay_receipts の1行が、そのまま1枚の領収書になる。
+     ★番号は請求番号＋枝番。消した入金も席を占める★（同じ番号の紙を2枚 外に出さない）。 */
+  /** その請求に付いた入金の全部（★消した物も含む★＝枝番のため） */
+  function receiptsAllOf(id) {
+    if (S.receipts === null) return null;
+    return S.receipts.filter(function (r) { return r.invoice_id === id; });
+  }
+  function receiptById(id) {
+    if (S.receipts === null) return null;
+    for (var i = 0; i < S.receipts.length; i++) if (S.receipts[i].id === id) return S.receipts[i];
+    return null;
+  }
+  /** 領収書の紙の材料。作れない時は null（理由は box に出す） */
+  function receiptPaperInput(rcId) {
+    var v = S.cur, rc = receiptById(rcId);
+    if (!rc) { box('pay-err', 'この入金が見つかりません。「読み直す」を押してください。'); return null; }
+    var chk = DOC.canReceipt(rc, v);
+    if (!chk.ok) { box('pay-err', chk.reason); return null; }
+    var all = receiptsAllOf(v.id) || [];
+    var no = DOC.receiptNoOf(v.no, DOC.receiptBranchOf(all, rc.id));
+    var pi = paperInput();
+    if (!pi) return null;
+    /* ★消費税額を区分して書けるのは「請求の全額を受け取った時」だけ★
+       一部だけの紙で按分すると、★紙に嘘の消費税額が載る★（国税庁 No.7124 は
+       「区分して記載されている」時の扱いなので、書けない物を書かない）。 */
+    var total = (v.totals && Number(v.totals.grandTotal)) || 0;
+    var taxTotal = (v.totals && Number(v.totals.taxTotal)) || 0;
+    var whole = (total > 0 && Number(rc.amount) === total && taxTotal > 0);
+    return Object.assign({}, pi, {
+      docKind: 'receipt',
+      receipt: {
+        no: no, ymd: rc.ymd, amount: Number(rc.amount), method: rc.method || '',
+        note: (v.data && v.data.subject) || '',
+        taxTotal: taxTotal, taxSeparate: whole,
+      },
+    });
+  }
+  function receiptFileName(rcId) {
+    var v = S.cur, rc = receiptById(rcId);
+    if (!rc) return null;
+    var pi = paperInput();
+    return NAME.suggest({
+      docType: 'receipt', issueYmd: rc.ymd,
+      partnerName: (pi && pi.partner && pi.partner.name) || '',
+      grandTotal: Number(rc.amount), ext: 'pdf',
+    });
+  }
+  function doReceipt(rcId, name) {
+    var pi = receiptPaperInput(rcId);
+    if (!pi) return;
+    var built = PAPER.build(Object.assign({}, pi, { title: name }));
+    var r = OUT.print(built.html, name);
+    if (!r.ok) { box('pay-err', r.reason); return; }
+    box('pay-ok', '領収書 ' + pi.receipt.no + ' を、紙だけの新しい窓で開きました。'
+      + 'PDFにする時は、送信先を「PDFに保存」にしてください。');
   }
 
   /* ═══ ★入金（1回＝1行。上書きしない）★ ═══
@@ -554,11 +709,25 @@
           + '</span>'
           + (r.memo ? '<span class="pay-memo">' + esc(r.memo) + '</span>' : '')
           + '</span>'
+          /* ★この1回ぶんの領収書★（棚は増やさない＝この行がそのまま1枚になる）
+             返金の行には出さない（受け取っていない物の領収書を作らせない）。 */
+          + (neg ? '' : '<button class="mini" type="button" data-rcp="' + esc(r.id) + '">領収書</button>')
           + '<button class="l-del" type="button" data-rc="' + esc(r.id) + '" aria-label="この入金の記録を消す">×</button>'
           + '</div>';
       }).join('');
       Array.prototype.forEach.call(host.querySelectorAll('[data-rc]'), function (b) {
         b.onclick = function () { return removeReceipt(b.getAttribute('data-rc')); };
+      });
+      /* ★落とす前に「中身から作った名前」を出して直させる★（うちの決まり・全アプリ共通） */
+      Array.prototype.forEach.call(host.querySelectorAll('[data-rcp]'), function (b) {
+        b.onclick = function () {
+          var id = b.getAttribute('data-rcp');
+          var chk = DOC.canReceipt(receiptById(id), S.cur);
+          if (!chk.ok) { box('pay-err', chk.reason); return; }
+          var n = receiptFileName(id);
+          if (!n) { box('pay-err', '中身がまだ整っていないので、領収書が出せません。'); return; }
+          askNameWith(n, 'pdf', function (name) { doReceipt(id, name); });
+        };
       });
     }
 
@@ -640,9 +809,10 @@
       var r = COLS.roleOf(k);
       var cls = (r === 'name') ? 'l-name' : (r === 'rate') ? 'l-md' : 'l-sm';
       return '<th class="' + cls + '">' + esc(k) + '</th>';
-    }).join('') + '<th class="l-x"></th>';
+    }).join('') + '<th class="l-x"></th><th class="l-x"></th>';
 
-    host.innerHTML = v.lines.map(function (ln, i) {
+    var list = v.lines;
+    host.innerHTML = list.map(function (ln, i) {
       var tds = spec.items.map(function (k) {
         var r = COLS.roleOf(k);
         var cls = (r === 'name') ? 'l-name' : (r === 'rate') ? 'l-md' : 'l-sm';
@@ -665,7 +835,12 @@
         return '<td class="' + cls + '"><input class="finput' + num + '" ' + f + mode + extra
           + ' value="' + esc(val === undefined || val === null ? '' : val) + '"></td>';
       }).join('');
+      /* ★並べ替え★ 打ち直させないための物（消して打ち直すと必ず写し間違いが出る）。
+         ★端の行では、その向きのボタンを出さない★（押しても何も起きない物を置かない）。 */
+      var up = i > 0 ? '<button class="l-mv" type="button" data-up="' + i + '" aria-label="この行を上へ">▲</button>' : '';
+      var dn = i < list.length - 1 ? '<button class="l-mv" type="button" data-down="' + i + '" aria-label="この行を下へ">▼</button>' : '';
       return '<tr data-i="' + i + '">' + tds
+        + '<td class="l-x l-ord">' + up + dn + '</td>'
         + '<td class="l-x"><button class="l-del" type="button" data-del="' + i + '" aria-label="この行を消す">×</button></td></tr>';
     }).join('');
 
@@ -695,6 +870,20 @@
         S.dirty = true;
         renderLines(); recalc(); lockInputs();
       };
+    });
+    /* ★並べ替え★（消して打ち直させない）。★金額は1円も動かない★＝順番を入れ替えるだけ。 */
+    function move(from, to) {
+      var L = S.cur.lines;
+      if (to < 0 || to >= L.length) return;
+      var x = L[from]; L[from] = L[to]; L[to] = x;
+      S.dirty = true;
+      renderLines(); recalc(); lockInputs();
+    }
+    Array.prototype.forEach.call(host.querySelectorAll('[data-up]'), function (b) {
+      b.onclick = function () { var i = +b.getAttribute('data-up'); move(i, i - 1); };
+    });
+    Array.prototype.forEach.call(host.querySelectorAll('[data-down]'), function (b) {
+      b.onclick = function () { var i = +b.getAttribute('data-down'); move(i, i + 1); };
     });
   }
   function blankLine() {
@@ -861,7 +1050,7 @@
       setText('e-no-hint', errs.join(' '));
       return Promise.resolve();
     }
-    return S.store.invoices.usedNos('invoice').then(function (used) {
+    return S.store.invoices.usedNos(v.doc_type || 'invoice').then(function (used) {
       var no = DOC.nextNo({ format: s.format, resetYearly: s.resetYearly, ymd: v.issue_ymd, partnerCode: code, existing: used });
       v.no = no;
       $('e-no').value = no;
@@ -870,8 +1059,14 @@
       setText('e-no-hint', no
         ? '「設定」で決めた形から作りました。同じ番号を二度使わないことは倉庫が守ります。'
         : '番号が作れませんでした（請求日か取引先コードを確かめてください）。');
+      /* ★番号は後から（非同期で）決まる★
+         ここで塗り直さないと「発行する」が ★『請求番号が空です』と言ったまま灰色★ で残る。
+         番号は入っているのに押せない＝人には ★壊れているようにしか見えない★。
+         （2026-08-15 実測：見積から請求書を作った直後に発生。取引先を選んだ直後も同じ形） */
+      drawIssueButton();
     }).catch(function () {
       setText('e-no-hint', '使用済みの番号が読めませんでした。番号は手で入れてください。');
+      drawIssueButton();
     });
   }
 
@@ -929,6 +1124,10 @@
   function askName(ext, run) {
     var n = suggestName(ext);
     if (!n) { box('edit-err', '中身がまだ整っていないので、この形では出せません。上の赤い印を直してください。'); return; }
+    askNameWith(n, ext, run);
+  }
+  /** 名前を先に決めてある時（領収書など）。★小窓の出し方は1か所★ */
+  function askNameWith(n, ext, run) {
     var base = n.replace(new RegExp('\\.' + ext + '$'), '');
     $('fn-input').value = base;
     setText('fn-ext', '拡張子は . ' + ext + ' が付きます');
@@ -1040,6 +1239,8 @@
     if (!t || !t.ok) return '明細を直してください';
     var chk = DOC.validateInvoice({
       inv: Object.assign({}, v, { lines: cleanLines(v.lines) }),
+      /* ★打たれたそのままの行も渡す★＝品名だけ空の行を「黙って捨てる」のをやめる */
+      rawLines: v.lines,
       partner: partnerById(v.partner_id),
       org: { data: S.org || {} },
     });
@@ -1071,7 +1272,7 @@
       return Promise.resolve();
     }
     var p = partnerById(v.partner_id);
-    var chk = DOC.validateInvoice({ inv: Object.assign({}, v, { lines: cleanLines(v.lines) }), partner: p, org: { data: S.org || {} } });
+    var chk = DOC.validateInvoice({ inv: Object.assign({}, v, { lines: cleanLines(v.lines) }), rawLines: v.lines, partner: p, org: { data: S.org || {} } });
     if (!chk.ok) { box('edit-err', chk.errors.join('\n')); box('edit-warn', ''); return Promise.resolve(); }
     box('edit-warn', chk.warnings.join('\n'));
     box('edit-err', '');
@@ -1451,7 +1652,19 @@
         renderList();
       };
     });
+    /* ★種類の切替（請求書／見積書）★ 見積の入口はここ1つ。番号も棚も前から在る。 */
+    Array.prototype.forEach.call(document.querySelectorAll('#kind-seg [data-kind]'), function (b) {
+      b.onclick = function () {
+        var k = b.getAttribute('data-kind');
+        if (k === S.docType) return;
+        S.docType = k;
+        drawKind();
+        /* ★作りかけを黙って捨てない★＝打ちかけの下書きが在る時は、そのまま残して一覧だけ切替える */
+        return loadList();
+      };
+    });
     $('b-new').onclick = function () { newInvoice(); };
+    $('b-toinv').onclick = function () { return toInvoice(); };
     // ★「読み直す」は共有マスタも取り直す（自社が読めなかった時の直し方がこれ）
     $('b-reload').onclick = function () { return loadMasters().then(loadList); };
 

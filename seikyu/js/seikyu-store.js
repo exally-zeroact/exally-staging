@@ -202,10 +202,17 @@
            代行請求は「会社×月」で1行だけ持って上書きしていた＝分割払いの履歴が消えていた。
            ここは insert だけ（upsert を使わない＝同じ日に2回 入っても2行 残る）。 */
       receipts: {
+        /* ★消した入金も含めて取る★
+           理由＝★領収番号の枝番（202610-001-1）は、消した入金にも席を残す★から。
+             消した行を取らないと枝番が繰り上がり、★同じ番号の領収書が2枚 外に出る★。
+           ★ただし 合計・残り・過入金には混ぜない★（数が黙って狂う＝うちで一番 高くついた型）。
+             数える側（seikyu-doc.paymentStateOf / seikyu-carry.compute）は
+             deleted_at の行を必ず飛ばす作りになっていて、その検査も在る。
+           ★読めなかった時は null（0件と混ぜない）★ は変えない。 */
         list: function () {
           return fetchAllQ(function (a, b) {
-            return sb.from('pay_receipts').select('id,invoice_id,invoice_no,ymd,amount,method,memo,deleted_at', { count: 'exact' })
-              .is('deleted_at', null).order('ymd', { ascending: true }).range(a, b);
+            return sb.from('pay_receipts').select('id,invoice_id,invoice_no,ymd,amount,method,memo,created_at,deleted_at', { count: 'exact' })
+              .order('ymd', { ascending: true }).order('id', { ascending: true }).range(a, b);
           }).then(function (r) {
             if (r && r.error) return null;      // ★取れなかった＝null（0件と混ぜない）
             return r.data || [];

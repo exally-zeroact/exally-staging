@@ -58,6 +58,37 @@ if (process.argv.includes('--self-test')) {
     if (v !== null) throw new Error('null を返していない: ' + JSON.stringify(v));
   });
 
+  S('★印紙の境界が本当に効いている（49,999と50,000で答えが変わらなければ赤）', () => {
+    if (D.stampNeeded(49999) === D.stampNeeded(50000)) throw new Error('5万円の境目で答えが変わらない＝空振り');
+    if (D.stampNeeded(50000) !== true) throw new Error('5万円ちょうどを非課税にしている');
+  });
+
+  S('★区分記載(No.7124)が効いている（区分の有無で答えが変わらなければ赤）', () => {
+    const a = D.stampNeeded({ amount: 52800, taxTotal: 4800, taxSeparate: true });
+    const b = D.stampNeeded({ amount: 52800, taxTotal: 4800, taxSeparate: false });
+    if (a === b) throw new Error('★区分して書いても答えが変わらない＝No.7124 を見ていない★');
+    if (a !== false || b !== true) throw new Error('実測がずれた a=' + a + ' b=' + b);
+  });
+
+  S('★消した入金の枝番を使い回していない（使い回すと同じ番号の紙が2枚 出る）', () => {
+    const all = [{ id: 'r1', created_at: 'a' }, { id: 'r2', created_at: 'b', deleted_at: 'x' }, { id: 'r3', created_at: 'c' }];
+    if (D.receiptBranchOf(all, 'r3') !== 3) throw new Error('消した行が席を外している＝番号が繰り上がる');
+    const plus = all.concat([{ id: 'r4', created_at: 'd' }]);
+    if (D.receiptBranchOf(plus, 'r4') !== 4) throw new Error('★消した枝番を使い回している★');
+  });
+
+  S('★消した入金から領収書が作れないこと（作れたら赤）', () => {
+    const rc = { id: 'r1', amount: 1000, ymd: '2026-10-05' };
+    if (!D.canReceipt(rc, { status: 'issued' }).ok) throw new Error('生きている入金から作れない');
+    if (D.canReceipt({ ...rc, deleted_at: 'x' }, { status: 'issued' }).ok) throw new Error('★消した入金から作れる★');
+  });
+
+  S('★品名が空の行を止めている（通ったら赤＝何の代金か分からない紙が出る）', () => {
+    const r = D.rowIssuesOf([{ name: '', amount: '5000' }]);
+    if (!r.blankName.length) throw new Error('★品名が空の行を見逃している★');
+    if (r.dropped.length) throw new Error('中身が在る行を「まるごと空」と数えている');
+  });
+
   S('★取引先が消えた時に空文字を返していない（空なら赤）', () => {
     const inv = { status: 'draft', partner_id: 'pt_x', snapshot: {} };
     const name = D.partnerNameOf(inv, {});
@@ -469,6 +500,203 @@ T('★★分けて払われた3回を、1件も落とさずに数える（手計
     rs.concat([{ invoice_id: 'iv_1', amount: 80000, ymd: '2026-10-25', deleted_at: '2026-10-26T00:00:00Z' }]));
   eq(del.paid, 70000, '消した入金を数えている');
   eq(del.count, 2);
+});
+
+/* ── ②（a）見積 → 請求 → 領収 が1本の線でつながる ─────────────────
+   ★領収書は doc_type ではない★＝①で作った pay_receipts の1行から出す紙。棚を増やさない。 */
+
+T('★紙の呼び名は1か所（画面・紙・Excel・ファイル名で別々に書かない）', () => {
+  eq(D.docLabel('invoice'), '請求書');
+  eq(D.docLabel('quote'), '見積書');
+  eq(D.docLabel('receipt'), '領収書');
+  eq(D.docLabel(''), '請求書', '知らない種類は請求書に倒す');
+  // ★領収書は「請求書という物」の種類ではない（棚の doc_type に混ぜない）
+  eq(D.DOC_TYPES.indexOf('receipt'), -1, '★領収書が doc_type に混ざっている（棚を増やす道）★');
+  eq(D.DOC_KINDS.join(','), 'invoice,quote,receipt');
+});
+
+/* ★手計算★ 請求 202610-001 に入金が3回 → 領収番号は -1 / -2 / -3
+   2回目を消して4回目を足すと ★-4★（★-2 を使い回さない＝同じ番号の紙を2枚 外に出さない★） */
+T('★★領収番号＝請求番号＋枝番。消した入金の枝番を使い回さない★★', () => {
+  const all = [
+    { id: 'rc_1', created_at: '2026-10-05T00:00:00Z' },
+    { id: 'rc_2', created_at: '2026-10-20T00:00:00Z', deleted_at: '2026-10-21T00:00:00Z' },
+    { id: 'rc_3', created_at: '2026-10-25T00:00:00Z' },
+  ];
+  eq(D.receiptBranchOf(all, 'rc_1'), 1);
+  eq(D.receiptBranchOf(all, 'rc_2'), 2, '消した行が席を外している');
+  eq(D.receiptBranchOf(all, 'rc_3'), 3);
+  eq(D.receiptNoOf('202610-001', 1), '202610-001-1');
+  eq(D.receiptNoOf('202610-001', 3), '202610-001-3');
+  // 4回目を足す＝消した -2 は空いたままで、次は -4
+  const plus = all.concat([{ id: 'rc_4', created_at: '2026-11-05T00:00:00Z' }]);
+  eq(D.receiptBranchOf(plus, 'rc_4'), 4, '★消した入金の枝番(-2)を使い回している＝同じ番号の紙が2枚 出る★');
+  eq(D.receiptNoOf('202610-001', D.receiptBranchOf(plus, 'rc_4')), '202610-001-4');
+});
+
+T('★番号が作れない時は「それらしい番号」をでっち上げない（空を返す）', () => {
+  eq(D.receiptNoOf('', 1), '');
+  eq(D.receiptNoOf('202610-001', 0), '');
+  eq(D.receiptNoOf('202610-001', -1), '');
+  eq(D.receiptBranchOf([], 'rc_x'), 0, '居ない入金に枝番を作っている');
+  eq(D.receiptBranchOf(null, 'rc_x'), 0);
+});
+
+T('★並びは「作った順」で決まる（開くたびに枝番が変わらない）', () => {
+  const a = [
+    { id: 'rc_b', created_at: '2026-10-02T00:00:00Z' },
+    { id: 'rc_a', created_at: '2026-10-01T00:00:00Z' },
+  ];
+  eq(D.receiptBranchOf(a, 'rc_a'), 1, '渡された順に引きずられている');
+  eq(D.receiptBranchOf(a, 'rc_b'), 2);
+  // created_at が同じなら id で決める（並びを最後まで決める）
+  const same = [{ id: 'rc_z', created_at: 'X' }, { id: 'rc_a', created_at: 'X' }];
+  eq(D.receiptBranchOf(same, 'rc_a'), 1);
+});
+
+/* ★収入印紙★ 国税庁 No.7105：記載金額 5万円未満は非課税
+   ＝境界は ★49,999は要らない／50,000は要る★（5万円ちょうどは課税） */
+T('★★収入印紙の注意は5万円で切り替わる（国税庁 No.7105・境界を実数で固定）★★', () => {
+  eq(D.STAMP_FREE_UNDER, 50000, '法律のしきい値');
+  eq(D.stampNeeded(49999), false, '5万円未満は非課税');
+  eq(D.stampNeeded(50000), true, '★5万円ちょうどは課税（未満が非課税）★');
+  eq(D.stampNeeded(50001), true);
+  eq(D.stampNeeded(0), false);
+  eq(D.stampNeeded(-50000), false, '返金に印紙の注意を出している');
+  eq(D.stampNeeded('あ'), false, '読めない額で注意を出している');
+});
+
+/* ★国税庁 No.7124★ 消費税額等を区分して書いてあれば、その消費税額は「記載金額」に入れない。
+   国税庁の例そのもの：商品販売代金 48,000円／消費税額等 4,800円／合計 52,800円
+     → ★記載金額 48,000円＝5万円未満＝非課税★
+   同じ 52,800円でも ★区分せずに1行で書けば 記載金額は52,800円＝要る★
+   ＝★「税込いくらか」ではなく「紙にどう書いてあるか」で変わる★ */
+T('★★消費税額を区分して書けば、その分は記載金額に入らない（No.7124・国税庁の例で固定）★★', () => {
+  eq(D.stampBaseOf({ amount: 52800, taxTotal: 4800, taxSeparate: true }), 48000, '記載金額');
+  eq(D.stampNeeded({ amount: 52800, taxTotal: 4800, taxSeparate: true }), false,
+    '★区分して書いてあるのに印紙が要ると言っている★');
+  eq(D.stampNeeded({ amount: 52800, taxTotal: 4800, taxSeparate: false }), true,
+    '★区分せず1行で書いた52,800円で、印紙が要らないと言っている★');
+  eq(D.stampNeeded(52800), true, '数だけ渡した時は税込で判定する');
+  // 区分しても5万円以上なら要る（税抜 50,000＋税 5,000＝55,000）
+  eq(D.stampBaseOf({ amount: 55000, taxTotal: 5000, taxSeparate: true }), 50000);
+  eq(D.stampNeeded({ amount: 55000, taxTotal: 5000, taxSeparate: true }), true, '税抜5万円ちょうどは要る');
+});
+
+T('★分けて書ける消費税額が無い時は、税込のまま判定する（安全側に倒す）', () => {
+  eq(D.stampBaseOf({ amount: 52800, taxSeparate: true }), 52800, '税額が無いのに引いている');
+  eq(D.stampBaseOf({ amount: 52800, taxTotal: 0, taxSeparate: true }), 52800, '0円の税額で区分している');
+  eq(D.stampBaseOf({ amount: 52800, taxTotal: 60000, taxSeparate: true }), 52800, '税額が受取額より大きい形');
+  eq(D.stampBaseOf({ amount: 'あ', taxSeparate: true }), null, '読めない額を0にしている');
+  eq(D.stampBaseOf(null), null);
+});
+
+T('★注意書きは「要る時だけ」出る／★いくらの印紙かは書かない★', () => {
+  eq(D.stampNote(49999), '', '要らないのに出している');
+  const s = D.stampNote(50000);
+  ok(s, '要るのに出ていない');
+  ok(/収入印紙/.test(s), '印紙の話になっていない: ' + s);
+  ok(/場合があります/.test(s), '言い切っている（会社ごとの事情がある）: ' + s);
+  ok(/営業に関しない/.test(s), '非課税の例外を言っていない: ' + s);
+  // ★印紙の「額」を書かない（200円 などは金額帯で変わる）
+  ok(!/\d+\s*円の(収入)?印紙/.test(s), '★印紙の額を書いている★: ' + s);
+  ok(!/200円/.test(s), '★印紙の額を書いている★: ' + s);
+  // ★しきい値は数から文を作る（説明文に法定の数を直書きしない）
+  ok(s.indexOf(String(Math.round(D.STAMP_FREE_UNDER / 10000)) + '万円') >= 0, 'しきい値が数から作られていない: ' + s);
+});
+
+T('★★見積→請求で、品目・数量・単価・税区分・件名・備考・源泉をそのまま引き継ぐ★★', () => {
+  const q = {
+    id: 'iv_q9', doc_type: 'quote', no: 'Q-202609-001', partner_id: 'pt_1',
+    tax_mode: 'inclusive', rounding: 'ceil', template_id: 'std1',
+    lines: [{ name: '運転業務委託料', qty: 3, unit: '式', price: 1100, rate: 10, nontax: false, extra: { 行き先: '今治' } }],
+    data: {
+      subject: '9月分', memo: '振込手数料は貴社にて', gensen: true,
+      term: { kind: 'nextEom', n: 0 }, noMode: 'manual', lead: 'いつもお世話になっております。',
+      cols: { items: ['#', '品名・内容', '行き先'], widths: { '#': 28 }, aligns: { '行き先': 'left' } },
+    },
+  };
+  const c = D.convertQuoteToInvoice(q);
+  eq(c.doc_type, 'invoice');
+  eq(c.quote_from, 'iv_q9', 'どの見積から作ったかを残していない');
+  eq(c.no, '', '見積の番号を持ち込んでいる');
+  eq(c.data.noMode, 'auto', '★手打ちの番号の決め方まで持ち込んでいる★');
+  eq(c.issue_ymd, '', '見積の日付を持ち込んでいる');
+  // ★人に写させない物
+  eq(c.lines.length, 1);
+  eq(c.lines[0].name, '運転業務委託料');
+  eq(c.lines[0].qty, 3); eq(c.lines[0].price, 1100); eq(c.lines[0].rate, 10);
+  eq(c.lines[0].extra['行き先'], '今治', '★会社が足した列の中身が落ちている★');
+  eq(c.tax_mode, 'inclusive', '税の入れ方が落ちている');
+  eq(c.rounding, 'ceil', '丸め方が落ちている');
+  eq(c.data.subject, '9月分', '★件名を もう一度 打たせている★');
+  eq(c.data.memo, '振込手数料は貴社にて', '★備考が落ちている★');
+  eq(c.data.gensen, true, '★源泉が落ちている（振り込まれる額が黙って変わる）★');
+  eq(c.data.term.kind, 'nextEom', '支払期限の決め方が落ちている');
+  eq(c.data.cols.items.join(','), '#,品名・内容,行き先', '★列の並びが落ちている★');
+  // ★中身を共有していない（見積を直したら請求まで変わる、を作らない）
+  c.lines[0].name = 'かきかえ'; c.data.cols.items.push('X');
+  eq(q.lines[0].name, '運転業務委託料', '★元の見積まで書き換わった（参照を共有している）★');
+  eq(q.data.cols.items.length, 3, '★元の見積の列まで増えた★');
+});
+
+T('★★消した入金からは領収書を作れない／返金からも作れない★★', () => {
+  const live = { id: 'rc_1', amount: 40000, ymd: '2026-10-05' };
+  const inv = { id: 'iv_1', status: 'issued' };
+  eq(D.canReceipt(live, inv).ok, true, D.canReceipt(live, inv).reason);
+  eq(D.canReceipt({ ...live, deleted_at: '2026-10-06T00:00:00Z' }, inv).ok, false,
+    '★消した入金から領収書が出せてしまう★');
+  ok(/消した入金/.test(D.canReceipt({ ...live, deleted_at: 'x' }, inv).reason), '理由が言えていない');
+  eq(D.canReceipt({ ...live, amount: -2000 }, inv).ok, false, '返金から領収書が出せてしまう');
+  eq(D.canReceipt({ ...live, ymd: '' }, inv).ok, false, '日付が読めないのに出せてしまう');
+  eq(D.canReceipt({ ...live, amount: 0 }, inv).ok, false, '0円で出せてしまう');
+  eq(D.canReceipt(live, { id: 'iv_1', status: 'draft' }).ok, false, '下書きの請求から領収書が出せてしまう');
+  eq(D.canReceipt(null).ok, false);
+  // 理由は短い（ボタンの中に入る長さ）
+  ok(D.canReceipt({ ...live, deleted_at: 'x' }, inv).reason.length <= 24, '理由がボタンに入らない');
+});
+
+/* ── ②（b）★黙って小さくならない★ ────────────────────────────── */
+T('★★品名が空なのに金額が入っている行は、出す前に赤で止める★★', () => {
+  const raw = [
+    { name: '運転代行', amount: '1000' },
+    { name: '', amount: '5000' },            // ★2行目：品名だけ空＝何の代金か分からない
+    { name: '', qty: '', price: '', amount: '', memo: '', extra: {} },  // 3行目：まるごと空
+  ];
+  const r = D.rowIssuesOf(raw);
+  eq(r.blankName.join(','), '2', '品名だけ空の行を見つけていない');
+  eq(r.dropped.join(','), '3', 'まるごと空の行を数えていない');
+
+  const chk = D.validateInvoice({
+    inv: { ...goodInv(), lines: [{ name: '運転代行', amount: 1000, rate: 10 }, { name: '', amount: 5000, rate: 10 }] },
+    rawLines: raw, partner: goodPartner, org: goodOrg,
+  });
+  eq(chk.ok, false, '★品名が空のまま出せてしまう★');
+  ok(hasErr(chk.errors, '2行目'), '何行目か言っていない: ' + chk.errors.join('/'));
+  ok(hasErr(chk.errors, '品名'), '理由が品名の話になっていない: ' + chk.errors.join('/'));
+});
+
+T('★まるごと空の行は止めないが、★消したと言う★（黙って捨てない）', () => {
+  const raw = [{ name: '運転代行', amount: '1000' }, { name: '', extra: {} }, { name: '', extra: {} }];
+  const chk = D.validateInvoice({
+    inv: { ...goodInv(), lines: [{ name: '運転代行', amount: 1000, rate: 10 }] },
+    rawLines: raw, partner: goodPartner, org: goodOrg,
+  });
+  eq(chk.ok, true, '空行だけで発行を止めている: ' + chk.errors.join('/'));
+  ok(chk.warnings.some((w) => /2・3行目/.test(w)), '★黙って捨てている（消したと言っていない）★: ' + chk.warnings.join('/'));
+  ok(chk.warnings.some((w) => /2行/.test(w)), '何行 消したか言っていない: ' + chk.warnings.join('/'));
+});
+
+T('★単位や備考だけ入っている行も「品名が空」で止める（金額だけを見ない）', () => {
+  eq(D.rowIssuesOf([{ name: '', unit: '式' }]).blankName.join(','), '1');
+  eq(D.rowIssuesOf([{ name: '', memo: 'あとで' }]).blankName.join(','), '1');
+  eq(D.rowIssuesOf([{ name: '', extra: { 行き先: '今治' } }]).blankName.join(','), '1');
+  eq(D.rowIssuesOf([{ name: '  ', amount: '1' }]).blankName.join(','), '1', '空白だけの品名を通している');
+});
+
+T('★rawLines を渡さない呼び方も壊れていない（今までの検査はそのまま通る）', () => {
+  const chk = D.validateInvoice({ inv: goodInv(), partner: goodPartner, org: goodOrg });
+  eq(chk.ok, true, chk.errors.join('/'));
 });
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

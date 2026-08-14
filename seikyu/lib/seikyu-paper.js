@@ -175,13 +175,21 @@
     if (COLS.validate(spec.items).length) spec = COLS.normalizeSpec(DEFAULT_COLS);
     var colW = COLS.widthsOf(spec.items, spec.widths);
 
-    var isQuote = (inv.doc_type === 'quote');
-    var heading = isQuote ? '見　積　書' : '請　求　書';
+    /* ★紙の種類は3つ★ 請求書／見積書／★領収書★
+       領収書は doc_type ではない（棚を増やさない）＝入金1行から出す紙なので、
+       ★呼ぶ側が docKind:'receipt' と receipt:{…} を渡す★。 */
+    var rc = o.receipt || null;
+    var kind = o.docKind || (inv.doc_type === 'quote' ? 'quote' : 'invoice');
+    if (kind === 'receipt' && !rc) kind = 'invoice';        // 中身が無いのに領収書の顔をしない
+    var isQuote = (kind === 'quote');
+    var isReceipt = (kind === 'receipt');
+    var heading = isReceipt ? '領　収　書' : isQuote ? '見　積　書' : '請　求　書';
     /* 金額のラベルは様式が持つ（ご／御）。★どちらでもよい＝縛らない★ */
     var go = TH.grandGo || 'ご';
-    var grandLabel = go + (isQuote ? '見積金額（税込）' : '請求金額（税込）');
+    var grandLabel = isReceipt ? '領収金額（税込）' : go + (isQuote ? '見積金額（税込）' : '請求金額（税込）');
     var noLabel = 'No.　';
-    var docTitle = (o.title || (heading.replace(/　/g, '') + (inv.no ? ' ' + inv.no : '')));
+    var headNo = isReceipt ? String((rc && rc.no) || '') : (inv.no || '');
+    var docTitle = (o.title || (heading.replace(/　/g, '') + (headNo ? ' ' + headNo : '')));
 
     var lines = Array.isArray(tax.lines) ? tax.lines : [];
     var byRate = Array.isArray(tax.byRate) ? tax.byRate : [];
@@ -223,10 +231,13 @@
     function headBlock(pageIdx) {
       /* 並びは 請求日 → No. → お支払期限。
          ★番号は空でも欄を出す（「（未採番）」と書く）＝取れなかったを空欄にしない★ */
-      var ds = dateStr(inv.issue_ymd, era);
-      var meta = '<div class="meta-l">' + (isQuote ? '見積日　' : '請求日　') + (ds || '（未入力）') + '</div>';
-      meta += '<div class="meta-l">' + esc(noLabel) + (esc(inv.no) || '（未採番）') + '</div>';
-      if (inv.due_ymd) meta += '<div class="meta-l">お支払期限　' + dateStr(inv.due_ymd, era) + '</div>';
+      /* 領収書は ★入金日★ が日付・★領収番号（請求番号＋枝番）★ が番号 */
+      var ds = dateStr(isReceipt ? (rc && rc.ymd) : inv.issue_ymd, era);
+      var dLabel = isReceipt ? '領収日　' : isQuote ? '見積日　' : '請求日　';
+      var meta = '<div class="meta-l">' + dLabel + (ds || '（未入力）') + '</div>';
+      meta += '<div class="meta-l">' + esc(noLabel) + (esc(headNo) || '（未採番）') + '</div>';
+      // ★もう受け取った紙に「お支払期限」を出さない★
+      if (!isReceipt && inv.due_ymd) meta += '<div class="meta-l">お支払期限　' + dateStr(inv.due_ymd, era) + '</div>';
 
       return '<h1 class="ttl">' + heading + '</h1>'
         + '<div class="meta">' + meta + '</div>'
@@ -261,6 +272,15 @@
 
     /* ── 御請求金額（★枠なし・ラベル＋大きい金額・下に線★） ── */
     function grandBlock() {
+      /* ★領収書は「実際に受け取った額」★（請求額ではない）。
+         一部だけ受け取った時に請求額を書くと、★受け取っていない金額の領収書★になる。 */
+      if (isReceipt) {
+        var got = Number(rc && rc.amount);
+        return '<div class="grand">'
+          + '<span class="grand-l">' + grandLabel + '</span>'
+          + '<span class="grand-v">' + (Number.isFinite(got) ? yen(got) : '（未確認）') + '</span>'
+          + '</div>';
+      }
       /* ★見出しの額は「実際に請求している額」＝繰越があれば足したあと★
          ここだけ今回分のままにすると、下の 合計請求額 と食い違う。 */
       var billed = DOC.billedOf(tax, carry);
@@ -345,6 +365,50 @@
 
     var subject = (inv.data && inv.data.subject) || '';
     var caption = subject || (inv.data && inv.data.tableTitle) || '';
+
+    /* ── 領収書の中身 ────────────────────────────────────────────
+       ★明細も内訳も出さない★
+         受け取ったのは「その1回ぶんのお金」で、明細は請求書の側にある。
+         一部だけ受け取った紙に税率ごとの区分を出すと ★按分＝嘘の数字★ になる。
+         だから ★どの請求の代金か（但し書き）で紐づける★。
+       ★消費税額を区分して書くのは、はっきりしている時だけ★（国税庁 No.7124）
+         書けた時は ★印紙の判定でも その分を記載金額から外す★（呼ぶ側が taxSeparate を立てる）。 */
+    function receiptBody() {
+      var but = textOf(rc.note) || (inv.no ? ('請求書 ' + inv.no + ' の代金として') : '上記代金として');
+      var sep = !!rc.taxSeparate && Number(rc.taxTotal) > 0;
+      var rows = '';
+      if (sep) {
+        var base = Number(rc.amount) - Number(rc.taxTotal);
+        rows = '<table class="sums"><tbody>'
+          + '<tr><th>税抜金額</th><td>' + yen(base) + '</td></tr>'
+          + '<tr><th>消費税額等</th><td>' + yen(Number(rc.taxTotal)) + '</td></tr>'
+          + '<tr class="sums-g"><th>合計</th><td>' + yen(Number(rc.amount)) + '</td></tr>'
+          + '</tbody></table>';
+      }
+      /* ★印紙の注意は「要る時だけ」出す★。判定は seikyu-doc.js が唯一の正
+         （区分して書けた時は、その消費税額を記載金額から外して数える＝No.7124）。 */
+      var stamp = DOC.stampNote({ amount: Number(rc.amount), taxTotal: Number(rc.taxTotal), taxSeparate: sep });
+      var memo = textOf(inv.data && inv.data.memo);
+      return '<div class="rc-but"><span class="rc-but-l">但し　</span>'
+        + '<span class="rc-but-b">' + esc(but) + '</span></div>'
+        + '<div class="rc-ack">上記正に領収いたしました。</div>'
+        + (rows ? '<div class="rc-sums">' + rows + '</div>' : '')
+        + (rc.method ? '<div class="rc-way">お支払方法　' + esc(rc.method) + '</div>' : '')
+        + (memo ? '<div class="note"><div class="note-h">備考</div><div class="note-b">' + esc(memo).replace(/\n/g, '<br>') + '</div></div>' : '')
+        + (stamp ? '<div class="rc-stamp">' + esc(stamp) + '</div>' : '');
+    }
+
+    if (isReceipt) {
+      var rcHtml = '<div class="sheet">' + headBlock(0) + grandBlock() + receiptBody() + '</div>';
+      return {
+        html: '<!DOCTYPE html>\n<html lang="ja"><head><meta charset="UTF-8">'
+          + '<meta name="viewport" content="width=device-width, initial-scale=1">'
+          + '<title>' + esc(docTitle) + '</title>'
+          + '<style>' + css(TH) + '</style></head><body>' + rcHtml + '</body></html>',
+        title: docTitle, templateId: inv.template_id || TEMPLATE_ID,
+        cols: spec, colWidths: colW, pages: 1, docKind: 'receipt',
+      };
+    }
 
     /* ── 紙を組む ── */
     var sheets = pages.map(function (pageLines, idx) {
@@ -497,6 +561,19 @@
       '.cont-l{display:block;font-size:9.5pt;color:' + SUB + ';white-space:nowrap;}',
       '.cont-v{margin-left:6mm;color:' + INK + ";font-family:'DM Mono',ui-monospace,monospace;}",
       '.cont-n{display:block;font-size:10pt;color:' + INK + ';margin-top:1.5mm;white-space:nowrap;}',
+
+      /* ── 領収書だけの物 ──────────────────────────────────
+         ★文が入る所に flex を使わない★（1文字ずつ縦に割れる事故を作らない）＝
+         但し書きは「ラベル＋本文」を ★inline で並べ、本文は折り返せる★ 形にする。 */
+      '.rc-but{margin:0 0 4mm;font-size:11pt;line-height:1.9;',
+      'white-space:normal;word-break:normal;overflow-wrap:break-word;}',
+      '.rc-but-l{color:' + SUB + ';white-space:nowrap;}',
+      '.rc-but-b{border-bottom:.5pt solid ' + LINE + ';padding:0 1mm .6mm;}',
+      '.rc-ack{margin:0 0 6mm;font-size:11pt;color:' + INK + ';}',
+      '.rc-sums{margin:0 0 4mm;}',
+      '.rc-way{margin:0 0 3mm;font-size:9.5pt;color:' + SUB + ';}',
+      '.rc-stamp{display:block;width:100%;min-width:60mm;margin:6mm 0 0;font-size:8.5pt;color:' + SUB + ';',
+      'line-height:1.9;white-space:normal;word-break:normal;overflow-wrap:break-word;}',
 
       '@page{size:A4;margin:0;}',
       '@media print{.sheet{width:210mm;min-width:210mm;padding:14mm 12mm;}}',

@@ -519,5 +519,100 @@ T('★網羅：税率の組み合わせ×内外×丸め を全部刷って、区
   console.log('     実測: ' + n + '通りを刷って矛盾0件');
 });
 
+/* ── ②（a）★領収書の紙★ ────────────────────────────────────────
+   ★入金1行から出す紙★（棚を増やさない）。請求書とは出す物が違う:
+     ・出す   … 領収日（＝入金日）／領収番号（請求番号＋枝番）／★受け取った額★／但し書き／
+                「上記正に領収いたしました。」／印紙の注意（要る時だけ）
+     ・出さない … 明細／税率ごとの内訳／お支払期限／繰越／源泉／お振込先
+       （一部だけ受け取った紙に内訳を出すと ★按分＝嘘の数字★ になる） */
+function receiptSample(rc, over) {
+  return sample(Object.assign({
+    docKind: 'receipt',
+    receipt: Object.assign({ no: '202609-001-1', ymd: '2026-10-05', amount: 30000, method: '振込' }, rc || {}),
+  }, over || {}));
+}
+const flatOf = (o) => PAPER.build(o).html.split('</head>')[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+
+T('★領収書は「領　収　書」で、日付は入金日・番号は枝番つき', () => {
+  const f = flatOf(receiptSample());
+  ok(/領\s*収\s*書/.test(f), '見出しが領収書でない: ' + f.slice(0, 80));
+  ok(/領収日/.test(f), '「領収日」が無い（請求日のまま）');
+  ok(!/請求日/.test(f), '★請求日が残っている★');
+  ok(/202609-001-1/.test(f), '領収番号（枝番つき）が出ていない');
+  ok(/上記正に領収いたしました/.test(f), '受け取った文言が無い');
+  ok(/但し/.test(f), '但し書きが無い');
+});
+
+T('★★領収書に出るのは「受け取った額」（請求額ではない）★★', () => {
+  // 請求は 137,900（sample の実額）だが、受け取ったのは 30,000
+  const full = PAPER.build(sample());
+  const grand = /（税込）\s*¥([\d,]+)/.exec(full.html.replace(/<[^>]+>/g, ' '));
+  ok(grand, '請求書の金額が読めない');
+  const f = flatOf(receiptSample({ amount: 30000 }));
+  ok(/領収金額（税込） ¥30,000/.test(f), '★受け取った額が出ていない★: ' + f.slice(0, 200));
+  ok(!f.includes(grand[1]), '★受け取っていない請求額が領収書に載っている★（' + grand[1] + '）');
+});
+
+T('★領収書は 明細・内訳・支払期限・振込先を出さない（按分＝嘘の数字を作らない）', () => {
+  const f = flatOf(receiptSample());
+  ok(!/（内訳）/.test(f), '★税率ごとの内訳が出ている（一部入金だと按分＝嘘になる）★');
+  ok(!/運転代行 9月分/.test(f), '★明細が出ている★');
+  ok(!/お支払期限/.test(f), '★もう受け取った紙に支払期限が出ている★');
+  ok(!/お振込先/.test(f), '★もう受け取った紙に振込先が出ている★');
+  ok(!/前回請求額/.test(f), '繰越が出ている');
+});
+
+/* ★国税庁 No.7124★ 消費税額等を区分して書けば、その分は「記載金額」に入らない。
+   ★手計算★ 48,000＋4,800＝52,800 → 記載金額 48,000＝5万円未満＝★印紙の注意は出さない★
+             同じ 52,800 を区分せず1行で書けば → 記載金額 52,800＝★注意を出す★ */
+T('★★印紙の注意は「紙にどう書いてあるか」で変わる（No.7124・国税庁の例で固定）★★', () => {
+  const sep = flatOf(receiptSample({ amount: 52800, taxTotal: 4800, taxSeparate: true }));
+  ok(/税抜金額 ¥48,000/.test(sep), '税抜が出ていない: ' + sep.slice(-260));
+  ok(/消費税額等 ¥4,800/.test(sep), '消費税額等を区分して書けていない');
+  ok(/合計 ¥52,800/.test(sep), '合計が出ていない');
+  ok(!/収入印紙/.test(sep), '★区分して書いてあるのに印紙の注意が出ている（No.7124を見ていない）★');
+
+  const lump = flatOf(receiptSample({ amount: 52800, taxSeparate: false }));
+  ok(/収入印紙/.test(lump), '★区分せず1行の52,800円で、印紙の注意が出ていない★');
+  ok(!/税抜金額/.test(lump), '区分できないのに税抜を書いている（嘘の数字）');
+});
+
+T('★印紙の注意は要る時だけ／★いくらの印紙かは書かない★', () => {
+  ok(!/収入印紙/.test(flatOf(receiptSample({ amount: 49999 }))), '5万円未満で注意が出ている');
+  const on = flatOf(receiptSample({ amount: 50000 }));
+  ok(/収入印紙/.test(on), '★5万円ちょうどで注意が出ていない★');
+  ok(!/\d+円の(収入)?印紙/.test(on), '★印紙の額を書いている★');
+  ok(/営業に関しない/.test(on), '非課税の例外を言っていない');
+});
+
+T('★但し書きは 件名 → 無ければ「請求書◯◯の代金として」（空欄で出さない）', () => {
+  ok(/9月分 運転代行ご利用料金/.test(flatOf(receiptSample({ note: '9月分 運転代行ご利用料金' }))), '渡した但し書きが出ていない');
+  const auto = flatOf(receiptSample());
+  ok(/請求書 202609-001 の代金として/.test(auto), '★但し書きが空欄になっている★: ' + auto.slice(0, 200));
+});
+
+T('★領収書の中身が無いのに「領収書」の顔をしない（請求書に倒す）', () => {
+  const f = flatOf(sample({ docKind: 'receipt' }));   // receipt を渡し忘れた形
+  ok(/請\s*求\s*書/.test(f), '★中身が無いのに領収書として刷っている★');
+});
+
+T('★領収書の文も 1文字ずつ縦に割れない書き方（flex を使わない・最低幅を持つ）', () => {
+  const CSS = PAPER.build(receiptSample()).html;
+  for (const sel of ['.rc-but', '.rc-stamp']) {
+    const rule = (new RegExp('\\' + sel + '\\{([^}]*)\\}').exec(CSS) || [])[1] || '';
+    ok(rule, sel + ' の指定が無い');
+    ok(!/display\s*:\s*flex/.test(rule), sel + ' が flex（文が縦に割れる）');
+    ok(/overflow-wrap\s*:\s*break-word/.test(rule), sel + ' に折り返しの指定が無い');
+  }
+  const st = (/\.rc-stamp\{([^}]*)\}/.exec(CSS) || [])[1] || '';
+  ok(/min-width\s*:\s*\d/.test(st), '.rc-stamp に最低幅が無い（縦帯になる）');
+});
+
+T('★領収書でも 角印は出る（会社の印は受取書にも押す）', () => {
+  const seal = 'data:image/png;base64,iVBORw0KGgo=';
+  const html = PAPER.build(receiptSample(null, { org: Object.assign({}, sample().org, { sealDataUrl: seal, sealSizeMm: 21 }) })).html;
+  ok(html.indexOf(seal) >= 0, '角印が出ていない');
+});
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

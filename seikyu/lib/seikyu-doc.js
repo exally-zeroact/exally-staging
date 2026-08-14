@@ -31,6 +31,13 @@
   var DOC_TYPES = ['invoice', 'quote'];
   var STATUSES = ['draft', 'issued', 'void'];
 
+  /* ★紙の呼び名は1か所★（画面・紙・Excel・ファイル名で別々に書かない）
+     ★領収書は doc_type ではない★＝「お金を受け取った証」なので pay_invoices の種類には足さない。
+     入金1行（pay_receipts）から出す紙。棚は増やさない。 */
+  var DOC_LABEL = { invoice: '請求書', quote: '見積書', receipt: '領収書' };
+  var DOC_KINDS = ['invoice', 'quote', 'receipt'];
+  function docLabel(kind) { return DOC_LABEL[kind] || DOC_LABEL.invoice; }
+
   /* ★発行したら固まる列★
      倉庫のトリガ(kyuyo.pay_invoices_freeze)と同じ並びでなければ赤になる
      （seikyu/tests/schema-contract.test.mjs が突き合わせる）。
@@ -377,11 +384,139 @@
     return { ok: errors.length === 0, errors: errors };
   }
 
+  /* ── 領収書（入金1行から出す紙） ────────────────────────────────
+     ★新しい棚を作らない★＝①で作った pay_receipts の1行が、そのまま1枚の領収書になる。
+
+     ★番号＝請求番号＋枝番★（202610-001-1）
+       枝番は ★入金の行に付く★。同じ請求に2回 入れば -1 / -2。
+       ★消した入金の枝番を、次の入金に使い回さない★
+         使い回すと「同じ番号の領収書が2枚 外に出る」＝いちばんまずい形。
+         だから ★消した行も席を占める★（作った順に並べて、その位置が枝番）。 */
+  function receiptNoOf(invoiceNo, branch) {
+    var no = String(invoiceNo == null ? '' : invoiceNo).trim();
+    var b = Math.trunc(Number(branch) || 0);
+    if (!no || b < 1) return '';          // ★作れない時は空（それらしい番号をでっち上げない）★
+    return no + '-' + b;
+  }
+
+  /** その入金が「その請求の何回目か」。★消した入金も席を占める★
+   *  all … その請求に付いた入金の全部（★消した物も含めて渡す★）
+   *  返り … 1始まりの枝番。見つからなければ 0 */
+  function receiptBranchOf(all, receiptId) {
+    var list = (Array.isArray(all) ? all : []).slice().sort(function (a, b) {
+      // 作った順＝id の昇順（アプリの id は作った時刻から作る）。created_at があればそちらを先に見る
+      var ca = String((a && a.created_at) || ''), cb = String((b && b.created_at) || '');
+      if (ca !== cb) return ca < cb ? -1 : 1;
+      return String((a && a.id) || '') < String((b && b.id) || '') ? -1 : 1;
+    });
+    for (var i = 0; i < list.length; i++) if (list[i] && list[i].id === receiptId) return i + 1;
+    return 0;
+  }
+
+  /* ★収入印紙★ 一次情報（確認日 2026-08-14）
+       国税庁 No.7105 金銭又は有価証券の受取書
+         ・★記載金額 5万円未満は非課税★
+         ・営業に関しないものは非課税
+         https://www.nta.go.jp/taxes/shiraberu/taxanswer/inshi/7105.htm
+       国税庁 No.7124 消費税額等が区分記載された契約書等の記載金額
+         ・★消費税額等を区分して書いてあれば、その消費税額は「記載金額」に入れない★
+         ・国税庁の例「商品販売代金 48,000円／消費税額等 4,800円／合計 52,800円」
+           → ★記載金額は 48,000円＝5万円未満＝非課税★
+         ・この扱いが使えるのは第1号・第2号・★第17号（＝領収書）★だけ
+         https://www.nta.go.jp/taxes/shiraberu/taxanswer/inshi/7124.htm
+
+     ⇒ ★「税込いくらか」ではなく「紙にどう書いてあるか」で変わる★
+     ★いくらの印紙が要るかは書かない★（額は金額帯で変わる・会社ごとの事情も入る）。
+     ★「営業に関しないもの」は器で判定しない★（会社ごと）＝注意書きに1行 添えるだけ。 */
+  var STAMP_FREE_UNDER = 50000;   // これ未満は非課税（法律の数。★ここが唯一の正★）
+
+  /** 印紙の判定に使う「記載金額」。読めない時は null（0にしない）
+   *  o … 数（税込の受取額）／または { amount, taxTotal, taxSeparate }
+   *  ★区分して書けるのは、その消費税額が はっきりしている時だけ★
+   *    （一部だけ受け取った紙で按分すると、★紙に嘘の消費税額が載る★）。
+   *    はっきりしない時は taxSeparate を立てない＝税込のまま判定する（安全側）。 */
+  function stampBaseOf(o) {
+    if (o === null || o === undefined) return null;
+    var amount = (typeof o === 'object') ? Number(o.amount) : Number(o);
+    if (!Number.isFinite(amount)) return null;
+    if (typeof o !== 'object' || !o.taxSeparate) return amount;
+    var t = Number(o.taxTotal);
+    if (!Number.isFinite(t) || t <= 0) return amount;   // 分けて書ける消費税額が無い＝税込のまま
+    if (t >= amount) return amount;                     // ありえない形＝税込のまま（安全側）
+    return amount - t;
+  }
+
+  function stampNeeded(o) {
+    var base = stampBaseOf(o);
+    if (base === null) return false;
+    return base >= STAMP_FREE_UNDER;
+  }
+
+  /** 印紙の注意書き。★要らない時は空文字（いつも出さない）★
+   *  ★しきい値は数から文を作る（法定の数を説明文に直書きしない）★ */
+  function stampNote(o) {
+    if (!stampNeeded(o)) return '';
+    return '※ ' + Math.round(STAMP_FREE_UNDER / 10000) + '万円以上の受取書には収入印紙が要る場合があります'
+      + '（営業に関しないものは非課税）。';
+  }
+
+  /** その入金から領収書を出せるか。返り = { ok, reason }
+   *  ★消した入金からは出せない★（消した物の紙が外に出ると、後から辻褄が合わなくなる） */
+  function canReceipt(rc, invoice) {
+    var r = rc || {};
+    if (!r.id) return { ok: false, reason: '入金の記録がありません' };
+    if (r.deleted_at) return { ok: false, reason: '消した入金からは領収書を出せません' };
+    if (!Number.isFinite(Number(r.amount)) || Number(r.amount) === 0) return { ok: false, reason: '金額が読めません' };
+    if (Number(r.amount) < 0) return { ok: false, reason: '返金からは領収書を出せません' };
+    if (!parseYmd(r.ymd)) return { ok: false, reason: '入金日が読めません' };
+    var inv = invoice || null;
+    if (inv && statusOf(inv) === 'draft') return { ok: false, reason: 'まだ発行していない請求書です' };
+    return { ok: true, reason: '' };
+  }
+
   /* ── 発行前の検査（空欄のまま出させない） ──────────────────────── */
+  /* ★黙って小さくならないようにする★
+     今までは「何も入っていない行」を計算の前に黙って捨てていた。
+     捨てるのは正しいが ★黙って★が悪い＝#ERROR より「合計が静かに小さくなる」方が高くつく
+     （Exally で 527,000 が 186,000 になったのと同じ形）。
+     ここでは ★打たれたそのままの行★ を見て、
+       ・品名が空なのに 数量や金額が入っている → ★赤で止める★（何の代金か分からない紙を出さない）
+       ・まるごと空の行                        → ★消したと言う★（黙って消さない）
+     返り = { blankName:[行番号…], dropped:[行番号…] }（★人が見る1始まりの行番号★） */
+  function rowIssuesOf(rawLines) {
+    var blankName = [], dropped = [];
+    var list = Array.isArray(rawLines) ? rawLines : [];
+    for (var i = 0; i < list.length; i++) {
+      var ln = list[i] || {};
+      var name = String(ln.name == null ? '' : ln.name).trim();
+      var vals = [ln.qty, ln.price, ln.amount, ln.memo, ln.unit];
+      var ex = ln.extra || {};
+      for (var k in ex) if (Object.prototype.hasOwnProperty.call(ex, k)) vals.push(ex[k]);
+      var hasSomething = false;
+      for (var j = 0; j < vals.length; j++) {
+        if (String(vals[j] == null ? '' : vals[j]).trim() !== '') { hasSomething = true; break; }
+      }
+      if (name) continue;
+      if (hasSomething) blankName.push(i + 1); else dropped.push(i + 1);
+    }
+    return { blankName: blankName, dropped: dropped };
+  }
+
   function validateInvoice(o) {
     o = o || {};
     var inv = o.inv || {};
     var errors = [], warnings = [];
+
+    /* ★打たれたそのままの行★ を渡された時だけ見る（渡さない呼び方も壊さない） */
+    if (o.rawLines) {
+      var ri = rowIssuesOf(o.rawLines);
+      if (ri.blankName.length) {
+        errors.push(ri.blankName.join('・') + '行目の品名が空です（何の代金か分からない紙は出せません）');
+      }
+      if (ri.dropped.length) {
+        warnings.push(ri.dropped.join('・') + '行目は何も入っていないので数えません（' + ri.dropped.length + '行）');
+      }
+    }
 
     if (DOC_TYPES.indexOf(inv.doc_type || 'invoice') < 0) errors.push('書類の種類が不明です（' + inv.doc_type + '）');
     if (!String(inv.no || '').trim()) errors.push('請求番号が空です');
@@ -417,9 +552,35 @@
     return { ok: errors.length === 0, errors: errors, warnings: warnings, tax: tax };
   }
 
-  /** 見積 → 請求 に変換する形（★番号は請求の系列で採り直す★） */
+  /** 見積 → 請求 に変換する形（★番号は請求の系列で採り直す★）
+   *  ★品目・数量・単価・税区分をそのまま引き継ぐ＝人に写させない★
+   *  ★件名・備考・源泉・支払期限の決め方・列の並びも引き継ぐ★
+   *    （見積で決めた物を、請求で もう一度 打たせない。空欄を並べて埋めさせない）
+   *  ★引き継がない物★ 番号（別系列）／発行日（これから決める）／写し（発行時に固める） */
   function convertQuoteToInvoice(q) {
     q = q || {};
+    var qd = q.data || {};
+    var data = {
+      subject: qd.subject || '', memo: qd.memo || '',
+      noMode: 'auto',                                   // ★番号は自動に戻す（見積の手打ち番号を継がない）
+      term: qd.term ? { kind: qd.term.kind, n: qd.term.n || 0 } : { kind: 'none', n: 0 },
+      gensen: !!qd.gensen,
+      lead: qd.lead || '',
+      dateEra: qd.dateEra || '',
+    };
+    if (qd.cols && Array.isArray(qd.cols.items) && qd.cols.items.length) {
+      data.cols = {
+        items: qd.cols.items.slice(),
+        widths: Object.assign({}, qd.cols.widths || {}),
+        aligns: Object.assign({}, qd.cols.aligns || {}),
+      };
+    }
+    /* 見積で足した自由な列の中身も落とさない（lines の extra ごと持っていく） */
+    var lines = (q.lines || []).map(function (ln) {
+      var o = Object.assign({}, ln);
+      if (ln && ln.extra) o.extra = Object.assign({}, ln.extra);
+      return o;
+    });
     return {
       doc_type: 'invoice',
       quote_from: q.id || '',
@@ -428,14 +589,20 @@
       partner_id: q.partner_id || '',
       issue_ymd: '', due_ymd: '',
       tax_mode: q.tax_mode, rounding: q.rounding,
-      lines: (q.lines || []).slice(),
+      lines: lines,
       totals: {}, snapshot: {},
+      data: data,
       template_id: q.template_id || '',
     };
   }
 
   return {
     DOC_TYPES: DOC_TYPES, STATUSES: STATUSES, FROZEN_FIELDS: FROZEN_FIELDS,
+    DOC_KINDS: DOC_KINDS, DOC_LABEL: DOC_LABEL, docLabel: docLabel,
+    receiptNoOf: receiptNoOf, receiptBranchOf: receiptBranchOf,
+    stampNeeded: stampNeeded, stampNote: stampNote, stampBaseOf: stampBaseOf,
+    STAMP_FREE_UNDER: STAMP_FREE_UNDER, canReceipt: canReceipt,
+    rowIssuesOf: rowIssuesOf,
     NUMBER_FORMATS: NUMBER_FORMATS, PAY_TERMS: PAY_TERMS, PAY_STATE_LABEL: PAY_STATE_LABEL,
     PAY_METHODS: PAY_METHODS, receiptAmountOf: receiptAmountOf, validateReceipt: validateReceipt,
     formatNo: formatNo, nextNo: nextNo, bumpNo: bumpNo, validateNumbering: validateNumbering,

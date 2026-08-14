@@ -84,6 +84,12 @@ jobs:
         run: node tests/hollow-guard.test.mjs --self-test && node tests/hollow-guard.test.mjs
       - name: ★入口の見張りの「判定」が空振りしていないか (外へ出ない部分だけ・実際の死活は hosts.yml 週1)
         run: node scripts/check-hosts.mjs --self-test
+      # ★HTMLの中の <script> は lint も試験も見ない＝構文が壊れてもアプリが丸ごと死ぬまで気づかない
+      #   （2026-08-12 ダイコメが実際に踏んだ）。的は book.html の巨大なインライン。
+      - name: ★HTMLの中のJSが構文として通るか (git ls-files で全HTMLを自動で拾う)
+        run: node tests/html-script-syntax.test.mjs
+      - name: ★HTMLの中のJS (わざと壊して赤になるかの自己確認・実物も1本 壊す)
+        run: node tests/html-script-syntax.test.mjs --self-test
       - name: CI coverage guard (CIから黙って外れているテストが無いか=除外は理由と戻す条件つきのみ)
         run: node tests/ci-coverage.test.mjs
 
@@ -115,6 +121,10 @@ jobs:
         run: node seikyu/tests/schema-contract.test.mjs
       - name: ★設計図(SQL)と lib のズレ (わざとズラして赤になるかの自己確認)
         run: node seikyu/tests/schema-contract.test.mjs --self-test
+      - name: ★請求書が触る棚の権限 (8つを名前で固定・棚と窓の両方・棚が1つ増えたら赤)
+        run: node seikyu/tests/warehouse-perms.test.mjs
+      - name: ★棚の権限 (窓のsecurity_invokerを落とす/棚のgrantを消す等で赤になるかの自己確認)
+        run: node seikyu/tests/warehouse-perms.test.mjs --self-test
       - name: ★請求書 推奨ファイル名 (相手/日付が空でも空欄を作らない・落とせない文字を残さない・上限に収める)
         run: node seikyu/tests/seikyu-name.test.mjs
       - name: ★請求書 推奨ファイル名 (わざと掃除を外して赤になるかの自己確認)

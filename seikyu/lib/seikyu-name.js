@@ -27,7 +27,9 @@
   /* 落とせる種類。★ここに無い拡張子は名前を作らない（js/file-out.js の MIME と揃える）★ */
   var EXTS = ['pdf', 'xlsx', 'csv'];
 
-  var KIND_LABEL = { invoice: '請求書', quote: '見積書' };
+  /* ★領収書は doc_type ではない★（棚を増やさない）が、落とす紙としては3種類目。
+     呼び名は seikyu-doc.js の DOC_LABEL と同じ物にする（画面・紙・ファイル名で別々に書かない）。 */
+  var KIND_LABEL = { invoice: '請求書', quote: '見積書', receipt: '領収書' };
 
   var NO_PARTNER = '取引先未選択';
   var NO_DATE = '日付未定';

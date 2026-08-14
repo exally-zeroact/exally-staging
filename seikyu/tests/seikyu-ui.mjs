@@ -172,6 +172,11 @@ await TA('1. ★3画面ぜんぶのボタンを1つ残らず押しても、JSが
   console.log('     押した物(' + pressed.length + '): ' + pressed.join(' / '));
   ok(pressed.length >= 25, '押した物が少なすぎる（一覧が取れていない）: ' + pressed.length);
   eq(errs.length, before, 'JSが落ちた: ' + errs.slice(before).join(' | '));
+  /* ★総当たりで「見積書」も押している＝そのままだと次の検査が全部 見積になる★
+     押した事実は上の一覧に残したまま、種類だけ請求書へ戻す（片づけ）。 */
+  doc.querySelector('#kind-seg [data-kind="invoice"]').click();
+  await sleep(30);
+  eq(win.SeikyuApp._state.docType, 'invoice', '種類が請求書に戻らない');
   // ★総当たりで作られた行は片づける（次の検査を汚さない）。押した事実は上に残す
   db.pay_invoices.length = 0;
   await win.SeikyuApp._state.store.invoices.list('invoice');
@@ -861,8 +866,11 @@ T('9-a. ★非課税と対象外は別物＝選び所に両方ある（新しい
   ok(opts.includes('対象外'), '「対象外」が無い: ' + opts.join('/'));
   // ★増えたのは選択肢だけ＝行に入力は1つも増えていない（列の数は前の検査で変わり得るので数えない）
   const cols = win.SeikyuApp._state.cur.data.cols;
-  const want = (cols && cols.items ? cols.items.length : 7) + 1;   // ＋消す列
+  // ＋並べ替えの列 ＋消す列（どちらも「打つ所」ではないので、入力欄は増えていない）
+  const want = (cols && cols.items ? cols.items.length : 7) + 2;
   eq(doc.querySelectorAll('#lines-head th').length, want, '明細の列が増えている');
+  eq(doc.querySelectorAll('#lines-body tr:first-child input,#lines-body tr:first-child select').length,
+    cols.items.filter((k) => k !== '#').length, '★行の「打つ所」が増えている★');
   eq(doc.querySelectorAll('#lines-body tr [data-f="rate"]').length, 1, '税率の選び所が増えている');
   eq(doc.querySelectorAll('#lines-body input[type="checkbox"]').length, 0, '行にチェックが増えている（設問が増える）');
 });
@@ -1388,6 +1396,239 @@ await TA('11-z. 繰越の設定を元に戻す（次の検査を汚さない）'
   await win.SeikyuApp._loadMasters();
   await sleep(20);
   eq(!!win.SeikyuApp._state.org.invoiceCarry, false, '繰越が「切」に戻っていない');
+});
+
+/* ═══ 12. ★見積 → 請求 → 領収 が1本の線でつながる★ ═══
+   ★押す物の一覧（先に書く）★
+     一覧の「見積書」チップ ／ ＋新しい見積書 ／ 発行する ／
+     この見積から請求書を作る ／ 発行する（請求） ／
+     入金を記録 ／ 入金の行の「領収書」 ／ 名前の小窓の「この名前で保存」 ／
+     明細の ▲ ／ ▼ ／ 一覧の「請求書」チップ
+   ここで止めたい事故:
+     ・見積が どの画面からも作れない（紙も棚も在るのに死んでいる）
+     ・見積 → 請求 で 人に写させる（写し間違いが必ず出る）
+     ・受け取っていない額の領収書が出る／消した入金から領収書が出る
+     ・品名が空の行を ★黙って捨てて★ 合計が静かに小さくなる */
+
+await TA('12-a. ★一覧に「請求書／見積書」の切替が在り、言葉がそろって変わる', async () => {
+  doc.querySelector('.bn[data-scr="scr-list"]').click(); await sleep(20);
+  ok($('kind-seg'), '★種類の切替が無い（見積の入口が無い）★');
+  eq($('list-h').textContent, '請求書');
+  ok(/新しい請求書/.test($('b-new').textContent), 'ボタンの言葉: ' + $('b-new').textContent);
+  doc.querySelector('#kind-seg [data-kind="quote"]').click(); await sleep(60);
+  eq(win.SeikyuApp._state.docType, 'quote', '種類が切り替わらない');
+  eq($('list-h').textContent, '見積書', '見出しが変わらない');
+  ok(/新しい見積書/.test($('b-new').textContent), '★ボタンが「請求書」のまま★: ' + $('b-new').textContent);
+  ok(doc.querySelector('#kind-seg [data-kind="quote"]').classList.contains('on'), '押した物に印が付かない');
+});
+
+let quoteRow = null;
+
+await TA('12-b. ★見積を1通 出せる（番号は請求と別の系列＝同じ番号を持てる）', async () => {
+  const st = win.SeikyuApp._state;
+  db.pay_partners.push({ id: 'pt_q', account_id: 'u1', sort: 30, data: { name: '見積テスト工業', keisho: '御中' }, deleted_at: null });
+  await win.SeikyuApp._loadMasters(); await sleep(30);
+  $('b-new').click(); await sleep(30);
+  eq(st.cur.doc_type, 'quote', '★見積を選んでいるのに請求書を作っている★');
+  setVal('e-partner', 'pt_q'); await sleep(60);
+  if (win.getComputedStyle($('guess-card')).display !== 'none') { $('b-guess-edit').click(); await sleep(20); }
+  setVal('e-issue', '2026-09-10'); await sleep(40);
+  const tr = doc.querySelector('#lines-body tr');
+  const setF = (k, v) => { const e = tr.querySelector('[data-f="' + k + '"]'); e.value = v; e.dispatchEvent(new win.Event('input')); e.dispatchEvent(new win.Event('change')); };
+  setF('name', '運転代行 見積'); setF('qty', '2'); setF('price', '30000');
+  await sleep(60);
+  // ★件名・備考・源泉も見積で決めておく（請求へ持っていけるか、あとで見る）
+  $('more-box').open = true;
+  setVal('e-subject', '9月分 運転代行（お見積）'); setVal('e-memo', '有効期限は1か月です');
+  await sleep(20);
+  $('b-issue').click(); await sleep(90);
+  eq(st.cur.status, 'issued', '見積が出せていない: ' + $('edit-err').textContent);
+  quoteRow = db.pay_invoices.find((x) => x.id === st.cur.id);
+  eq(quoteRow.doc_type, 'quote', '倉庫に見積として入っていない');
+  // ★手計算★ 30,000×2＝60,000＋消費税6,000＝66,000
+  eq(quoteRow.totals.grandTotal, 66000, '見積の合計が手計算と違う');
+  // 請求書に同じ番号が在ってもぶつからない（doc_type 込みの一意制約）
+  const sameNo = db.pay_invoices.filter((x) => x.no === quoteRow.no);
+  ok(sameNo.length >= 1, '番号が入っていない');
+});
+
+await TA('12-c. ★出した見積の主役の操作＝「この見積から請求書を作る」（下書きには出さない）', async () => {
+  ok($('b-toinv'), '★ボタンそのものが無い★');
+  eq(win.getComputedStyle($('b-toinv')).display !== 'none', true, '★出した見積なのに次の一手が隠れている★');
+  eq($('b-toinv').disabled, false, '押せない: ' + $('b-toinv').textContent);
+  eq($('b-issue').style.display, 'none', '発行済みなのに発行するが出ている');
+  // 下書きの請求書では出さない（存在しない操作は出さない）
+  doc.querySelector('.bn[data-scr="scr-list"]').click(); await sleep(10);
+  doc.querySelector('#kind-seg [data-kind="invoice"]').click(); await sleep(60);
+  $('b-new').click(); await sleep(30);
+  eq(win.getComputedStyle($('b-toinv')).display, 'none', '★下書きの請求書に「見積から作る」が出ている★');
+});
+
+await TA('12-d. ★★見積→請求で 中身をそのまま引き継ぐ（人に写させない）★★', async () => {
+  const st = win.SeikyuApp._state;
+  // 出した見積を開き直す
+  doc.querySelector('.bn[data-scr="scr-list"]').click(); await sleep(10);
+  doc.querySelector('#kind-seg [data-kind="quote"]').click(); await sleep(60);
+  [...$('list-body').querySelectorAll('[data-open]')].find((b) => b.getAttribute('data-open') === quoteRow.id).click();
+  await sleep(40);
+  const qNo = st.cur.no;
+
+  $('b-toinv').click(); await sleep(150);
+  eq(st.cur.doc_type, 'invoice', '★請求書になっていない★');
+  eq(st.cur.status, 'draft', 'いきなり発行してしまっている');
+  eq(st.cur.quote_from, quoteRow.id, 'どの見積から作ったかを持っていない');
+  eq(st.docType, 'invoice', '一覧の種類が請求書に切り替わっていない');
+  // ★写した物★
+  eq(st.cur.lines[0].name, '運転代行 見積', '★品目が落ちている★');
+  eq(String(st.cur.lines[0].qty), '2', '★数量が落ちている★');
+  eq(String(st.cur.lines[0].price), '30000', '★単価が落ちている★');
+  eq(st.cur.data.subject, '9月分 運転代行（お見積）', '★件名が落ちている★');
+  eq(st.cur.data.memo, '有効期限は1か月です', '★備考が落ちている★');
+  eq($('e-subject').value, '9月分 運転代行（お見積）', '画面に戻っていない');
+  eq($('e-partner').value, 'pt_q', '★取引先が落ちている★');
+  // ★取り直す物★
+  ok(st.cur.no && st.cur.no !== qNo, '★見積の番号を持ち込んでいる★（' + st.cur.no + '）');
+  ok(st.cur.issue_ymd, '請求日が空');
+  // ★つながりを画面に出す★
+  eq(win.getComputedStyle($('from-quote')).display !== 'none', true, '★どの見積から来たかを画面に出していない★');
+  ok($('from-quote').textContent.includes(qNo), '見積の番号が出ていない: ' + $('from-quote').textContent);
+  // ★手計算★ 引き継いだので合計は見積と同じ 66,000
+  ok($('tot-box').textContent.includes('66,000'), '合計が見積と違う: ' + $('tot-box').textContent.replace(/\s+/g, ' '));
+  // ★元の見積は書き換わっていない★
+  eq(db.pay_invoices.find((x) => x.id === quoteRow.id).lines[0].name, '運転代行 見積', '★元の見積まで書き換わった★');
+});
+
+let invForReceipt = null;
+
+await TA('12-e. ★★入金の1行から領収書が出る（枝番つき・受け取った額）★★', async () => {
+  const st = win.SeikyuApp._state;
+  $('b-issue').click(); await sleep(120);
+  eq(st.cur.status, 'issued', '請求書が出せていない: btn=[' + $('b-issue').textContent + '] disabled=' + $('b-issue').disabled
+    + ' err=[' + $('edit-err').textContent + '] warn=[' + $('edit-warn').textContent + '] lines='
+    + JSON.stringify(st.cur.lines.map((l) => [l.name, l.qty, l.price, l.amount, l.rate])));
+  invForReceipt = st.cur.id;
+  const invNo = st.cur.no;
+
+  // 2回に分けて入金
+  const pay = async (ymd, amt, method) => {
+    setVal('pay-ymd', ymd); setVal('pay-amt', amt); setVal('pay-method', method); setVal('pay-memo', '');
+    await sleep(20); $('b-pay-add').click(); await sleep(120);
+  };
+  await pay('2026-10-05', '20000', '振込');
+  await pay('2026-10-20', '46000', '振込');
+  eq($('pay-list').querySelectorAll('.pay-row').length, 2, '入金が2行 残っていない');
+
+  // ★1回目の領収書＝枝番 -1・受け取った 20,000（請求の 66,000 ではない）
+  const before = opened.length;
+  $('pay-list').querySelectorAll('[data-rcp]')[0].click(); await sleep(30);
+  ok($('fn-ov').classList.contains('open'), '★落とす前に名前を見せていない★');
+  ok(/領収書/.test($('fn-input').value), '名前が中身から作られていない: ' + $('fn-input').value);
+  ok(/20000|20,000/.test($('fn-input').value), '名前に受け取った額が入っていない: ' + $('fn-input').value);
+  $('fn-ok').click(); await sleep(60);
+  ok(opened.length > before, '★紙だけの新しい窓が開いていない★');
+  const w = opened[opened.length - 1];
+  const flat = w._html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+  ok(/領\s*収\s*書/.test(flat), '領収書になっていない: ' + flat.slice(0, 120));
+  ok(flat.includes(invNo + '-1'), '★枝番つきの領収番号が出ていない★: ' + flat.slice(0, 200));
+  ok(/¥20,000/.test(flat), '★受け取った額が出ていない★');
+  ok(!/¥66,000/.test(flat), '★受け取っていない請求額が領収書に載っている★');
+  ok(/上記正に領収いたしました/.test(flat), '受け取った文言が無い');
+  ok(/9月分 運転代行（お見積）/.test(flat), '但し書きが件名から作られていない');
+  ok(!/botnav|appbar|b-issue/.test(w._html), 'アプリの画面が紙に混ざっている');
+
+  // ★2回目は -2
+  $('pay-list').querySelectorAll('[data-rcp]')[1].click(); await sleep(30);
+  $('fn-ok').click(); await sleep(60);
+  const f2 = opened[opened.length - 1]._html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+  ok(f2.includes(invNo + '-2'), '★2回目の枝番が -2 になっていない★');
+  // ★全額を受け取った回ではないので、消費税額を区分して書かない（按分＝嘘を作らない）
+  ok(!/税抜金額/.test(f2), '★一部入金なのに消費税額を区分して書いている（按分＝嘘）★');
+});
+
+await TA('12-e2. ★消した入金から領収書は出せない／枝番は使い回さない', async () => {
+  const st = win.SeikyuApp._state;
+  const invNo = st.cur.no;
+  // 1件目を消す
+  $('pay-list').querySelectorAll('[data-rc]')[0].click(); await sleep(120);
+  eq($('pay-list').querySelectorAll('.pay-row').length, 1, '消せていない');
+  // 3件目を足す → ★枝番は -3★（消した -1 を使い回さない）
+  setVal('pay-ymd', '2026-11-01'); setVal('pay-amt', '10000'); setVal('pay-method', '現金');
+  await sleep(20); $('b-pay-add').click(); await sleep(120);
+  const btns = $('pay-list').querySelectorAll('[data-rcp]');
+  btns[btns.length - 1].click(); await sleep(30);
+  $('fn-ok').click(); await sleep(60);
+  const f3 = opened[opened.length - 1]._html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+  ok(f3.includes(invNo + '-3'), '★消した入金の枝番を使い回している（同じ番号の紙が2枚 出る）★: ' + f3.slice(0, 200));
+  // ★合計は生きている2件だけ★（消した物を混ぜない）＝20,000を消したので 46,000+10,000＝56,000
+  ok($('pay-sum').textContent.includes('56,000'), '★消した入金を合計に混ぜている★: ' + $('pay-sum').textContent);
+});
+
+await TA('12-f. ★明細の並べ替え（▲▼）で 金額は1円も動かない', async () => {
+  const st = win.SeikyuApp._state;
+  doc.querySelector('.bn[data-scr="scr-list"]').click(); await sleep(10);
+  $('b-new').click(); await sleep(30);
+  setVal('e-partner', 'pt_q'); await sleep(60);
+  if (win.getComputedStyle($('guess-card')).display !== 'none') { $('b-guess-edit').click(); await sleep(20); }
+  const setRow = (i, name, amt) => {
+    const tr = $('lines-body').querySelectorAll('tr')[i];
+    const n = tr.querySelector('[data-f="name"]'), a = tr.querySelector('[data-f="amount"]');
+    n.value = name; n.dispatchEvent(new win.Event('input'));
+    a.value = amt; a.dispatchEvent(new win.Event('input'));
+  };
+  setRow(0, 'あ', '1000');
+  $('b-addline').click(); await sleep(20); setRow(1, 'い', '2000');
+  $('b-addline').click(); await sleep(20); setRow(2, 'う', '3000');
+  await sleep(60);
+  const before = $('tot-box').textContent.replace(/\s+/g, '');
+  eq(st.cur.lines.map((l) => l.name).join(','), 'あ,い,う');
+  // いちばん上の行に ▲ は出さない（押しても何も起きない物を置かない）
+  eq($('lines-body').querySelectorAll('tr')[0].querySelectorAll('[data-up]').length, 0, '★端の行に ▲ が出ている★');
+  eq($('lines-body').querySelectorAll('tr')[2].querySelectorAll('[data-down]').length, 0, '★端の行に ▼ が出ている★');
+  // 3行目を上へ
+  $('lines-body').querySelectorAll('[data-up]')[1].click(); await sleep(40);
+  eq(st.cur.lines.map((l) => l.name).join(','), 'あ,う,い', '★並べ替えが効いていない★');
+  // 1行目を下へ
+  $('lines-body').querySelectorAll('[data-down]')[0].click(); await sleep(40);
+  eq(st.cur.lines.map((l) => l.name).join(','), 'う,あ,い');
+  eq($('tot-box').textContent.replace(/\s+/g, ''), before, '★並べ替えで金額が動いた★');
+  ok($('tot-box').textContent.includes('6,600'), '合計(6,600)が出ていない: ' + $('tot-box').textContent.replace(/\s+/g, ' '));
+});
+
+await TA('12-g. ★★品名が空の行は、黙って捨てずに 出す前に赤で止める★★', async () => {
+  const st = win.SeikyuApp._state;
+  // 2行目の品名だけ消す（金額は残す）＝何の代金か分からない行
+  const tr = $('lines-body').querySelectorAll('tr')[1];
+  const n = tr.querySelector('[data-f="name"]');
+  n.value = ''; n.dispatchEvent(new win.Event('input'));
+  await sleep(60);
+  eq($('b-issue').disabled, true, '★品名が空のまま発行できてしまう★');
+  ok(/品名/.test($('b-issue').textContent), '理由がボタンの中に無い: ' + $('b-issue').textContent);
+  ok(/2行目/.test($('b-issue').textContent), '★何行目か言っていない★: ' + $('b-issue').textContent);
+  // 押しても出ない
+  const n0 = db.pay_invoices.length;
+  $('b-issue').click(); await sleep(60);
+  eq(db.pay_invoices.length, n0, '★灰色なのに発行された★');
+  /* ★見た目＝灰色だけで守らない★ を実測する
+     （灰色を外して押しても、下の検査が同じ理由で止めるか） */
+  $('b-issue').disabled = false;
+  $('b-issue').click(); await sleep(80);
+  eq(db.pay_invoices.length, n0, '★灰色を外したら発行できてしまった（歯止めが見た目だけ）★');
+  ok(/品名/.test($('edit-err').textContent), '押した後の赤い印が理由を言っていない: ' + $('edit-err').textContent);
+  ok(/2行目/.test($('edit-err').textContent), '何行目か言っていない: ' + $('edit-err').textContent);
+  // 品名を入れれば通る
+  n.value = 'あ2'; n.dispatchEvent(new win.Event('input'));
+  await sleep(60);
+  eq($('b-issue').disabled, false, '直したのに押せないまま: ' + $('b-issue').textContent);
+});
+
+await TA('12-h. ★まるごと空の行は止めないが「消した」と言う（黙って小さくしない）', async () => {
+  $('b-addline').click(); await sleep(40);          // 何も入れない行を1本 足す
+  await sleep(40);
+  eq($('b-issue').disabled, false, '★まるごと空の行で発行を止めている★: ' + $('b-issue').textContent);
+  $('b-issue').click(); await sleep(120);
+  ok(/行目は何も入っていない/.test($('edit-warn').textContent),
+    '★空行を黙って捨てている（消したと言っていない）★: ' + $('edit-warn').textContent);
+  eq(win.SeikyuApp._state.cur.status, 'issued', '発行できていない: ' + $('edit-err').textContent);
 });
 
 /* ═══ 10. ★主役の操作は隠さない・塞がっている時は灰色＋理由★ ═══
