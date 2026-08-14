@@ -143,10 +143,22 @@
   }
 
   /* ═══ 一覧 ═══ */
-  function payLabel(inv) {
-    var st = DOC.paymentStateOf({ id: inv.id, grand_total: (inv.totals && inv.totals.grandTotal) || 0 },
+  /** その1通の入金の状態。★数え方は seikyu-doc.js が唯一の正（画面で数え直さない）★
+   *  S.receipts が null＝読めていない → paymentStateOf が 'unknown' を返す（0にしない）。 */
+  function payStateOf(inv) {
+    return DOC.paymentStateOf(
+      { id: inv.id, grand_total: (inv.totals && inv.totals.grandTotal) || 0 },
       S.receipts === null ? null : S.receipts);
-    return DOC.PAY_STATE_LABEL[st.state] || '';
+  }
+  function payLabel(inv) {
+    // ★発行していない紙に「未入金」と書かない★（まだ請求していない＝入金の話が無い）
+    if (inv.status !== 'issued') return '';
+    var st = payStateOf(inv);
+    var lb = DOC.PAY_STATE_LABEL[st.state] || '';
+    /* ★状態の言葉だけでは督促の判断ができない。いくら残っているかまで出す★ */
+    if (st.state === 'partial') lb += '　残り ' + yen(st.remain) + ' 円';
+    else if (st.state === 'over') lb += '　' + yen(-st.remain) + ' 円 多い';
+    return lb;
   }
 
   function renderList() {
@@ -277,6 +289,9 @@
     renderLines();
     recalc();
     lockInputs();
+    // ★入金は「発行した1通」にだけ出す（下書きには請求そのものが無い）
+    resetPayForm();
+    renderPay();
   }
 
   /* ═══ ★前回から当てて確かめる★ ═══
@@ -440,6 +455,179 @@
     if (ro && v.status === 'issued') why = 'この請求書は発行済みです。直すには取り消してから作り直します。';
     else if (ro && v.status === 'void') why = 'この請求書は取り消し済みです。新しく作り直してください。';
     setText('act-why', why);
+  }
+
+  /* ═══ ★入金（1回＝1行。上書きしない）★ ═══
+     ・決まり（0円・日付・桁）は seikyu-doc.validateReceipt が唯一の正
+     ・数え方（合計・残り・過入金）は seikyu-doc.paymentStateOf が唯一の正
+       ＝ここでは1つも数え直さない（2か所で数えると必ずどこかで食い違う）
+     ・★取れなかったを0にしない★ … S.receipts === null は「未確認」。0円と書き分ける
+     ・★記録しても、すでに出した紙は変わらない★
+       紙に出る繰越は発行時に写し（snapshot.carry）へ固まっている。ここは次に出す紙に効く。 */
+
+  /** この1通に付いている入金（新しく足した順ではなく日付順）。★読めていない時は null★ */
+  function receiptsOf(id) {
+    if (S.receipts === null) return null;
+    return S.receipts.filter(function (r) {
+      return !r.deleted_at && r.invoice_id === id;
+    }).sort(function (a, b) {
+      if ((a.ymd || '') !== (b.ymd || '')) return (a.ymd || '') < (b.ymd || '') ? -1 : 1;
+      return String(a.id) < String(b.id) ? -1 : 1;      // 同じ日は id で並びを固定する
+    });
+  }
+
+  /* ★「入金を記録」が押せない理由★
+     入金カードの主役の操作なので ★隠さず、灰色にして理由をボタンの中★（発行するボタンと同じ流儀）。
+     理由の言葉は DOC.validateReceipt が持つ物をそのまま使う＝押す前と押した後で別々に書かない。 */
+  function payBlockReason() {
+    var v = S.cur;
+    if (!v || !v.id) return '先に発行してください';
+    if (v.status === 'void') return '取り消した請求書には記録できません';
+    if (v.status !== 'issued') return '発行してから記録できます';
+    var chk = DOC.validateReceipt({
+      ymd: $('pay-ymd').value, amount: $('pay-amt').value,
+      method: $('pay-method').value, memo: $('pay-memo').value,
+    });
+    return chk.ok ? null : (chk.errors[0] || '記録できません');
+  }
+  function drawPayButton() {
+    var b = $('b-pay-add'); if (!b) return;
+    var why = payBlockReason();
+    b.disabled = !!why;
+    b.textContent = why ? ('入金を記録（' + why + '）') : '入金を記録';
+    b.title = why || '';
+  }
+
+  /** 打ち込む欄を初期に戻す（日付は今日・方法は前回と同じ・金額と備考は空） */
+  function resetPayForm(keepMethod) {
+    var m = $('pay-method');
+    if (m && (!m.options.length || !keepMethod)) {
+      fillSelect(m, DOC.PAY_METHODS.map(function (k) { return { v: k, t: k }; }), keepMethod || DOC.PAY_METHODS[0]);
+    }
+    if ($('pay-ymd')) $('pay-ymd').value = todayYmd();
+    if ($('pay-amt')) $('pay-amt').value = '';
+    if ($('pay-memo')) $('pay-memo').value = '';
+    box('pay-err', ''); box('pay-ok', '');
+  }
+
+  function renderPay() {
+    var card = $('pay-card'); if (!card) return;
+    var v = S.cur;
+    /* 下書きには「請求」がまだ無いので、この箱ごと出さない
+       （押せない操作を灰色で並べるより、その状態に存在しない物は出さない） */
+    var on = !!(v && v.id && v.status !== 'draft');
+    show(card, on);
+    if (!on) return;
+
+    var st = payStateOf(v);
+    var rows = '<div class="tot-r"><span class="tot-l">請求額</span><span class="tot-v">' + yen(st.total) + ' 円</span></div>';
+    if (st.paid === null) {
+      // ★読めなかった＝0円と書かない★
+      rows += '<div class="tot-r"><span class="tot-l">入っている合計</span><span class="tot-v">（未確認）</span></div>'
+        + '<div class="tot-r tot-g"><span class="tot-l">残り</span><span class="tot-v">（未確認）</span></div>';
+    } else {
+      rows += '<div class="tot-r"><span class="tot-l">入っている合計</span><span class="tot-v">'
+        + yen(st.paid) + ' 円' + (st.count ? '（' + st.count + '回）' : '') + '</span></div>';
+      rows += st.remain < 0
+        ? '<div class="tot-r tot-g"><span class="tot-l">過入金</span><span class="tot-v">' + yen(-st.remain) + ' 円</span></div>'
+        : '<div class="tot-r tot-g"><span class="tot-l">残り</span><span class="tot-v">' + yen(st.remain) + ' 円</span></div>';
+    }
+    $('pay-sum').innerHTML = rows;
+
+    var list = receiptsOf(v.id);
+    var host = $('pay-list');
+    if (list === null) {
+      host.innerHTML = '<p class="hint">入金の記録が読めませんでした（＝0件ではありません）。'
+        + '一覧の「読み直す」を押すと、もう一度 取りにいきます。</p>';
+    } else if (!list.length) {
+      host.innerHTML = '<p class="hint">まだ入金の記録がありません。下の欄から1回ぶんずつ足します（'
+        + '★分けて払われた時は、そのぶん行が増えます★）。</p>';
+    } else {
+      host.innerHTML = list.map(function (r) {
+        var neg = Number(r.amount) < 0;
+        return '<div class="pay-row"><span class="pay-main">'
+          + '<span class="pay-l1">'
+          + '<span class="pay-d">' + esc(r.ymd || '日付なし') + '</span>'
+          + '<span class="pay-v">' + (neg ? '− ' : '') + yen(Math.abs(Number(r.amount) || 0)) + ' 円</span>'
+          + (r.method ? '<span class="pay-w">' + esc(r.method) + '</span>' : '')
+          + (neg ? '<span class="pay-w">返金</span>' : '')
+          + '</span>'
+          + (r.memo ? '<span class="pay-memo">' + esc(r.memo) + '</span>' : '')
+          + '</span>'
+          + '<button class="l-del" type="button" data-rc="' + esc(r.id) + '" aria-label="この入金の記録を消す">×</button>'
+          + '</div>';
+      }).join('');
+      Array.prototype.forEach.call(host.querySelectorAll('[data-rc]'), function (b) {
+        b.onclick = function () { return removeReceipt(b.getAttribute('data-rc')); };
+      });
+    }
+
+    /* ★金額を打たずに入れる近道★（代行請求の「全額／残額／半額」から採った）。
+       ただし ★残りが読めていない時は出さない★＝当てずっぽうの金額を入れさせない。 */
+    var q = $('pay-quick');
+    var qh = '';
+    if (st.paid !== null && st.remain > 0) {
+      qh += '<button class="mini" type="button" data-fill="' + st.remain + '">残り全部（' + yen(st.remain) + '）</button>';
+      var half = Math.floor(st.remain / 2);
+      if (half > 0 && half !== st.remain) qh += '<button class="mini" type="button" data-fill="' + half + '">半分（' + yen(half) + '）</button>';
+    }
+    q.innerHTML = qh;
+    Array.prototype.forEach.call(q.querySelectorAll('[data-fill]'), function (b) {
+      b.onclick = function () { $('pay-amt').value = b.getAttribute('data-fill'); drawPayButton(); };
+    });
+
+    setText('pay-why', v.status === 'void'
+      ? 'この請求書は取り消し済みです。入金は記録できません（すでに記録した分はそのまま残ります）。'
+      : '記録しても、すでに出した紙は変わりません（紙の繰越は発行した時の入金で固まっています）。'
+        + 'ここに足した分は、次にこの取引先へ出す請求書の「前回の残り」に効きます。');
+    drawPayButton();
+  }
+
+  /** 入金を1件 足す。★足すだけ＝前の記録を書き換えない★ */
+  function addReceipt() {
+    var v = S.cur;
+    var why = payBlockReason();
+    if (why) { box('pay-err', why); box('pay-ok', ''); return Promise.resolve(); }
+    var rc = {
+      invoice_id: v.id, invoice_no: v.no || '',
+      ymd: $('pay-ymd').value, amount: $('pay-amt').value,
+      method: $('pay-method').value, memo: $('pay-memo').value.trim(),
+    };
+    box('pay-err', '');
+    return S.store.receipts.add(rc).then(function (r) {
+      if (!r.ok) { box('pay-err', '記録できませんでした（' + r.reason + '）'); return; }
+      var keep = rc.method;
+      return reloadReceipts().then(function () {
+        resetPayForm(keep);
+        renderPay();
+        // ★行の書き方とそろえる（行は「− 2,000 円 返金」なので、ここも「返金」と言う）
+        box('pay-ok', r.amount < 0
+          ? (rc.ymd + ' に ' + yen(-r.amount) + ' 円 の返金を記録しました。')
+          : (rc.ymd + ' に ' + yen(r.amount) + ' 円 の入金を記録しました。'));
+      });
+    });
+  }
+
+  function removeReceipt(id) {
+    if (!global.confirm('この入金の記録を消しますか？\n（合計と残りは その場で数え直します）')) return Promise.resolve();
+    box('pay-err', ''); box('pay-ok', '');
+    return S.store.receipts.remove(id, new Date().toISOString()).then(function (r) {
+      if (!r.ok) { box('pay-err', '消せませんでした（' + r.reason + '）'); return; }
+      return reloadReceipts().then(function () {
+        renderPay();
+        box('pay-ok', '入金の記録を1件 消しました。');
+      });
+    });
+  }
+
+  /** 入金を取り直して、入金に依るもの（一覧の状態・繰越）を塗り直す。
+   *  ★S.receipts が唯一の正★（null＝読めていない／[]＝読めた上で0件） */
+  function reloadReceipts() {
+    return S.store.receipts.list().then(function (rs) {
+      S.receipts = rs;
+      renderList();
+      return rs;
+    });
   }
 
   /* ── 明細（★列は会社が決めた items のとおりに作る★） ── */
@@ -1352,6 +1540,13 @@
     $('b-save').onclick = function () { return saveDraft(); };
     $('b-issue').onclick = function () { return issue(); };
 
+    /* ★入金★ 打つたびに「押せる/押せない」を塗り直す（黙って無反応にしない） */
+    $('b-pay-add').onclick = function () { return addReceipt(); };
+    ['pay-ymd', 'pay-amt', 'pay-memo'].forEach(function (id) {
+      var el = $(id); if (el) el.oninput = el.onchange = drawPayButton;
+    });
+    $('pay-method').onchange = drawPayButton;
+
     $('b-seal-save').onclick = function () { return saveSeal(); };
     $('b-seal-clear').onclick = function () { return clearSeal(); };
     $('seal-file').onchange = function (e) { pickSeal(e.target.files && e.target.files[0]); };
@@ -1423,6 +1618,7 @@
     _fillSettings: fillSettings,
     _loadMasters: function () { return loadMasters(true); },   // テストから1回だけ読ませる
     _recalcForTest: function () { return recalc(); },          // テスト用: 数え直しだけ走らせる
+    _renderPayForTest: function () { return renderPay(); },    // テスト用: 入金の箱だけ描き直す
     _pickSealUrl: function (url) {           // テスト用: ファイル選択の代わりに data URL を渡す
       var chk = DOC.validateSeal(url);
       if (!chk.ok) { box('seal-err', chk.reason); sealPending = null; fillSeal(); return chk; }

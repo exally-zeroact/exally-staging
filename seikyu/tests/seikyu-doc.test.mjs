@@ -47,6 +47,17 @@ if (process.argv.includes('--self-test')) {
     if (r.state !== 'over') throw new Error('過入金と判定していない: ' + r.state);
   });
 
+  S('★0円の入金が止まっている（通ったら赤）＝「入っていない」と「0円入った」を作り分けない', () => {
+    if (D.validateReceipt({ ymd: '2026-10-05', amount: '0' }).ok) throw new Error('0円が記録できてしまう');
+    if (!D.validateReceipt({ ymd: '2026-10-05', amount: '1' }).ok) throw new Error('1円が通らない（境界を締めすぎ）');
+  });
+
+  S('★読めない金額を0に丸めていない（0を返したら赤）', () => {
+    const v = D.receiptAmountOf('あいう');
+    if (v === 0) throw new Error('読めない金額を0にしている＝0円の入金として記録される');
+    if (v !== null) throw new Error('null を返していない: ' + JSON.stringify(v));
+  });
+
   S('★取引先が消えた時に空文字を返していない（空なら赤）', () => {
     const inv = { status: 'draft', partner_id: 'pt_x', snapshot: {} };
     const name = D.partnerNameOf(inv, {});
@@ -375,6 +386,89 @@ T('★発行した時の印は写しに残る（あとで印を替えても、�
   });
   eq(s.org.sealDataUrl, seal, '写しに印が残っていない');
   eq(s.org.sealSizeMm, 30, '写しに大きさが残っていない');
+});
+
+/* ── 入金を「記録する」側 ────────────────────────────────────────
+   ★1回＝1行で足す（上書きしない）★ の相方＝「何を1行として受け付けるか」。
+   代行請求は `PAYMENTS["会社::月"]` に1行だけ持って上書きしていた＝分割払いの履歴が消えた。
+   ここは「1件が記録できる形か」だけを決める（数え方は paymentStateOf が持つ）。 */
+T('★入金の方法は選び所から出す（画面に文字を直書きしない）', () => {
+  ok(Array.isArray(D.PAY_METHODS) && D.PAY_METHODS.length >= 3, '方法の一覧が無い');
+  ok(D.PAY_METHODS.indexOf('振込') >= 0, '「振込」が無い');
+  ok(D.PAY_METHODS.indexOf('相殺') >= 0, '「相殺」が無い（現金と振込だけでは足りない）');
+});
+
+T('★0円は記録できない（倉庫の check amount <> 0 と同じ言葉で断る）', () => {
+  const r = D.validateReceipt({ ymd: '2026-10-05', amount: '0' });
+  eq(r.ok, false, '0円が通っている');
+  ok(hasErr(r.errors, '0円'), '理由が0円の話になっていない: ' + r.errors.join('/'));
+  // 境界：1円は通る／−1円（返金）も通る
+  eq(D.validateReceipt({ ymd: '2026-10-05', amount: '1' }).ok, true, '1円が通らない');
+  eq(D.validateReceipt({ ymd: '2026-10-05', amount: '-1' }).ok, true, '返金（マイナス）が通らない');
+});
+
+T('★金額は1円単位の数字だけ（小数・文字・空を通さない）', () => {
+  eq(D.validateReceipt({ ymd: '2026-10-05', amount: '1000.5' }).ok, false, '小数が通っている');
+  eq(D.validateReceipt({ ymd: '2026-10-05', amount: 'あいう' }).ok, false, '文字が通っている');
+  eq(D.validateReceipt({ ymd: '2026-10-05', amount: '' }).ok, false, '空が通っている');
+  eq(D.validateReceipt({ ymd: '2026-10-05', amount: '40,000' }).ok, true, '桁区切りが弾かれている（人はこう打つ）');
+  eq(D.receiptAmountOf('40,000'), 40000, '桁区切りが読めていない');
+  eq(D.receiptAmountOf(' 40000 '), 40000, '前後の空白で読めなくなる');
+});
+
+T('★★読めない金額を0にしない（0にすると「0円の入金」として記録される）★★', () => {
+  eq(D.receiptAmountOf('あいう'), null);
+  eq(D.receiptAmountOf(''), null);
+  eq(D.receiptAmountOf('1000.5'), null, '小数を切り捨てて通していない');
+  eq(D.receiptAmountOf('０'), null, '全角が数字として読まれている');
+  eq(D.receiptAmountOf('0'), 0, '0そのものは0として読む（弾くのは validateReceipt の仕事）');
+});
+
+T('★入金日が無い・読めない物は記録できない（勝手に今日にしない）', () => {
+  eq(D.validateReceipt({ ymd: '', amount: '1000' }).ok, false, '日付なしが通っている');
+  eq(D.validateReceipt({ ymd: '2026-02-30', amount: '1000' }).ok, false, '存在しない日が通っている');
+  eq(D.validateReceipt({ ymd: '2026/10/05', amount: '1000' }).ok, false, '形の違う日付が通っている');
+  eq(D.validateReceipt({ ymd: '2026-10-05', amount: '1000' }).ok, true);
+});
+
+T('★理由は「押す前」と「押した後」で同じ物を使う（1件目だけをボタンに入れる）', () => {
+  const r = D.validateReceipt({ ymd: '', amount: '' });
+  eq(r.ok, false);
+  ok(r.errors.length >= 2, '理由が1つしか出ていない: ' + r.errors.join('/'));
+  ok(r.errors[0].length <= 24, '★1つ目の理由がボタンに入らない長さ★: ' + r.errors[0]);
+});
+
+T('★備考・方法の長さに蓋がある（1行に長文を貼られて画面が崩れない）', () => {
+  eq(D.validateReceipt({ ymd: '2026-10-05', amount: '1', memo: 'あ'.repeat(200) }).ok, true, '200文字が通らない（境界）');
+  eq(D.validateReceipt({ ymd: '2026-10-05', amount: '1', memo: 'あ'.repeat(201) }).ok, false, '201文字が通っている');
+  eq(D.validateReceipt({ ymd: '2026-10-05', amount: '1', method: 'あ'.repeat(21) }).ok, false, '方法の蓋が無い');
+});
+
+/* ★手計算★ 請求 110,000 に 40,000＋30,000 が入った ＝ 残り 40,000（一部入金）
+   さらに 80,000 で 150,000 ＝ 40,000 の過入金。★どちらも0でクランプしない★ */
+T('★★分けて払われた3回を、1件も落とさずに数える（手計算 110,000 / 70,000 / 40,000）★★', () => {
+  const rs = [
+    { invoice_id: 'iv_1', amount: 40000, ymd: '2026-10-05' },
+    { invoice_id: 'iv_1', amount: 30000, ymd: '2026-10-20' },
+    { invoice_id: 'iv_2', amount: 99999, ymd: '2026-10-21' },   // 別の請求＝混ぜない
+  ];
+  const r = D.paymentStateOf({ id: 'iv_1', grand_total: 110000 }, rs);
+  eq(r.paid, 70000, '入っている合計');
+  eq(r.remain, 40000, '残り');
+  eq(r.count, 2, '回数');
+  eq(r.state, 'partial');
+  eq(r.lastYmd, '2026-10-20', '最後に入った日');
+  // 3回目（80,000）を足すと過入金 40,000
+  const over = D.paymentStateOf({ id: 'iv_1', grand_total: 110000 },
+    rs.concat([{ invoice_id: 'iv_1', amount: 80000, ymd: '2026-10-25' }]));
+  eq(over.paid, 150000);
+  eq(over.remain, -40000, '★過入金が0でクランプされている★');
+  eq(over.state, 'over');
+  // 消した入金は数えない（行は残るが合計には入らない）
+  const del = D.paymentStateOf({ id: 'iv_1', grand_total: 110000 },
+    rs.concat([{ invoice_id: 'iv_1', amount: 80000, ymd: '2026-10-25', deleted_at: '2026-10-26T00:00:00Z' }]));
+  eq(del.paid, 70000, '消した入金を数えている');
+  eq(del.count, 2);
 });
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

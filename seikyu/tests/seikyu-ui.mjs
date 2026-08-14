@@ -305,9 +305,13 @@ T('2-a. ★出すボタンは1つだけ大きく・ほかは畳む（7個 横並
   const box = $('out-box');
   ok(box && box.tagName === 'DETAILS', 'ほかの出し方が畳まれていない');
   ok(!box.open, '最初から開いている（画面が説明とボタンで埋まる）');
-  // 畳みの外に出ているボタンは「発行する」だけ
-  const outside = [...$('scr-edit').querySelectorAll('button')].filter((b) => !b.closest('details') && !b.closest('#lines-body') && b.id !== 'b-addline' && b.id !== 'b-no-edit' && !b.id.startsWith('b-guess'));
+  /* 畳みの外に「見えている」ボタンは、下書きの間は「発行する」だけ。
+     ★DOMに在る＝見えている ではない★ので、隠れている箱の中は数えない
+     （入金の箱は発行してから出る。下書きの画面には1つも出ていないことを、ここで併せて測る）。 */
+  const shown = (el) => { for (let e = el; e && e !== doc.body; e = e.parentElement) { if (e.style && e.style.display === 'none') return false; } return true; };
+  const outside = [...$('scr-edit').querySelectorAll('button')].filter((b) => shown(b) && !b.closest('details') && !b.closest('#lines-body') && b.id !== 'b-addline' && b.id !== 'b-no-edit' && !b.id.startsWith('b-guess'));
   eq(outside.map((b) => b.id).join(','), 'b-issue', '畳みの外にボタンが多い: ' + outside.map((b) => b.id));
+  eq(shown($('b-pay-add')), false, '★下書きなのに「入金を記録」が出ている（まだ請求していない）★');
 });
 
 T('2-a. ★タブの順と動詞を給与にそろえた（設定→入力→一覧・「作る」ではなく「入力」）', () => {
@@ -1132,6 +1136,258 @@ T('9-e. ★税率のある行は非課税にならない（印だけ立てても
   const STD = Math.round(SR.hyojun * 10000) / 100;
   const r = TAX.compute({ lines: [{ name: 'あ', amount: 10000, rate: STD, nontax: true }], taxMode: 'exclusive', rounding: 'floor' });
   eq(r.nontaxable.base, 0, '税率のある行が非課税に入った');
+});
+
+/* ═══ 11. ★入金の記録（1回＝1行。上書きしない）★ ═══
+   ここで止めたい事故:
+     ・代行請求の型＝1請求1行で上書き → ★2回目を記録すると1回目が消える★
+     ・入金が読めないのに「0円・未入金」と言い切る
+     ・あとから入金を記録したら ★もう出した紙の繰越まで動く★
+   ★数字はすべて手で計算して埋める（一致だけの試験にしない）★
+     9月請求  100,000（税抜）＋消費税 10,000 ＝ ★110,000★
+     入金 40,000 ＋ 30,000        ＝ ★70,000★  → 残り 110,000−70,000 ＝ ★40,000★
+     さらに 80,000 を足すと 150,000 → 110,000−150,000 ＝ ★−40,000（過入金 40,000）★
+     10月請求 50,000＋5,000 ＝ 55,000 → 合計請求額 40,000＋55,000 ＝ ★95,000★ */
+
+const SR_ = require_(path.join(ROOT, 'kyuyo/lib/shouhizei-ritsu.js'));
+const STD_PCT = Math.round(SR_.hyojun * 10000) / 100;
+const yenS = (n) => Number(n).toLocaleString('ja-JP');
+
+T('11. ★この検査の手計算は標準税率10%を前提にしている（変わったら数え直す合図）', () => {
+  eq(STD_PCT, 10, '★標準税率が変わった＝下の 110,000 / 95,000 を手で計算し直すこと★');
+});
+
+await TA('11. 入金テスト用の取引先を足して、繰越を「入」にする', async () => {
+  db.pay_partners.push({
+    id: 'pt_p', account_id: 'u1', sort: 20,
+    data: { name: '入金テスト商店', keisho: '御中', addr: '今治市8-8' }, deleted_at: null,
+  });
+  /* ★倉庫の側に入れる★ … 画面の変数だけに入れると「読み直す」で消える
+     （この検査は途中で b-reload を押すので、そこで繰越が切れて空振りになる） */
+  db.pay_org[0].data.invoiceCarry = true;         // 紙に繰越5行を出す会社
+  await win.SeikyuApp._loadMasters();
+  await sleep(30);
+  ok(win.SeikyuApp._state.partners.some((p) => p.id === 'pt_p'), '取引先が足せていない');
+  eq(win.SeikyuApp._state.org.invoiceCarry, true, '繰越が「入」になっていない');
+});
+
+/** その画面の1通を作って発行する（明細1行・外税） */
+async function issueOne(partnerId, ymd, amount, name) {
+  doc.querySelector('.bn[data-scr="scr-list"]').click(); await sleep(10);
+  $('b-new').click(); await sleep(20);
+  setVal('e-partner', partnerId); await sleep(60);
+  if (win.getComputedStyle($('guess-card')).display !== 'none') { $('b-guess-edit').click(); await sleep(20); }
+  setVal('e-issue', ymd); await sleep(40);
+  const tr = doc.querySelector('#lines-body tr');
+  const setF = (k, v) => { const e = tr.querySelector('[data-f="' + k + '"]'); e.value = v; e.dispatchEvent(new win.Event('input')); e.dispatchEvent(new win.Event('change')); };
+  setF('name', name); setF('amount', String(amount));
+  await sleep(40);
+  $('b-issue').click(); await sleep(80);
+  return win.SeikyuApp._state.cur;
+}
+
+let sep = null;   // 9月の1通（あとで繰越の「前回」になる）
+
+await TA('11-a. ★9月の1通を発行すると、入金の箱がその場に出る（下書きには出ない）', async () => {
+  sep = await issueOne('pt_p', '2026-09-30', 100000, '9月分 業務委託料');
+  eq(sep.status, 'issued', '発行できていない: ' + $('edit-err').textContent);
+  // ★手計算★ 100,000 ＋ 消費税10,000 ＝ 110,000
+  eq(sep.totals.grandTotal, 110000, '合計が手計算と違う');
+  eq(win.getComputedStyle($('pay-card')).display !== 'none', true, '★発行したのに入金の箱が出ない★');
+  ok(/請求額/.test($('pay-sum').textContent), '請求額が出ていない');
+  ok($('pay-sum').textContent.includes(yenS(110000)), '請求額が手計算と違う: ' + $('pay-sum').textContent);
+  ok(/まだ入金の記録がありません/.test($('pay-list').textContent), '0件の言い方が違う: ' + $('pay-list').textContent);
+  // 0件は「0件」であって「未確認」ではない
+  ok(!/未確認/.test($('pay-sum').textContent), '★読めているのに未確認と出ている★: ' + $('pay-sum').textContent);
+  ok($('pay-sum').textContent.includes(yenS(110000)), '残りが請求額と一致していない');
+});
+
+await TA('11-b. ★押せない理由はボタンの中（金額が空・0円・日付なし）', async () => {
+  eq($('b-pay-add').disabled, true, '金額が空なのに押せる');
+  ok(/入金を記録（/.test($('b-pay-add').textContent), '理由がボタンの中に無い: ' + $('b-pay-add').textContent);
+  setVal('pay-amt', '0'); await sleep(10);
+  ok(/0円は記録できません/.test($('b-pay-add').textContent), '★0円が止まっていない★: ' + $('b-pay-add').textContent);
+  setVal('pay-amt', 'あいう'); await sleep(10);
+  ok(/1円単位/.test($('b-pay-add').textContent), '数字でない金額が止まっていない: ' + $('b-pay-add').textContent);
+  setVal('pay-amt', '1000.5'); await sleep(10);
+  ok(/1円単位/.test($('b-pay-add').textContent), '★小数が止まっていない（1円単位）★: ' + $('b-pay-add').textContent);
+  const keepYmd = $('pay-ymd').value;
+  setVal('pay-ymd', ''); setVal('pay-amt', '1000'); await sleep(10);
+  ok(/入金日/.test($('b-pay-add').textContent), '日付なしが止まっていない: ' + $('b-pay-add').textContent);
+  setVal('pay-ymd', keepYmd); setVal('pay-amt', ''); await sleep(10);
+});
+
+await TA('11-c. ★分けて払われた2回が、2行とも残る（代行請求は1行で上書きしていた）', async () => {
+  setVal('pay-ymd', '2026-10-05'); setVal('pay-amt', '40000'); setVal('pay-method', '振込');
+  setVal('pay-memo', '1回目'); await sleep(10);
+  eq($('b-pay-add').disabled, false, '揃ったのに押せない: ' + $('b-pay-add').textContent);
+  $('b-pay-add').click(); await sleep(60);
+
+  setVal('pay-ymd', '2026-10-20'); setVal('pay-amt', '30000'); setVal('pay-method', '現金');
+  setVal('pay-memo', '2回目'); await sleep(10);
+  $('b-pay-add').click(); await sleep(60);
+
+  // ★倉庫に2行★（上書きされていない）
+  const mine = db.pay_receipts.filter((r) => r.invoice_id === sep.id && !r.deleted_at);
+  eq(mine.length, 2, '★1請求1行で上書きしている（分割払いの履歴が消える）★');
+  eq(mine.reduce((a, r) => a + r.amount, 0), 70000, '倉庫の合計が手計算と違う');
+  // ★画面にも2行★
+  eq($('pay-list').querySelectorAll('.pay-row').length, 2, '画面の入金の行数');
+  ok(/1回目/.test($('pay-list').textContent) && /2回目/.test($('pay-list').textContent), '備考が消えている');
+  ok(/振込/.test($('pay-list').textContent) && /現金/.test($('pay-list').textContent), '方法が消えている');
+  // ★手計算★ 40,000＋30,000＝70,000 ／ 110,000−70,000＝40,000
+  ok($('pay-sum').textContent.includes(yenS(70000)), '入っている合計が手計算と違う: ' + $('pay-sum').textContent);
+  ok($('pay-sum').textContent.includes(yenS(40000)), '残りが手計算と違う: ' + $('pay-sum').textContent);
+  ok(/（2回）/.test($('pay-sum').textContent), '何回で入ったかが出ていない: ' + $('pay-sum').textContent);
+});
+
+await TA('11-d. ★一覧にも「一部入金・残り 40,000 円」と出る', async () => {
+  doc.querySelector('.bn[data-scr="scr-list"]').click(); await sleep(20);
+  doc.querySelector('#fil-seg [data-fil="issued"]').click(); await sleep(10);
+  const row = [...$('list-body').querySelectorAll('[data-open]')].find((b) => b.getAttribute('data-open') === sep.id);
+  ok(row, '一覧にこの1通が無い');
+  ok(/一部入金/.test(row.textContent), '状態が出ていない: ' + row.textContent);
+  ok(row.textContent.includes(yenS(40000)), '★残りの金額が出ていない（状態の言葉だけでは督促を判断できない）★: ' + row.textContent);
+  doc.querySelector('#fil-seg [data-fil="all"]').click(); await sleep(10);
+  row.click(); await sleep(30);
+});
+
+await TA('11-e. ★「残り全部」を押すと残りが入る（金額を打たない近道）', async () => {
+  const b = [...$('pay-quick').querySelectorAll('[data-fill]')].find((x) => /残り全部/.test(x.textContent));
+  ok(b, '「残り全部」が出ていない: ' + $('pay-quick').textContent);
+  b.click(); await sleep(10);
+  eq($('pay-amt').value, '40000', '残りが入っていない');
+  // 半分も出る（40,000 の半分＝20,000）
+  const h = [...$('pay-quick').querySelectorAll('[data-fill]')].find((x) => /半分/.test(x.textContent));
+  ok(h && h.getAttribute('data-fill') === '20000', '半分が手計算と違う: ' + (h && h.getAttribute('data-fill')));
+  setVal('pay-amt', ''); await sleep(10);
+});
+
+await TA('11-f. ★過入金は0でクランプしない（多く入った事実を残す）', async () => {
+  setVal('pay-ymd', '2026-10-25'); setVal('pay-amt', '80000'); setVal('pay-memo', '入れすぎ');
+  await sleep(10);
+  $('b-pay-add').click(); await sleep(60);
+  // ★手計算★ 70,000＋80,000＝150,000 ／ 110,000−150,000＝−40,000
+  ok(/過入金/.test($('pay-sum').textContent), '★過入金と言っていない★: ' + $('pay-sum').textContent);
+  ok($('pay-sum').textContent.includes(yenS(40000)), '過入金の額が手計算と違う: ' + $('pay-sum').textContent);
+  ok($('pay-sum').textContent.includes(yenS(150000)), '入っている合計が手計算と違う: ' + $('pay-sum').textContent);
+  eq($('pay-list').querySelectorAll('.pay-row').length, 3, '3行 残っていない');
+  // 残りが無いので近道は出さない（当てずっぽうの金額を入れさせない）
+  eq($('pay-quick').querySelectorAll('[data-fill]').length, 0, '残りが無いのに「残り全部」が出ている');
+});
+
+await TA('11-g. ★入れ間違いを消すと数え直す。ただし行は残す（履歴を消さない）', async () => {
+  const dels = $('pay-list').querySelectorAll('[data-rc]');
+  eq(dels.length, 3, '消すボタンが行の数だけ無い');
+  dels[2].click(); await sleep(60);          // 3件目（80,000）を消す
+  eq($('pay-list').querySelectorAll('.pay-row').length, 2, '画面から消えていない');
+  // ★倉庫の行は残っている（deleted_at が入っただけ）＝いつ何を消したかが辿れる
+  eq(db.pay_receipts.filter((r) => r.invoice_id === sep.id).length, 3, '★行ごと消している（履歴が残らない）★');
+  eq(db.pay_receipts.filter((r) => r.invoice_id === sep.id && r.deleted_at).length, 1, '消した印が入っていない');
+  // 数え直し ＝ 70,000 / 残り 40,000
+  ok($('pay-sum').textContent.includes(yenS(70000)), '数え直していない: ' + $('pay-sum').textContent);
+  ok($('pay-sum').textContent.includes(yenS(40000)), '残りが数え直されていない: ' + $('pay-sum').textContent);
+  ok(!/過入金/.test($('pay-sum').textContent), '消したのに過入金のまま');
+});
+
+await TA('11-h. ★入金が読めない時は「未確認」。0円と書き分ける', async () => {
+  sb._failNext('pay_receipts', 'select');
+  $('b-reload').click(); await sleep(80);
+  eq(win.SeikyuApp._state.receipts, null, '読めなかったのに 0件として持っている');
+  doc.querySelector('.bn[data-scr="scr-list"]').click(); await sleep(10);
+  [...$('list-body').querySelectorAll('[data-open]')].find((b) => b.getAttribute('data-open') === sep.id).click();
+  await sleep(30);
+  ok(/未確認/.test($('pay-sum').textContent), '★読めないのに0円と言い切っている★: ' + $('pay-sum').textContent);
+  ok(!$('pay-sum').textContent.includes(yenS(70000)), '読めていないのに合計を出している');
+  ok(/読めませんでした/.test($('pay-list').textContent), '読めなかったと言っていない: ' + $('pay-list').textContent);
+  eq($('pay-quick').querySelectorAll('[data-fill]').length, 0, '★残りが読めないのに「残り全部」を出している★');
+  // 読めなくても記録そのものは止めない（足すのは読み取りに依らない）
+  eq($('b-pay-add').disabled, true, '金額が空なので押せないのが正しい');
+  $('b-reload').click(); await sleep(80);
+  ok(Array.isArray(win.SeikyuApp._state.receipts), '読み直せていない');
+});
+
+await TA('11-i. ★★繰越が実額で出る（1通 出す → 入金を入れる → 翌月に前回の残りが出る）★★', async () => {
+  const oct = await issueOne('pt_p', '2026-10-31', 50000, '10月分 業務委託料');
+  eq(oct.status, 'issued', '10月の1通が出せていない: ' + $('edit-err').textContent);
+  const c = oct.snapshot.carry;
+  ok(c, '写しに繰越が入っていない');
+  // ★手計算★ 前回 110,000 ／ 入金 70,000 ／ 繰越 40,000 ／ 今回 55,000 ／ 合計 95,000
+  eq(c.state, 'ok', '繰越の状態: ' + c.state);
+  eq(c.prevTotal, 110000, '前回請求額');
+  eq(c.paid, 70000, '★入金額が実額になっていない（ここが0のままだと繰越は育たない）★');
+  eq(c.carry, 40000, '繰越額');
+  eq(c.thisTotal, 55000, '今回請求額');
+  eq(c.grandTotal, 95000, '合計請求額');
+  // 画面にも実額で出ている
+  const tot = $('tot-box').textContent;
+  ok(tot.includes(yenS(70000)), '画面の入金額が実額でない: ' + tot.replace(/\s+/g, ' '));
+  ok(tot.includes(yenS(95000)), '画面の合計請求額が手計算と違う: ' + tot.replace(/\s+/g, ' '));
+  ok(!/未確認/.test(tot), '入金は読めているのに「未確認」と出ている: ' + tot.replace(/\s+/g, ' '));
+});
+
+await TA('11-j. ★★あとから入金を記録しても、もう出した紙は1円も動かない★★', async () => {
+  const st = win.SeikyuApp._state;
+  const oct = st.cur;
+  const before = JSON.stringify(oct.snapshot.carry);
+  // 9月の1通に、10月の紙を出したあとで さらに入金する
+  doc.querySelector('.bn[data-scr="scr-list"]').click(); await sleep(10);
+  [...$('list-body').querySelectorAll('[data-open]')].find((b) => b.getAttribute('data-open') === sep.id).click();
+  await sleep(30);
+  setVal('pay-ymd', '2026-11-05'); setVal('pay-amt', '10000'); setVal('pay-memo', 'あとから');
+  await sleep(10);
+  $('b-pay-add').click(); await sleep(60);
+  ok($('pay-sum').textContent.includes(yenS(80000)), '9月側の合計が更新されていない: ' + $('pay-sum').textContent);
+
+  // 10月の紙を開き直す → 写しの繰越は動いていない
+  doc.querySelector('.bn[data-scr="scr-list"]').click(); await sleep(10);
+  [...$('list-body').querySelectorAll('[data-open]')].find((b) => b.getAttribute('data-open') === oct.id).click();
+  await sleep(30);
+  eq(JSON.stringify(st.cur.snapshot.carry), before, '★出した紙の繰越が後から動いた★');
+  eq(st.cur.totals.grandTotal, 55000, '出した紙の合計が動いた');
+  const tot = $('tot-box').textContent;
+  ok(tot.includes(yenS(70000)), '★画面が写しではなく今の入金で描き直している★: ' + tot.replace(/\s+/g, ' '));
+  ok(!tot.includes(yenS(80000)), '★出した紙に、あとから入れた入金が混ざった★: ' + tot.replace(/\s+/g, ' '));
+  // 倉庫の行そのものも動いていない
+  const row = db.pay_invoices.find((x) => x.id === oct.id);
+  eq(row.snapshot.carry.paid, 70000, '倉庫の写しが動いた');
+  eq(row.totals.grandTotal, 55000, '倉庫の合計が動いた');
+});
+
+T('11-k. ★取り消した請求書には記録させない（理由はボタンの中）', () => {
+  const st = win.SeikyuApp._state;
+  const keep = st.cur.status;
+  st.cur.status = 'void';
+  win.SeikyuApp._renderPayForTest();
+  eq($('b-pay-add').disabled, true, '取り消し済みなのに押せる');
+  ok(/取り消した請求書/.test($('b-pay-add').textContent), '理由がボタンの中に無い: ' + $('b-pay-add').textContent);
+  // すでに記録した分は消さない（見えなくしない）
+  eq(win.getComputedStyle($('pay-card')).display !== 'none', true, '取り消したら入金の記録ごと隠れた');
+  st.cur.status = keep;
+  win.SeikyuApp._renderPayForTest();
+});
+
+T('11-l. ★入金の文は block で最低幅を持つ（狭い端末で1文字ずつ縦に割れない）', () => {
+  for (const sel of ['.pay-memo']) {
+    const rule = (new RegExp('\\' + sel + '\\s*\\{([^}]*)\\}').exec(CSS) || [])[1] || '';
+    ok(/display\s*:\s*block/.test(rule), sel + ' が block でない');
+    ok(/min-width\s*:\s*\d/.test(rule), sel + ' に最低幅が無い');
+    ok(/overflow-wrap\s*:\s*break-word/.test(rule), sel + ' に折り返しの指定が無い');
+  }
+  // 行そのものは折り返す（消すボタンが外へ出ない）
+  const row = (/\.pay-row\s*\{([^}]*)\}/.exec(CSS) || [])[1] || '';
+  ok(/flex-wrap\s*:\s*wrap/.test(row), '.pay-row が折り返さない');
+  const main = (/\.pay-main\s*\{([^}]*)\}/.exec(CSS) || [])[1] || '';
+  ok(/min-width\s*:\s*\d+px/.test(main), '.pay-main に最低幅が無い（幅ゼロまで潰れる）');
+  // 理由を入れるボタンなので折り返す側（btn-big）に入っている
+  ok(/btn-big/.test($('b-pay-add').className), '★理由を入れるボタンが折り返せない書き方（はみ出す）★');
+});
+
+await TA('11-z. 繰越の設定を元に戻す（次の検査を汚さない）', async () => {
+  delete db.pay_org[0].data.invoiceCarry;
+  await win.SeikyuApp._loadMasters();
+  await sleep(20);
+  eq(!!win.SeikyuApp._state.org.invoiceCarry, false, '繰越が「切」に戻っていない');
 });
 
 /* ═══ 10. ★主役の操作は隠さない・塞がっている時は灰色＋理由★ ═══

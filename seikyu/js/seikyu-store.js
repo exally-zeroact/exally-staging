@@ -196,8 +196,11 @@
         },
       },
 
-      /* ═══ 入金（②では読むだけ。記録の画面は後） ═══
-         ★読めなかった時は null を返す＝「0件」と作り分ける（未確認と未入金は違う）★ */
+      /* ═══ 入金 ═══
+         ★読めなかった時は null を返す＝「0件」と作り分ける（未確認と未入金は違う）★
+         ★1回＝1行で足す。上書きしない★
+           代行請求は「会社×月」で1行だけ持って上書きしていた＝分割払いの履歴が消えていた。
+           ここは insert だけ（upsert を使わない＝同じ日に2回 入っても2行 残る）。 */
       receipts: {
         list: function () {
           return fetchAllQ(function (a, b) {
@@ -207,6 +210,38 @@
             if (r && r.error) return null;      // ★取れなかった＝null（0件と混ぜない）
             return r.data || [];
           }).catch(function () { return null; });
+        },
+        /* 入金を1件 足す。★決まり（日付・0円・桁）は seikyu-doc.validateReceipt が唯一の正★
+           ここは配線だけ＝倉庫が弾いた時は理由をそのまま返す（嘘の成功を返さない）。 */
+        add: function (rc) {
+          var o = rc || {};
+          var chk = DOC.validateReceipt(o);
+          if (!chk.ok) return Promise.resolve({ ok: false, reason: chk.errors[0] });
+          var amount = DOC.receiptAmountOf(o.amount);
+          return uid().then(function (u) {
+            if (!u) return { ok: false, reason: 'ログインしていません' };
+            var id = o.id || newId('rc');
+            var row = {
+              id: id, account_id: u,
+              // ★どの請求か分からない入金も捨てない（棚は invoice_id に null を許す）
+              invoice_id: o.invoice_id || null,
+              invoice_no: o.invoice_no || '',
+              ymd: o.ymd, amount: amount,
+              method: o.method || '', memo: o.memo || '',
+              deleted_at: null, updated_at: nowIso(),
+            };
+            return Promise.resolve(sb.from('pay_receipts').insert(row))
+              .then(function (w) { return (w && w.error) ? { ok: false, reason: err(w.error) } : { ok: true, id: id, amount: amount }; })
+              .catch(function (e) { return { ok: false, reason: err(e) }; });
+          });
+        },
+        /* 打ち間違いの取り消し。★行は消さない（deleted_at を入れるだけ）★
+           物理削除すると「いつ何を消したか」が残らない＝入金の履歴が信用できなくなる。 */
+        remove: function (id, at) {
+          var stamp = at || nowIso();
+          return Promise.resolve(sb.from('pay_receipts').update({ deleted_at: stamp, updated_at: stamp }).eq('id', id))
+            .then(function (w) { return (w && w.error) ? { ok: false, reason: err(w.error) } : { ok: true }; })
+            .catch(function (e) { return { ok: false, reason: err(e) }; });
         },
       },
 

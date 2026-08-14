@@ -210,6 +210,52 @@ T('★発行時の5行は写しに残せる形（あとで入金しても過去�
   eq(back.state, r.state);
 });
 
+/* ⑤ ★入金を記録できるようになって初めて成り立つ筋★ -------------------
+   2026-08-14 まで、入金を記録する所が無かった＝入金額は永久に0で、
+   繰越は「前回請求額がそのまま繰り越される」だけの飾りだった。
+   ★手計算★（実UIの検査 seikyu-ui.mjs 11-i と同じ数字を、libの側でも留める）
+     前回 110,000 ／ 入金 40,000＋30,000＝70,000 ／ 繰越 110,000−70,000＝40,000
+     今回 55,000 ／ 合計請求額 40,000＋55,000＝95,000 */
+T('★★分けて払われた2回が繰越に効く（手計算 110,000 / 70,000 / 40,000 / 55,000 / 95,000）★★', () => {
+  const prev = inv({ id: 'iv_sep', no: '202609-001', totals: { grandTotal: 110000 } });
+  const r = CARRY.compute({
+    prev: prev,
+    receipts: [
+      { invoice_id: 'iv_sep', amount: 40000, ymd: '2026-10-05' },
+      { invoice_id: 'iv_sep', amount: 30000, ymd: '2026-10-20' },
+      { invoice_id: 'iv_other', amount: 99999, ymd: '2026-10-21' },   // 別の請求＝混ぜない
+    ],
+    thisTotal: 55000,
+  });
+  eq(r.state, 'ok');
+  eq(r.prevTotal, 110000, '前回請求額');
+  eq(r.paid, 70000, '★入金額（ここが0のままなら、記録する所が繋がっていない）★');
+  eq(r.carry, 40000, '繰越額');
+  eq(r.thisTotal, 55000, '今回請求額');
+  eq(r.grandTotal, 95000, '合計請求額');
+});
+
+T('★消した入金は繰越に入れない（打ち間違いを消したら、その場で数え直る）', () => {
+  const prev = inv({ id: 'iv_sep', totals: { grandTotal: 110000 } });
+  const rs = [
+    { invoice_id: 'iv_sep', amount: 40000, ymd: '2026-10-05' },
+    { invoice_id: 'iv_sep', amount: 30000, ymd: '2026-10-20' },
+    { invoice_id: 'iv_sep', amount: 80000, ymd: '2026-10-25', deleted_at: '2026-10-26T00:00:00Z' },
+  ];
+  const r = CARRY.compute({ prev: prev, receipts: rs, thisTotal: 55000 });
+  eq(r.paid, 70000, '消した入金を数えている');
+  eq(r.carry, 40000);
+  // 消していなければ 150,000 入って 40,000 の過入金（0でクランプしない）
+  const live = CARRY.compute({
+    prev: prev, thisTotal: 55000,
+    receipts: rs.map((x) => ({ invoice_id: x.invoice_id, amount: x.amount, ymd: x.ymd })),
+  });
+  eq(live.paid, 150000);
+  eq(live.carry, -40000, '★過入金が0でクランプされている★');
+  eq(live.state, 'over');
+  eq(live.grandTotal, 15000, '過入金は次回から引く（−40,000＋55,000＝15,000）');
+});
+
 T('★網羅：前回×入金×今回 を全部流して 繰越=前回−入金・合計=繰越+今回 が必ず一致', () => {
   const prevs = [null, 0, 1, 50000, 999999];
   const paids = [null, [], [0], [10000], [10000, 20000], [999999]];

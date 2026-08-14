@@ -60,6 +60,30 @@
 }
 .iv-amt { font-family: 'DM Mono', ui-monospace, monospace; font-size: 15px; font-weight: 700; color: #2E7D54; }
 
+/* ── 入金の1行（★1回＝1行。上書きしない＝分割払いの履歴が残る★）─────
+   ★flex の子に文を直接置くと、狭い端末で1文字ずつ縦に割れる（前科あり）★
+     ＝日付・金額の並びと、備考の文を別の箱に分け、文の側に最低幅を持たせる。
+   消すボタンは明細と同じ .l-del を使い回す（新しい部品を作らない）。 */
+.pay-row {
+  display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px;
+  border: 1px solid #D4EAE0; border-radius: 12px;
+  padding: 8px 10px; margin-bottom: 8px; background: #FFFFFF;
+}
+.pay-main { flex: 1 1 180px; min-width: 180px; }
+.pay-l1 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; }
+.pay-d { font-family: 'DM Mono', ui-monospace, monospace; font-size: 12px; color: #5C7E6C; white-space: nowrap; }
+.pay-v { font-family: 'DM Mono', ui-monospace, monospace; font-size: 15px; font-weight: 700; color: #2E7D54; white-space: nowrap; }
+.pay-w { font-size: 10.5px; color: #7AA08C; white-space: nowrap; }
+.pay-memo {
+  display: block; width: 100%; min-width: 150px; font-size: 11.5px; color: #7AA08C;
+  line-height: 1.8; margin-top: 2px;
+  white-space: normal; word-break: normal; overflow-wrap: break-word;
+}
+/* 「残り全部」「半分」＝金額を打たずに入れる近道（当たりは指の幅を確保する） */
+.pay-quick { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+/* ★指で押す物なので、mini の既定（高さ約23px）より当たりを大きくする（実測40px）★ */
+.pay-quick .mini { padding: 11px 12px; font-size: 11.5px; }
+
 /* ── 列の編集（★ボタンだけの行なので折り返して潰さない★）───── */
 .col-row {
   display: flex; flex-wrap: wrap; align-items: center; gap: 6px;

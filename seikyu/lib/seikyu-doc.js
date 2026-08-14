@@ -335,6 +335,48 @@
     unknown: '入金は未確認', unpaid: '未入金', partial: '一部入金', paid: '入金済', over: '過入金',
   };
 
+  /* ── 入金を「記録する」側の決まり ────────────────────────────
+     ★1回＝1行で足す。上書きしない★
+       代行請求は `PAYMENTS["会社::月"] = {paid,paidDate,note}` ＝ 1請求に1行しか持てない。
+       2回に分けて払われると、2回目で1回目が消える（分割払いの履歴が残らない）。
+       うちは入金1回につき1行を足すだけ＝分割払いも過入金も返金も、そのまま履歴に残る。
+     ★充てた結果は保存しない★（飲み屋 nomiya-core.js と同じ考え方）
+       残り・過入金は毎回その場で数える（paymentStateOf）。正が1つで済み、
+       記録を消せば数字もその場でやり直される。
+     ★0円は記録させない★＝倉庫の check (amount <> 0) と同じ言葉でここでも断る。
+       「入っていない」と「0円 入った」を作り分けると、督促の判断ができなくなる。 */
+  var PAY_METHODS = ['振込', '現金', '相殺', '手形', 'その他'];
+
+  /** 画面に打たれた金額を円の整数に直す。
+   *  ★読めなかったら null（0にしない）★ … 0にすると「0円の入金」として記録できてしまう。
+   *  返金はマイナスで入れる（−2,000 など）。 */
+  function receiptAmountOf(v) {
+    var raw = String(v == null ? '' : v).trim().replace(/[,\s]/g, '');
+    if (!raw) return null;
+    if (!/^-?\d+$/.test(raw)) return null;      // 小数・文字・全角は受けない（1円単位）
+    var n = Number(raw);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  /** 入金1件が記録できる形か。返り = { ok, errors:[] }
+   *  ★押す前（ボタンの中の理由）と押した後（赤い印）で同じ判定を使う★
+   *  ＝同じ状態を2か所で別々に書かない。 */
+  function validateReceipt(o) {
+    o = o || {};
+    var errors = [];
+    if (!parseYmd(o.ymd)) errors.push('入金日を入れてください');
+    var raw = String(o.amount == null ? '' : o.amount).trim();
+    if (!raw) errors.push('金額を入れてください');
+    else {
+      var n = receiptAmountOf(raw);
+      if (n === null) errors.push('金額は1円単位の数字で入れてください');
+      else if (n === 0) errors.push('0円は記録できません（返金はマイナスで入れてください）');
+    }
+    if (String(o.memo || '').length > 200) errors.push('備考が長すぎます（200文字まで）');
+    if (String(o.method || '').length > 20) errors.push('方法が長すぎます（20文字まで）');
+    return { ok: errors.length === 0, errors: errors };
+  }
+
   /* ── 発行前の検査（空欄のまま出させない） ──────────────────────── */
   function validateInvoice(o) {
     o = o || {};
@@ -395,6 +437,7 @@
   return {
     DOC_TYPES: DOC_TYPES, STATUSES: STATUSES, FROZEN_FIELDS: FROZEN_FIELDS,
     NUMBER_FORMATS: NUMBER_FORMATS, PAY_TERMS: PAY_TERMS, PAY_STATE_LABEL: PAY_STATE_LABEL,
+    PAY_METHODS: PAY_METHODS, receiptAmountOf: receiptAmountOf, validateReceipt: validateReceipt,
     formatNo: formatNo, nextNo: nextNo, bumpNo: bumpNo, validateNumbering: validateNumbering,
     dueDateFrom: dueDateFrom, parseYmd: parseYmd,
     canEdit: canEdit, canDelete: canDelete, canVoid: canVoid, statusOf: statusOf,
