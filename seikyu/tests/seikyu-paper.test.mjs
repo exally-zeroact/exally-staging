@@ -614,5 +614,48 @@ T('★領収書でも 角印は出る（会社の印は受取書にも押す）'
   ok(html.indexOf(seal) >= 0, '角印が出ていない');
 });
 
+
+/* ── ★控除は紙にも出る★ ────────────────────────────────────────
+   ★これを出し忘れると、画面は 281,260 なのに 紙は 292,600 と書く★
+   ＝★請求している額と、紙に書いた額が食い違う★（2026-08-15 スクショで実際に見つけた）。
+   ★実物★ 八木工業：266,000 ＋ 26,600 ＝ 292,600 − 弁当代 11,340 ＝ 281,260 */
+T('★★控除を引いた「請求額」が紙に出る（頭の金額も引いたあと）★★', () => {
+  const lines = [{ name: '工事代金', qty: 140, price: 1900, rate: STD }];
+  const tax = TAX.compute({ lines, taxMode: 'exclusive', rounding: 'floor' });
+  const h = PAPER.build(sample({
+    inv: { doc_type: 'invoice', no: '202607-001', issue_ymd: '2026-07-21', tax_mode: 'exclusive', rounding: 'floor', data: {} },
+    tax,
+    deduct: 11340,
+    deductLines: [{ name: '弁当代　矢原', amount: 11340 }],
+  })).html;
+  const flat = h.split('</head>')[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+  ok(/¥266,000/.test(flat), '小計が出ていない');
+  ok(/¥26,600/.test(flat), '消費税が出ていない');
+  ok(/¥292,600/.test(flat), '合計（控除前）が出ていない');
+  ok(/弁当代/.test(flat), '★何を引いたかが紙に無い（「控除」だけでは理由が分からない）★');
+  ok(/-¥11,340/.test(flat), '★引いた額が紙に無い★: ' + flat.slice(-260));
+  ok(/請求額/.test(flat), '★請求額の行が紙に無い★');
+  ok(/¥281,260/.test(flat), '★実際に請求している額が紙に出ていない★');
+  // ★紙の頭の金額も 引いたあと★（ここだけ控除前だと、頭と足元で食い違う）
+  const head = /（税込）\s*¥([\d,]+)/.exec(flat);
+  ok(head, '頭の金額が読めない');
+  eq(head[1], '281,260', '★頭の金額が控除前のまま（足元と食い違う）★');
+});
+
+T('★控除が無い紙は 今までどおり（控除の行も請求額の行も出さない）', () => {
+  const flat = PAPER.build(sample()).html.split('</head>')[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+  ok(!/請求額/.test(flat), '控除が無いのに「請求額」の行が出ている');
+  ok(!/-¥/.test(flat.replace(/-¥0\b/g, '')), '控除が無いのに引き算の行が出ている');
+});
+
+T('★控除で消費税は動かない（税の外で引く）', () => {
+  const lines = [{ name: '工事代金', qty: 140, price: 1900, rate: STD }];
+  const tax = TAX.compute({ lines, taxMode: 'exclusive', rounding: 'floor' });
+  const withDed = PAPER.build(sample({ inv: { doc_type: 'invoice', no: 'X', issue_ymd: '2026-07-21', tax_mode: 'exclusive', rounding: 'floor', data: {} }, tax, deduct: 11340, deductLines: [{ name: '弁当代', amount: 11340 }] })).html;
+  const noDed = PAPER.build(sample({ inv: { doc_type: 'invoice', no: 'X', issue_ymd: '2026-07-21', tax_mode: 'exclusive', rounding: 'floor', data: {} }, tax })).html;
+  const taxOf = (h) => (/消費税[^¥]*¥([\d,]+)/.exec(h.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ')) || [])[1];
+  eq(taxOf(withDed), taxOf(noDed), '★控除を入れたら消費税が変わった（税の中で引いている）★');
+});
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

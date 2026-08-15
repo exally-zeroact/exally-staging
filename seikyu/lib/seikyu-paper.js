@@ -195,6 +195,12 @@
     var byRate = Array.isArray(tax.byRate) ? tax.byRate : [];
     var exemptBase = (tax.exempt && Number(tax.exempt.base)) || 0;
     var nontaxBase = (tax.nontaxable && Number(tax.nontaxable.base)) || 0;
+    /* ★控除（明細の外・税込の合計から引く）★
+       ★ここを紙に出し忘れると、画面は 281,260 なのに 紙は 292,600 と書く★
+       ＝★請求している額と、紙に書いた額が食い違う★（2026-08-15 スクショで実際に見つけた）。
+       決め方は seikyu-doc.js が唯一の正（billedOf）。 */
+    var deduct = (o.deduct === undefined || o.deduct === null) ? null : Number(o.deduct);
+    var deductLines = Array.isArray(o.deductLines) ? o.deductLines : [];
     var gen = o.gensen || null;     // ★源泉徴収（引く紙だけ）★
     var carry = o.carry || null;    // ★繰越（前回の残り）★
     var pages = paginate(lines, o.page);
@@ -284,9 +290,9 @@
           + '<span class="grand-v">' + (Number.isFinite(got) ? yen(got) : '（未確認）') + '</span>'
           + '</div>';
       }
-      /* ★見出しの額は「実際に請求している額」＝繰越があれば足したあと★
-         ここだけ今回分のままにすると、下の 合計請求額 と食い違う。 */
-      var billed = DOC.billedOf(tax, carry);
+      /* ★見出しの額は「実際に請求している額」★＝繰越があれば足し、★控除があれば引いたあと★。
+         ここだけ今回分のままにすると、下の 合計請求額／請求額 と食い違う。 */
+      var billed = DOC.billedOf(tax, carry, deduct);
       return '<div class="grand">'
         + '<span class="grand-l">' + grandLabel + '</span>'
         + '<span class="grand-v">' + (billed === null ? '（未確認）' : yen(billed)) + '</span>'
@@ -300,17 +306,29 @@
     function totalsBlock() {
       var rows = ''
         + '<tr><th>小計</th><td>' + yen(tax.subtotal) + '</td></tr>'
-        + '<tr><th>' + taxLabel(tax, inv.tax_mode) + '</th><td>' + yen(tax.taxTotal) + '</td></tr>';
+        + '<tr><th>' + taxLabel(tax, inv.tax_mode) + '</th><td>' + yen(tax.taxTotal) + '</td></tr>'
+        + '<tr class="sums-g"><th>合計</th><td>' + yen(tax.grandTotal) + '</td></tr>';
+      /* ★控除（明細の外・税込から引く）★
+         ★何を引いたかを1行ずつ書く★（「控除 −11,340」だけだと、受け取った人に理由が分からない）。
+         ★税額は動かさない★＝上の「消費税」はそのまま。 */
+      if (deduct !== null && (deduct > 0 || deductLines.length)) {
+        for (var di = 0; di < deductLines.length; di++) {
+          var d = deductLines[di] || {};
+          var dv = Number(d.amount);
+          rows += '<tr class="sums-minus"><th>' + (esc(d.name) || '控除') + '</th><td>-'
+            + (Number.isFinite(dv) ? yen(dv) : '（未確認）') + '</td></tr>';
+        }
+        if (!deductLines.length) rows += '<tr class="sums-minus"><th>控除</th><td>-' + yen(deduct) + '</td></tr>';
+        rows += '<tr class="sums-net"><th>請求額</th><td>'
+          + (Number.isFinite(Number(tax.grandTotal - deduct)) ? yen(tax.grandTotal - deduct) : '（未確認）') + '</td></tr>';
+      }
       if (gen && gen.on) {
-        /* ★差引お支払額は「合計請求額（繰越こみ）− 源泉」★
+        /* ★差引お支払額は「合計請求額（繰越こみ・控除ずみ）− 源泉」★
            gen.net は この1通だけで出した額なので、繰越があると足りない。
            順番は seikyu-doc.js が唯一の正。 */
-        var pay = DOC.payableOf(tax, carry, gen);
-        rows += '<tr class="sums-g"><th>合計</th><td>' + yen(tax.grandTotal) + '</td></tr>'
-          + '<tr class="sums-minus"><th>' + esc(gen.label) + '</th><td>-' + yen(gen.amount) + '</td></tr>'
+        var pay = DOC.payableOf(tax, carry, gen, deduct);
+        rows += '<tr class="sums-minus"><th>' + esc(gen.label) + '</th><td>-' + yen(gen.amount) + '</td></tr>'
           + '<tr class="sums-net"><th>' + esc(gen.netLabel) + '</th><td>' + (pay === null ? '（未確認）' : yen(pay)) + '</td></tr>';
-      } else {
-        rows += '<tr class="sums-g"><th>合計</th><td>' + yen(tax.grandTotal) + '</td></tr>';
       }
       return '<table class="sums"><tbody>' + rows + '</tbody></table>';
     }

@@ -1822,13 +1822,13 @@ await TA('13-h. ★控除の赤は 埋めた瞬間に消える（古い文を残
   setLine(0, 'name', '工事代金'); setLine(0, 'amount', '100000');
   await sleep(80);
   $('b-ded-add').click(); await sleep(60);
-  // 足した直後は「名前がありません」＝正しい
-  ok(/名前がありません/.test($('ded-err').textContent), '空の控除で赤が出ていない');
+  // 足した直後は「名前が空です」＝正しい
+  ok(/名前が空です/.test($('ded-err').textContent), '空の控除で赤が出ていない');
   const dn = $('ded-list').querySelector('[data-dn="0"]'), da = $('ded-list').querySelector('[data-da="0"]');
   dn.value = '弁当代'; dn.dispatchEvent(new win.Event('input'));
   await sleep(60);
-  ok(!/名前がありません/.test($('ded-err').textContent),
-    '★名前を打ったのに「名前がありません」が残っている★: ' + $('ded-err').textContent);
+  ok(!/名前が空です/.test($('ded-err').textContent),
+    '★名前を打ったのに「名前が空です」が残っている★: ' + $('ded-err').textContent);
   ok(/金額が空/.test($('ded-err').textContent), '金額が空なのに赤が消えた');
   da.value = '5000'; da.dispatchEvent(new win.Event('input'));
   await sleep(60);
@@ -1837,7 +1837,7 @@ await TA('13-h. ★控除の赤は 埋めた瞬間に消える（古い文を残
   // 名前を消すと また赤に戻り、発行も止まる
   dn.value = ''; dn.dispatchEvent(new win.Event('input'));
   await sleep(80);
-  ok(/名前がありません/.test($('ded-err').textContent), '空に戻したのに赤が出ない');
+  ok(/名前が空です/.test($('ded-err').textContent), '空に戻したのに赤が出ない');
   eq($('b-issue').disabled, true, '★名前の無い控除のまま発行できる★: ' + $('b-issue').textContent);
 });
 

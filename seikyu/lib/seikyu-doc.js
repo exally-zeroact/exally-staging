@@ -521,15 +521,17 @@
     for (var i = 0; i < list.length; i++) {
       var d = list[i] || {};
       var no = i + 1;
-      if (!String(d.name == null ? '' : d.name).trim()) errors.push('控除の' + no + '行目に名前がありません（何を引いたか分からない紙は出せません）');
+      /* ★理由はボタンの中に入る長さで書く★（説明は画面の添え書きが持つ）
+         長い括弧書きを足すと「発行する（…（…））」と入れ子になって読めない。 */
+      if (!String(d.name == null ? '' : d.name).trim()) errors.push('控除の' + no + '行目の名前が空です');
       if (String(d.name || '').length > 40) errors.push('控除の' + no + '行目の名前が長すぎます（40文字まで）');
       var raw = String(d.amount == null ? '' : d.amount).trim();
       if (!raw) errors.push('控除の' + no + '行目の金額が空です');
       else {
         var n = Number(raw.replace(/[,\s]/g, ''));
         if (!Number.isFinite(n) || !Number.isInteger(n)) errors.push('控除の' + no + '行目の金額は1円単位の数字で入れてください');
-        else if (n === 0) errors.push('控除の' + no + '行目が0円です（引かないなら行ごと消してください）');
-        else if (n < 0) errors.push('控除の' + no + '行目がマイナスです（足すなら明細の行にしてください）');
+        else if (n === 0) errors.push('控除の' + no + '行目が0円です');
+        else if (n < 0) errors.push('控除の' + no + '行目がマイナスです');
       }
     }
     return { ok: errors.length === 0, errors: errors };

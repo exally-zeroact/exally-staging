@@ -1332,9 +1332,18 @@
     if (!snap && S.org) org = Object.assign({}, S.org, { bank: settings().bank },
       sealPending ? { sealDataUrl: sealPending } : {});
     var inv = Object.assign({}, v, { lines: cleanLines(v.lines) });
+    /* ★控除も紙へ渡す★
+       渡し忘れると ★画面は 281,260 なのに 紙は 292,600★ と書く（実際に起きた）。
+       発行済みは写しの数（あとで控除を直しても 出した紙は変わらない）。 */
+    var ded = (v.status && v.status !== 'draft' && v.totals && v.totals.deduct !== undefined)
+      ? Number(v.totals.deduct) : currentDeduct();
+    var dedLines = (v.status && v.status !== 'draft' && v.totals && v.totals.deductLines)
+      ? v.totals.deductLines
+      : DOC.deductionsOf(v).map(function (d) { return { name: String(d.name || ''), amount: DOC.receiptAmountOf(d.amount) }; });
     return {
       inv: inv, tax: t, partner: partner, org: org, cols: colsOf(v), theme: themeOf(v),
       gensen: currentGensen(), carry: currentCarry(),
+      deduct: ded, deductLines: dedLines,
     };
   }
 
