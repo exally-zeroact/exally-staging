@@ -1841,6 +1841,95 @@ await TA('13-h. ★控除の赤は 埋めた瞬間に消える（古い文を残
   eq($('b-issue').disabled, true, '★名前の無い控除のまま発行できる★: ' + $('b-issue').textContent);
 });
 
+/* ═══ 14. ★見た目の直し（指示役 2026-08-15）★ ═══ */
+
+await TA('14-a. ★同じ数字を2回 言わない（税率が1つなら「◯%対象」を出さない）', async () => {
+  await newInvoiceFor('pt_y', '2026-08-10');
+  setLine(0, 'name', 'あ'); setLine(0, 'amount', '10000');
+  await sleep(100);
+  const tot = $('tot-box').textContent;
+  ok(!/対象/.test(tot), '★税率が1つなのに「◯%対象」が出ている（小計と同じ数字）★: ' + tot.replace(/\s+/g, ' '));
+  ok(/小計/.test(tot) && /消費税/.test(tot) && /合計/.test(tot), '小計・消費税・合計が出ていない');
+  // ★8%が混ざったら 内訳として出す（税率ごとの区分は適格請求書の要件）★
+  $('b-addline').click(); await sleep(30);
+  setLine(1, 'name', 'い'); setLine(1, 'amount', '1000');
+  const sel = $('lines-body').querySelectorAll('tr')[1].querySelector('[data-f="rate"]');
+  const SRx = require_(path.join(ROOT, 'kyuyo/lib/shouhizei-ritsu.js'));
+  const REDPCT = Math.round(SRx.keigen * 10000) / 100;      // ★率は唯一の正から取る（書かない）
+  const red = [...sel.options].find((o) => o.textContent === String(REDPCT) + '%');
+  ok(red, '軽減税率の選び所が無い: ' + [...sel.options].map((o) => o.textContent).join('/'));
+  sel.value = red.value; sel.dispatchEvent(new win.Event('change'));
+  await sleep(120);
+  ok(/対象/.test($('tot-box').textContent), '★税率が混ざったのに内訳が出ていない★: ' + $('tot-box').textContent.replace(/\s+/g, ' '));
+});
+
+await TA('14-b. ★払う金額を1つだけ 一番 大きく（大きい数字が2つ並ばない）', async () => {
+  await newInvoiceFor('pt_y', '2026-08-11');
+  setLine(0, 'name', '工事代金'); setLine(0, 'qty', '140'); setLine(0, 'price', '1900');
+  await sleep(100);
+  // 控除が無い時＝一番 下は「合計」
+  let big = [...$('tot-box').querySelectorAll('.tot-g')];
+  eq(big.length, 1, '★大きい数字が ' + big.length + ' 個ある★');
+  ok(/合計/.test(big[0].textContent), '一番 大きいのが合計でない: ' + big[0].textContent);
+  // 控除を足すと 一番 下は「請求額」になり、合計は小さくなる
+  $('b-ded-add').click(); await sleep(40);
+  const dn = $('ded-list').querySelector('[data-dn="0"]'), da = $('ded-list').querySelector('[data-da="0"]');
+  dn.value = '弁当代'; dn.dispatchEvent(new win.Event('input'));
+  da.value = '11340'; da.dispatchEvent(new win.Event('input'));
+  await sleep(120);
+  big = [...$('tot-box').querySelectorAll('.tot-g')];
+  eq(big.length, 1, '★控除を足したら大きい数字が ' + big.length + ' 個になった★');
+  ok(/請求額/.test(big[0].textContent), '★一番 大きいのが請求額でない★: ' + big[0].textContent);
+  ok(big[0].textContent.includes('281,260'), '請求額が違う: ' + big[0].textContent);
+  // ★一番 下の行が大きい★（上に小さく並ぶ）
+  const rows = [...$('tot-box').querySelectorAll('.tot-r')];
+  eq(rows[rows.length - 1], big[0], '大きい行が一番 下でない');
+});
+
+await TA('14-c. ★数量×単価の行でも、その行の金額が読める（空欄にしない）', async () => {
+  const tr = $('lines-body').querySelectorAll('tr')[0];
+  const amt = tr.querySelector('[data-f="amount"]');
+  eq(amt.value, '', '前提が崩れている（金額を打っている）');
+  eq(amt.getAttribute('placeholder'), '266,000', '★出た金額が読めない（空欄のまま）★');
+  ok(/l-calc/.test(amt.className), '打った字と見分けが付く印が無い');
+  // 打てば その字が勝つ
+  amt.value = '300000'; amt.dispatchEvent(new win.Event('input'));
+  await sleep(100);
+  eq(amt.getAttribute('placeholder'), '', '打ったのに薄い字が残っている');
+  ok(!/l-calc/.test(amt.className), '打ったのに「出た金額」の印が残っている');
+  amt.value = ''; amt.dispatchEvent(new win.Event('input'));
+  await sleep(100);
+  eq(amt.getAttribute('placeholder'), '266,000', '消したら また出た金額が読める、になっていない');
+});
+
+T('14-d. ★狭い幅では明細を2段の札にする（広い画面は表のまま横に動かす）', () => {
+  /* jsdom は幅を計算しないので、ここでは ★書き方★ を見る（実物の幅は実機幅で定規を当てた）。 */
+  const m = /@media \(max-width: 480px\) \{([\s\S]*?)\n\}/.exec(APPCSS);
+  ok(m, '★狭い幅の決めごとが無い★');
+  const nar = m[1];
+  ok(/\.lines[^{]*\btd\b[^{]*\{[^}]*display:\s*block/.test(nar) || /\.lines, \.lines tbody, \.lines tr, \.lines td \{[^}]*display:\s*block/.test(nar),
+    '狭い幅で表を札にしていない');
+  ok(/\.lines thead \{[^}]*display:\s*none/.test(nar), '見出しを消していない');
+  ok(/td::before\s*\{[^}]*content:\s*attr\(data-label\)/.test(nar), '★見出しを消したのに、欄の名前を添えていない★');
+  ok(/overflow-x:\s*visible/.test(nar), '狭い幅でも横に動かす作りのまま');
+  // ★広い画面は今までどおり★
+  ok(/\.lines-scroll \{[^}]*overflow-x:\s*auto/.test(APPCSS), '広い画面の横スクロールが消えている');
+  // 欄の名前は実際に付いている（CSSだけあっても data-label が無ければ空になる）
+  ok(doc.querySelector('#lines-body td[data-label]'), '★data-label が付いていない（名前が空で出る）★');
+});
+
+T('14-e. ★注意書きは1件1行（2文が続けて流れない）', () => {
+  const bad = $('ded-err');
+  ok(bad, '控除の赤の箱が無い');
+  // 2件 出る形を作って、行が2本になるか
+  win.SeikyuApp._state.cur.data.deductions = [{ name: '', amount: '' }];
+  win.SeikyuApp._recalcForTest();
+  const lines = bad.querySelectorAll('.msg-l');
+  ok(lines.length >= 2, '★2件 出ているのに1行に流れている★: ' + bad.textContent);
+  win.SeikyuApp._state.cur.data.deductions = [];
+  win.SeikyuApp._recalcForTest();
+});
+
 /* ═══ 10. ★主役の操作は隠さない・塞がっている時は灰色＋理由★ ═══
    決まり（2026-08-12・指示役）:
      ・その画面の主役の操作が塞がっている → ★出す。灰色にして理由をボタンの中★（隠さない）

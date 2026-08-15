@@ -143,6 +143,12 @@ jobs:
         run: node seikyu/tests/seikyu-aoa.test.mjs --self-test
       - name: ★請求書 実UI (画面のボタンを1つ残らず押す＋作る→発行→紙→Excelを実際に通す)
         run: node seikyu/tests/seikyu-ui.mjs
+      # ★★ は仲間に向けた印。客の画面に出す物ではない（2026-08-15 指示役が配信で見つけた）
+      #   ソースの grep だとコメントまで拾うので、★本物の画面を動かして 描き終わった本文から数える★
+      - name: ★請求書 画面に「★」を出さない (描き終わった画面から数える・畳みも発行後の箱も開く)
+        run: node seikyu/tests/seikyu-no-star.mjs
+      - name: ★画面の「★」(わざと1つ戻して赤になるかの自己確認)
+        run: node seikyu/tests/seikyu-no-star.mjs --self-test
 
       # ── 給与(kyuyo/) 由来（据置） ──
       - name: Payroll unit tests (依存なし・実数リテラル+回帰)

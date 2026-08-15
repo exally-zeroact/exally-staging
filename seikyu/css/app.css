@@ -176,3 +176,58 @@
   display: inline-block; margin-left: 4px; padding: 0 5px; border-radius: 999px;
   background: #F0FAF4; border: 1px solid #C8ECD8; color: #7AA08C; font-size: 9.5px; font-weight: 400;
 }
+
+/* 注意書きは1件1行（何件 出ても読める） */
+.msg-l { display: block; }
+.msg-l + .msg-l { margin-top: 4px; }
+
+/* ── 狭い幅では 明細の1行を「2段の札」にする ─────────────────────
+   ★実測（2026-08-15・幅375）★ 表のままだと「品名・内容」と「数量」までしか見えず、
+   ★一番 見たい金額が 横に動かさないと読めなかった★。
+   だから狭い時は 表をやめて ★上＝品名／下＝数量×単価＝金額★ の札にする。
+   ★広い画面では今までどおり表のまま横に動かせる★（下の @media の外は触っていない）。
+   見出し(thead)が消えるので、欄の名前は ::before で1つずつ添える。 */
+@media (max-width: 480px) {
+  .lines-scroll { overflow-x: visible; }
+  .lines, .lines tbody, .lines tr, .lines td { display: block; width: auto; min-width: 0; }
+  .lines thead { display: none; }
+  .lines tr {
+    position: relative;
+    border: 1px solid #D4EAE0; border-radius: 12px; background: #FFFFFF;
+    padding: 8px 10px 8px; margin-bottom: 8px;
+  }
+  .lines td { padding: 0 0 6px; }
+  /* 欄の名前（表の見出しの代わり）。★文なので block＋折り返し可★ */
+  .lines td::before {
+    content: attr(data-label);
+    display: block; font-size: 10.5px; color: #7AA08C; margin-bottom: 2px;
+    white-space: normal; word-break: normal; overflow-wrap: break-word;
+  }
+  /* # は札の右上に小さく（1行ぶんの場所を取らせない） */
+  .lines td.l-c-index {
+    position: absolute; top: 8px; right: 74px; padding: 0;
+    font-size: 10.5px; color: #7AA08C;
+  }
+  .lines td.l-c-index::before { display: none; }
+  /* 上の段＝品名（幅いっぱい） */
+  .lines td.l-c-name { padding-right: 78px; }
+  /* 下の段＝数量 × 単価 ＝ 金額 を横に3つ（★折り返す★） */
+  .lines td.l-c-qty, .lines td.l-c-unit, .lines td.l-c-price,
+  .lines td.l-c-amount, .lines td.l-c-rate, .lines td.l-c-tax {
+    display: inline-block; vertical-align: top; width: 48%; padding-right: 6px;
+  }
+  .lines td.l-c-amount, .lines td.l-c-tax { text-align: right; }
+  .lines td.l-c-amount .finput { text-align: right; font-weight: 700; }
+  .lines td.l-ro { padding-top: 0; }
+  /* 並べ替えと消すは 札の右上に寄せる */
+  .lines td.l-ord, .lines td.l-x:last-child {
+    position: absolute; top: 6px; padding: 0; width: auto; text-align: right;
+  }
+  .lines td.l-ord { right: 40px; }
+  .lines td.l-x:last-child { right: 6px; }
+  .lines td.l-ord::before, .lines td.l-x::before { display: none; }
+  .l-mv { width: 28px; height: 22px; margin-bottom: 1px; }
+}
+
+/* 数量×単価から出た金額は、打った字と見分けが付くように薄く出す（打てば その字が勝つ） */
+.l-calc::placeholder { color: #7AA08C; opacity: 1; }

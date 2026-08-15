@@ -39,7 +39,25 @@
   function esc(s) { return PAPER.esc(s); }
   function show(el, on) { if (el) el.style.display = on ? '' : 'none'; }
   function setText(id, t) { var e = $(id); if (e) e.textContent = t || ''; }
-  function box(id, text) { var e = $(id); if (!e) return; e.textContent = text || ''; show(e, !!text); }
+  /* 注意書きの箱。★1件1行で出す★
+     （2文が続けて流れると「何件 出ているか」が読めない＝控除の赤で実際に読みにくかった）
+     中身は textContent で入れる＝打った文字がそのまま出る（HTMLとして解釈しない）。 */
+  function box(id, text) {
+    var e = $(id); if (!e) return;
+    var t = String(text == null ? '' : text);
+    e.textContent = '';
+    if (t) {
+      var lines = t.split('\n').filter(function (x) { return x.trim() !== ''; });
+      if (lines.length <= 1) e.textContent = t;
+      else lines.forEach(function (ln) {
+        var d = document.createElement('div');
+        d.className = 'msg-l';
+        d.textContent = ln;
+        e.appendChild(d);
+      });
+    }
+    show(e, !!t);
+  }
 
   /* ★画面の金額は「1,100 円」（桁区切り＋円）★
      紙は「¥1,100」（¥ 記号）。画面で ¥ と 円 を両方付けると二重になる。
@@ -768,7 +786,7 @@
         + '一覧の「読み直す」を押すと、もう一度 取りにいきます。</p>';
     } else if (!list.length) {
       host.innerHTML = '<p class="hint">まだ入金の記録がありません。下の欄から1回ぶんずつ足します（'
-        + '★分けて払われた時は、そのぶん行が増えます★）。</p>';
+        + '分けて払われた時は、そのぶん行が増えます）。</p>';
     } else {
       host.innerHTML = list.map(function (r) {
         var neg = Number(r.amount) < 0;
@@ -894,21 +912,22 @@
     var list = v.lines;
     host.innerHTML = list.map(function (ln, i) {
       var rateCell = function (cls) {
-        return '<td class="' + cls + '"><select class="finput" data-f="rate">'
+        return '<td class="' + cls + ' l-c-rate" data-label="税率"><select class="finput" data-f="rate">'
           + rates.map(function (x) { return '<option value="' + esc(x.v) + '"' + (rateValueOf(ln) === x.v ? ' selected' : '') + '>' + esc(x.t) + '</option>'; }).join('')
           + '</select></td>';
       };
       var tds = spec.items.map(function (k) {
         var r = role(k);
         var cls = (r === 'name') ? 'l-name' : (r === 'rate') ? 'l-md' : 'l-sm';
-        if (r === 'index') return '<td class="l-x" style="color:#7AA08C;padding-top:12px">' + (i + 1) + '</td>';
+        if (r === 'index') return '<td class="l-x l-c-index" data-label="#">' + (i + 1) + '</td>';
         if (r === 'rate') return rateCell(cls);
         /* ★行ごとの税額は「打つ物」ではなく「出る物」★
            打てるようにすると ★行ごとに丸めた数を足す道★ ができる＝
            国税庁 Q&A 問57 で認められていない形になる。★読むだけで出す★。 */
         if (r === 'tax') {
           var tx = lineTaxOf(i);
-          return '<td class="' + cls + ' l-ro">' + (tx === null ? '—' : yen(tx)) + '</td>';
+          return '<td class="' + cls + ' l-ro l-c-tax" data-label="' + esc(k) + '">'
+            + (tx === null ? '—' : yen(tx)) + '</td>';
         }
         var val, mode = '', extra = '';
         if (r === 'name') { val = ln.name; extra = ' placeholder="品名"'; }
@@ -920,7 +939,10 @@
         else { val = (ln.extra || {})[k]; }         // ★会社が足した列＝自由枠に入れる
         var num = (r === 'qty' || r === 'price' || r === 'amount') ? ' num' : '';
         var f = r ? ('data-f="' + r + '"') : ('data-x="' + esc(k) + '"');
-        return '<td class="' + cls + '"><input class="finput' + num + '" ' + f + mode + extra
+        /* ★狭い幅では表の見出しが消える★ので、欄そのものに名前を持たせる
+           （CSSが ::before で出す＝広い画面では出さない） */
+        return '<td class="' + cls + ' l-c-' + (r || 'x') + '" data-label="' + esc(k) + '">'
+          + '<input class="finput' + num + '" ' + f + mode + extra
           + ' value="' + esc(val === undefined || val === null ? '' : val) + '"></td>';
       }).join('');
       /* ★並べ替え★ 打ち直させないための物（消して打ち直すと必ず写し間違いが出る）。
@@ -1071,11 +1093,11 @@
     var v = S.cur; if (!v || !$('taxmode-note')) return;
     var inc = v.tax_mode === 'inclusive';
     setText('taxmode-note', inc
-      ? '金額は ★税込★ で入れています（中から消費税を出します）。変えるときは「細かく決める」から。'
-      : '金額は ★税抜★ で入れています（消費税を足します）。変えるときは「細かく決める」から。');
+      ? '金額は税込で入れています（中から消費税を出します）。変えるときは「細かく決める」から。'
+      : '金額は税抜で入れています（消費税を足します）。変えるときは「細かく決める」から。');
     if ($('e-taxmode-hint')) {
       setText('e-taxmode-hint', inc
-        ? '税込でいくら、が先に決まっている相手はこちら。★入れた税込と合計は1円もずれません★。'
+        ? '税込でいくら、が先に決まっている相手はこちら。入れた税込と合計は1円もずれません。'
         : '単価や金額を税抜で持っている相手はこちら。');
     }
   }
@@ -1108,6 +1130,12 @@
     for (var k = 0; k < lastTax.lines.length; k++) if (lastTax.lines[k].index === i) return lastTax.lines[k].tax;
     return null;   // 計算に入らなかった行（空行）＝0にしない
   }
+  /** その行の金額（数量×単価から出た物も含む）。読めない時は null */
+  function lineAmountOf(i) {
+    if (!lastTax || !lastTax.ok) return null;
+    for (var k = 0; k < lastTax.lines.length; k++) if (lastTax.lines[k].index === i) return lastTax.lines[k].amount;
+    return null;
+  }
 
   function currentTax() {
     var v = S.cur;
@@ -1118,9 +1146,23 @@
   function paintLineTax() {
     var host = $('lines-body'); if (!host) return;
     Array.prototype.forEach.call(host.querySelectorAll('tr'), function (tr) {
-      var cell = tr.querySelector('.l-ro'); if (!cell) return;
-      var tx = lineTaxOf(+tr.getAttribute('data-i'));
-      cell.textContent = (tx === null) ? '—' : yen(tx);
+      var i = +tr.getAttribute('data-i');
+      var cell = tr.querySelector('.l-ro');
+      if (cell) {
+        var tx = lineTaxOf(i);
+        cell.textContent = (tx === null) ? '—' : yen(tx);
+      }
+      /* ★数量×単価の行でも、その行の金額が読める★
+         打っていない時は ★出た金額を薄く出す★（打てば その字が勝つ）。
+         ＝空欄を並べて人に埋めさせない／★一番 見たい金額が空のまま★にしない。
+         （2026-08-15 実測：狭い幅の札にしたら、数量×単価の行の金額が空で見えなかった） */
+      var amt = tr.querySelector('[data-f="amount"]');
+      if (amt) {
+        var v = lineAmountOf(i);
+        var typed = String(amt.value || '').trim() !== '';
+        amt.setAttribute('placeholder', (!typed && v !== null && v !== 0) ? yen(v) : '');
+        amt.classList.toggle('l-calc', !typed && v !== null && v !== 0);
+      }
     });
   }
 
@@ -1140,10 +1182,17 @@
     drawDedErr();                // ★古い赤を残さない（同じ状態を2か所で別々に出さない）
     paintLineTax();
     drawTaxModeNote();
-    var rows = t.byRate.map(function (b) {
+    /* ★同じ数字を2回 言わない★
+       税率が1種類しか無い紙では「◯%対象 …（消費税 …）」の行が、
+       すぐ下の「小計／消費税」と ★まったく同じ数字★になる。画面では出さない。
+       ★税率が2種類 以上になった時だけ 内訳として出す★
+       （税率ごとの区分は適格請求書の要件なので、混ざれば必ず出す）。
+       ★紙は今までどおり（内訳）を必ず出す★＝変えたのは入力の画面だけ。
+       ★率の数字はここに書かない★（唯一の正は kyuyo/lib/shouhizei-ritsu.js）。 */
+    var rows = (t.byRate.length >= 2) ? t.byRate.map(function (b) {
       return '<div class="tot-r"><span class="tot-l">' + esc(b.pct) + '% 対象</span><span class="tot-v">'
         + yen(b.base) + ' 円（消費税 ' + yen(b.tax) + ' 円）</span></div>';
-    }).join('');
+    }).join('') : '';
     /* ★非課税と対象外は別の行に出す（同じ0円でも意味が違う）★ */
     if (t.nontaxable && t.nontaxable.base) {
       rows += '<div class="tot-r"><span class="tot-l">非課税</span><span class="tot-v">' + yen(t.nontaxable.base) + ' 円</span></div>';
@@ -1152,31 +1201,37 @@
       rows += '<div class="tot-r"><span class="tot-l">消費税の対象外</span><span class="tot-v">' + yen(t.exempt.base) + ' 円</span></div>';
     }
     if (host) {
-      var html = rows
-        + '<div class="tot-r"><span class="tot-l">小計</span><span class="tot-v">' + yen(t.subtotal) + ' 円</span></div>'
-        + '<div class="tot-r"><span class="tot-l">消費税</span><span class="tot-v">' + yen(t.taxTotal) + ' 円</span></div>'
-        + '<div class="tot-r tot-g"><span class="tot-l">合計</span><span class="tot-v">' + yen(t.grandTotal) + ' 円</span></div>';
-      /* ★源泉があるなら、画面にも「引いたあと」まで出す★
-         紙にだけ出して画面に出さないと、見ている数字と振り込まれる額が食い違う。 */
       var g = currentGensen();
       var c = currentCarry();
       var ded = currentDeduct();
+      /* ★払う金額は1つだけ 一番 大きく★
+         合計・控除・源泉は ★その上に小さく★ 並べ、★一番 下の1行だけ大きくする★。
+         （大きい数字が2つ並ぶと、どれを振り込むのか一目で決まらない） */
+      var lines = [
+        ['小計', yen(t.subtotal) + ' 円'],
+        ['消費税', yen(t.taxTotal) + ' 円'],
+        ['合計', yen(t.grandTotal) + ' 円'],
+      ];
       /* ★控除（明細の外・税込から引く）★ 税額は動かさない。
          ★読めない控除は 0 にしない★＝「（未確認）」と出して、引き忘れた紙を出さない。 */
       if (ded === null || ded > 0) {
-        html += '<div class="tot-r"><span class="tot-l">控除</span><span class="tot-v">'
-          + (ded === null ? '（未確認）' : '− ' + yen(ded) + ' 円') + '</span></div>';
+        lines.push(['控除', ded === null ? '（未確認）' : '− ' + yen(ded) + ' 円']);
         var billed = DOC.billedOf(t, null, ded);
-        html += '<div class="tot-r tot-g"><span class="tot-l">請求額</span><span class="tot-v">'
-          + (billed === null ? '（未確認）' : yen(billed) + ' 円') + '</span></div>';
+        lines.push(['請求額', billed === null ? '（未確認）' : yen(billed) + ' 円']);
       }
+      /* ★源泉があるなら、画面にも「引いたあと」まで出す★
+         紙にだけ出して画面に出さないと、見ている数字と振り込まれる額が食い違う。 */
       if (g && g.on) {
         /* ★差引は「合計請求額（繰越こみ）− 源泉」★ 順番は seikyu-doc.js が唯一の正 */
         var pay = DOC.payableOf(t, c, g, ded);
-        html += '<div class="tot-r"><span class="tot-l">' + esc(g.label) + '</span><span class="tot-v">− ' + yen(g.amount) + ' 円</span></div>'
-          + '<div class="tot-r tot-g"><span class="tot-l">' + esc(g.netLabel) + '</span><span class="tot-v">'
-          + (pay === null ? '（未確認）' : yen(pay) + ' 円') + '</span></div>';
+        lines.push([g.label, '− ' + yen(g.amount) + ' 円']);
+        lines.push([g.netLabel, pay === null ? '（未確認）' : yen(pay) + ' 円']);
       }
+      var last = lines.length - 1;
+      var html = rows + lines.map(function (x, i) {
+        return '<div class="tot-r' + (i === last ? ' tot-g' : '') + '"><span class="tot-l">'
+          + esc(x[0]) + '</span><span class="tot-v">' + esc(x[1]) + '</span></div>';
+      }).join('');
       /* ★1円の端数を最後の行に寄せた時は 黙らない★
          （税率ごとに1回だけ端数処理する＝国税庁 Q&A 問57。行ごとに丸めて足す道は作らない） */
       if (t.spread && t.spread.length) {
@@ -1575,7 +1630,7 @@
     var errs = COLS.validate(spec.items);
     box('col-err', errs.join(' '));
     setText('col-why', '幅は ' + COLS.MIN_W + '〜' + COLS.MAX_W + ' の間だけ。並べた幅の比率で紙に割り付けるので、'
-      + '★列を何本足しても紙からはみ出しません★（今 ' + spec.items.length + ' 本／最大 ' + COLS.MAX_COLS + ' 本）。');
+      + '列を何本足しても紙からはみ出しません（今 ' + spec.items.length + ' 本／最大 ' + COLS.MAX_COLS + ' 本）。');
   }
 
   function afterColChange() {
@@ -1645,7 +1700,7 @@
     $('seal-mm').value = DOC.sealSizeMm(d.sealSizeMm);
     setText('seal-why', '大きさは ' + DOC.SEAL_MIN_MM + '〜' + DOC.SEAL_MAX_MM + 'mm の間だけ（既定 '
       + DOC.SEAL_DEFAULT_MM + 'mm）。画像は ' + Math.round(DOC.SEAL_MAX_BYTES / 1024) + 'KB まで。'
-      + '発行した時の印は写しに残るので、あとで印を替えても ★出した紙は変わりません★。');
+      + '発行した時の印は写しに残るので、あとで印を替えても出した紙は変わりません。');
     $('b-seal-clear').disabled = !(d.sealDataUrl || sealPending);
   }
 
