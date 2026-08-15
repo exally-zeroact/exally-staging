@@ -92,7 +92,18 @@
       carry: !!d.invoiceCarry,      // ★繰越を紙に出すか（既定は切＝今までどおり）
       template: TPL.get(d.invoiceTemplate) ? d.invoiceTemplate : TPL.DEFAULT_ID,
       cols: (d.invoiceCols && Array.isArray(d.invoiceCols.items) && d.invoiceCols.items.length) ? d.invoiceCols : null,
+      /* ★紙の枠の行数（空＝既定。既定の数は紙の側が持っている）★
+         0以上の整数だけ受ける。読めない字が入っていたら「決めていない」と同じ扱い。 */
+      paperRows: rowsSetting(d.invoicePaperRows),
+      deductRows: rowsSetting(d.invoiceDeductRows),
     };
+  }
+  /* 会社が入れた枠の行数を読む。★空欄と 0 は別物★（0＝枠を作らず詰める） */
+  function rowsSetting(v) {
+    if (v === undefined || v === null || v === '') return null;
+    var n = Number(v);
+    if (!Number.isFinite(n) || n < 0) return null;
+    return Math.trunc(n);
   }
 
   /* ═══ 列（★どんな項目にも対応する所★） ═══
@@ -538,11 +549,9 @@
     show($('b-ded-add'), !ro);
     /* ★記入ガイドは薄く・先に読ませない★
        行が0本の時は1行だけ。詳しい話は ★足した後★（その時に要る言葉だけ出す）。 */
-    setText('ded-why', list.length
-      ? '税込の合計から引きます（消費税は動きません）。値引き（税も一緒に減る物）は 明細にマイナスの行で。'
-      : '');
+    setText('ded-why', dedWhyText());
     if (!list.length) {
-      host.innerHTML = '<p class="hint">差し引く物はありません。</p>';
+      host.innerHTML = '<p class="hint">控除はありません。</p>';
     } else {
       host.innerHTML = list.map(function (d, i) {
         return '<div class="ded-row">'
@@ -567,10 +576,40 @@
      ★古い文を残さない★＝名前や金額を打った瞬間に赤が消える。
      （2026-08-15 実測：足した直後の「名前がありません」が、埋めても残ったままだった＝
        同じ状態を2か所で別々に出していた） */
+  /* ふだんの説明（行が0本の時は出さない＝先に読ませない） */
+  function dedWhyText() {
+    return deductions().length
+      ? '税込の合計から引きます（消費税は動きません）。値引き（税も一緒に減る物）は 明細にマイナスの行で。'
+      : '';
+  }
   function drawDedErr() {
     if (!$('ded-err')) return;
     var chk = DOC.validateDeductions(S.cur || {});
     box('ded-err', chk.ok ? '' : chk.errors.join('\n'));
+    drawDedOver();
+  }
+  /* ★端（差し引く額が合計を超える）★
+     ★止めない★＝前に多く貰っている分の返金など、本当にマイナスになる月がある。
+     ただし ★黙って マイナスの請求書を出さない★＝画面で1回 言う。
+     （2026-08-15 実測：控除 11,340 ／ 合計 10,450 で 紙に「¥-890」と刷れた） */
+  function drawDedOver() {
+    if (!$('ded-why')) return;
+    var t = lastTax;
+    var d = currentDeduct();
+    var base = (t && t.ok) ? Number(t.grandTotal) : null;
+    /* ★出しっぱなしにしない★＝金額を下げたら すぐ ふだんの説明に戻す
+       （同じ状態を2か所で別々に出すと「直したのに赤が残る」になる） */
+    /* ★ふだんの説明は薄く・注意は目に入る色★（皮の .warn を借りる＝色を新しく作らない） */
+    var el = $('ded-why');
+    if (base === null || d === null || d <= base) {
+      el.className = 'hint';
+      setText('ded-why', dedWhyText());
+      return;
+    }
+    el.className = 'warn';
+    setText('ded-why', '控除の額（' + yen(d) + ' 円）が 合計（' + yen(base)
+      + ' 円）より大きいので、請求額は マイナス ' + yen(d - base)
+      + ' 円になります。このまま出せますが、多く貰っている分の返金でなければ 金額を確かめてください。');
   }
   /** 控除の合計。★読めない行が1つでもあれば null（0にしない）★ */
   function currentDeduct() {
@@ -1213,7 +1252,8 @@
          合計・控除・源泉は ★その上に小さく★ 並べ、★一番 下の1行だけ大きくする★。
          （大きい数字が2つ並ぶと、どれを振り込むのか一目で決まらない） */
       var lines = [
-        ['小計', yen(t.subtotal) + ' 円'],
+        /* ★画面と紙で同じ言葉★（紙は「明細の合計」）＝突き合わせる時に迷わない */
+        ['明細の合計', yen(t.subtotal) + ' 円'],
         ['消費税', yen(t.taxTotal) + ' 円'],
         ['合計', yen(t.grandTotal) + ' 円'],
       ];
@@ -1266,8 +1306,49 @@
       }
       host.innerHTML = html;
     }
+    drawPagesNote(t);      // ★2枚目に入る前に言う★
     drawIssueButton();     // ★打つたびに「発行する」の押せる/押せないを塗り直す★
     return t;
+  }
+
+  /* ★何枚になるかは 紙の lib に聞く（画面で数え直さない）★
+     画面と紙で別々に数えると「画面は1枚・紙は2枚」が出る。
+     ★『あと何行で2枚目』まで言う★＝出してから気づく物にしない。 */
+  function drawPagesNote(t) {
+    var v = S.cur;
+    if (!v || !t || !t.ok) { setText('pages-note', ''); return; }
+    var pi = { deduct: currentDeduct(), deductLines: DOC.deductionsOf(v) };
+    var st = settings();
+    var own = (v.data && v.data.paperRows);
+    var rows = (own === undefined || own === null || own === '') ? st.paperRows : own;
+    if (rows !== null && rows !== undefined && rows !== '') pi.paperRows = rows;
+    var frame = PAPER.frameRowsOf(v, pi);
+    var n = (t.lines || []).length;
+    var pages = PAPER.pagesOf(n, frame);
+    /* ★1枚に収まっている間は 何も言わない★（司さん 2026-08-16 ⑤）
+       既定は ★A4 1枚に収まるように測って決めてある★ので、ふだんは案内が要らない。
+       毎回 出すと「読まなくていい字」が増えて、本当に読ませたい時に効かなくなる。 */
+    if (!frame || pages <= 1) { setText('pages-note', ''); show($('pages-note'), false); return; }
+    show($('pages-note'), true);
+    setText('pages-note', '明細 ' + n + ' 行 ＝ 紙は ' + pages + ' 枚になります（1枚の枠は ' + frame
+      + ' 行）。1枚に収めたい時は 枠を増やしてください。');
+    /* ★その場から飛べる★＝設定のどこを触ればよいか探させない */
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'btn-ghost'; b.id = 'b-goto-rows';
+    b.textContent = '枠を増やす';
+    b.onclick = function () { openRowsSetting(); };
+    $('pages-note').appendChild(document.createElement('br'));
+    $('pages-note').appendChild(b);
+  }
+
+  /* 「枠を増やす」→ 設定を開いて、畳んである所を開いて、その欄へ連れて行く */
+  function openRowsSetting() {
+    fillSettings();
+    goScreen('scr-set');
+    var box = $('set-more');
+    if (box) box.open = true;
+    var el = $('s-rows');
+    if (el) { try { el.scrollIntoView({ block: 'center' }); } catch (e) { /* 端末による */ } el.focus(); }
   }
 
   /* ── 番号 ── */
@@ -1348,10 +1429,18 @@
     var dedLines = (v.status && v.status !== 'draft' && v.totals && v.totals.deductLines)
       ? v.totals.deductLines
       : DOC.deductionsOf(v).map(function (d) { return { name: String(d.name || ''), amount: DOC.receiptAmountOf(d.amount) }; });
+    /* ★枠の行数★ その1通が持っていればそれ、無ければ会社の設定、それも無ければ紙の既定。
+       ★発行済みは写しの数★（あとで行数を変えても、出した紙は同じ顔のまま）。 */
+    var st = settings();
+    var own = (v.data && v.data.paperRows), ownD = (v.data && v.data.deductRows);
+    var rows = (own === undefined || own === null || own === '') ? st.paperRows : own;
+    var dRows = (ownD === undefined || ownD === null || ownD === '') ? st.deductRows : ownD;
     return {
       inv: inv, tax: t, partner: partner, org: org, cols: colsOf(v), theme: themeOf(v),
       gensen: currentGensen(), carry: currentCarry(),
       deduct: ded, deductLines: dedLines,
+      paperRows: (rows === null ? undefined : rows),
+      deductRows: (dRows === null ? undefined : dRows),
     };
   }
 
@@ -1581,7 +1670,10 @@
         + esc(t.id) + '"' + (disabled ? ' disabled' : '') + '>' + esc(t.label) + '</button>';
     }).join('');
     var cur = TPL.getOrDefault(current);
-    if (noteId) setText(noteId, cur.note + '（様式で変わるのは見た目だけです。金額・消費税・合計は1円も変わりません）');
+    /* ★同じ事を2回 言わない★
+       「見た目だけ・金額は変わらない」は 画面に固定の1行として書いてある。
+       ここは ★選んだ様式が どういう形か★ だけを言う。 */
+    if (noteId) setText(noteId, cur.note);
     Array.prototype.forEach.call(host.querySelectorAll('[data-tpl]'), function (b) {
       b.onclick = function () { onPick(b.getAttribute('data-tpl')); };
     });
@@ -1777,6 +1869,9 @@
     fillSelect($('s-round'), TAX.ROUNDINGS.map(function (k) { return { v: k, t: ROUND_LABEL[k] }; }), s.rounding);
     $('s-bank').value = s.bank;
     $('s-carry').checked = s.carry;
+    $('s-rows').value = (s.paperRows === null ? '' : s.paperRows);
+    $('s-dedrows').value = (s.deductRows === null ? '' : s.deductRows);
+    rowsHint();
     settingsHint();
 
     fillSelect($('s-partner'), [{ v: '', t: '（選んでください）' }].concat(S.partners.map(function (p) {
@@ -1801,6 +1896,20 @@
       box('col-ok', '');
       renderColEditor();
     }, false);
+  }
+
+  /* ★既定の数は紙の lib が持ち主★（画面に書き写すと、片方だけ直した時に食い違う） */
+  function rowsHint() {
+    var r = rowsSetting($('s-rows').value);
+    var d = rowsSetting($('s-dedrows').value);
+    var txt = '空のままなら 既定（控除を出さない紙 ' + PAPER.PAPER_ROWS + ' 行 ／ 出す紙 '
+      + PAPER.PAPER_ROWS_DED + ' 行 ／ 控除の枠 ' + PAPER.DEDUCT_ROWS + ' 行）で刷ります。'
+      + 'この数は A4 1枚に収まるところまで実際に測った数です。';
+    if ((r !== null && r > PAPER.PAPER_ROWS) || (d !== null && d > PAPER.DEDUCT_ROWS)) {
+      txt += ' 増やした分は 1枚に入りきらず 2枚目に回ります（黙って詰めることはしません）。';
+    }
+    if (r === 0) txt += ' 明細の枠 0 ＝ 枠を作らず、打った行の数だけ刷ります。';
+    setText('s-rows-note', txt);
   }
 
   function settingsHint() {
@@ -1837,6 +1946,8 @@
       taxRounding: $('s-round').value,
       bank: $('s-bank').value,
       invoiceCarry: $('s-carry').checked,
+      invoicePaperRows: rowsSetting($('s-rows').value),
+      invoiceDeductRows: rowsSetting($('s-dedrows').value),
       invoiceTemplate: settings().template,
       invoiceCols: COLS.normalizeSpec((S.org && S.org.invoiceCols) || TPL.getOrDefault(settings().template).cols),
     };
@@ -1881,6 +1992,10 @@
         var t = b.getAttribute('data-scr');
         if (t === 'scr-edit' && !S.cur) { newInvoice(); return; }
         if (t === 'scr-set') fillSettings();
+        /* ★設定を変えて戻ってきた時、古い案内を残さない★
+           （紙の行数を20行にしたのに「紙は2枚になります」と言ったまま＝
+             人は「直っていない」と見る。2026-08-15 実UIで実際に出た） */
+        if (t === 'scr-edit' && S.cur) recalc();
         goScreen(t);
       };
     });
@@ -2023,6 +2138,8 @@
     $('b-col-reset').onclick = function () { resetCols(); };
     $('col-new').onkeydown = function (e) { if (e.key === 'Enter') { e.preventDefault(); addCol(); } };
     $('s-format').onchange = settingsHint;
+    $('s-rows').oninput = rowsHint;
+    $('s-dedrows').oninput = rowsHint;
     $('s-reset').onchange = settingsHint;
     $('s-partner').onchange = function () { fillPartnerForm($('s-partner').value); };
     $('s-pterm').onchange = function () {

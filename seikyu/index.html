@@ -12,8 +12,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@500&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 <!-- ★見た目の本体はスイート共通の皮。請求書の app.css は差分だけ（読む順は皮が先） -->
-<link rel="stylesheet" href="../css/exally-ui.css?v=1ecadcf5">
-<link rel="stylesheet" href="css/app.css?v=1ecadcf5">
+<link rel="stylesheet" href="../css/exally-ui.css?v=53d5585c">
+<link rel="stylesheet" href="css/app.css?v=53d5585c">
 </head>
 <body>
 
@@ -108,25 +108,28 @@
       </div>
       <button class="btn-add" type="button" id="b-addline">＋ 行を足す</button>
       <p class="hint" id="taxmode-note"></p>
+      <!-- ★2枚目に入る前に言う★ 出してから気づく物にしない。行数は「設定→紙の行数」で変えられる -->
+      <p class="hint" id="pages-note"></p>
     </div>
 
-    <!-- ═══ 差し引く（控除） ═══
+    <!-- ═══ 控除 ═══ ★言葉は給料明細にそろえる（支給／控除）★（司さん 2026-08-15）
+         人に見せる字は「控除」1本。会社が言い換えられるのは今までどおり。
          ★引き算は2種類ある。混ぜると消費税がズレる★（実物の式で確かめた）
            ・値引き … ★明細の中★のマイナス行。課税の対象が減る＝★税額も一緒に減る★
            ・控除   … ★ここ★。★税込の合計から引く＝税額は動かない★
              実物: 八木工業「控除明細／弁当代 矢原 11,340」小計292,600 − 11,340 ＝ 281,260
          ★名前は会社が決める★（「弁当代」「立替」は現場の言い方＝器に焼き込まない） -->
     <div class="card" id="ded-card">
-      <div class="card-h">差し引く（控除）</div>
+      <div class="card-h">控除</div>
       <div id="ded-list"></div>
-      <button class="btn-add" type="button" id="b-ded-add">＋ 差し引く行を足す</button>
+      <button class="btn-add" type="button" id="b-ded-add">＋ 控除の行を足す</button>
       <p class="hint" id="ded-why"></p>
       <div class="bad" id="ded-err" style="display:none"></div>
     </div>
 
     <!-- ═══ ③ 締め ═══
          給料明細と同じ並び（支給／控除／差引支給額）にそろえる。
-         ①明細 → ②差し引く → ③締め の順は、スマホ（1カラム）でも紙（2カラム）でも同じ。
+         ①明細 → ②控除 → ③締め の順は、スマホ（1カラム）でも紙（2カラム）でも同じ。
          ＝探す場所が変わらない。 -->
     <div class="card" id="sum-card">
       <div class="card-h">締め</div>
@@ -231,6 +234,9 @@
           <button class="btn-ghost" type="button" id="b-print">印刷 / PDF保存</button>
           <button class="btn-ghost" type="button" id="b-xlsx">Excel</button>
         </div>
+        <!-- ★紙はA4 1枚に収まるよう「実際に測って」組んである★
+             印刷の画面で「用紙に合わせる／縮小」を選ぶと その寸法が崩れる。 -->
+        <p class="hint" id="print-scale-note">印刷するときは、拡大・縮小を「実際のサイズ（100%）」にしてください。A4 1枚に収まるよう寸法を測って作っています。</p>
         <div class="btn-row" id="danger-row"></div>
       </details>
       <div class="ok" id="edit-ok" style="display:none"></div>
@@ -242,13 +248,36 @@
   <section class="screen" id="scr-set">
     <div class="card">
       <div class="card-h">紙の様式</div>
+      <p class="hint">紙の見た目だけが変わります（金額は1円も変わりません）。</p>
       <div class="seg" id="s-tpl"></div>
+      <!-- ★同じ事を2回 言わない★ 「見た目だけ・金額は変わらない」は
+           下の s-tpl-note が選んだ様式の説明と一緒に出している（2026-08-15 スクショで重複を発見）。 -->
       <p class="hint" id="s-tpl-note"></p>
-      <p class="hint">様式で変わるのは見た目だけです。金額・消費税・合計は1円も変わりません。</p>
     </div>
 
-    <div class="card">
-      <div class="card-h">明細の列</div>
+    <!-- ★既定で正しく動く物は 出しっぱなしにしない★（司さん 2026-08-16 ⑥）
+         ・紙の行数 … 既定は ★A4 1枚に収まる数を実測して★ 入れてある＝ふだん触らない
+                      （2枚になった時だけ 入力の画面から「枠を増やす」で ここへ飛べる）
+         ・明細の列 … ★列を足したい会社だけ★ が触る
+         ★畳むだけで 消さない★（押せば出る）。★開いた時に見える設定を減らす★のが狙い。 -->
+    <details class="card more" id="set-more">
+      <summary class="more-s">詳しい設定（紙の行数・明細の列）</summary>
+
+      <div class="sub-h">紙の行数</div>
+      <p class="hint">明細が少ない月でも、枠の分だけ空の行を残して刷ります。毎月おなじ場所に おなじ物が来るので、探し直しになりません。</p>
+      <div class="frow2">
+        <div class="frow">
+          <div class="flabel">明細の枠（行）</div>
+          <input class="finput" id="s-rows" type="number" min="0" max="60" step="1" inputmode="numeric" placeholder="既定">
+        </div>
+        <div class="frow">
+          <div class="flabel">控除の枠（行）</div>
+          <input class="finput" id="s-dedrows" type="number" min="0" max="30" step="1" inputmode="numeric" placeholder="既定">
+        </div>
+      </div>
+      <p class="hint" id="s-rows-note"></p>
+
+      <div class="sub-h">明細の列</div>
       <p class="hint">請求書に並べる列は、会社ごとに自由に決められます。足す・消す・並べ替える・幅を変える・揃えを変える。知らない名前の列（例：行き先・距離・担当者）も足せます。</p>
       <div id="col-list"></div>
       <div class="btn-row">
@@ -259,7 +288,7 @@
       <p class="why" id="col-why"></p>
       <div class="ok" id="col-ok" style="display:none"></div>
       <div class="bad" id="col-err" style="display:none"></div>
-    </div>
+    </details>
 
     <div class="card">
       <div class="card-h">請求書の決まり</div>
@@ -425,33 +454,33 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../js/supa-config.js?v=1ecadcf5"></script>
-<script src="../lib/xlsx.full.min.js?v=1ecadcf5"></script>
-<script src="../js/file-out.js?v=1ecadcf5"></script>
-<script src="../js/suite-data.js?v=1ecadcf5"></script>
-<script src="../kyuyo/lib/shouhizei-ritsu.js?v=1ecadcf5"></script>
+<script src="../js/supa-config.js?v=53d5585c"></script>
+<script src="../lib/xlsx.full.min.js?v=53d5585c"></script>
+<script src="../js/file-out.js?v=53d5585c"></script>
+<script src="../js/suite-data.js?v=53d5585c"></script>
+<script src="../kyuyo/lib/shouhizei-ritsu.js?v=53d5585c"></script>
 <!-- ★源泉徴収の率と式は【給与の lib】が持つ＝請求書側には率を1つも書かない★
      （国税庁 No.2798。100万円の境目も、1円未満の切り捨ても、あちらの gensenA が唯一の正） -->
-<script src="../kyuyo/lib/shiharai-chosho.js?v=1ecadcf5"></script>
-<script src="lib/seikyu-tax.js?v=1ecadcf5"></script>
-<script src="lib/seikyu-gensen.js?v=1ecadcf5"></script>
-<script src="lib/seikyu-carry.js?v=1ecadcf5"></script>
-<script src="lib/seikyu-cols.js?v=1ecadcf5"></script>
-<script src="lib/seikyu-templates.js?v=1ecadcf5"></script>
-<script src="lib/seikyu-doc.js?v=1ecadcf5"></script>
-<script src="lib/seikyu-name.js?v=1ecadcf5"></script>
-<script src="lib/seikyu-paper.js?v=1ecadcf5"></script>
-<script src="lib/seikyu-aoa.js?v=1ecadcf5"></script>
-<script src="js/seikyu-store.js?v=1ecadcf5"></script>
-<script src="js/seikyu-out.js?v=1ecadcf5"></script>
-<script src="js/seikyu-app.js?v=1ecadcf5"></script>
-<script src="../js/exally-login.js?v=1ecadcf5"></script>
-<script src="js/auth.js?v=1ecadcf5"></script>
+<script src="../kyuyo/lib/shiharai-chosho.js?v=53d5585c"></script>
+<script src="lib/seikyu-tax.js?v=53d5585c"></script>
+<script src="lib/seikyu-gensen.js?v=53d5585c"></script>
+<script src="lib/seikyu-carry.js?v=53d5585c"></script>
+<script src="lib/seikyu-cols.js?v=53d5585c"></script>
+<script src="lib/seikyu-templates.js?v=53d5585c"></script>
+<script src="lib/seikyu-doc.js?v=53d5585c"></script>
+<script src="lib/seikyu-name.js?v=53d5585c"></script>
+<script src="lib/seikyu-paper.js?v=53d5585c"></script>
+<script src="lib/seikyu-aoa.js?v=53d5585c"></script>
+<script src="js/seikyu-store.js?v=53d5585c"></script>
+<script src="js/seikyu-out.js?v=53d5585c"></script>
+<script src="js/seikyu-app.js?v=53d5585c"></script>
+<script src="../js/exally-login.js?v=53d5585c"></script>
+<script src="js/auth.js?v=53d5585c"></script>
 <!-- ★Service Worker は登録しない＝キャッシュで古い版が居座る問題を根絶。
      開くたびに既存SWを登録解除＋全キャッシュ削除して常に最新にする（給与と同じ）。 -->
 <script>try{if('serviceWorker'in navigator){navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister();});});}if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.delete(k);});});}}catch(e){}</script>
 <!-- ★テスト環境の帯★ 本番の倉庫では出ない。今どの倉庫かは js/supa-config.js が唯一の正。
      ホスト名では決めない（配り方は変わるが「本番のデータか」は変わらないため）。 -->
-<script src="../js/env-badge.js?v=1ecadcf5"></script>
+<script src="../js/env-badge.js?v=53d5585c"></script>
 </body>
 </html>

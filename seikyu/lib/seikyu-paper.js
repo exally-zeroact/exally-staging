@@ -54,13 +54,45 @@
      ★固定にするのは「紙」だけ★＝入力の画面は今までどおり可変（空欄を並べて埋めさせない）。 */
   /* ★行の高さは1か所で決める★＝左（明細）と右（控除）の罫線がずれない
      （2026-08-15 司さんの指摘：右の空の枠の横線が左と合っていなかった） */
-  var ROW_H = '7.2mm';
-  var PAPER_ROWS = 30;        // 明細の枠（1ページぶん）★会社が変えられる★
-  var DEDUCT_ROWS = 4;        // 差し引く（控除）の枠 ★会社が変えられる★
+  /* ★行の高さは実物に合わせる★（2026-08-15 実物32枚を機械で読んだ数字）
+       xlsx の row/@ht ＝ 中央値 ★17.85pt＝6.3mm★（最小 5.29mm ／ 最大 6.35mm・32枚全部）
+       上下の余白も32枚 全部 ★0.748in＝19mm★
+     ★前は 7.2mm と書いてあったのに 実際は 8.1mm で刷れていた★
+       ＝ height は「最低の高さ」でしかなく、中身（9.5pt×1.55＋上下1.4mm＝30.2px）の方が高くて
+         ROW_H が ★一度も効いていなかった★。だから余白と行間も ここで決める。 */
+  var ROW_H = '6.3mm';
+  var ROW_PAD = '0.9mm 1.2mm';
+  var ROW_LH = '1.35';
+  /* ★A4 1枚に収まる行数★（★実測して決めた数★）
+     給料明細も同じやり方＝A4を固定して「支給14マス／控除10マス」を実測してベタで持っている
+     （kyuyo/js/render.js の lnHTML(p.shikyu,14) / lnHTML(p.kojo,10)・行の高さ33px）。
+     ★控除の箱を出すと その分 明細に使える高さが減る★ので数を分ける。
+     ★会社が増やせる★。増やして1枚に入らなくなったら 素直に2ページ目（黙って詰めない）。
+
+     ★実測（Chromium・1行ずつ26行まで総当たり／2026-08-16）★
+       A4たて ＝ 1123px（96dpi）／ 1行 ＝ ★25px（6.6mm）★
+       動かない部分 ＝ ★620px★（控除を出さない紙）／ ★872px★（出す紙）
+       → 収まる最大 ＝ ★20行★（1118px）／ ★10行★（1121px）
+         ＋1行で 1143px・1146px ＝ ★A4を超える★ ので ここが上限。
+
+     ★数字が動いた履歴（★紙に何か足した日／詰めた日に 必ず測り直す★）★
+       ・最初に置いた 30／21／14 は ★当てずっぽう★＝測ったら全部はみ出していた
+       ・行の高さを実物（6.3mm）に合わせて → 16／7
+       ・締めに「控除」の行を足した（司さん ④）→ 16／★6★
+       ・★紙の頭を詰めた（司さん ⑦）→ 頭 389px→290px（−99px）＝ ★20／10★★
+         ＝詰めた分は そのまま 明細の行数に回った（+4行ずつ）。
+
+     ★実物（32枚）との突き合わせ★
+       ・実物の明細の枠 … 黒田空調/ENEOS ＝ 30行 ／ ★八木（控除あり）＝ 3行★（控除枠は4行）
+       ・実物が30行 入るのは ★紙の頭が小さいから★。うちも頭を詰めて 20行まで来た。
+         残りの差は「ご請求金額を大きく」「振込先を枠で囲う」＝★うちが決めて残した所★。 */
+  var PAPER_ROWS = 20;        // 控除を出さない紙（★実測★）
+  var PAPER_ROWS_DED = 10;    // 控除を出す紙（★実測★）
+  var DEDUCT_ROWS = 4;        // 控除の枠 ★会社が変えられる★（実物 八木＝E17:H20＝4行）
   var ROWS_FIRST = 12;
   var ROWS_REST = 24;
 
-  /* 色は★直hex★。#1A4A2E は使わない。 */
+  /* 色は★直hex★。★禁止色（濃い緑）は使わない＝緑は #2E7D54★ */
   var THEME = {
     ink: '#24422F',       // 本文
     sub: '#5C7E6C',       // 補助文（挨拶・ラベル）
@@ -172,6 +204,35 @@
     return pages;
   }
 
+  /* ★「差し引くを出すか」「枠は何行か」「何枚になるか」を決めるのは ここ1か所★
+     画面（2枚になりますの案内）と紙が別々に判定すると、
+     ★画面は「1枚」・紙は2枚★という食い違いが必ず出る（過去に同じ型の事故あり）。
+     ＝画面はこの3つを呼ぶ。自前で数えない。 */
+  function showDeductOf(inv, o) {
+    o = o || {};
+    var dLines = Array.isArray(o.deductLines) ? o.deductLines : [];
+    var d = (o.deduct === undefined || o.deduct === null) ? null : Number(o.deduct);
+    var has = dLines.length > 0
+      || !!(inv && inv.data && inv.data.deductions && inv.data.deductions.length)
+      || (d !== null && d !== 0);
+    if (has) return true;                       // ★1件でも入れたら自動で出す★
+    if (o.showDeduct !== undefined) return !!o.showDeduct;
+    return !!(inv && inv.data && inv.data.showDeduct);   // ★既定は出さない★
+  }
+  function frameRowsOf(inv, o) {
+    o = o || {};
+    var given = (o.paperRows !== undefined ? o.paperRows : (inv && inv.data && inv.data.paperRows));
+    var ded = (o.showDeductResolved !== undefined) ? !!o.showDeductResolved : showDeductOf(inv, o);
+    return Math.max(0, Math.trunc(Number(given) || (ded ? PAPER_ROWS_DED : PAPER_ROWS)));
+  }
+  /* 明細が何本で 何枚になるか（枠0＝詰める指定の時は 昔の数え方に任せて1枚と言わない） */
+  function pagesOf(lineCount, frameRows) {
+    var n = Math.max(0, Math.trunc(Number(lineCount) || 0));
+    var f = Math.max(0, Math.trunc(Number(frameRows) || 0));
+    if (!f) return paginate(new Array(n).fill(0)).length;
+    return Math.max(1, Math.ceil(n / f));
+  }
+
   /* ═══ 紙 ═══
    * build({ inv, tax, partner, org, cols, theme, era, page })
    *   era … 'reiwa' で和暦。既定は西暦（代行請求の既定 dateEra:'seireki' と同じ）
@@ -215,24 +276,30 @@
        決め方は seikyu-doc.js が唯一の正（billedOf）。 */
     var deduct = (o.deduct === undefined || o.deduct === null) ? null : Number(o.deduct);
     var deductLines = Array.isArray(o.deductLines) ? o.deductLines : [];
-    /* ★枠の本数（固定）★ 会社が変えられる。0以下は「詰める」＝昔の形に戻す道 */
-    var frameRows = Math.max(0, Math.trunc(Number(
-      (o.paperRows !== undefined ? o.paperRows : (inv.data && inv.data.paperRows))) || PAPER_ROWS));
+    /* ★枠の本数（固定）★ 会社が変えられる。0以下は「詰める」＝昔の形に戻す道
+       ★既定は 控除の枠を出すかで変わる★（下の showDeduct が決まってから入れる）。 */
+    var frameRowsGiven = (o.paperRows !== undefined ? o.paperRows : (inv.data && inv.data.paperRows));
+    var frameRows = 0;
     var dedRows = Math.max(0, Math.trunc(Number(
       (o.deductRows !== undefined ? o.deductRows : (inv.data && inv.data.deductRows))) || DEDUCT_ROWS));
     /* ★控除の話を渡されたか★
        渡されていない紙（見積・領収・古い呼び方）に「控除計（未確認）」を出さない。
        ★渡された時は 0件でも枠を出す★＝毎月 同じ顔（実物 八木は4行の枠に1行しか使っていない）。
        ★「出さない」も会社が選べる★（控除を使わない会社が多いため）。 */
-    var deductGiven = (o.deduct !== undefined) || deductLines.length > 0 || o.showDeduct !== undefined
-      || !!(inv.data && inv.data.deductions && inv.data.deductions.length);
-    /* ★1カラム／2カラム★（給料明細と同じ選び方・同じ言い方）
-         2カラム … 明細｜差し引く を ★横に並べる★（col2）
-         1カラム … 明細 ↓ 差し引く を ★縦に積む★（col1・明細が多い／控除を使わない会社向け） */
-    var layout = String((o.layout !== undefined ? o.layout : (inv.data && inv.data.paperLayout)) || 'col2');
-    if (layout !== 'col1' && layout !== 'col2') layout = 'col2';
-    var showDeduct = (o.showDeduct !== undefined) ? !!o.showDeduct
-      : ((inv.data && inv.data.showDeduct) !== undefined ? !!inv.data.showDeduct : deductGiven);
+    /* ★紙は1カラム★（司さん 2026-08-15「2カラムは見にくい」）
+         2カラムだと ★明細の幅が狭くなる／控除1件の会社は右が空白だらけ／
+         左28行に対して右3行＝紙の右半分が死ぬ★。
+       ★col2 のコードは残す★（後で「横に並べたい」会社が出た時に戻せるように）。
+       ★ただし 選ぶ所には出さない★＝今は人に見せない。 */
+    var layout = String((o.layout !== undefined ? o.layout : (inv.data && inv.data.paperLayout)) || 'col1');
+    if (layout !== 'col1' && layout !== 'col2') layout = 'col1';
+    /* ★控除を使わない会社の方が多い★（司さん 2026-08-15）
+       ・★既定は「使わない」★＝見出しごと出さない（★中身が空の枠だけ出す★のが一番 悪い）
+       ・★控除を1件でも入れたら 自動で「使う」★（入れたのに出ない事故を作らない）
+       ・使わない紙は ★その分の高さを明細に回す★（入る行数が増える） */
+    var showDeduct = showDeductOf(inv, o);
+    /* ★枠の本数は 控除の枠を出すかで変わる★（出すと明細に使える高さが減る） */
+    frameRows = frameRowsOf(inv, { paperRows: frameRowsGiven, showDeductResolved: showDeduct });
     var gen = o.gensen || null;     // ★源泉徴収（引く紙だけ）★
     var carry = o.carry || null;    // ★繰越（前回の残り）★
     /* ★1ページに入るのは 枠の本数まで★（入り切らない時だけ次のページ） */
@@ -256,6 +323,33 @@
       var out = '';
       for (var i = 0; i < n; i++) out += '<tr class="r-blank">' + tds + '</tr>';
       return out;
+    }
+
+    /* ★② 明細の合計は「列の真下」に置く★（司さん 2026-08-15）
+       前は 表の外に 2列の小さい表（label|値）で出していたので、
+       ★金額の合計が「消費税」の列の真下★に来て、何の合計か分からなかった。
+       ＝★表の一番下に合計行を入れて、金額の列には金額の合計・消費税の列には消費税の合計★
+         （Timeally の勤務表と同じ作法＝上の行と縦にぴったり重なる）。
+       ★列は会社が決める★ので、どこに置くかは ★役割（role）で探す★。 */
+    function itemsFootHtml(pageLines, label, amountSum, taxSum) {
+      var iAmount = -1, iTax = -1;
+      spec.items.forEach(function (k, c) {
+        var role = COLS.roleOfIn(spec, k);
+        if (role === 'amount' && iAmount < 0) iAmount = c;
+        if (role === 'tax' && iTax < 0) iTax = c;
+      });
+      /* 金額の列も消費税の列も無い様式（会社が全部 消した）＝置き場所が無いので出さない。
+         ★その時は締めに同じ数が出る★ので、紙から合計が消える事はない。 */
+      if (iAmount < 0 && iTax < 0) return '';
+      var firstVal = Math.min.apply(null, [iAmount, iTax].filter(function (x) { return x >= 0; }));
+      var cells = '<th class="c-col c-left c-sumlabel"'
+        + (firstVal > 1 ? ' colspan="' + firstVal + '"' : '') + '>' + esc(label) + '</th>';
+      if (firstVal === 0) cells = '';       // 1列目が金額＝ラベルを置く所が無い（下で値だけ並べる）
+      for (var c = (firstVal === 0 ? 0 : firstVal); c < spec.items.length; c++) {
+        var v = (c === iAmount) ? comma(amountSum) : (c === iTax) ? comma(taxSum) : '';
+        cells += '<td class="c-col c-' + COLS.alignOf(spec, spec.items[c]) + '">' + v + '</td>';
+      }
+      return '<tfoot><tr class="r-sum">' + cells + '</tr></tfoot>';
     }
 
     function rowsHtmlOf(pageLines, offset) {
@@ -323,10 +417,13 @@
       var lead = (inv.data && inv.data.lead) || '';
       if (!lead) lead = DOC.periodLabelOf(inv.issue_ymd);
       var greet = isQuote ? '下記の通り御見積申し上げます。' : '下記の通り御請求申し上げます。';
-      return '<div class="lead">'
-        + (lead ? '<div class="lead-l">' + esc(lead) + '</div>' : '')
-        + '<div class="lead-l">' + greet + '</div>'
-        + '</div>';
+      /* ★⑦ 頭を詰める★（司さん 2026-08-16「入力したい所が押し下げられている」）
+         ・「◯月分」と挨拶は ★1行にまとめる★
+         ・挨拶は ★小さく★（毎月おなじ文＝読まれない。消しはしない＝商習慣） */
+      return '<div class="lead"><div class="lead-l">'
+        + (lead ? '<span class="lead-p">' + esc(lead) + '</span>' : '')
+        + '<span class="lead-g">' + greet + '</span>'
+        + '</div></div>';
     }
 
     /* ── 御請求金額（★枠なし・ラベル＋大きい金額・下に線★） ── */
@@ -358,29 +455,45 @@
     function totalsBlock() {
       /* ★締め★ 小計はブロックの合計が持っているので、ここは 消費税 → 合計 → 請求額。
          ★大きい数字は紙の頭に1つだけ★（給料明細の差引支給額と同じ）＝ここは全部 小さく。 */
-      var rows = ''
-        + '<tr><th>' + taxLabel(tax, inv.tax_mode) + '</th><td>' + yen(tax.taxTotal) + '</td></tr>'
-        + '<tr class="sums-mid"><th>合計</th><td>' + yen(tax.grandTotal) + '</td></tr>';
+      /* ★一番 下の行＝実際に払う額★ 何行 出るかは紙ごとに違う（控除・源泉の有無）ので、
+         ★最後の1行に印を付ける★のは組み終わってから（下の netLast）。
+         ここで「合計」を太くしてしまうと、控除のある紙で
+         ★合計＝太字／請求額＝細字★ になり、払う額の方が弱く見える。 */
+      /* ★④ 請求額までの筋道を1本で見せる★（司さん 2026-08-15）
+           明細の合計 → 消費税 → 合計 → 控除 → 請求額
+         ★控除の箱の下の「控除計」は残す★＝ブロックの合計（箱の足し算）と
+           ここ（払う額までの計算）は役目が違う。給料明細も両方 在る。 */
+      var rows = [
+        ['', '明細の合計', yen(tax.subtotal)],
+        ['', taxLabel(tax, inv.tax_mode), yen(tax.taxTotal)],
+        ['sums-mid', '合計', yen(tax.grandTotal)],
+      ];
       /* ★控除の「1行ずつ」は ②の枠が持つ★（同じ物を2か所に出さない）。
          ここには ★控除計 と 請求額★ だけを出す。★税額は動かさない★。
          ★控除が読めない時は 請求額も数字にしない★
            ＝0として計算した額を「請求額」と大きく出すと、★引き忘れた紙★ になる。 */
-      if (showDeduct) {
-        /* ★控除計は②のブロックが持つ★（同じ数を2回 足し算として出さない）。
-           ここは ★引いたあとの「請求額」★ だけ＝締めの役目。 */
+      /* ★控除が本当に在る紙だけ★ 控除と請求額の2行を足す。
+         0件（空の枠だけ出している会社）で「控除 -¥0／請求額＝合計」を出すと
+         ★同じ数字が2回 並ぶだけ★になる。 */
+      var hasRealDeduct = showDeduct && (deduct === null || Number(deduct) !== 0);
+      if (hasRealDeduct) {
         var billedNet = (deduct === null) ? null : (tax.grandTotal - deduct);
-        rows += '<tr class="sums-net"><th>請求額</th><td>'
-          + (billedNet === null ? '（未確認）' : yen(billedNet)) + '</td></tr>';
+        rows.push(['sums-minus', '控除', (deduct === null) ? '（未確認）' : '-' + yen(deduct)]);
+        rows.push(['', '請求額', (billedNet === null ? '（未確認）' : yen(billedNet))]);
       }
       if (gen && gen.on) {
         /* ★差引お支払額は「合計請求額（繰越こみ・控除ずみ）− 源泉」★
            gen.net は この1通だけで出した額なので、繰越があると足りない。
            順番は seikyu-doc.js が唯一の正。 */
         var pay = DOC.payableOf(tax, carry, gen, deduct);
-        rows += '<tr class="sums-minus"><th>' + esc(gen.label) + '</th><td>-' + yen(gen.amount) + '</td></tr>'
-          + '<tr class="sums-net"><th>' + esc(gen.netLabel) + '</th><td>' + (pay === null ? '（未確認）' : yen(pay)) + '</td></tr>';
+        rows.push(['sums-minus', esc(gen.label), '-' + yen(gen.amount)]);
+        rows.push(['', esc(gen.netLabel), (pay === null ? '（未確認）' : yen(pay))]);
       }
-      return '<table class="sums"><tbody>' + rows + '</tbody></table>';
+      /* ★最後の1行だけ sums-net★（＝この紙で実際に払う額。控除も源泉も無ければ「合計」がそれ） */
+      rows[rows.length - 1][0] = 'sums-net';
+      return '<table class="sums"><tbody>' + rows.map(function (r) {
+        return '<tr' + (r[0] ? ' class="' + r[0] + '"' : '') + '><th>' + r[1] + '</th><td>' + r[2] + '</td></tr>';
+      }).join('') + '</tbody></table>';
     }
 
     /* ── 繰越（前回の残り）★紙の頭・箱で囲まない★
@@ -415,7 +528,7 @@
       }
       if (!rows) rows = '<tr><td class="r-none" colspan="3">区分はまだありません</td></tr>';
       return '<div class="bd"><div class="bd-h">（内訳）</div>'
-        + '<table class="rates"><thead><tr><th>区分</th><th>対象額</th><th>消費税</th></tr></thead>'
+        + '<table class="rates"><thead><tr><th class="rt-l">区分</th><th class="rt-r">対象額</th><th class="rt-r">消費税</th></tr></thead>'
         + '<tbody>' + rows + '</tbody></table></div>';
     }
 
@@ -429,7 +542,7 @@
          ・足りない行は ★高さの決まった空行★ で埋める（rowsHTML の minCells と同じ考え方）
          ・★各ブロックの下にそのブロックの合計★（支給合計／控除合計＝上に線を引いた1行）
          ・★大きい数字は紙の頭に1つだけ★（差引支給額）＝ブロックの合計は小さく
-       請求書では 支給→★ご請求の内訳★／控除→★差し引く★ に読み替える。 */
+       請求書では 支給→★ご請求の内訳★／控除→★控除★（給料明細と同じ言葉にそろえる）。 */
     function blockHead(t) { return '<div class="st">' + esc(t) + '</div>'; }
     function blockSum(label, value) {
       return '<table class="bsum"><tbody><tr><th>' + esc(label) + '</th><td>' + value + '</td></tr></tbody></table>';
@@ -447,7 +560,7 @@
       for (var i = 0; i < blanks; i++) rows += '<tr class="r-blank"><th>&nbsp;</th><td>&nbsp;</td></tr>';
       /* ★このブロックの合計はこのブロックが持つ★（給料明細の「控除合計」と同じ）。
          締めの「請求額」とは役目が違う（ブロックの足し算／払う額）。 */
-      return '<div class="blk blk-ded">' + blockHead('差し引く')
+      return '<div class="blk blk-ded">' + blockHead('控除')
         + '<table class="ded"><tbody>'
         + '<tr class="ded-hd"><th>内容</th><td>金額</td></tr>'
         + rows + '</tbody></table>'
@@ -458,10 +571,20 @@
     /* ── 足元（★左＝お振込先／右＝小計・消費税・合計＋（内訳）★）
          左右に並べるのは、紙の下半分を1列で長くしないため。
          ★2段組みは表で作る★（flex だと文が1文字ずつ縦に割れる） */
+    /* ★口座番号だけ 大きく・等幅★（読み間違いが一番 困る所）
+       振込先は1本の文（「伊予銀行　今治支店　普通　4160657　ド）ゼロアクト」）で会社が持つので、
+       ★続いた数字（5〜8桁）だけを見つけて大きくする★。文そのものは1文字も変えない。 */
+    function bankHtml(bank) {
+      return esc(bank).replace(/\n/g, '<br>')
+        .replace(/(\d{5,8})/g, '<span class="bank-no">$1</span>');
+    }
     function footerBlock() {
       var left = '';
       var bank = textOf(g.bank);
-      if (bank) left += '<div class="note"><div class="note-h">お振込先</div><div class="note-b">' + esc(bank).replace(/\n/g, '<br>') + '</div></div>';
+      /* ★⑧ 客が一番 使う情報＝ここへ振り込む★（司さん 2026-08-16）
+         枠で囲って薄く塗る（★白黒コピーでも枠は残る濃さ★）。 */
+      if (bank) left += '<div class="note note-bank"><div class="note-h">お振込先</div>'
+        + '<div class="note-b">' + bankHtml(bank) + '</div></div>';
       var memo = textOf(inv.data && inv.data.memo);
       if (memo) left += '<div class="note"><div class="note-h">備考</div><div class="note-b">' + esc(memo).replace(/\n/g, '<br>') + '</div></div>';
       return '<table class="foot"><tbody><tr>'
@@ -521,7 +644,6 @@
     var sheets = pages.map(function (pageLines, idx) {
       var last = (idx === pages.length - 1);
       var offset = pages.slice(0, idx).reduce(function (a, x) { return a + x.length; }, 0);
-      var pageSum = pageLines.reduce(function (a, x) { return a + (Number(x.amount) || 0); }, 0);
       var body = ''
         + headBlock(idx)
         /* ★繰越は1ページ目の金額のすぐ下★（前回の残りを含む額なので、金額の根拠として先に見せる）
@@ -537,11 +659,18 @@
           /* ★① ご請求の内訳★（左／上）＝明細＋★このブロックの合計★
              見出しの下に線を引く＝★左右の1行目が同じ高さから始まる★（給料明細と同じ） */
           var pageSub = pageLines.reduce(function (a2, x) { return a2 + (Number(x.amount) || 0); }, 0);
+          var pageTax = pageLines.reduce(function (a2, x) { return a2 + (Number(x.tax) || 0); }, 0);
+          /* ★合計行は表の中★（列の真下に来る）。最後の紙は紙ぜんぶの合計、
+             途中の紙は そのページの分（★どちらも同じ場所・同じ列★）。 */
+          var foot = last
+            ? itemsFootHtml(pageLines, '明細の合計', tax.subtotal, tax.taxTotal)
+            : itemsFootHtml(pageLines, 'このページの小計', pageSub, pageTax);
           var itemsBlk = '<div class="blk blk-items">'
             + blockHead(caption ? caption : 'ご請求の内訳')
             + '<table class="items"><thead><tr>' + headHtml + '</tr></thead>'
-            + '<tbody>' + rowsHtmlOf(pageLines, offset) + '</tbody></table>'
-            + (last ? blockSum('明細の合計', yen(tax.subtotal)) : blockSum('このページの小計', yen(pageSub)))
+            + '<tbody>' + rowsHtmlOf(pageLines, offset) + '</tbody>' + foot + '</table>'
+            /* 金額の列も消費税の列も無い様式だけ、昔どおり表の外に出す（置き場所が無いため） */
+            + (foot ? '' : (last ? blockSum('明細の合計', yen(tax.subtotal)) : blockSum('このページの小計', yen(pageSub))))
             + '</div>';
           var rightBlk = last ? deductBlock() : '';
           if (layout === 'col1') {
@@ -556,9 +685,12 @@
         + (last ? totalsBlock() : '')
         + (last
           ? footerBlock()
-          : '<div class="cont">'
-            + '<div class="cont-l">このページの小計<span class="cont-v">' + yen(pageSum) + '</span></div>'
-            + '<div class="cont-n">次ページへ続く →</div></div>');
+          /* ★同じ数字を2回 言わない★
+             「このページの小計」は すぐ上の 明細の箱が すでに出している。
+             ここで もう一度 出すと、同じ紙の同じ場所に同じ額が2つ並ぶ
+             （2026-08-15 スクショで実際に ¥66,500 が2つ並んでいた）。
+             ★ここは「続く」ことだけ言う。★ */
+          : '<div class="cont"><div class="cont-n">次ページへ続く →</div></div>');
       return '<div class="sheet">' + body + '</div>';
     }).join('');
 
@@ -591,32 +723,33 @@
       'html,body{margin:0;padding:0;background:#FFFFFF;color:' + INK + ';',
       "font-family:'Noto Sans JP','Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;",
       '-webkit-print-color-adjust:exact;print-color-adjust:exact;}',
-      '.sheet{width:190mm;min-width:190mm;margin:0 auto;padding:12mm 10mm;position:relative;}',
+      '.sheet{width:190mm;min-width:190mm;margin:0 auto;padding:10mm 10mm;position:relative;}',
       '.sheet + .sheet{border-top:1px dashed ' + LINE + ';}',
       '@media print{.sheet{page-break-after:always;break-after:page;border-top:0;}',
       '.sheet:last-child{page-break-after:auto;break-after:auto;}}',
 
       /* ★日付・No. の塊は題名より上（実物と同じ並び）。題名を少し下げて場所を空ける★ */
-      '.ttl{font-size:22pt;letter-spacing:' + TH.titleSpacing + ';text-align:center;color:' + INK + ';',
-      'margin:11mm 0 8mm;font-weight:700;}',
+      /* ★⑦ 頭を詰める★ 題名の上下を詰める（実測して行数に回す） */
+      '.ttl{font-size:20pt;letter-spacing:' + TH.titleSpacing + ';text-align:center;color:' + INK + ';',
+      'margin:6mm 0 5mm;font-weight:700;}',
 
       /* 日付・No.（右上）。★ラベルの後ろは全角スペース＝字間はそれで作る★ */
-      '.meta{position:absolute;top:12mm;right:10mm;font-size:9pt;color:' + SUB + ';text-align:right;}',
-      '.meta-l{display:block;white-space:nowrap;line-height:1.9;}',
+      '.meta{position:absolute;top:10mm;right:10mm;font-size:9pt;color:' + SUB + ';text-align:right;}',
+      '.meta-l{display:block;white-space:nowrap;line-height:1.6;}',
 
       /* 宛名（左）／自社（右）。★表の2列＝幅が足りなくても文が縦に割れない★
          ★下線は引かない（うちの紙は引いていない）★ */
-      '.party{width:100%;border-collapse:collapse;margin:0 0 5mm;table-layout:fixed;}',
+      '.party{width:100%;border-collapse:collapse;margin:0 0 3mm;table-layout:fixed;}',
       '.party td{vertical-align:top;padding:0;}',
       '.party-to{width:56%;min-width:80mm;}',
       '.party-from{width:44%;min-width:60mm;text-align:right;}',
-      '.to-name{font-size:15pt;font-weight:700;display:block;line-height:1.6;',
+      '.to-name{font-size:14pt;font-weight:700;display:block;line-height:1.45;',
       'word-break:normal;overflow-wrap:break-word;}',
-      '.to-sub{font-size:9.5pt;color:' + SUB + ';line-height:1.8;',
+      '.to-sub{font-size:9.5pt;color:' + SUB + ';line-height:1.55;',
       'word-break:normal;overflow-wrap:break-word;}',
-      '.from-name{font-size:11pt;font-weight:700;line-height:1.6;',
+      '.from-name{font-size:11pt;font-weight:700;line-height:1.45;',
       'word-break:normal;overflow-wrap:break-word;}',
-      '.from-sub{font-size:9pt;color:' + SUB + ';line-height:1.6;',
+      '.from-sub{font-size:9pt;color:' + SUB + ';line-height:1.45;',
       'word-break:normal;overflow-wrap:break-word;}',
       /* ★角印は薄く重ねる（下の文字を隠し切らない）★
          大きさは会社が決める（10〜40mm・既定21mm）。文字の上に少しかかってよい。 */
@@ -624,12 +757,15 @@
       '.pageno{font-size:9.5pt;color:' + SUB + ';margin:0 0 3mm;}',
 
       /* 挨拶。★block＋十分な幅＝1文字ずつ縦に割れない★ */
-      '.lead{margin:0 0 5mm;}',
+      '.lead{margin:0 0 3mm;}',
+      /* ★挨拶は小さく（毎月おなじ文）／「◯月分」は本文の大きさのまま★ */
+      '.lead-p{font-size:9.5pt;color:' + INK + ';margin-right:4mm;}',
+      '.lead-g{font-size:8.5pt;color:' + SUB + ';}',
       '.lead-l{display:block;width:100%;min-width:80mm;font-size:9.5pt;color:' + SUB + ';',
       'line-height:1.9;white-space:normal;word-break:normal;overflow-wrap:break-word;}',
 
       /* ★御請求金額＝枠なし。ラベル（小）＋金額（大）＋下に細い線★ */
-      '.grand{margin:0 0 6mm;padding:0 0 2.2mm;border-bottom:1.2pt solid ' + ACCENT + ';',
+      '.grand{margin:0 0 4mm;padding:0 0 2mm;border-bottom:1.2pt solid ' + ACCENT + ';',
       'display:block;width:100%;max-width:120mm;white-space:nowrap;}',
       '.grand-l{font-size:12pt;font-weight:700;color:' + INK + ';}',
       '.grand-v{font-size:20pt;font-weight:700;color:' + TH.grandInk + ';margin-left:12mm;',
@@ -640,15 +776,17 @@
       'white-space:normal;word-break:normal;overflow-wrap:break-word;}',
 
       /* 明細。★縦の罫は引かない・見出しは薄い地・表の下を1本で締める★ */
-      '.items{width:100%;table-layout:fixed;border-collapse:collapse;font-size:9.5pt;margin:0 0 4mm;',
-      'border-bottom:0.9pt solid ' + ACCENT + ';}',
+      /* ★② 線は「上」に統一★（司さん 2026-08-16）
+         表そのものに下線を引くと、合計行だけ ★上にも下にも線★が付いて、
+         締めの行（上線だけ）と作法が違って見える。★線の付け方は1か所★＝合計行の上線だけ。 */
+      '.items{width:100%;table-layout:fixed;border-collapse:collapse;font-size:9.5pt;margin:0 0 4mm;}',
       /* ★見出しは切らずに折り返す★
          2カラムにして明細の幅が狭くなり、「数量」が ★「数…」と切れていた★（2026-08-15 実測）。
          ★列の名前は会社が決める＝長い名前も来る★ので、切るのではなく折り返して全部 見せる。 */
       '.items th{background:' + TH.headBg + ';color:' + TH.headInk + ';font-weight:700;font-size:8.5pt;',
-      'border:0;padding:1.4mm 1.2mm;line-height:1.35;',
+      'border:0;padding:' + ROW_PAD + ';line-height:1.35;',
       'white-space:normal;word-break:normal;overflow-wrap:break-word;}',
-      '.items td{' + cellBorder + 'padding:1.4mm 1.2mm;vertical-align:top;line-height:1.55;height:' + ROW_H + ';}',
+      '.items td{' + cellBorder + 'padding:' + ROW_PAD + ';vertical-align:top;line-height:' + ROW_LH + ';height:' + ROW_H + ';}',
       '.items .c-left{text-align:left;}',
       '.items .c-center{text-align:center;}',
       '.items .c-right{text-align:right;white-space:nowrap;',
@@ -676,6 +814,14 @@
       '.blk{margin:0 0 4mm;}',
       '.st{font-size:9.5pt;font-weight:700;color:' + ACCENT + ';letter-spacing:.16em;',
       'padding:0 0 1.6mm;border-bottom:0.7pt solid ' + LINE + ';margin:0 0 0;}',
+      /* ★② 表の中の合計行★（列の真下に来る＝上の行と縦に重なる）
+         給料明細の「支給合計」と同じ役目だが、★列がある表では 表の中に置く★。 */
+      /* ★見出しの地色を引き継がない★（th なので .items th の薄い地が乗って、
+         合計行の左半分だけ塗られて見えた＝2026-08-15 スクショで発見） */
+      '.items tfoot .r-sum th,.items tfoot .r-sum td{background:transparent;border-top:0.9pt solid ' + ACCENT + ';',
+      'border-bottom:0;padding:' + ROW_PAD + ';line-height:' + ROW_LH + ';font-weight:700;color:' + INK + ';}',
+      '.items tfoot .r-sum td{' + "font-family:'DM Mono',ui-monospace,monospace;}",
+      '.c-sumlabel{text-align:left;white-space:nowrap;}',
       '.bsum{width:100%;border-collapse:collapse;font-size:9.5pt;margin:0;}',
       '.bsum th{text-align:left;font-weight:700;color:' + INK + ';border:0;border-top:0.9pt solid ' + ACCENT + ';',
       'padding:1.8mm 1.2mm;white-space:nowrap;}',
@@ -684,22 +830,24 @@
 
       /* ★② 差し引く（控除）★ ★行の高さは明細と同じ★（左右の罫線をそろえる） */
       '.ded{width:100%;border-collapse:collapse;font-size:9.5pt;table-layout:fixed;}',
-      '.ded th{text-align:left;font-weight:400;color:' + INK + ';' + cellBorder + 'padding:1.4mm 1.2mm;',
-      'height:' + ROW_H + ';line-height:1.55;',
+      '.ded th{text-align:left;font-weight:400;color:' + INK + ';' + cellBorder + 'padding:' + ROW_PAD + ';',
+      'height:' + ROW_H + ';line-height:' + ROW_LH + ';',
       'white-space:normal;word-break:normal;overflow-wrap:break-word;}',
-      '.ded td{text-align:right;white-space:nowrap;' + cellBorder + 'padding:1.4mm 1.2mm;',
-      'height:' + ROW_H + ';line-height:1.55;',
+      '.ded td{text-align:right;white-space:nowrap;' + cellBorder + 'padding:' + ROW_PAD + ';',
+      'height:' + ROW_H + ';line-height:' + ROW_LH + ';',
       "font-family:'DM Mono',ui-monospace,monospace;}",
       /* 右の見出しの行＝左の明細の見出しと同じ高さ・同じ見た目 */
       '.ded-hd th,.ded-hd td{background:' + TH.headBg + ';color:' + TH.headInk + ';font-weight:700;',
-      'font-size:8.5pt;border:0;padding:1.4mm 1.2mm;line-height:1.35;height:auto;}',
+      'font-size:8.5pt;border:0;padding:' + ROW_PAD + ';line-height:1.35;height:auto;}',
       '.ded-hd td{text-align:right;font-family:inherit;}',
       '.ded .r-blank th,.ded .r-blank td{color:transparent;}',
 
       '.foot{width:100%;border-collapse:collapse;table-layout:fixed;margin:0;}',
       '.foot td{vertical-align:top;padding:0;}',
-      '.foot-l{width:52%;min-width:70mm;padding-right:6mm;}',
-      '.foot-r{width:48%;min-width:70mm;}',
+      /* ★振込先を枠で囲った分、左を少し広げる★
+         （狭いままだと「ド）ゼロアクト」が「ド）ゼロア／クト」と折り返した＝2026-08-16 実測） */
+      '.foot-l{width:58%;min-width:70mm;padding-right:5mm;}',
+      '.foot-r{width:42%;min-width:60mm;}',
 
       /* ★小計/消費税/合計＝右下・枠なし・合計の上に線★ */
       '.sums{border-collapse:collapse;font-size:9.5pt;width:100%;margin:0 0 4mm;}',
@@ -711,14 +859,24 @@
          締めの中は ★全部 小さく★＝どれを振り込むのか迷わせない。 */
       '.sums-g th{border-top:0.9pt solid ' + ACCENT + ';font-size:12pt;font-weight:700;color:' + INK + ';}',
       '.sums-g td{border-top:0.9pt solid ' + ACCENT + ';font-size:14pt;font-weight:700;color:' + TH.grandInk + ';}',
-      '.sums-mid th,.sums-mid td{border-top:0.7pt solid ' + LINE + ';font-weight:700;color:' + INK + ';}',
+      /* ★途中の「合計」は途中★＝細い線だけ。ここを太くすると
+         「合計＝太字／請求額＝細字」になり、★払う額の方が弱く見える★
+         （2026-08-15 実物のスクショで見つけた。給料明細も最後の行が主役）。 */
+      '.sums-mid th,.sums-mid td{border-top:0.7pt solid ' + LINE + ';color:' + INK + ';}',
+      /* ★締めの最後の1行＝実際に払う額★ 大きさは変えず、線と太さで一番 強くする。 */
+      '.sums-net th,.sums-net td{border-top:0.9pt solid ' + ACCENT + ';font-weight:700;color:' + INK + ';}',
+      '.sums-net td{color:' + TH.grandInk + ';}',
 
       /* （内訳）★枠で囲まない★ */
       '.bd{margin:0 0 5mm;}',
       '.bd-h{font-size:8.5pt;color:' + SUB + ';margin:0 0 1mm;}',
       '.rates{border-collapse:collapse;font-size:9pt;width:100%;}',
+      /* ★① 見出しと数字の右端をそろえる★＝数の列は見出しも右そろえ（明細の表と同じ作法）
+         ★同じ padding を使う★＝右端の位置が1か所で決まる（別々に書くとまたずれる） */
       '.rates th{color:' + SUB + ';border:0;border-bottom:1px solid ' + LINE + ';',
-      'padding:1.2mm 3mm;white-space:nowrap;text-align:left;font-weight:400;}',
+      'padding:1.2mm 3mm;white-space:nowrap;font-weight:400;}',
+      '.rates .rt-l{text-align:left;}',
+      '.rates .rt-r{text-align:right;}',
       '.rates td{border:0;border-bottom:1px solid ' + LINE + ';padding:1.2mm 3mm;text-align:right;',
       "white-space:nowrap;font-family:'DM Mono',ui-monospace,monospace;}",
       '.rates tbody th{color:' + INK + ';}',
@@ -726,6 +884,14 @@
 
       /* 振込先・備考。★箱で囲まない★（文の幅だけは確保する） */
       '.note{margin:0 0 3mm;}',
+      /* ★⑧ 振込先＝客が一番 使う所★ 枠で囲って薄く塗る。
+         ★色は うちの緑1色・薄く★／★枠は白黒コピーでも残る濃さ★（色ではなく濃さで作る）。 */
+      '.note-bank{border:0.9pt solid ' + ACCENT + ';background:' + TH.headBg + ';',
+      'border-radius:1.5mm;padding:2mm 3mm;margin:0 0 3mm;}',
+      '.note-bank .note-h{color:' + TH.headInk + ';font-weight:700;}',
+      /* 口座番号（続いた数字）だけ 大きく等幅＝読み間違いを減らす */
+      '.bank-no{font-size:13pt;font-weight:700;letter-spacing:.06em;',
+      "font-family:'DM Mono',ui-monospace,monospace;}",
       '.note-h{font-size:8.5pt;color:' + SUB + ';margin-bottom:.8mm;}',
       '.note-b{display:block;width:100%;min-width:60mm;font-size:9.5pt;line-height:1.9;',
       'white-space:normal;word-break:normal;overflow-wrap:break-word;}',
@@ -759,5 +925,8 @@
     dateStr: dateStr, jpDate: jpDate, honorOf: honorOf, taxLabel: taxLabel,
     paginate: paginate, sealMm: sealMm, TEMPLATE_ID: TEMPLATE_ID,
     ROWS_FIRST: ROWS_FIRST, ROWS_REST: ROWS_REST,
+    /* ★画面が「2枚になります」を出すために呼ぶ（自前で数えない）★ */
+    showDeductOf: showDeductOf, frameRowsOf: frameRowsOf, pagesOf: pagesOf,
+    PAPER_ROWS: PAPER_ROWS, PAPER_ROWS_DED: PAPER_ROWS_DED, DEDUCT_ROWS: DEDUCT_ROWS,
   };
 });

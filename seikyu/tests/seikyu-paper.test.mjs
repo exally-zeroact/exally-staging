@@ -64,7 +64,11 @@ export function paperBad(kind, o) {
   if (kind === 'mixNo') return b.html.replace(/(No\.　)[^<]*/, '$1T1234567890123');
   if (kind === 'flex') return b.html.replace('.note-b{display:block', '.note-b{display:flex');
   // ★金額を塗りつぶした角丸の箱に入れる＝差し戻しの原因そのもの
-  if (kind === 'grandBox') return b.html.replace('.grand{margin:0 0 6mm;', '.grand{background:#EEF7F1;border:1px solid #CDE7D8;border-radius:2mm;padding:4mm 6mm;margin:0 0 6mm;');
+  /* ★字面で探さない★＝余白を詰めた日に この作り物が空振りして、
+     「壊したのに赤にならない」＝検査が死んでいた（2026-08-16 self-test が自分で見つけた）。
+     ＝★セレクタで探して 中身を差し替える★（余白の数字が変わっても効く） */
+  if (kind === 'grandBox') return b.html.replace(/\.grand\{/,
+    '.grand{background:#EEF7F1;border:1px solid #CDE7D8;border-radius:2mm;padding:4mm 6mm;');
   return b.html;
 }
 
@@ -315,7 +319,50 @@ T('★紙に [object Object] を刷らない（読めない物は出さない）
   const h2 = PAPER.build(sample({ inv })).html;
   ok(!/\[object Object\]/.test(h2), '備考に [object Object] が出ている');
   // ★ちゃんとした文字列は今までどおり出る（消しすぎない）
-  ok(/伊予銀行 今治支店 普通 1234567/.test(H1), '文字列の振込先まで消している');
+  //   ★口座番号は <span> で包む★ ので、タグを外した「人が読む字」で見る。
+  const flatH1 = H1.replace(/<[^>]+>/g, '');
+  ok(/伊予銀行 今治支店 普通 1234567/.test(flatH1), '文字列の振込先まで消している');
+});
+
+/* ★⑧ 振込先＝客が一番 使う情報★（司さん 2026-08-16「目立たない」） */
+T('★★振込先は枠で囲って 口座番号を大きく等幅にする（白黒でも分かる）★★', () => {
+  const h = PAPER.build(sample()).html;
+  ok(/class="note note-bank"/.test(h), '★振込先が ただの文のまま（目立たない）★');
+  ok(/<span class="bank-no">1234567<\/span>/.test(h), '★口座番号を大きくしていない★');
+  const css = PAPER.css();
+  const box = (/\.note-bank\{([^}]*)\}/.exec(css) || [])[1] || '';
+  ok(/border:[^;]*solid/.test(box), '★枠が無い（白黒コピーで箱が消える）★: ' + box);
+  ok(/background:/.test(box), '薄い塗りが無い');
+  const no = (/\.bank-no\{([^}]*)\}/.exec(css) || [])[1] || '';
+  const pt = (r) => Number((/font-size:\s*([\d.]+)pt/.exec(r) || [])[1] || 0);
+  const body = pt((/\.note-b\{([^}]*)\}/.exec(css) || [])[1] || '');
+  ok(pt(no) > body, '★口座番号が本文と同じ大きさ（一番 読みたい所なのに）★ '
+    + pt(no) + ' vs ' + body);
+  ok(/DM Mono|monospace/.test(no), '口座番号が等幅でない');
+  /* ★紙の中で一番 大きい数字は「ご請求金額」のまま★（口座番号に食われない） */
+  const grand = pt((/\.grand-v\{([^}]*)\}/.exec(css) || [])[1] || '');
+  ok(grand > pt(no), '★口座番号が 請求金額より大きい（主役が入れ替わる）★');
+});
+
+/* ★② 線は「上」に統一★（司さん 2026-08-16「明細の合計だけ下に線」） */
+T('★★線の向きが揃っている（合計の線は上・表そのものに下線を引かない）★★', () => {
+  const css = PAPER.css();
+  const items = (/\.items\{([^}]*)\}/.exec(css) || [])[1] || '';
+  ok(!/border-bottom/.test(items), '★表そのものに下線が残っている（合計行だけ上下に線が付く）★: ' + items);
+  const sum = (/\.items tfoot \.r-sum th,\.items tfoot \.r-sum td\{([^}]*)\}/.exec(css) || [])[1] || '';
+  ok(/border-top/.test(sum) && !/border-bottom:[^0]/.test(sum), '合計行の線が上でない: ' + sum);
+  /* 締めの行・ブロックの合計も「上」
+     ★正規表現を組み立てない★（記号の書き分けで自分が事故った 2026-08-15）＝素直に探す */
+  const ruleOf = (sel) => {
+    const i = css.indexOf(sel + '{');
+    if (i < 0) return null;
+    return css.slice(i + sel.length + 1, css.indexOf('}', i));
+  };
+  for (const sel of ['.sums-net th,.sums-net td', '.bsum th', '.sums-mid th,.sums-mid td']) {
+    const r = ruleOf(sel);
+    ok(r !== null, sel + ' の指定が無い');
+    ok(!/border-bottom/.test(r), '★' + sel + ' が下線で締めている（1か所だけ作法が違う）★: ' + r);
+  }
 });
 
 /* ★紙でも「前回が無い」と「入金が読めていない」を作り分ける★
@@ -680,15 +727,21 @@ function framed(n, over) {
     deduct: 11340, deductLines: [{ name: '弁当代　矢原', amount: 11340 }],
   }, over || {}));
 }
+/* ★差し引きを1件も持たない紙★（既定＝出さない） */
+const NODED = { deduct: 0, deductLines: [] };
 const rowsIn = (h) => (h.match(/<tr[\s>]/g) || []).length;
 const blanksIn = (h) => (h.match(/class="r-blank"/g) || []).length;
 
-T('★★明細が1行でも28行でも、紙の行数が同じ（足りない行は空の枠で残す）★★', () => {
-  const a = framed(1).html, b = framed(28).html;
+T('★★明細が1行でも枠いっぱいでも、紙の行数が同じ（足りない行は空の枠で残す）★★', () => {
+  const N = PAPER.PAPER_ROWS_DED;                 // ★既定の枠（差し引きを出す紙）★
+  const a = framed(1).html, b = framed(N).html;
   eq(rowsIn(a), rowsIn(b), '★中身の本数で紙の行数が変わる（毎月 顔が変わる）★');
   // 空の枠で埋めている（詰めていない）
-  eq(blanksIn(a) - blanksIn(b), 27, '空の枠の数が合わない（1行と28行の差は27）');
+  eq(blanksIn(a) - blanksIn(b), N - 1, '空の枠の数が合わない（1行と' + N + '行の差は' + (N - 1) + '）');
   ok(blanksIn(a) > 0, '★空の枠が1つも無い＝詰めている★');
+  // 差し引きを出さない紙でも同じ（枠の数だけ違う）
+  const c = framed(1, NODED).html, d = framed(PAPER.PAPER_ROWS, NODED).html;
+  eq(rowsIn(c), rowsIn(d), '★差し引きの無い紙で 顔が変わる★');
 });
 
 T('★空の枠にも罫線が残る（白黒コピーで消えない＝色ではなく濃さで作る）', () => {
@@ -701,25 +754,80 @@ T('★空の枠にも罫線が残る（白黒コピーで消えない＝色で�
   ok(/\.items td\{[^}]*border/.test(css), '明細の罫線が無い');
 });
 
-T('★★27／28／29／30／31行の境目で 紙が崩れない（31でだけ次のページ）★★', () => {
-  for (const n of [1, 27, 28, 29, 30]) {
-    const r = framed(n);
-    eq(r.pages, 1, n + '行で ' + r.pages + 'ページになった');
-    ok(/請求額/.test(r.html), n + '行の紙に請求額が無い');
+T('★★枠ぴったりまで1枚・1行 増やすと2枚目（差し引き 有り／無し の両方）★★', () => {
+  for (const [name, N, over] of [['差し引き有り', PAPER.PAPER_ROWS_DED, {}],
+                                 ['差し引き無し', PAPER.PAPER_ROWS, NODED]]) {
+    for (const n of [1, N - 1, N]) {
+      const r = framed(n, over);
+      eq(r.pages, 1, name + '・' + n + '行で ' + r.pages + 'ページになった');
+    }
+    const o = framed(N + 1, over);
+    eq(o.pages, 2, '★' + name + '：枠を超えたのに次のページへ行かない★');
+    ok(/次ページへ続く/.test(o.html), name + '：続きの案内が無い');
+    ok(/このページの小計/.test(o.html), name + '：途中の小計が無い');
+    /* ★同じ数字を2回 言わない★（小計は明細の箱が1回 出すだけ） */
+    const p1 = o.html.split('class="sheet"')[1] || '';
+    eq((p1.match(/このページの小計/g) || []).length, 1,
+      name + '：★1ページ目に「このページの小計」が2つ出ている★');
   }
-  const over = framed(31);
-  eq(over.pages, 2, '★枠を超えたのに次のページへ行かない★');
-  ok(/次ページへ続く/.test(over.html), '続きの案内が無い');
-  ok(/このページの小計/.test(over.html), '途中の小計が無い');
 });
 
-T('★控除0件でも 枠が出る（空の枠・控除計）／「出さない」も会社が選べる', () => {
-  const none = framed(3, { deduct: 0, deductLines: [] }).html;
-  ok(/差し引く/.test(none), '★控除0件で枠ごと消えている（毎月 顔が変わる）★');
-  ok(/控除計/.test(none), '控除計の行が無い');
-  const off = framed(3, { deduct: 0, deductLines: [], showDeduct: false }).html;
-  ok(!/差し引く/.test(off), '★「出さない」を選んでも出ている★');
-  ok(!/控除計/.test(off), '「出さない」なのに控除計が出ている');
+T('★続きの紙でも 数字は1回だけ（続きの案内は「続く」だけ言う）', () => {
+  const o = framed(PAPER.PAPER_ROWS_DED + 1);
+  const cont = (/<div class="cont">([\s\S]*?)<\/div>\s*<\/div>/.exec(o.html) || [])[1] || '';
+  ok(/次ページへ続く/.test(cont), '「続く」が無い');
+  ok(!/¥/.test(cont), '★続きの案内に金額を書いている（すぐ上と同じ数字）★: ' + cont);
+  // ★2ページ目にも見出しが要る★（続きの紙だけ列の名前が無いと読めない）
+  const p2 = o.html.split('class="sheet"')[2] || '';
+  ok(/<thead>/.test(p2), '★2ページ目に明細の見出しが無い★');
+});
+
+/* ★A4 1枚に収まる数は「測った数」＝勝手に上げたら赤★
+   （2026-08-16 Chromium で1行ずつ26行まで総当たり：
+     1行25px・動かない部分 620px／872px → ★20行=1118px・10行=1121px★ が上限。
+     ＋1行で 1143px／1146px ＝ A4の1123px を超える）
+   ★紙に何かを足した日／詰めた日に この数は変わる★
+     ・締めに「控除」の行を足した → 7→6
+     ・紙の頭を詰めた（頭 389→290px）→ 16／6 → ★20／10★
+   ★必ず もう一度 測ってから 数字を書き換える。★ */
+T('★★既定の行数は「A4 1枚に収まると実測した数」から動かさない★★', () => {
+  eq(PAPER.PAPER_ROWS, 20, '★控除なしの既定を測らずに変えた★');
+  eq(PAPER.PAPER_ROWS_DED, 10, '★控除ありの既定を測らずに変えた★');
+  eq(PAPER.DEDUCT_ROWS, 4, '★差し引きの枠（実物 八木＝4行）を変えた★');
+  ok(PAPER.PAPER_ROWS > PAPER.PAPER_ROWS_DED,
+    '★差し引きを出す紙の方が 明細を多く載せている（高さが足りなくなる）★');
+});
+
+T('★何枚になるかを画面に答えるのは 紙の lib（画面で数え直さない）', () => {
+  eq(typeof PAPER.frameRowsOf, 'function', 'frameRowsOf が無い');
+  eq(PAPER.frameRowsOf({}, {}), PAPER.PAPER_ROWS, '差し引き無しの既定が違う');
+  eq(PAPER.frameRowsOf({}, { deduct: 100 }), PAPER.PAPER_ROWS_DED, '★控除を入れたのに枠が減っていない★');
+  eq(PAPER.frameRowsOf({}, { paperRows: 30 }), 30, '会社が決めた行数が効いていない');
+  eq(PAPER.pagesOf(PAPER.PAPER_ROWS, PAPER.PAPER_ROWS), 1, '枠ぴったりで2枚と言っている');
+  eq(PAPER.pagesOf(PAPER.PAPER_ROWS + 1, PAPER.PAPER_ROWS), 2, '★はみ出しているのに1枚と言っている★');
+  eq(PAPER.pagesOf(0, PAPER.PAPER_ROWS), 1, '明細0本で0枚と言っている');
+  // ★紙が実際に刷る枚数と、画面に答える枚数が同じ★（別々に数えない）
+  const n = PAPER.PAPER_ROWS_DED + 1;
+  eq(PAPER.pagesOf(n, PAPER.frameRowsOf({}, { deduct: 100 })), framed(n).pages,
+    '★画面に答える枚数と 実際に刷る枚数が違う★');
+});
+
+/* ★差し引きは 既定オフ★（司さん 2026-08-15「控除を使わない会社の方が多い」）
+   ・0件のまま枠だけ出すのが一番 悪い（毎月 空の箱を見せられる）
+   ・★1件でも入れたら 自動で出す★（入れたのに出ない事故を作らない）
+   ・使わない紙は その高さを明細に回す＝★入る行が増える★ */
+T('★★差し引きは既定オフ・1件でも入れたら自動で出る★★', () => {
+  const off = framed(3, NODED).html;
+  ok(!/控除/.test(off), '★控除0件なのに空の枠を出している★');
+  ok(!/控除計/.test(off), '控除0件なのに控除計が出ている');
+  const auto = framed(3, { deduct: 500, deductLines: [{ name: '立替', amount: 500 }] }).html;
+  ok(/控除/.test(auto), '★控除を入れたのに紙に出ていない★');
+  ok(/控除計/.test(auto), '控除を入れたのに控除計が無い');
+  // 「出す」を会社が選べば 0件でも枠は出る（毎月おなじ顔にしたい会社向け）
+  const on = framed(3, { deduct: 0, deductLines: [], showDeduct: true }).html;
+  ok(/控除/.test(on), '★「出す」を選んでも出ない★');
+  // ★出さない紙の方が 明細を多く載せられる★
+  ok(blanksIn(off) > blanksIn(framed(3).html), '★差し引きを消しても入る行が増えていない★');
 });
 
 T('★★控除が読めない時は 請求額も数字にしない（引き忘れた紙を出さない）★★', () => {
@@ -737,11 +845,11 @@ T('★控除計は1か所だけ（同じ物を2か所に出さない）', () => 
   eq((flat.match(/請求額/g) || []).length, 1, '請求額が2か所に出ている');
 });
 
-T('★① 明細 → ② 差し引く → ③ 締め の順で紙に出る（給料明細と同じ作法）', () => {
+T('★① 明細 → ② 控除 → ③ 締め の順で紙に出る（給料明細と同じ作法）', () => {
   const h = framed(3).html.split('</head>')[1];
   const iItems = h.indexOf('class="items"');
-  const iDed = h.indexOf('差し引く');
-  const iSum = h.indexOf('請求額');
+  const iDed = h.indexOf('blk-ded');
+  const iSum = h.indexOf('class="sums"');
   ok(iItems >= 0 && iDed >= 0 && iSum >= 0, '3つの箱が揃っていない');
   ok(iItems < iDed, '★明細より先に控除が出ている★');
   ok(iDed < iSum, '★控除より先に締めが出ている★');
@@ -752,29 +860,123 @@ T('★2カラムは「表」で組む（flex だと文が1文字ずつ縦に割�
   ok(/\.cols2\{[^}]*table-layout:fixed/.test(css), '2カラムが表で組まれていない');
   ok(!/display\s*:\s*(flex|grid|inline-flex|inline-grid)/.test(css), '紙のCSSに flex/grid がある');
   ok(/\.cols2>tbody>tr>td\{[^}]*vertical-align:top/.test(css), '★上ぞろえでない＝締めの位置が動く★');
-  ok(/<table class="cols2">/.test(framed(3).html), '2カラムの表が出ていない');
+  /* ★2カラムは選ぶ所から外した（司さん 2026-08-15）★＝呼べば出るが、既定は1カラム。 */
+  ok(/<table class="cols2">/.test(framed(3, { layout: 'col2' }).html), '2カラムの表が出ていない');
+  ok(!/<table class="cols2">/.test(framed(3).html), '★既定が2カラムのまま★');
+});
+
+/* ★締めの中の強さ★ 一番 下（実際に払う額）が一番 強い。
+   ★合計を太字にして請求額を細字にすると、払う額の方が弱く見える★（2026-08-15 スクショで発見） */
+T('★★締めの中で一番 強いのは「請求額」（途中の合計より弱くしない）★★', () => {
+  const css = PAPER.css();
+  const mid = (/\.sums-mid th,\.sums-mid td\{([^}]*)\}/.exec(css) || [])[1] || '';
+  const net = (/\.sums-net th,\.sums-net td\{([^}]*)\}/.exec(css) || [])[1] || '';
+  ok(net, '★請求額の行に指定が1つも無い（細字のまま）★');
+  ok(/font-weight:700/.test(net), '請求額が太くない');
+  ok(!/font-weight:700/.test(mid), '★途中の合計が請求額と同じ太さ（どっちを払うのか迷う）★');
+  ok(/border-top/.test(net), '請求額の上に線が無い');
+  // 大きさは変えない＝一番 大きい数字は頭の「ご請求金額」だけ
+  ok(!/font-size/.test(net), '★締めの中で字を大きくしている（大きい数字が2つになる）★');
+  /* ★どの行が最後かは紙ごとに違う★（控除あり＝請求額／控除なし＝合計／源泉あり＝差引）。
+     ★最後の1行に印が付く★のを、3通りの紙で確かめる。 */
+  const lastOf = (h) => {
+    const t = (/<table class="sums">([\s\S]*?)<\/table>/.exec(h) || [])[1] || '';
+    const trs = t.match(/<tr[^>]*>[\s\S]*?<\/tr>/g) || [];
+    return trs[trs.length - 1] || '';
+  };
+  const cnt = (h) => ((/<table class="sums">([\s\S]*?)<\/table>/.exec(h) || [])[1] || '').match(/sums-net/g) || [];
+  const noDed = framed(3, NODED).html;
+  ok(/sums-net/.test(lastOf(noDed)) && /合計/.test(lastOf(noDed)),
+    '★差し引きの無い紙で「合計」が細字のまま（払う額が一番 弱い）★: ' + lastOf(noDed));
+  const withDed = framed(3).html;
+  ok(/sums-net/.test(lastOf(withDed)) && /請求額/.test(lastOf(withDed)), '控除ありの紙の最後が請求額でない');
+  eq(cnt(noDed).length, 1, '★締めの中に強い行が2つ以上ある★');
+  eq(cnt(withDed).length, 1, '★締めの中に強い行が2つ以上ある（控除あり）★');
 });
 
 /* ★恒等式★ ①の合計 ＋ 消費税 − ②の合計 ＝ 請求額（紙の上で必ず一致） */
-T('★★紙の上で 小計＋消費税−控除計 ＝ 請求額 が必ず一致する★★', () => {
-  for (const n of [1, 5, 30]) {
-    // ★控除は合計より小さい額にする★（大きいと請求額がマイナス＝この検査の狙いから外れる）
+/* ★恒等式★ ★紙に出た文字を足して確かめる★（中の値どうしで閉じない）
+   締めの1本の筋道： 明細の合計 ＋ 消費税 − 控除 ＝ 請求額 */
+function sumsOfPaper(html) {
+  const t = (/<table class="sums">([\s\S]*?)<\/table>/.exec(html) || [])[1] || '';
+  const out = {};
+  for (const m of t.matchAll(/<tr[^>]*><th>([\s\S]*?)<\/th><td>([\s\S]*?)<\/td><\/tr>/g)) {
+    const k = m[1].replace(/<[^>]+>/g, '').trim();
+    const v = m[2].replace(/<[^>]+>/g, '').trim();
+    out[k] = /^-?¥[\d,]+$/.test(v) ? Number(v.replace(/[¥,]/g, '')) : v;
+  }
+  return out;
+}
+T('★★締めの筋道で 明細の合計＋消費税−控除 ＝ 請求額 が必ず一致する★★', () => {
+  for (const n of [1, 5, PAPER.PAPER_ROWS_DED]) {
     const r = framed(n, { deduct: 300, deductLines: [{ name: '立替', amount: 300 }] });
-    /* ★給料明細と同じ作法★＝ブロックの合計は各ブロックが持ち、締めは払う額を持つ。
-       だから ★読む場所も分けて★ 見る（1か所から全部 拾おうとしない）。 */
-    const inTag = (re, h) => { const m = re.exec(h); return (m ? m[1] : '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' '); };
-    const sums = inTag(/<table class="sums">([\s\S]*?)<\/table>/, r.html);
-    const blocks = [...r.html.matchAll(/<table class="bsum">([\s\S]*?)<\/table>/g)]
-      .map((m) => m[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ')).join(' ／ ');
-    const pick = (re, hay) => { const m = re.exec(hay); return m ? Number(m[1].replace(/,/g, '')) : null; };
-    const sub = pick(/明細の合計\s*¥([\d,]+)/, blocks);
-    const ded = pick(/控除計\s*-¥([\d,]+)/, blocks);
-    const tx = pick(/消費税[^¥]*¥([\d,]+)/, sums);
-    const bill = pick(/請求額\s*¥([\d,]+)/, sums);
-    ok(sub !== null && tx !== null && ded !== null && bill !== null, n + '行: 数が読めない');
-    eq(sub + tx - ded, bill, n + '行: ★紙の中で辻褄が合っていない★');
+    const S = sumsOfPaper(r.html);
+    ok(typeof S['明細の合計'] === 'number', n + '行: 明細の合計が読めない（' + JSON.stringify(S) + '）');
+    ok(typeof S['合計'] === 'number' && typeof S['控除'] === 'number' && typeof S['請求額'] === 'number',
+      n + '行: 締めの数が読めない（' + JSON.stringify(S) + '）');
+    const tx = S[Object.keys(S).find((k) => /^消費税/.test(k))];
+    eq(S['明細の合計'] + tx, S['合計'], n + '行: ★明細の合計＋消費税 ≠ 合計★');
+    eq(S['明細の合計'] + tx + S['控除'], S['請求額'], n + '行: ★紙の中で辻褄が合っていない★');
+    ok(S['控除'] < 0, n + '行: 控除が引き算として出ていない');
   }
 });
+
+T('★★控除が0件の紙でも成り立つ（控除の行を出さない・合計＝請求額）★★', () => {
+  for (const n of [1, 5, PAPER.PAPER_ROWS]) {
+    const r = framed(n, NODED);
+    const S = sumsOfPaper(r.html);
+    const tx = S[Object.keys(S).find((k) => /^消費税/.test(k))];
+    eq(S['明細の合計'] + tx, S['合計'], n + '行: ★控除の無い紙で辻褄が合っていない★');
+    ok(!('控除' in S), n + '行: ★控除0件なのに 締めに控除の行を出している★');
+    ok(!('請求額' in S), n + '行: ★合計と同じ数を 請求額として もう1回 出している★');
+    ok(!/控除計/.test(r.html), n + '行: 控除が無いのに控除計が出ている');
+  }
+});
+
+/* ★③ 言葉は給料明細にそろえる（支給／控除）★（司さん 2026-08-15）
+   ★人に見せる字に「差し引く」が0件★＝タグを外した本文から数える（コメントは数えない）。 */
+T('★★紙に「差し引く」と書かない（給料明細と同じ「控除」で通す）★★', () => {
+  for (const over of [{}, NODED, { deduct: null, deductLines: [{ name: 'x', amount: null }] }]) {
+    const body = framed(3, over).html.split('</head>')[1] || '';
+    const text = body.replace(/<!--[\s\S]*?-->/g, ' ').replace(/<[^>]+>/g, ' ');
+    ok(!/差し引/.test(text), '★紙に「差し引く」が出ている★: '
+      + (text.match(/.{0,12}差し引.{0,12}/) || [''])[0]);
+  }
+  ok(/控除/.test(framed(3).html), '控除という言葉が紙から消えている');
+});
+
+/* ★② 合計行は「列の真下」★（司さん 2026-08-15：何の合計か分からなかった） */
+T('★★表の中の合計行が 金額の列と消費税の列の真下に来る★★', () => {
+  const r = framed(3);
+  const foot = (/<tfoot>([\s\S]*?)<\/tfoot>/.exec(r.html) || [])[1] || '';
+  ok(foot, '★表の中に合計行が無い（表の外に出したままだと列とずれる）★');
+  const head = [...(/<thead><tr>([\s\S]*?)<\/tr><\/thead>/.exec(r.html) || ['', ''])[1]
+    .matchAll(/<th[^>]*>([\s\S]*?)<\/th>/g)].map((m) => m[1].replace(/<[^>]+>/g, '').trim());
+  const cells = [...foot.matchAll(/<(th|td)([^>]*)>([\s\S]*?)<\/(?:th|td)>/g)]
+    .map((m) => ({ tag: m[1], span: Number((/colspan="(\d+)"/.exec(m[2]) || [])[1] || 1), t: m[3].replace(/<[^>]+>/g, '').trim() }));
+  // ★列の番号をたどって、金額の列に金額の合計・消費税の列に消費税の合計が来ているか★
+  let col = 0; const at = {};
+  for (const c of cells) { at[col] = c.t; col += c.span; }
+  eq(col, head.length, '★合計行の桁数が 見出しの列数と違う（縦がずれる）★ ' + col + ' vs ' + head.length);
+  const iAmount = head.indexOf('金額'), iTax = head.indexOf('消費税');
+  ok(iAmount >= 0 && iTax >= 0, '見本の様式に 金額／消費税 の列が無い');
+  const S = sumsOfPaper(r.html);
+  const tx = S[Object.keys(S).find((k) => /^消費税/.test(k))];
+  eq(at[iAmount], S['明細の合計'].toLocaleString('ja-JP'), '★金額の列の真下が 金額の合計でない★: ' + JSON.stringify(at));
+  eq(at[iTax], tx.toLocaleString('ja-JP'), '★消費税の列の真下が 消費税の合計でない★: ' + JSON.stringify(at));
+  eq(at[0], '明細の合計', '★何の合計か 書いていない★');
+  /* ★合計行に見出しの地色を引き継がない★（th なので放っておくと左半分だけ塗られる） */
+  const css = PAPER.css();
+  const sumRule = (/\.items tfoot \.r-sum th,\.items tfoot \.r-sum td\{([^}]*)\}/.exec(css) || [])[1] || '';
+  ok(/background:transparent/.test(sumRule), '★合計行に見出しの地色が乗っている★: ' + sumRule);
+  // ★列を足しても崩れない★（知らない列を足す）
+  const withCol = framed(3, { cols: { items: ['#', '品名・内容', '行き先', '数量', '単位', '単価', '金額', '消費税'] } });
+  const f2 = (/<tfoot>([\s\S]*?)<\/tfoot>/.exec(withCol.html) || [])[1] || '';
+  const c2 = [...f2.matchAll(/<(th|td)([^>]*)>([\s\S]*?)<\/(?:th|td)>/g)]
+    .reduce((a, m) => a + Number((/colspan="(\d+)"/.exec(m[2]) || [])[1] || 1), 0);
+  eq(c2, 8, '★列を足したら合計行の桁がずれた★');
+});
+
 
 
 /* ── ★給料明細と同じ作法（kyuyo/js/render.js を読んで合わせた・2026-08-15）★ ──
@@ -813,9 +1015,12 @@ T('★★それぞれのブロックの下に そのブロックの合計が出�
   // ★順番★ 明細の合計 → 控除計 → 請求額
   ok(flat.indexOf('明細の合計') < flat.indexOf('控除計'), '明細の合計より先に控除計が出ている');
   ok(flat.indexOf('控除計') < flat.indexOf('請求額'), '控除計より先に請求額が出ている');
-  // ★同じ数を2回 足し算として出さない★
-  eq((flat.match(/控除計/g) || []).length, 1, '控除計が2か所に出ている');
-  eq((flat.match(/明細の合計/g) || []).length, 1, '明細の合計が2か所に出ている');
+  /* ★「ブロックの合計」と「払う額までの筋道」は役目が違う★（司さん 2026-08-15）
+     ・表の中の合計行（列の真下）＝そのブロックの足し算
+     ・締めの1本の筋道（明細の合計→消費税→合計→控除→請求額）＝払う額の出し方
+     給料明細も「控除合計」と「差引支給額の計算」の両方が在る。★2回 出るのは決めごと。★ */
+  eq((flat.match(/控除計/g) || []).length, 1, '控除計が2か所に出ている（ブロックの合計は1つ）');
+  eq((flat.match(/明細の合計/g) || []).length, 2, '★表の中の合計行と 締めの筋道で 2回 出る決め★');
 });
 
 T('★★紙の中で一番 大きい金額は1つだけ＝客が払う額★★', () => {
@@ -848,11 +1053,11 @@ T('★★1カラム版が出る（上から ①明細 → ②差し引く → �
   const one = framed(3, { layout: 'col1' }).html;
   ok(!/<table class="cols2">/.test(one), '★1カラムなのに2カラムの表で組んでいる★');
   const flat = one.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
-  ok(flat.indexOf('明細の合計') < flat.indexOf('差し引く'), '1カラムの順番が違う（①→②）');
-  ok(flat.indexOf('差し引く') < flat.indexOf('請求額'), '1カラムの順番が違う（②→③）');
+  ok(flat.indexOf('明細の合計') < flat.indexOf('控除計'), '1カラムの順番が違う（①→②）');
+  ok(flat.indexOf('控除計') < flat.indexOf('請求額'), '1カラムの順番が違う（②→③）');
   // ★2カラムと同じ順番★（探す場所が変わらない）
   const two = framed(3, { layout: 'col2' }).html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
-  const orderOf = (t) => ['明細の合計', '差し引く', '請求額'].map((k) => t.indexOf(k));
+  const orderOf = (t) => ['明細の合計', '控除計', '請求額'].map((k) => t.indexOf(k));
   const a1 = orderOf(flat), a2 = orderOf(two);
   ok(a1[0] < a1[1] && a1[1] < a1[2], '1カラムの順番が崩れている');
   ok(a2[0] < a2[1] && a2[1] < a2[2], '2カラムの順番が崩れている');
@@ -861,9 +1066,12 @@ T('★★1カラム版が出る（上から ①明細 → ②差し引く → �
   eq(money(flat), money(two), '★形を変えたら金額が動いた★');
 });
 
-T('★知らない形を渡されたら2カラムに倒す（黙って壊れない）', () => {
-  ok(/<table class="cols2">/.test(framed(3, { layout: 'なにこれ' }).html), '知らない形で崩れている');
-  ok(/<table class="cols2">/.test(framed(3).html), '既定が2カラムでない');
+T('★知らない形を渡されたら1カラムに倒す（黙って壊れない）', () => {
+  for (const bad of ['col3', '', 'ほげ', null, 0, 99]) {
+    const h = framed(3, { layout: bad }).html;
+    ok(!/<table class="cols2">/.test(h), '知らない形（' + bad + '）で2カラムになった');
+    ok(/class="items"/.test(h) && /請求額/.test(h), '知らない形（' + bad + '）で崩れている');
+  }
 });
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

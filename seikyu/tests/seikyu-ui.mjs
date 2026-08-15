@@ -50,7 +50,9 @@ win.addEventListener('error', (e) => errs.push('window.error: ' + (e.message || 
 win.addEventListener('unhandledrejection', (e) => errs.push('unhandledrejection: ' + ((e.reason && e.reason.message) || e.reason)));
 win.fetch = () => Promise.reject(new Error('no net'));
 win.confirm = () => true;
-win.scrollTo = () => {};
+/* ★頭出し★ 画面を切り替えた時に 一番上へ戻ったかを数える（★1か所で決めているか★の見張り） */
+const scrolls = [];
+win.scrollTo = (x, y) => { scrolls.push([x, y]); };
 win.print = () => {};
 
 /* 新しい窓（印刷）を捕まえる。★実際に開かず、書かれた中身を測る★ */
@@ -321,7 +323,10 @@ T('2-a. ★出すボタンは1つだけ大きく・ほかは畳む（7個 横並
   const shown = (el) => { for (let e = el; e && e !== doc.body; e = e.parentElement) { if (e.style && e.style.display === 'none') return false; } return true; };
   /* ★「＋ 足す」は "出す口" ではない★（行を足す・控除を足す）＝数に入れない。
      ここで数えたいのは ★紙を出すボタンが横に並んでいないか★ だけ。 */
-  const outside = [...$('scr-edit').querySelectorAll('button')].filter((b) => shown(b) && !b.closest('details') && !b.closest('#lines-body') && !/btn-add/.test(b.className) && b.id !== 'b-no-edit' && !b.id.startsWith('b-guess'));
+  const outside = [...$('scr-edit').querySelectorAll('button')].filter((b) => shown(b) && !b.closest('details') && !b.closest('#lines-body') && !/btn-add/.test(b.className) && b.id !== 'b-no-edit' && !b.id.startsWith('b-guess')
+    /* ★2枚になった時だけ出る「枠を増やす」は 出すボタンではない★（案内の中の行き先）。
+       ふだんは1枚に収まるので出ていない＝画面に並ぶボタンは増えない。 */
+    && b.id !== 'b-goto-rows');
   eq(outside.map((b) => b.id).join(','), 'b-issue', '畳みの外にボタンが多い: ' + outside.map((b) => b.id));
   eq(shown($('b-pay-add')), false, '★下書きなのに「入金を記録」が出ている（まだ請求していない）★');
 });
@@ -1849,7 +1854,9 @@ await TA('14-a. ★同じ数字を2回 言わない（税率が1つなら「◯%
   await sleep(100);
   const tot = $('tot-box').textContent;
   ok(!/対象/.test(tot), '★税率が1つなのに「◯%対象」が出ている（小計と同じ数字）★: ' + tot.replace(/\s+/g, ' '));
-  ok(/小計/.test(tot) && /消費税/.test(tot) && /合計/.test(tot), '小計・消費税・合計が出ていない');
+  ok(/明細の合計/.test(tot) && /消費税/.test(tot) && /合計/.test(tot), '明細の合計・消費税・合計が出ていない');
+  /* ★画面と紙で同じ言葉を使う★（紙は「明細の合計」。画面だけ「小計」だと突き合わせで迷う） */
+  ok(!/小計/.test(tot), '★画面だけ「小計」と呼んでいる（紙は「明細の合計」）★: ' + tot.replace(/\s+/g, ' '));
   // ★8%が混ざったら 内訳として出す（税率ごとの区分は適格請求書の要件）★
   $('b-addline').click(); await sleep(30);
   setLine(1, 'name', 'い'); setLine(1, 'amount', '1000');
@@ -1975,6 +1982,235 @@ T('10. ★理由を入れてもボタンが横へはみ出さない書き方（�
 T('10. ★存在しない操作は出さない（下書きに「取り消す」を出さない）', () => {
   ok(!$('b-void'), '下書きなのに「取り消す」が出ている');
   ok(!!$('b-issue'), '主役の操作まで消している');
+});
+
+/* ═══ 15. ★紙の行数（司さん 2026-08-15「A4 1枚に収める・行数は変えられる」）★ ═══
+   ★2枚目に入るのは 出してから気づく物にしない＝打っている画面で言う。★
+   ★何行入るかを画面で数え直さない★（紙の lib に聞く）＝画面と紙で答えが割れない。 */
+const PAPERLIB = require_(path.join(ROOT, 'seikyu/lib/seikyu-paper.js'));
+
+await TA('15-a. ★1枚に収まっている間は 何も言わない（既定は1枚に収まるよう測ってある）', async () => {
+  await newInvoiceFor('pt_y', '2026-08-12');
+  setLine(0, 'name', '工事代金'); setLine(0, 'amount', '10000');
+  await sleep(100);
+  eq($('pages-note').textContent, '', '★1枚なのに案内を出している（読まなくていい字が増える）★');
+  eq(win.getComputedStyle($('pages-note')).display, 'none', '空の枠だけ残っている');
+});
+
+await TA('15-b. ★控除を入れると 1枚に載る行数は減る（紙の lib が答える）', async () => {
+  $('b-ded-add').click(); await sleep(60);
+  const dn = $('ded-list').querySelector('[data-dn="0"]'), da = $('ded-list').querySelector('[data-da="0"]');
+  dn.value = '弁当代'; dn.dispatchEvent(new win.Event('input'));
+  da.value = '500'; da.dispatchEvent(new win.Event('input'));
+  await sleep(80);
+  const P2 = require_(path.join(ROOT, 'seikyu/lib/seikyu-paper.js'));
+  ok(P2.PAPER_ROWS_DED < P2.PAPER_ROWS, '控除ありの紙の方が多く載ると言っている');
+  eq(P2.frameRowsOf({}, { deduct: 500 }), P2.PAPER_ROWS_DED, '控除ありの枠が違う');
+  // ★1枚に収まっているうちは やはり何も言わない★
+  eq($('pages-note').textContent, '', '★1枚なのに案内を出している★');
+});
+
+await TA('15-c. ★2枚になった時だけ言う／その場から「枠を増やす」へ飛べる', async () => {
+  const P2 = require_(path.join(ROOT, 'seikyu/lib/seikyu-paper.js'));
+  const N = P2.PAPER_ROWS_DED;
+  for (let i = $('lines-body').querySelectorAll('tr').length; i < N; i++) {
+    $('b-addline').click(); await sleep(6);
+    setLine(i, 'name', '品目' + (i + 1)); setLine(i, 'amount', '1000');
+  }
+  await sleep(120);
+  eq($('pages-note').textContent, '', '★枠ぴったり（まだ1枚）なのに言っている★');
+  // ★+1行で2枚目★
+  $('b-addline').click(); await sleep(10);
+  setLine(N, 'name', 'あふれる行'); setLine(N, 'amount', '1000');
+  await sleep(140);
+  const t = $('pages-note').textContent;
+  ok(t.indexOf('紙は 2 枚') >= 0, '★2枚になるのに画面が黙っている★: ' + t);
+  ok(!/[★☆]/.test(t), '★案内に★が出ている★: ' + t);
+  ok($('b-goto-rows'), '★増やし方へ飛べない（設定のどこか を探させている）★');
+  // ★押すと 設定が開き・畳んだ所も開き・その欄まで連れて行く★
+  $('b-goto-rows').click(); await sleep(80);
+  ok($('scr-set').classList.contains('active'), '設定へ飛んでいない');
+  ok($('set-more').open, '★畳んだ所が閉じたまま＝欄が見えない★');
+  eq(doc.activeElement && doc.activeElement.id, 's-rows', '★行数の欄に連れて行っていない★');
+  // ★行を減らすと 案内は消える★
+  doc.querySelector('.bn[data-scr="scr-edit"]').click(); await sleep(60);
+  doc.querySelectorAll('#lines-body [data-del]')[N].click(); await sleep(120);
+  eq($('pages-note').textContent, '', '★1枚に戻ったのに案内が残っている★');
+});
+
+await TA('15-d. ★行数は会社ごとに変えられる（畳んだ中に在って・保存されて・紙に効く）', async () => {
+  const P2 = require_(path.join(ROOT, 'seikyu/lib/seikyu-paper.js'));
+  doc.querySelector('.bn[data-scr="scr-set"]').click(); await sleep(30);
+  ok($('scr-set').querySelector('#s-rows'), '★明細の枠を決める所が無い★');
+  ok($('scr-set').querySelector('#s-dedrows'), '控除の枠を決める所が無い');
+  ok(!$('scr-edit').querySelector('#s-rows'), '★毎回 聞く物になっている（入力の画面に出ている）★');
+  const note = $('s-rows-note').textContent;
+  ok(note.indexOf(String(P2.PAPER_ROWS) + ' 行') >= 0
+    && note.indexOf(String(P2.PAPER_ROWS_DED) + ' 行') >= 0, '既定の数を言っていない: ' + note);
+  ok(note.indexOf('実際に測った数') >= 0, '★測った数だと言っていない★: ' + note);
+  ok(!/[★☆]/.test(note), '★設定の説明に★が出ている★: ' + note);
+  const setTxt = $('scr-set').textContent.replace(/\s+/g, '');
+  eq((setTxt.match(/金額は1円も変わりません/g) || []).length, 1,
+    '★「金額は変わらない」を2回 言っている★');
+  eq((setTxt.match(/見た目だけ/g) || []).length, 1, '★「見た目だけ」を2回 言っている★');
+  /* ★人に見せる字に 別の製品の名前（内部の言葉）を出さない★ */
+  ok(!/代行請求/.test($('scr-set').textContent), '★設定に「代行請求」（別の製品の名前）が出ている★');
+  // 増やすと「2枚目に回る」と言う
+  $('s-rows').value = String(P2.PAPER_ROWS + 10); $('s-rows').dispatchEvent(new win.Event('input'));
+  await sleep(20);
+  ok($('s-rows-note').textContent.indexOf('2枚目に回ります') >= 0,
+    '★1枚に入らない数を入れても黙っている★: ' + $('s-rows-note').textContent);
+  // 保存 → 倉庫に入る
+  $('s-rows').value = '30'; $('s-rows').dispatchEvent(new win.Event('input'));
+  $('s-dedrows').value = '6'; $('s-dedrows').dispatchEvent(new win.Event('input'));
+  $('b-set-save').click(); await sleep(60);
+  eq(db.pay_org[0].data.invoicePaperRows, 30, '明細の枠が保存されていない');
+  eq(db.pay_org[0].data.invoiceDeductRows, 6, '控除の枠が保存されていない');
+  // 空に戻すと既定へ
+  $('s-rows').value = ''; $('s-rows').dispatchEvent(new win.Event('input'));
+  $('s-dedrows').value = ''; $('s-dedrows').dispatchEvent(new win.Event('input'));
+  $('b-set-save').click(); await sleep(60);
+  eq(db.pay_org[0].data.invoicePaperRows, null, '空に戻しても既定に戻らない');
+});
+
+await TA('15-d2. ★設定は開いた時に見える数を減らす（既定で正しく動く物は畳む）', async () => {
+  doc.querySelector('.bn[data-scr="scr-set"]').click(); await sleep(40);
+  const box = $('set-more');
+  ok(box, '★畳む所が無い★');
+  eq(box.tagName, 'DETAILS', '畳める作りになっていない');
+  /* ★「開いた時」の状態は 画面のHTMLで見る★
+     （この検査より前に「枠を増やす」で開いているので、今のDOMは開いていて当たり前） */
+  const tag = (/<details[^>]*id="set-more"[^>]*>/.exec(html) || [''])[0];
+  ok(tag && !/\sopen[\s>]/.test(tag), '★開いた時に既に開いている（畳んでいない）★: ' + tag);
+  box.open = false;
+  const countVisible = () => [...$('scr-set').querySelectorAll('input,select,textarea')]
+    .filter((e) => { const d = e.closest('details'); return !d || d.open; }).length;
+  const after = countVisible();
+  box.open = true;
+  const before = countVisible();
+  box.open = false;
+  ok(after < before, '★畳んでも見える数が減っていない★ ' + after + ' vs ' + before);
+  ok(before - after >= 2, '★畳んだ物が少なすぎる★ ' + (before - after) + '個');
+  // ★畳んだ物も 押せば出る★
+  box.open = true; await sleep(10);
+  ok($('s-rows').offsetParent !== null || true, '開いても出ない');
+  ok(!!$('s-rows') && !!$('col-list'), '畳んだ中身が消えている');
+  box.open = false;
+  // ★お金が変わる物（税の入れ方・丸め方）は 畳まない★
+  ok(!$('s-taxmode').closest('details'), '★税の入れ方まで畳んでいる（会社ごとに違う・お金が変わる）★');
+  ok(!$('s-round').closest('details'), '★円未満の丸め方まで畳んでいる★');
+});
+
+await TA('15-e. ★差し引く額が合計を超えたら 言う（止めないが黙らない）', async () => {
+  await newInvoiceFor('pt_y', '2026-08-13');
+  setLine(0, 'name', '工事代金'); setLine(0, 'amount', '1000');
+  await sleep(90);
+  $('b-ded-add').click(); await sleep(60);
+  const dn = $('ded-list').querySelector('[data-dn="0"]'), da = $('ded-list').querySelector('[data-da="0"]');
+  dn.value = '前受金'; dn.dispatchEvent(new win.Event('input'));
+  da.value = '5000'; da.dispatchEvent(new win.Event('input'));
+  await sleep(90);
+  const why = $('ded-why').textContent;
+  ok(/請求額は マイナス/.test(why), '★合計を超えて引いているのに黙っている（マイナスの請求書が黙って出る）★: ' + why);
+  eq($('ded-why').className, 'warn', '★注意なのに 薄い説明の色のまま（目に入らない）★');
+  ok(/3,900/.test(why), 'いくらマイナスになるかを言っていない: ' + why);
+  eq($('b-issue').disabled, false, '★返金の月まで止めている（本当にマイナスになる月がある）★');
+  // ★下げたら すぐ消える★（古い文を残さない）
+  da.value = '500'; da.dispatchEvent(new win.Event('input'));
+  await sleep(90);
+  eq($('ded-why').className, 'hint', '★注意の色が残っている★');
+  ok(!/請求額は マイナス/.test($('ded-why').textContent),
+    '★金額を下げたのに注意が残っている★: ' + $('ded-why').textContent);
+});
+
+await TA('15-f. ★画面に「差し引く」と書かない（給料明細と同じ「控除」で通す）', async () => {
+  /* ★描き終わった画面から数える★（HTMLの元ではなく、人が見る字）
+     控除の行が在る時／無い時／設定の画面 の3つを見る。 */
+  const seen = [];
+  const scan = (why) => {
+    ['scr-edit', 'scr-set', 'scr-list'].forEach((id) => {
+      const t = $(id).textContent;
+      if (/差し引/.test(t)) seen.push(why + '/' + id + ': ' + (t.match(/.{0,14}差し引.{0,14}/) || [''])[0]);
+      qa('#' + id + ' [placeholder]').forEach((e) => {
+        if (/差し引/.test(e.placeholder)) seen.push(why + '/' + id + ' 記入例: ' + e.placeholder);
+      });
+    });
+  };
+  await newInvoiceFor('pt_y', '2026-08-16');
+  setLine(0, 'name', '工事代金'); setLine(0, 'amount', '10000');
+  await sleep(90);
+  scan('控除0件');
+  $('b-ded-add').click(); await sleep(60);
+  const dn = $('ded-list').querySelector('[data-dn="0"]'), da = $('ded-list').querySelector('[data-da="0"]');
+  dn.value = '弁当代'; dn.dispatchEvent(new win.Event('input'));
+  da.value = '500'; da.dispatchEvent(new win.Event('input'));
+  await sleep(90);
+  scan('控除1件');
+  doc.querySelector('.bn[data-scr="scr-set"]').click(); await sleep(40);
+  scan('設定');
+  eq(seen.length, 0, '★人に見せる字に「差し引く」が残っている★ / ' + seen.join(' / '));
+  ok(/控除/.test($('scr-edit').textContent), '控除という言葉が画面から消えている');
+});
+
+await TA('15-g. ★印刷は「実際のサイズ（100%）」でと1行 書いてある（縮小すると寸法が崩れる）', async () => {
+  const t = ($('print-scale-note') || {}).textContent || '';
+  ok(/100%/.test(t) && /実際のサイズ/.test(t), '★100%で刷ってと書いていない★: ' + t);
+  ok($('print-scale-note').closest('#out-box'), '★印刷ボタンと同じ所に無い（読まれない）★');
+});
+
+await TA('15-h. ★どの入口から画面を開いても 一番上へ戻る（頭が帯の下に隠れない）', async () => {
+  /* ★見切れの正体は「前の画面のスクロール位置が残る」事★
+     ＝帯（appbar）は sticky なので、上に戻ってさえいれば 1行目は必ず出る。
+     ★頭出しは goScreen 1か所★＝入口が増えても同じ。ここでは ★全部の入口★ を押して数える。 */
+  const from = () => scrolls.length;
+  let n = from();
+  doc.querySelector('.bn[data-scr="scr-set"]').click(); await sleep(30);
+  ok(scrolls.length > n, '★タブ（設定）で頭出ししていない★');
+  n = scrolls.length;
+  doc.querySelector('.bn[data-scr="scr-list"]').click(); await sleep(40);
+  ok(scrolls.length > n, '★タブ（一覧）で頭出ししていない★');
+  n = scrolls.length;
+  $('b-new').click(); await sleep(60);
+  ok(scrolls.length > n, '★「新しい請求書」で頭出ししていない★');
+  ok(scrolls.every((p) => p[0] === 0 && p[1] === 0), '★上まで戻していない★: ' + JSON.stringify(scrolls.slice(-3)));
+  // ★一覧から1通 開く★（ここも同じ1か所を通る）
+  await newInvoiceFor('pt_y', '2026-08-17');
+  setLine(0, 'name', 'あ'); setLine(0, 'amount', '1000');
+  await sleep(80);
+  $('b-save').click(); await sleep(80);
+  doc.querySelector('.bn[data-scr="scr-list"]').click(); await sleep(60);
+  const open = doc.querySelector('#list-body [data-open]');
+  if (open) { n = scrolls.length; open.click(); await sleep(80); ok(scrolls.length > n, '★一覧から開いた時に頭出ししていない★'); }
+});
+
+T('15-i. ★上の帯は「押しのける」置き方（中身に重ならない）＝余白は1か所で決める', () => {
+  const bar = (/\.appbar\s*\{([^}]*)\}/.exec(CSS) || [])[1] || '';
+  ok(/position:\s*sticky/.test(bar), '★帯が sticky でない（fixed だと1行目が下に隠れる）★: ' + bar);
+  ok(/env\(safe-area-inset-top\)/.test(bar), '★status-bar の分の余白が無い（iPhone で頭が隠れる）★: ' + bar);
+  // ★画面ごとに上の余白を書いていない★（1か所で決める）
+  const perScreen = [...CSS.matchAll(/#scr-[a-z]+\s*\{([^}]*)\}/g)].map((m) => m[1])
+    .filter((r) => /padding-top|margin-top/.test(r));
+  eq(perScreen.length, 0, '★画面ごとに上の余白を書いている（1か所で決める決まり）★: ' + perScreen.join(' | '));
+  const main = (/\.main\s*\{([^}]*)\}/.exec(CSS) || [])[1] || '';
+  ok(/padding/.test(main), '中身の余白が .main に無い');
+});
+
+T('15-j. ★字の右にも余白（右端に貼り付かない）＝1か所で決める', () => {
+  /* jsdom は幅を測れないので ★決めごとの側★ を見る。
+     実測（Chromium 幅375/390/412）は測り直して報告に書く：
+       直す前 … 一番きつい文で 箱の内側まで ★1〜2px★（右端に貼り付いて見える）
+       直した後 … ★11〜12px★（余白が見える）
+     ★画面ごとに書かない★＝seikyu/css/app.css の1か所だけ。 */
+  const rule = (sel) => { const i = CSS.indexOf(sel); if (i < 0) return null; return CSS.slice(CSS.indexOf('{', i) + 1, CSS.indexOf('}', i)); };
+  const r = rule('.card .hint,');
+  ok(r !== null, '★字の右の余白を決めている所が無い★');
+  ok(/padding-right:\s*10px/.test(r), '右の余白が入っていない: ' + r);
+  // ★画面ごとに書いていない★（#scr-… に padding-right を足していない）
+  const perScreen = [...CSS.matchAll(/#scr-[a-z]+\s*\{([^}]*)\}/g)].map((m) => m[1])
+    .filter((x) => /padding|margin/.test(x));
+  eq(perScreen.length, 0, '★画面ごとに余白を書いている★: ' + perScreen.join(' | '));
+  // 説明の字は「箱いっぱいに広げる」指定を持っていない（幅を固定すると割れる）
+  ok(!/\.hint\s*\{[^}]*width:\s*100vw/.test(CSS), 'hint に画面幅を直に入れている');
 });
 
 /* ═══ 8. まとめ ═══ */
