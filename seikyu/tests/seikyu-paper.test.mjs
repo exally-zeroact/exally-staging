@@ -653,8 +653,121 @@ T('★控除で消費税は動かない（税の外で引く）', () => {
   const tax = TAX.compute({ lines, taxMode: 'exclusive', rounding: 'floor' });
   const withDed = PAPER.build(sample({ inv: { doc_type: 'invoice', no: 'X', issue_ymd: '2026-07-21', tax_mode: 'exclusive', rounding: 'floor', data: {} }, tax, deduct: 11340, deductLines: [{ name: '弁当代', amount: 11340 }] })).html;
   const noDed = PAPER.build(sample({ inv: { doc_type: 'invoice', no: 'X', issue_ymd: '2026-07-21', tax_mode: 'exclusive', rounding: 'floor', data: {} }, tax })).html;
-  const taxOf = (h) => (/消費税[^¥]*¥([\d,]+)/.exec(h.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ')) || [])[1];
+  /* ★締めの所だけを見る★
+     明細にも「消費税」の列が在るので、紙全体から拾うと ★列の値を掴んでしまう★
+     （2026-08-15 実測：既定の列を消費税にした日に、この検査が拾い違えた）。 */
+  const sumsOf = (h) => { const m = /<table class="sums">([\s\S]*?)<\/table>/.exec(h); return (m ? m[1] : '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' '); };
+  const taxOf = (h) => (/消費税[^¥]*¥([\d,]+)/.exec(sumsOf(h)) || [])[1];
   eq(taxOf(withDed), taxOf(noDed), '★控除を入れたら消費税が変わった（税の中で引いている）★');
+});
+
+
+/* ── ★項目が少なくても 紙の顔を同じにする★ ────────────────────────
+   うちの実物が すでにそうなっている（実測 2026-08-15）:
+     黒田空調 … 入っているのは6行／枠は12〜41行＝★30行★
+     ENEOS   … 入っているのは2行／枠は★同じ30行★
+     八木工業 … 控除の枠は E17:H20＝★4行★（1行しか使っていない）
+   ★経理の人は「いつも同じ場所」を見る★。動くと毎回 探し直しになる。 */
+function framed(n, over) {
+  const lines = Array.from({ length: n }, (_, i) => ({ name: '品目' + (i + 1), qty: 1, unit: '式', amount: 1000, rate: STD }));
+  const tax = TAX.compute({ lines, taxMode: 'exclusive', rounding: 'floor' });
+  return PAPER.build(Object.assign({
+    inv: { doc_type: 'invoice', no: '202607-001', issue_ymd: '2026-07-21', tax_mode: 'exclusive', rounding: 'floor', data: {} },
+    tax,
+    partner: { name: '八木工業 株式会社', keisho: '御中' },
+    org: { yago: '合同会社ZEROact' },
+    deduct: 11340, deductLines: [{ name: '弁当代　矢原', amount: 11340 }],
+  }, over || {}));
+}
+const rowsIn = (h) => (h.match(/<tr[\s>]/g) || []).length;
+const blanksIn = (h) => (h.match(/class="r-blank"/g) || []).length;
+
+T('★★明細が1行でも28行でも、紙の行数が同じ（足りない行は空の枠で残す）★★', () => {
+  const a = framed(1).html, b = framed(28).html;
+  eq(rowsIn(a), rowsIn(b), '★中身の本数で紙の行数が変わる（毎月 顔が変わる）★');
+  // 空の枠で埋めている（詰めていない）
+  eq(blanksIn(a) - blanksIn(b), 27, '空の枠の数が合わない（1行と28行の差は27）');
+  ok(blanksIn(a) > 0, '★空の枠が1つも無い＝詰めている★');
+});
+
+T('★空の枠にも罫線が残る（白黒コピーで消えない＝色ではなく濃さで作る）', () => {
+  const css = PAPER.css();
+  const blank = (/\.r-blank td,\.r-blank th\{([^}]*)\}/.exec(css) || [])[1] || '';
+  ok(blank, '空の枠の指定が無い');
+  ok(/color:transparent/.test(blank), '空の枠の字が消えていない');
+  ok(!/border:\s*0/.test(blank) && !/border:\s*none/.test(blank), '★空の枠の罫線まで消している★');
+  // 罫線そのものは 明細の td の指定が持っている（薄い色ではなく実線）
+  ok(/\.items td\{[^}]*border/.test(css), '明細の罫線が無い');
+});
+
+T('★★27／28／29／30／31行の境目で 紙が崩れない（31でだけ次のページ）★★', () => {
+  for (const n of [1, 27, 28, 29, 30]) {
+    const r = framed(n);
+    eq(r.pages, 1, n + '行で ' + r.pages + 'ページになった');
+    ok(/請求額/.test(r.html), n + '行の紙に請求額が無い');
+  }
+  const over = framed(31);
+  eq(over.pages, 2, '★枠を超えたのに次のページへ行かない★');
+  ok(/次ページへ続く/.test(over.html), '続きの案内が無い');
+  ok(/このページの小計/.test(over.html), '途中の小計が無い');
+});
+
+T('★控除0件でも 枠が出る（空の枠・控除計）／「出さない」も会社が選べる', () => {
+  const none = framed(3, { deduct: 0, deductLines: [] }).html;
+  ok(/差し引く/.test(none), '★控除0件で枠ごと消えている（毎月 顔が変わる）★');
+  ok(/控除計/.test(none), '控除計の行が無い');
+  const off = framed(3, { deduct: 0, deductLines: [], showDeduct: false }).html;
+  ok(!/差し引く/.test(off), '★「出さない」を選んでも出ている★');
+  ok(!/控除計/.test(off), '「出さない」なのに控除計が出ている');
+});
+
+T('★★控除が読めない時は 請求額も数字にしない（引き忘れた紙を出さない）★★', () => {
+  const h = framed(3, { deduct: null, deductLines: [{ name: '弁当代', amount: null }] }).html;
+  const flat = h.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+  ok(/控除計 （未確認）/.test(flat), '控除計が（未確認）になっていない: ' + flat.slice(-300));
+  ok(/請求額 （未確認）/.test(flat), '★控除が読めないのに請求額を数字で出している★');
+  // 頭の金額も数字にしない
+  ok(!/（税込） ¥/.test(flat) || /（税込） （未確認）/.test(flat), '★頭の金額が控除前の数字のまま★');
+});
+
+T('★控除計は1か所だけ（同じ物を2か所に出さない）', () => {
+  const flat = framed(3).html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+  eq((flat.match(/控除計/g) || []).length, 1, '★控除計が2か所に出ている★');
+  eq((flat.match(/請求額/g) || []).length, 1, '請求額が2か所に出ている');
+});
+
+T('★① 明細 → ② 差し引く → ③ 締め の順で紙に出る（給料明細と同じ作法）', () => {
+  const h = framed(3).html.split('</head>')[1];
+  const iItems = h.indexOf('class="items"');
+  const iDed = h.indexOf('差し引く');
+  const iSum = h.indexOf('請求額');
+  ok(iItems >= 0 && iDed >= 0 && iSum >= 0, '3つの箱が揃っていない');
+  ok(iItems < iDed, '★明細より先に控除が出ている★');
+  ok(iDed < iSum, '★控除より先に締めが出ている★');
+});
+
+T('★2カラムは「表」で組む（flex だと文が1文字ずつ縦に割れる）', () => {
+  const css = PAPER.css();
+  ok(/\.cols2\{[^}]*table-layout:fixed/.test(css), '2カラムが表で組まれていない');
+  ok(!/display\s*:\s*(flex|grid|inline-flex|inline-grid)/.test(css), '紙のCSSに flex/grid がある');
+  ok(/\.cols2>tbody>tr>td\{[^}]*vertical-align:top/.test(css), '★上ぞろえでない＝締めの位置が動く★');
+  ok(/<table class="cols2">/.test(framed(3).html), '2カラムの表が出ていない');
+});
+
+/* ★恒等式★ ①の合計 ＋ 消費税 − ②の合計 ＝ 請求額（紙の上で必ず一致） */
+T('★★紙の上で 小計＋消費税−控除計 ＝ 請求額 が必ず一致する★★', () => {
+  for (const n of [1, 5, 30]) {
+    // ★控除は合計より小さい額にする★（大きいと請求額がマイナス＝この検査の狙いから外れる）
+    const r = framed(n, { deduct: 300, deductLines: [{ name: '立替', amount: 300 }] });
+    // ★締めの表の中だけを見る★（明細の「消費税」の列を掴まない）
+    const m0 = /<table class="sums">([\s\S]*?)<\/table>/.exec(r.html);
+    const flat = (m0 ? m0[1] : '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+    const num = (re) => { const m = re.exec(flat); return m ? Number(m[1].replace(/,/g, '')) : null; };
+    const sub = num(/小計\s*¥([\d,]+)/), tx = num(/消費税[^¥]*¥([\d,]+)/);
+    const ded = num(/控除計\s*-¥([\d,]+)/), bill = num(/請求額\s*¥([\d,]+)/);
+    ok(sub !== null && tx !== null && ded !== null && bill !== null, n + '行: 数が読めない');
+    eq(sub + tx - ded, bill, n + '行: ★紙の中で辻褄が合っていない★');
+  }
 });
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

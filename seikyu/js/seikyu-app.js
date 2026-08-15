@@ -536,6 +536,11 @@
     var list = deductions();
     show($('ded-card'), !!v && (list.length > 0 || !ro));
     show($('b-ded-add'), !ro);
+    /* ★記入ガイドは薄く・先に読ませない★
+       行が0本の時は1行だけ。詳しい話は ★足した後★（その時に要る言葉だけ出す）。 */
+    setText('ded-why', list.length
+      ? '税込の合計から引きます（消費税は動きません）。値引き（税も一緒に減る物）は 明細にマイナスの行で。'
+      : '');
     if (!list.length) {
       host.innerHTML = '<p class="hint">差し引く物はありません。</p>';
     } else {
@@ -1216,7 +1221,10 @@
          ★読めない控除は 0 にしない★＝「（未確認）」と出して、引き忘れた紙を出さない。 */
       if (ded === null || ded > 0) {
         lines.push(['控除', ded === null ? '（未確認）' : '− ' + yen(ded) + ' 円']);
-        var billed = DOC.billedOf(t, null, ded);
+        /* ★控除が読めない時は 請求額も数字にしない★
+           0として計算した額を「請求額」と一番 大きく出すと、★引き忘れた紙★ になる
+           （2026-08-15 スクショで実際に「控除（未確認）／請求額 292,600」と出ていた）。 */
+        var billed = (ded === null) ? null : DOC.billedOf(t, null, ded);
         lines.push(['請求額', billed === null ? '（未確認）' : yen(billed) + ' 円']);
       }
       /* ★源泉があるなら、画面にも「引いたあと」まで出す★

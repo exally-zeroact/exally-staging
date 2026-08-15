@@ -217,6 +217,9 @@
     display: inline-block; vertical-align: top; width: 48%; padding-right: 6px;
   }
   .lines td.l-c-amount, .lines td.l-c-tax { text-align: right; }
+  /* ★欄の名前は どの欄も「上・左」にそろえる★
+     （消費税だけ右に寄っていて、値が左に浮いて見えた＝2026-08-15 指示役の指摘） */
+  .lines td.l-c-amount::before, .lines td.l-c-tax::before { text-align: left; }
   .lines td.l-c-amount .finput { text-align: right; font-weight: 700; }
   .lines td.l-ro { padding-top: 0; }
   /* 並べ替えと消すは 札の右上に寄せる */

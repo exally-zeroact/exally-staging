@@ -12,8 +12,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@500&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 <!-- ★見た目の本体はスイート共通の皮。請求書の app.css は差分だけ（読む順は皮が先） -->
-<link rel="stylesheet" href="../css/exally-ui.css?v=0bca6450">
-<link rel="stylesheet" href="css/app.css?v=0bca6450">
+<link rel="stylesheet" href="../css/exally-ui.css?v=301fe41e">
+<link rel="stylesheet" href="css/app.css?v=301fe41e">
 </head>
 <body>
 
@@ -108,9 +108,6 @@
       </div>
       <button class="btn-add" type="button" id="b-addline">＋ 行を足す</button>
       <p class="hint" id="taxmode-note"></p>
-      <div class="tot" id="tot-box"></div>
-      <div class="bad" id="edit-err" style="display:none"></div>
-      <div class="warn" id="edit-warn" style="display:none"></div>
     </div>
 
     <!-- ═══ 差し引く（控除） ═══
@@ -123,10 +120,19 @@
       <div class="card-h">差し引く（控除）</div>
       <div id="ded-list"></div>
       <button class="btn-add" type="button" id="b-ded-add">＋ 差し引く行を足す</button>
-      <p class="hint" id="ded-why">値引き（税も一緒に減る物）は、明細にマイナスの行で入れてください。
-        ここは税込の合計から引く物（立替の弁当代など）です。消費税は動きません。
-        1行ずつ、何を引いたかの名前と金額を入れてください（名前が空の紙は出せません）。</p>
+      <p class="hint" id="ded-why"></p>
       <div class="bad" id="ded-err" style="display:none"></div>
+    </div>
+
+    <!-- ═══ ③ 締め ═══
+         給料明細と同じ並び（支給／控除／差引支給額）にそろえる。
+         ①明細 → ②差し引く → ③締め の順は、スマホ（1カラム）でも紙（2カラム）でも同じ。
+         ＝探す場所が変わらない。 -->
+    <div class="card" id="sum-card">
+      <div class="card-h">締め</div>
+      <div class="tot" id="tot-box"></div>
+      <div class="bad" id="edit-err" style="display:none"></div>
+      <div class="warn" id="edit-warn" style="display:none"></div>
     </div>
 
     <!-- ═══ 入金（★1回＝1行。上書きしない★） ═══
@@ -419,33 +425,33 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../js/supa-config.js?v=0bca6450"></script>
-<script src="../lib/xlsx.full.min.js?v=0bca6450"></script>
-<script src="../js/file-out.js?v=0bca6450"></script>
-<script src="../js/suite-data.js?v=0bca6450"></script>
-<script src="../kyuyo/lib/shouhizei-ritsu.js?v=0bca6450"></script>
+<script src="../js/supa-config.js?v=301fe41e"></script>
+<script src="../lib/xlsx.full.min.js?v=301fe41e"></script>
+<script src="../js/file-out.js?v=301fe41e"></script>
+<script src="../js/suite-data.js?v=301fe41e"></script>
+<script src="../kyuyo/lib/shouhizei-ritsu.js?v=301fe41e"></script>
 <!-- ★源泉徴収の率と式は【給与の lib】が持つ＝請求書側には率を1つも書かない★
      （国税庁 No.2798。100万円の境目も、1円未満の切り捨ても、あちらの gensenA が唯一の正） -->
-<script src="../kyuyo/lib/shiharai-chosho.js?v=0bca6450"></script>
-<script src="lib/seikyu-tax.js?v=0bca6450"></script>
-<script src="lib/seikyu-gensen.js?v=0bca6450"></script>
-<script src="lib/seikyu-carry.js?v=0bca6450"></script>
-<script src="lib/seikyu-cols.js?v=0bca6450"></script>
-<script src="lib/seikyu-templates.js?v=0bca6450"></script>
-<script src="lib/seikyu-doc.js?v=0bca6450"></script>
-<script src="lib/seikyu-name.js?v=0bca6450"></script>
-<script src="lib/seikyu-paper.js?v=0bca6450"></script>
-<script src="lib/seikyu-aoa.js?v=0bca6450"></script>
-<script src="js/seikyu-store.js?v=0bca6450"></script>
-<script src="js/seikyu-out.js?v=0bca6450"></script>
-<script src="js/seikyu-app.js?v=0bca6450"></script>
-<script src="../js/exally-login.js?v=0bca6450"></script>
-<script src="js/auth.js?v=0bca6450"></script>
+<script src="../kyuyo/lib/shiharai-chosho.js?v=301fe41e"></script>
+<script src="lib/seikyu-tax.js?v=301fe41e"></script>
+<script src="lib/seikyu-gensen.js?v=301fe41e"></script>
+<script src="lib/seikyu-carry.js?v=301fe41e"></script>
+<script src="lib/seikyu-cols.js?v=301fe41e"></script>
+<script src="lib/seikyu-templates.js?v=301fe41e"></script>
+<script src="lib/seikyu-doc.js?v=301fe41e"></script>
+<script src="lib/seikyu-name.js?v=301fe41e"></script>
+<script src="lib/seikyu-paper.js?v=301fe41e"></script>
+<script src="lib/seikyu-aoa.js?v=301fe41e"></script>
+<script src="js/seikyu-store.js?v=301fe41e"></script>
+<script src="js/seikyu-out.js?v=301fe41e"></script>
+<script src="js/seikyu-app.js?v=301fe41e"></script>
+<script src="../js/exally-login.js?v=301fe41e"></script>
+<script src="js/auth.js?v=301fe41e"></script>
 <!-- ★Service Worker は登録しない＝キャッシュで古い版が居座る問題を根絶。
      開くたびに既存SWを登録解除＋全キャッシュ削除して常に最新にする（給与と同じ）。 -->
 <script>try{if('serviceWorker'in navigator){navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister();});});}if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.delete(k);});});}}catch(e){}</script>
 <!-- ★テスト環境の帯★ 本番の倉庫では出ない。今どの倉庫かは js/supa-config.js が唯一の正。
      ホスト名では決めない（配り方は変わるが「本番のデータか」は変わらないため）。 -->
-<script src="../js/env-badge.js?v=0bca6450"></script>
+<script src="../js/env-badge.js?v=301fe41e"></script>
 </body>
 </html>
