@@ -52,6 +52,9 @@
        経理の人は「いつも同じ場所」を見るので、動くと毎回 探し直しになる。
      ★足りない行は空の枠のまま残す（罫線は消さない）★
      ★固定にするのは「紙」だけ★＝入力の画面は今までどおり可変（空欄を並べて埋めさせない）。 */
+  /* ★行の高さは1か所で決める★＝左（明細）と右（控除）の罫線がずれない
+     （2026-08-15 司さんの指摘：右の空の枠の横線が左と合っていなかった） */
+  var ROW_H = '7.2mm';
   var PAPER_ROWS = 30;        // 明細の枠（1ページぶん）★会社が変えられる★
   var DEDUCT_ROWS = 4;        // 差し引く（控除）の枠 ★会社が変えられる★
   var ROWS_FIRST = 12;
@@ -223,6 +226,11 @@
        ★「出さない」も会社が選べる★（控除を使わない会社が多いため）。 */
     var deductGiven = (o.deduct !== undefined) || deductLines.length > 0 || o.showDeduct !== undefined
       || !!(inv.data && inv.data.deductions && inv.data.deductions.length);
+    /* ★1カラム／2カラム★（給料明細と同じ選び方・同じ言い方）
+         2カラム … 明細｜差し引く を ★横に並べる★（col2）
+         1カラム … 明細 ↓ 差し引く を ★縦に積む★（col1・明細が多い／控除を使わない会社向け） */
+    var layout = String((o.layout !== undefined ? o.layout : (inv.data && inv.data.paperLayout)) || 'col2');
+    if (layout !== 'col1' && layout !== 'col2') layout = 'col2';
     var showDeduct = (o.showDeduct !== undefined) ? !!o.showDeduct
       : ((inv.data && inv.data.showDeduct) !== undefined ? !!inv.data.showDeduct : deductGiven);
     var gen = o.gensen || null;     // ★源泉徴収（引く紙だけ）★
@@ -348,19 +356,20 @@
          ★足した2行が迷子にならないよう、合計の直下に続けて並べ、
            いちばん下（実際に払う額）を太くする★ */
     function totalsBlock() {
+      /* ★締め★ 小計はブロックの合計が持っているので、ここは 消費税 → 合計 → 請求額。
+         ★大きい数字は紙の頭に1つだけ★（給料明細の差引支給額と同じ）＝ここは全部 小さく。 */
       var rows = ''
-        + '<tr><th>小計</th><td>' + yen(tax.subtotal) + '</td></tr>'
         + '<tr><th>' + taxLabel(tax, inv.tax_mode) + '</th><td>' + yen(tax.taxTotal) + '</td></tr>'
-        + '<tr class="sums-g"><th>合計</th><td>' + yen(tax.grandTotal) + '</td></tr>';
+        + '<tr class="sums-mid"><th>合計</th><td>' + yen(tax.grandTotal) + '</td></tr>';
       /* ★控除の「1行ずつ」は ②の枠が持つ★（同じ物を2か所に出さない）。
          ここには ★控除計 と 請求額★ だけを出す。★税額は動かさない★。
          ★控除が読めない時は 請求額も数字にしない★
            ＝0として計算した額を「請求額」と大きく出すと、★引き忘れた紙★ になる。 */
       if (showDeduct) {
+        /* ★控除計は②のブロックが持つ★（同じ数を2回 足し算として出さない）。
+           ここは ★引いたあとの「請求額」★ だけ＝締めの役目。 */
         var billedNet = (deduct === null) ? null : (tax.grandTotal - deduct);
-        rows += '<tr class="sums-minus"><th>控除計</th><td>'
-          + (deduct === null ? '（未確認）' : (deduct ? '-' + yen(deduct) : yen(0))) + '</td></tr>'
-          + '<tr class="sums-net"><th>請求額</th><td>'
+        rows += '<tr class="sums-net"><th>請求額</th><td>'
           + (billedNet === null ? '（未確認）' : yen(billedNet)) + '</td></tr>';
       }
       if (gen && gen.on) {
@@ -415,6 +424,17 @@
        ★給料明細の「支給／控除／差引支給額」と同じ並び★＝Rakually の中で紙の作法をそろえる。
        ★税の外で引く★（①の中のマイナス行＝値引きは税の中なので、こちらに混ぜない）。
        ★中身が1行でも枠は固定★（実物 八木工業は E17:H20＝4行のうち1行しか使っていない）。 */
+    /* ★給料明細と同じ作法★（kyuyo/js/render.js を読んで合わせた・2026-08-15）
+         ・「支 給」「控 除」の ★見出しの下に線★（.st）＝左右の1行目が同じ高さから始まる
+         ・足りない行は ★高さの決まった空行★ で埋める（rowsHTML の minCells と同じ考え方）
+         ・★各ブロックの下にそのブロックの合計★（支給合計／控除合計＝上に線を引いた1行）
+         ・★大きい数字は紙の頭に1つだけ★（差引支給額）＝ブロックの合計は小さく
+       請求書では 支給→★ご請求の内訳★／控除→★差し引く★ に読み替える。 */
+    function blockHead(t) { return '<div class="st">' + esc(t) + '</div>'; }
+    function blockSum(label, value) {
+      return '<table class="bsum"><tbody><tr><th>' + esc(label) + '</th><td>' + value + '</td></tr></tbody></table>';
+    }
+
     function deductBlock() {
       if (!showDeduct) return '';
       var used = deductLines.length;
@@ -425,10 +445,14 @@
       }).join('');
       var blanks = Math.max(0, dedRows - used);
       for (var i = 0; i < blanks; i++) rows += '<tr class="r-blank"><th>&nbsp;</th><td>&nbsp;</td></tr>';
-      /* ★控除計は ③締め が持つ★（同じ物を2か所に出さない）。
-         ここは「何を引いたか」の一覧＝②の役目だけにする。 */
-      return '<div class="bd bd-ded"><div class="bd-h">差し引く</div>'
-        + '<table class="ded"><tbody>' + rows + '</tbody></table></div>';
+      /* ★このブロックの合計はこのブロックが持つ★（給料明細の「控除合計」と同じ）。
+         締めの「請求額」とは役目が違う（ブロックの足し算／払う額）。 */
+      return '<div class="blk blk-ded">' + blockHead('差し引く')
+        + '<table class="ded"><tbody>'
+        + '<tr class="ded-hd"><th>内容</th><td>金額</td></tr>'
+        + rows + '</tbody></table>'
+        + blockSum('控除計', (deduct === null) ? '（未確認）' : (deduct ? '-' + yen(deduct) : yen(0)))
+        + '</div>';
     }
 
     /* ── 足元（★左＝お振込先／右＝小計・消費税・合計＋（内訳）★）
@@ -509,14 +533,27 @@
              ★明細の枠が固定★なので、右の「請求額」は ★中身が1行でも28行でも同じ高さ★に来る。
              紙は A4 の幅で組むので ここは常に2カラム。★狭い画面の1カラムは 入力の画面の側★
              （①→②→③の順番は どちらも同じ＝探す場所が変わらない）。 */
-        + '<table class="cols2"><tbody><tr>'
-        + '<td class="c2-l">'
-        + (caption ? '<div class="cap">【' + esc(caption) + '】</div>' : '<div class="cap">【ご請求の内訳】</div>')
-        + '<table class="items"><thead><tr>' + headHtml + '</tr></thead>'
-        + '<tbody>' + rowsHtmlOf(pageLines, offset) + '</tbody></table>'
-        + '</td>'
-        + '<td class="c2-r">' + (last ? (deductBlock() + totalsBlock()) : '') + '</td>'
-        + '</tr></tbody></table>'
+        + (function () {
+          /* ★① ご請求の内訳★（左／上）＝明細＋★このブロックの合計★
+             見出しの下に線を引く＝★左右の1行目が同じ高さから始まる★（給料明細と同じ） */
+          var pageSub = pageLines.reduce(function (a2, x) { return a2 + (Number(x.amount) || 0); }, 0);
+          var itemsBlk = '<div class="blk blk-items">'
+            + blockHead(caption ? caption : 'ご請求の内訳')
+            + '<table class="items"><thead><tr>' + headHtml + '</tr></thead>'
+            + '<tbody>' + rowsHtmlOf(pageLines, offset) + '</tbody></table>'
+            + (last ? blockSum('明細の合計', yen(tax.subtotal)) : blockSum('このページの小計', yen(pageSub)))
+            + '</div>';
+          var rightBlk = last ? deductBlock() : '';
+          if (layout === 'col1') {
+            /* ★1カラム＝上から ①明細 → ②差し引く → ③締め★（順番は2カラムと同じ） */
+            return itemsBlk + rightBlk;
+          }
+          return '<table class="cols2"><tbody><tr>'
+            + '<td class="c2-l">' + itemsBlk + '</td>'
+            + '<td class="c2-r">' + rightBlk + '</td>'
+            + '</tr></tbody></table>';
+        })()
+        + (last ? totalsBlock() : '')
         + (last
           ? footerBlock()
           : '<div class="cont">'
@@ -611,7 +648,7 @@
       '.items th{background:' + TH.headBg + ';color:' + TH.headInk + ';font-weight:700;font-size:8.5pt;',
       'border:0;padding:1.4mm 1.2mm;line-height:1.35;',
       'white-space:normal;word-break:normal;overflow-wrap:break-word;}',
-      '.items td{' + cellBorder + 'padding:1.4mm 1.2mm;vertical-align:top;line-height:1.55;}',
+      '.items td{' + cellBorder + 'padding:1.4mm 1.2mm;vertical-align:top;line-height:1.55;height:' + ROW_H + ';}',
       '.items .c-left{text-align:left;}',
       '.items .c-center{text-align:center;}',
       '.items .c-right{text-align:right;white-space:nowrap;',
@@ -633,15 +670,31 @@
       '.r-blank td,.r-blank th{color:transparent;}',
       '.c-blank{background:transparent;}',
 
-      /* ★② 差し引く（控除）★ ①と はっきり別の枠にする */
-      '.bd-ded{margin:0 0 4mm;}',
-      '.ded{width:100%;border-collapse:collapse;font-size:9pt;}',
-      '.ded th{text-align:left;font-weight:400;color:' + INK + ';' + cellBorder + 'padding:1.6mm 2mm;',
+      /* ★ブロック（給料明細と同じ作法）★
+         見出しの下に線 → 中身（足りない行は高さの決まった空行）→ ★このブロックの合計★（上に線）
+         ★左右の行の高さを同じにする★＝同じ番号の行の上端が同じ位置に来る。 */
+      '.blk{margin:0 0 4mm;}',
+      '.st{font-size:9.5pt;font-weight:700;color:' + ACCENT + ';letter-spacing:.16em;',
+      'padding:0 0 1.6mm;border-bottom:0.7pt solid ' + LINE + ';margin:0 0 0;}',
+      '.bsum{width:100%;border-collapse:collapse;font-size:9.5pt;margin:0;}',
+      '.bsum th{text-align:left;font-weight:700;color:' + INK + ';border:0;border-top:0.9pt solid ' + ACCENT + ';',
+      'padding:1.8mm 1.2mm;white-space:nowrap;}',
+      '.bsum td{text-align:right;font-weight:700;color:' + INK + ';border:0;border-top:0.9pt solid ' + ACCENT + ';',
+      "padding:1.8mm 1.2mm;white-space:nowrap;font-family:'DM Mono',ui-monospace,monospace;}",
+
+      /* ★② 差し引く（控除）★ ★行の高さは明細と同じ★（左右の罫線をそろえる） */
+      '.ded{width:100%;border-collapse:collapse;font-size:9.5pt;table-layout:fixed;}',
+      '.ded th{text-align:left;font-weight:400;color:' + INK + ';' + cellBorder + 'padding:1.4mm 1.2mm;',
+      'height:' + ROW_H + ';line-height:1.55;',
       'white-space:normal;word-break:normal;overflow-wrap:break-word;}',
-      '.ded td{text-align:right;white-space:nowrap;' + cellBorder + 'padding:1.6mm 2mm;',
+      '.ded td{text-align:right;white-space:nowrap;' + cellBorder + 'padding:1.4mm 1.2mm;',
+      'height:' + ROW_H + ';line-height:1.55;',
       "font-family:'DM Mono',ui-monospace,monospace;}",
+      /* 右の見出しの行＝左の明細の見出しと同じ高さ・同じ見た目 */
+      '.ded-hd th,.ded-hd td{background:' + TH.headBg + ';color:' + TH.headInk + ';font-weight:700;',
+      'font-size:8.5pt;border:0;padding:1.4mm 1.2mm;line-height:1.35;height:auto;}',
+      '.ded-hd td{text-align:right;font-family:inherit;}',
       '.ded .r-blank th,.ded .r-blank td{color:transparent;}',
-      '.ded-sum th,.ded-sum td{font-weight:700;color:' + INK + ';border-top:1pt solid ' + ACCENT + ';}',
 
       '.foot{width:100%;border-collapse:collapse;table-layout:fixed;margin:0;}',
       '.foot td{vertical-align:top;padding:0;}',
@@ -654,8 +707,11 @@
       'padding:1.4mm 3mm;white-space:nowrap;}',
       '.sums td{text-align:right;border:0;padding:1.4mm 3mm;white-space:nowrap;',
       "font-family:'DM Mono',ui-monospace,monospace;}",
+      /* ★紙の中で一番 大きい金額は 頭の「ご請求金額」1つだけ★（給料明細の差引支給額と同じ）。
+         締めの中は ★全部 小さく★＝どれを振り込むのか迷わせない。 */
       '.sums-g th{border-top:0.9pt solid ' + ACCENT + ';font-size:12pt;font-weight:700;color:' + INK + ';}',
       '.sums-g td{border-top:0.9pt solid ' + ACCENT + ';font-size:14pt;font-weight:700;color:' + TH.grandInk + ';}',
+      '.sums-mid th,.sums-mid td{border-top:0.7pt solid ' + LINE + ';font-weight:700;color:' + INK + ';}',
 
       /* （内訳）★枠で囲まない★ */
       '.bd{margin:0 0 5mm;}',

@@ -433,8 +433,9 @@ T('★角印は薄く重ねる（実物と同じ扱い・文字を隠し切ら�
   ok(/object-fit\s*:\s*contain/.test(rule), '印が歪む（縦横比を保っていない）');
 });
 
-T('★表の上に【…】の小さなキャプションが出る', () => {
-  ok(/【9月分 運転代行ご利用料金】/.test(H1), 'キャプションが無い');
+T('★ブロックの見出しが件名になる（給料明細の「支 給」と同じ置き方）', () => {
+  ok(/<div class="st">9月分 運転代行ご利用料金<\/div>/.test(H1),
+    '★件名がブロックの見出しになっていない★');
 });
 
 T('★明細が多い時は次の紙へ送る（黙って切らない・3つの言葉が出る）', () => {
@@ -759,15 +760,110 @@ T('★★紙の上で 小計＋消費税−控除計 ＝ 請求額 が必ず一�
   for (const n of [1, 5, 30]) {
     // ★控除は合計より小さい額にする★（大きいと請求額がマイナス＝この検査の狙いから外れる）
     const r = framed(n, { deduct: 300, deductLines: [{ name: '立替', amount: 300 }] });
-    // ★締めの表の中だけを見る★（明細の「消費税」の列を掴まない）
-    const m0 = /<table class="sums">([\s\S]*?)<\/table>/.exec(r.html);
-    const flat = (m0 ? m0[1] : '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
-    const num = (re) => { const m = re.exec(flat); return m ? Number(m[1].replace(/,/g, '')) : null; };
-    const sub = num(/小計\s*¥([\d,]+)/), tx = num(/消費税[^¥]*¥([\d,]+)/);
-    const ded = num(/控除計\s*-¥([\d,]+)/), bill = num(/請求額\s*¥([\d,]+)/);
+    /* ★給料明細と同じ作法★＝ブロックの合計は各ブロックが持ち、締めは払う額を持つ。
+       だから ★読む場所も分けて★ 見る（1か所から全部 拾おうとしない）。 */
+    const inTag = (re, h) => { const m = re.exec(h); return (m ? m[1] : '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' '); };
+    const sums = inTag(/<table class="sums">([\s\S]*?)<\/table>/, r.html);
+    const blocks = [...r.html.matchAll(/<table class="bsum">([\s\S]*?)<\/table>/g)]
+      .map((m) => m[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ')).join(' ／ ');
+    const pick = (re, hay) => { const m = re.exec(hay); return m ? Number(m[1].replace(/,/g, '')) : null; };
+    const sub = pick(/明細の合計\s*¥([\d,]+)/, blocks);
+    const ded = pick(/控除計\s*-¥([\d,]+)/, blocks);
+    const tx = pick(/消費税[^¥]*¥([\d,]+)/, sums);
+    const bill = pick(/請求額\s*¥([\d,]+)/, sums);
     ok(sub !== null && tx !== null && ded !== null && bill !== null, n + '行: 数が読めない');
     eq(sub + tx - ded, bill, n + '行: ★紙の中で辻褄が合っていない★');
   }
+});
+
+
+/* ── ★給料明細と同じ作法（kyuyo/js/render.js を読んで合わせた・2026-08-15）★ ──
+   ・「支 給」「控 除」＝★見出しの下に線★／足りない行は高さの決まった空行
+   ・★各ブロックの下にそのブロックの合計★（支給合計／控除合計）
+   ・★大きい数字は紙の頭に1つだけ★（差引支給額）＝ブロックの合計は小さい
+   請求書では 支給→★ご請求の内訳★／控除→★差し引く★ に読み替える。 */
+T('★★左にも右にも「見出しの行」が在る（1行目が同じ高さから始まる）★★', () => {
+  const h = framed(3).html;
+  ok(/<div class="st">/.test(h), 'ブロックの見出しが無い');
+  eq((h.match(/<div class="st">/g) || []).length, 2, '★片方にしか見出しが無い★');
+  ok(/<tr class="ded-hd">/.test(h), '★右（差し引く）に見出しの行が無い＝左と1行ずれる★');
+  const st = (/\.st\{([^}]*)\}/.exec(PAPER.css()) || [])[1] || '';
+  ok(/border-bottom/.test(st), '見出しの下に線が無い');
+});
+
+T('★★左（明細）と右（控除）の行の高さが同じ（罫線がずれない）★★', () => {
+  const css = PAPER.css();
+  const items = (/\.items td\{([^}]*)\}/.exec(css) || [])[1] || '';
+  const dedTh = (/\.ded th\{([^}]*)\}/.exec(css) || [])[1] || '';
+  const dedTd = (/\.ded td\{([^}]*)\}/.exec(css) || [])[1] || '';
+  const hOf = (r) => (/height:\s*([\d.]+mm)/.exec(r) || [])[1];
+  ok(hOf(items), '明細の行に高さの決めが無い');
+  eq(hOf(dedTh), hOf(items), '★右の行の高さが左と違う（罫線がずれる）★');
+  eq(hOf(dedTd), hOf(items), '★右の行の高さが左と違う（罫線がずれる）★');
+  // 余白も同じ（高さが同じでも余白が違うと1行ずつずれていく）
+  const pOf = (r) => (/padding:\s*([^;]+);/.exec(r) || [])[1];
+  eq(pOf(dedTh), pOf(items), '右の余白が左と違う');
+});
+
+T('★★それぞれのブロックの下に そのブロックの合計が出る（給料明細と同じ）★★', () => {
+  const flat = framed(3).html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+  ok(/明細の合計/.test(flat), '★左ブロックの合計が無い★');
+  ok(/控除計/.test(flat), '★右ブロックの合計が無い★');
+  ok(/請求額/.test(flat), '締めの請求額が無い');
+  // ★順番★ 明細の合計 → 控除計 → 請求額
+  ok(flat.indexOf('明細の合計') < flat.indexOf('控除計'), '明細の合計より先に控除計が出ている');
+  ok(flat.indexOf('控除計') < flat.indexOf('請求額'), '控除計より先に請求額が出ている');
+  // ★同じ数を2回 足し算として出さない★
+  eq((flat.match(/控除計/g) || []).length, 1, '控除計が2か所に出ている');
+  eq((flat.match(/明細の合計/g) || []).length, 1, '明細の合計が2か所に出ている');
+});
+
+T('★★紙の中で一番 大きい金額は1つだけ＝客が払う額★★', () => {
+  const css = PAPER.css();
+  const px = (r) => Number((/font-size:\s*([\d.]+)pt/.exec(r) || [])[1] || 0);
+  const grand = px((/\.grand-v\{([^}]*)\}/.exec(css) || [])[1] || '');   // 頭の「ご請求金額」
+  ok(grand > 0, '頭の金額の大きさが読めない');
+  /* CSSから「その決めごと」の中身を取り出す。
+     ★正規表現を組み立てないで素直に探す★（記号の書き分けで自分が事故った 2026-08-15） */
+  const ruleOf = (sel) => {
+    const i = css.indexOf(sel + '{');
+    if (i < 0) return '';
+    return css.slice(i + sel.length + 1, css.indexOf('}', i));
+  };
+  for (const sel of ['.sums-g td', '.sums-net td', '.sums-mid th,.sums-mid td', '.bsum td']) {
+    const v = px(ruleOf(sel));
+    ok(v < grand, '★' + sel + ' が頭の金額と同じくらい大きい（大きい数字が2つになる）★: ' + v + ' vs ' + grand);
+  }
+  /* 頭に出るのは ★引いたあとの額★（客が払う額）
+     ★控除は合計より小さい額にする★（大きいと請求額がマイナスになり、この検査の狙いから外れる） */
+  const flat = framed(3, { deduct: 300, deductLines: [{ name: '立替', amount: 300 }] })
+    .html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+  const head = /（税込）\s*¥([\d,]+)/.exec(flat);
+  const bill = /請求額\s*¥([\d,]+)/.exec(flat);
+  ok(head && bill, '頭の金額か請求額が読めない');
+  eq(head[1], bill[1], '★頭の大きい金額が、客が払う額と違う★');
+});
+
+T('★★1カラム版が出る（上から ①明細 → ②差し引く → ③締め）★★', () => {
+  const one = framed(3, { layout: 'col1' }).html;
+  ok(!/<table class="cols2">/.test(one), '★1カラムなのに2カラムの表で組んでいる★');
+  const flat = one.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+  ok(flat.indexOf('明細の合計') < flat.indexOf('差し引く'), '1カラムの順番が違う（①→②）');
+  ok(flat.indexOf('差し引く') < flat.indexOf('請求額'), '1カラムの順番が違う（②→③）');
+  // ★2カラムと同じ順番★（探す場所が変わらない）
+  const two = framed(3, { layout: 'col2' }).html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+  const orderOf = (t) => ['明細の合計', '差し引く', '請求額'].map((k) => t.indexOf(k));
+  const a1 = orderOf(flat), a2 = orderOf(two);
+  ok(a1[0] < a1[1] && a1[1] < a1[2], '1カラムの順番が崩れている');
+  ok(a2[0] < a2[1] && a2[1] < a2[2], '2カラムの順番が崩れている');
+  // 数は同じ（形が変わっても金額は1円も動かない）
+  const money = (t) => (t.match(/¥[\d,]+/g) || []).join(',');
+  eq(money(flat), money(two), '★形を変えたら金額が動いた★');
+});
+
+T('★知らない形を渡されたら2カラムに倒す（黙って壊れない）', () => {
+  ok(/<table class="cols2">/.test(framed(3, { layout: 'なにこれ' }).html), '知らない形で崩れている');
+  ok(/<table class="cols2">/.test(framed(3).html), '既定が2カラムでない');
 });
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
