@@ -434,6 +434,39 @@ T('★★紙の中の表は3つとも同じ作法（見出しの地・罫・余�
    実測（Chromium 2026-08-16）：
      直す前 … 字 9pt・行 22px・幅は auto で毎回動く（親を中身なりにしたら 50px まで潰れた）
      直した後 … ★字 9.5pt・行 24px（明細と同じ）・幅 70mm 固定・列のずれ 0.0px★ */
+/* ★どの業種でも成り立つ紙にする★（司さん 2026-08-16「どの業種にも対応するんやろが」）
+   ★うちの実物32枚は全部 10% の1種類だけ★（実測：軽減8%・非課税・対象外は0枚）＝
+   ★見本は1例であって「正」ではない★。軽減税率（飲食料品）・非課税（家賃・保険料）・
+   対象外（立替金）が混ざる会社は必ず在るので、区分が増えても崩れない事を紙で確かめる。 */
+T('★★区分が増えても紙が崩れない（軽減8%・非課税・対象外）★★', () => {
+  const mk = (lines) => {
+    const t = TAX.compute({ lines, taxMode: 'exclusive', rounding: 'floor' });
+    ok(t.ok, '計算が通らない: ' + (t.errors || []).join(','));
+    return { t, h: PAPER.build({ inv: { doc_type: 'invoice', no: 'X', issue_ymd: '2026-09-30', tax_mode: 'exclusive', data: {} },
+      tax: t, partner: S1.partner, org: S1.org }).html };
+  };
+  const all = mk([
+    { name: '工事代金', amount: 66500, rate: STD },
+    { name: 'お弁当代（軽減税率）', amount: 3000, rate: RED },
+    { name: '駐車場の賃料', amount: 30000, rate: 0, nontax: true },
+    { name: '立替金', amount: 5000, rate: 0 },
+  ]);
+  /* ★非課税と対象外は別の行★（同じ0でも意味が違う）
+     ★紙にはこの2つのうち 対象外しか出ていなかった★（Excel には両方 出ていた）
+     ＝不動産・保険の会社の紙で 非課税の区分が消えていた（2026-08-16 実測で発見）。 */
+  ok(/<th>非課税<\/th>/.test(all.h), '★紙の（内訳）に非課税の行が無い（不動産・保険で消える）★');
+  ok(/<th>消費税の対象外<\/th>/.test(all.h), '紙の（内訳）に対象外の行が無い');
+  ok(/8% 対象/.test(all.h) && /10% 対象/.test(all.h), '軽減税率の区分が出ていない');
+  // 区分の数だけ行が出る（見出しの1行を除く）
+  const bodyRows = (all.h.match(/<tbody>([\s\S]*?)<\/tbody>/g) || [])
+    .map((x) => (x.match(/<tr/g) || []).length);
+  ok(bodyRows.length >= 1, '（内訳）の中身が無い');
+  // ★1種類だけの紙でも 区分は必ず出る（法定④⑤）★
+  const one = mk([{ name: '工事', amount: 10000, rate: STD }]);
+  ok(/10% 対象/.test(one.h), '★1種類の紙で税率の区分が消えている（適格請求書の要件）★');
+  ok(/class="rates"/.test(one.h), '1種類の紙に（内訳）の表が無い');
+});
+
 T('★★（内訳）は明細と同じ寸法（字・行の高さ・余白）で、列の幅が動かない★★', () => {
   const css = PAPER.css();
   const ruleOf = (sel) => { const i = css.indexOf(sel + '{'); return i < 0 ? null : css.slice(i + sel.length + 1, css.indexOf('}', i)); };
