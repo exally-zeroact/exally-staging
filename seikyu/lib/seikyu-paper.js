@@ -951,8 +951,13 @@
       '.bd{margin:0 0 5mm;}',
       '.bd-h{font-size:8.5pt;color:' + SUB + ';margin:0 0 1mm;padding-left:' + EDGE + ';}',
       '.rates{border-collapse:collapse;font-size:9pt;width:100%;}',
-      /* ★① 見出しと数字の右端をそろえる★＝数の列は見出しも右そろえ（明細の表と同じ作法）
+      /* ★紙の中の表は 3つとも同じ作法★（司さん 2026-08-16「行がずれとる」の正体）
+         明細・控除は「見出し＝薄い地・罫なし／本文＝下罫線」なのに、
+         ★（内訳）だけ「見出しも本文と同じ下罫線」★で、見出し行だけ作りが違って見えていた。
+         ＝★（内訳）の見出しも 明細の見出しと同じにする★（薄い地・罫なし・8.5pt）。
          ★同じ padding を使う★＝右端の位置が1か所で決まる（別々に書くとまたずれる） */
+      '.rates thead th{background:' + TH.headBg + ';color:' + TH.headInk + ';font-weight:700;',
+      'font-size:8.5pt;border:0;padding:' + ROW_PAD + ';line-height:1.35;white-space:nowrap;}',
       '.rates th{color:' + SUB + ';border:0;border-bottom:' + HAIR + ' solid ' + LINE + ';',
       'padding:1.2mm ' + EDGE + ';white-space:nowrap;font-weight:400;}',
       '.rates .rt-l{text-align:left;}',

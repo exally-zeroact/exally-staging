@@ -402,6 +402,33 @@ T('★★振込先は枠で囲って 口座番号を大きく等幅にする（�
 /* ★紙の中の線は1種類★（司さん 2026-08-16「明細の合計の濃い上線はダサい／他と統一」）
    前は 薄い罫 0.7pt/1px と 濃い緑 0.9pt/1.2pt が混ざっていて、
    ★合計の線だけ 濃くて太い★＝1か所だけ作法が違って見えた。 */
+/* ★紙の中の表は3つとも同じ作法★（司さん 2026-08-16「行がずれとる」）
+   明細・控除は「見出し＝薄い地・罫なし／本文＝下罫線」だったのに、
+   ★（内訳）だけ 見出しにも下罫線★で、見出し行だけ作りが違って見えた。
+   実測（2026-08-16 Chromium）：直した後は 3つとも
+     見出しの地 rgb(242,242,242)／見出しの罫 0px／見出しの字 11.33px・700／
+     本文の罫 0.5px／左右の余白 4.54px（＝1.2mm）が一致。 */
+T('★★紙の中の表は3つとも同じ作法（見出しの地・罫・余白）★★', () => {
+  const css = PAPER.css();
+  const ruleOf = (sel) => { const i = css.indexOf(sel + '{'); return i < 0 ? null : css.slice(i + sel.length + 1, css.indexOf('}', i)); };
+  const heads = ['.items th', '.ded-hd th,.ded-hd td', '.rates thead th'];
+  const got = heads.map((sel) => {
+    const r = ruleOf(sel) || '';
+    return { sel,
+      地: (/background:\s*([^;]+)/.exec(r) || [])[1],
+      罫: /border:0/.test(r) ? 'なし' : (/border-bottom:\s*([^;]+)/.exec(r) || [])[1] || '?',
+      字: (/font-size:\s*([^;]+)/.exec(r) || [])[1],
+      余白: (/padding:\s*([^;]+)/.exec(r) || [])[1] };
+  });
+  got.forEach((g) => ok(g.地, g.sel + ' の見出しに地が無い'));
+  ok(got.every((g) => g.地 === got[0].地), '★見出しの地が表ごとに違う★: ' + JSON.stringify(got));
+  ok(got.every((g) => g.罫 === 'なし'), '★見出しに罫を引いている表がある（本文と作りが違って見える）★: ' + JSON.stringify(got));
+  ok(got.every((g) => g.字 === got[0].字), '★見出しの字の大きさが表ごとに違う★: ' + JSON.stringify(got));
+  // 本文は3つとも「下罫線」
+  const bodies = ['.items td', '.ded th', '.rates td'];
+  bodies.forEach((sel) => ok(/border-bottom/.test(ruleOf(sel) || ''), sel + ' の本文に下罫線が無い'));
+});
+
 T('★★紙の線は1種類（太さも濃さも1つ）★★', () => {
   const css = PAPER.css();
   const found = {};
