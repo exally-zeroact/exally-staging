@@ -356,5 +356,29 @@ T('★繰越が無い時は今までどおり（源泉だけ引く）', () => {
   eq(DOC_.payableOf(tax, null, null), tax.grandTotal, '源泉も繰越も無い時に額が変わった');
 });
 
+/* ★振込先の分け方は 紙も Excel も同じ★（司さん 2026-08-16「全共通にしとんか？」）
+   紙だけ直すと、Excel を受け取った人には ★違う紙★ に見える。 */
+T('★★振込先の名義は Excel でも次の行（紙と同じ分け方を呼ぶ）★★', () => {
+  const lines = [{ name: '工事', amount: 10000, rate: STD }];
+  const tax = TAX.compute({ lines, taxMode: 'exclusive', rounding: 'floor' });
+  const mk = (bank) => {
+    const r = AOA.build({ inv: { doc_type: 'invoice', no: '1', issue_ymd: '2026-07-21', data: {} },
+      tax, partner: { name: 'x' }, org: { bank } });
+    const rows = r.aoa || r.rows || r;
+    const arr = Array.isArray(rows) ? rows : rows.aoa;
+    const i = arr.findIndex((x) => x && x[0] === 'お振込先');
+    return i < 0 ? [] : [arr[i], arr[i + 1]];
+  };
+  const a = mk('伊予銀行　今治支店　普通　4160657　ド）ゼロアクト');
+  eq(a[0][1], '伊予銀行　今治支店　普通　4160657', '★Excel の1行目に名義まで入っている★: ' + JSON.stringify(a));
+  eq(a[1][0], '', '名義の行に見出しを繰り返している');
+  eq(a[1][1], 'ド）ゼロアクト', '★Excel で名義が次の行に来ていない★: ' + JSON.stringify(a));
+  const want = PAPER_.bankLines('伊予銀行　今治支店　普通　4160657　ド）ゼロアクト');
+  eq(a[0][1], want[0], '紙と Excel で1行目が違う');
+  eq(a[1][1], want[1], '紙と Excel で2行目が違う');
+  const b = mk('伊予銀行　今治支店　普通　4160657');
+  ok(!b[1] || b[1][1] !== '', '★名義が無いのに空の行を足している★: ' + JSON.stringify(b));
+});
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

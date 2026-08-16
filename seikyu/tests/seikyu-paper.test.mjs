@@ -305,6 +305,11 @@ T('★御請求金額は「枠なし＋★金額の下だけ★に線」（塗�
   /* ★線は金額の下だけ★（司さん 2026-08-16）＝紙の幅いっぱいに引かない */
   ok(!/border-bottom/.test(rule), '★線が紙の幅いっぱいに引かれている★: ' + rule);
   ok(/border-bottom\s*:/.test(val), '★金額の下に線が無い★: ' + val);
+  /* ★線は ラベルの左端 → 金額の右端まで 1本★（途中から始めない・紙の端まで伸ばさない） */
+  const lab = (/\.grand th\.grand-l\{([^}]*)\}/.exec(css) || [])[1] || '';
+  ok(/border-bottom\s*:/.test(lab), '★ラベルの下に線が無い（線が途中から始まって見える）★: ' + lab);
+  const rest = (/\.grand-x\{([^}]*)\}/.exec(css) || [])[1] || '';
+  ok(!/border-bottom/.test(rest), '★線が金額の右へ伸びている（紙の端まで引いている）★: ' + rest);
   ok(/<table class="grand">/.test(H1), '★表で組んでいない（flex は文が縦に割れる）★');
   ok(/<td class="grand-x">/.test(H1), '★金額の右の余りが無い＝線が右へ伸びる★');
 });
@@ -342,15 +347,42 @@ T('★★振込先は枠で囲って 口座番号を大きく等幅にする（�
      ＝長い名義が「ド）ゼロア／クト」のように 中途半端な所で折れるのを避ける。 */
   const bankOf = (v) => {
     const b = PAPER.build(Object.assign({}, sample(), { org: Object.assign({}, sample().org, { bank: v }) })).html;
-    return (/<div class="note-b">([\s\S]*?)<\/div>/.exec(b) || [])[1] || '';
+    return (/<div class="note-b note-bb">([\s\S]*?)<\/div>/.exec(b) || [])[1] || '';
   };
   const long = bankOf('三菱UFJ銀行　丸の内中央支店　当座　1234567　カ）ゼロアクトコーポレーションジャパン');
   ok(/<\/span><br><span class="bank-nm">カ）/.test(long), '★名義が同じ行に続いている（中途半端に折れる）★: ' + long);
   eq((long.match(/<br>/g) || []).length, 1, '★改行が増えている★: ' + long);
+  /* ★塗りは字の幅に合わせる／長い銀行名でも1行目を折らない★（司さん 2026-08-16）
+     ・箱＝display:table（中身なりの幅）＝★字の右に大きな空きを作らない★
+     ・足元は table-layout:auto ＋（内訳）は中身なり＝★残り幅は全部 振込先に回る★
+     実測（2026-08-16 Chromium）：
+       ふつう「伊予銀行 今治支店 普通 4160657 ド）ゼロアクト」→ 箱 234px（前は左欄いっぱい約400px）
+       長い  「三菱UFJ信託銀行 みなとみらいランドマークタワー支店 当座 12345678 …」
+             → 箱 454px・★1行目は1行のまま★・紙からはみ出さない・A4 1枚のまま */
+  const cssB = PAPER.css();
+  const ruleB = (sel) => { const i = cssB.indexOf(sel + '{'); return i < 0 ? null : cssB.slice(i + sel.length + 1, cssB.indexOf('}', i)); };
+  ok(/display:table/.test(ruleB('.note-bank') || ''),
+    '★箱が中身なりの幅でない（字の右に空きが出る）★: ' + ruleB('.note-bank'));
+  ok(!/max-width/.test(ruleB('.note-bank') || ''),
+    '★箱に max-width があると 長い銀行名で1行目が折れる★: ' + ruleB('.note-bank'));
+  ok(/width:auto/.test(ruleB('.foot-l') || ''), '★左の幅を % で固定している（長い銀行名が折れる）★');
+  ok(/width:1%/.test(ruleB('.foot-r') || ''), '★（内訳）が中身なりでない（左に幅が回らない）★');
+  ok(/table-layout:auto/.test(ruleB('.foot') || ''), '足元が fixed のまま（幅を配り直せない）');
+  /* ★塗った箱は 字の周りに余白を取る★（司さん 2026-08-16「余白が無いと逆に見にくい」）
+     ★display:table は border-collapse を継承する★＝足元の表（collapse）の中では
+     ★padding が丸ごと無視される★（実測：枠と字の間が 1px しか無かった）。 */
+  const bankRule = ruleB('.note-bank') || '';
+  ok(/border-collapse:separate/.test(bankRule),
+    '★collapse を継承したまま＝箱の余白が消える★: ' + bankRule);
+  const pad = /padding:\s*([\d.]+)mm\s+([\d.]+)mm/.exec(bankRule);
+  ok(pad, '箱に余白の指定が無い: ' + bankRule);
+  ok(Number(pad[1]) >= 2 && Number(pad[2]) >= 3,
+    '★箱の余白が狭い（字が枠に貼り付く）★: ' + pad[0]);
+
   const noName = bankOf('伊予銀行　今治支店　普通　4160657');
   ok(!/<br>/.test(noName), '★名義が無いのに改行している★: ' + noName);
   const own = bankOf('伊予銀行 今治支店 普通 4160657\nカ）ゼロアクト');
-  ok(/<br>カ）/.test(own), '★会社が入れた改行を無視している★: ' + own);
+  ok(/<br><span class="bank-nm">カ）/.test(own), '★会社が入れた改行を無視している★: ' + own);
   const css = PAPER.css();
   const box = (/\.note-bank\{([^}]*)\}/.exec(css) || [])[1] || '';
   ok(/border:[^;]*solid/.test(box), '★枠が無い（白黒コピーで箱が消える）★: ' + box);
@@ -850,15 +882,15 @@ T('★続きの紙でも 数字は1回だけ（続きの案内は「続く」だ
 /* ★A4 1枚に載る数は「測った数」＝勝手に上げたら赤★
    （2026-08-16 Chromium で1行ずつ26行まで総当たり：
      紙 A4 1123px − 上下の余白 75.6px ＝ ★使える高さ 1047px★
-     足元 265px（控除あり）／208px（控除なし）
-     → ★21行（控除なし・余り0）★／★11行（控除あり・余り0）★ が上限。
-     ＋1行で −8px／−13px ＝ 足元に食い込む＝★紙は A4 固定なので黙って切れる★）
+     足元 280px（控除あり）／222px（控除なし）
+     → ★21行（控除なし・余り0）★／★10行（控除あり・余り0）★ が上限。
+     ＋1行で −3px ＝ 足元に食い込む＝★紙は A4 固定なので黙って切れる★）
    ★紙に何かを足した日／詰めた日に この数は変わる★
      30/21/14 → 16/7 → 16/6 → 20/10 → 22/12（A4固定＋足元を下端に貼った）
-     → ★21/11（振込先の名義を必ず次の行に＝足元が +13px）★ */
+     → 21/11（振込先の名義を必ず次の行に）→ ★21/10（箱に字の余白を入れた）★ */
 T('★★既定の行数は「A4 1枚に収まると実測した数」から動かさない★★', () => {
   eq(PAPER.PAPER_ROWS, 21, '★控除なしの既定を測らずに変えた★');
-  eq(PAPER.PAPER_ROWS_DED, 11, '★控除ありの既定を測らずに変えた★');
+  eq(PAPER.PAPER_ROWS_DED, 10, '★控除ありの既定を測らずに変えた★');
   eq(PAPER.DEDUCT_ROWS, 4, '★差し引きの枠（実物 八木＝4行）を変えた★');
   ok(PAPER.PAPER_ROWS > PAPER.PAPER_ROWS_DED,
     '★差し引きを出す紙の方が 明細を多く載せている（高さが足りなくなる）★');

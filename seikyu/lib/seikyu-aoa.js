@@ -16,11 +16,13 @@
  * 【利用】ブラウザ window.SeikyuAoa ／ Node require('./seikyu-aoa.js')
  */
 (function (root, factory) {
-  if (typeof module === 'object' && module.exports) module.exports = factory(require('./seikyu-cols.js'), require('./seikyu-carry.js'), require('./seikyu-doc.js'));
-  else root.SeikyuAoa = factory(root.SeikyuCols, root.SeikyuCarry, root.SeikyuDoc);
-})(typeof self !== 'undefined' ? self : this, function (COLS, CARRY, DOC) {
+  if (typeof module === 'object' && module.exports) module.exports = factory(require('./seikyu-cols.js'), require('./seikyu-carry.js'), require('./seikyu-doc.js'), require('./seikyu-paper.js'));
+  else root.SeikyuAoa = factory(root.SeikyuCols, root.SeikyuCarry, root.SeikyuDoc, root.SeikyuPaper);
+})(typeof self !== 'undefined' ? self : this, function (COLS, CARRY, DOC, PAPER) {
   'use strict';
   if (!COLS) throw new Error('seikyu-cols.js を先に読んでください');
+  /* ★振込先の分け方は紙と同じ物を使う★（seikyu-paper.js の bankLines） */
+  if (!PAPER) throw new Error('seikyu-paper.js を先に読んでください');
 
   var YEN_FMT = '#,##0';        // 金額（桁区切り・小数なし）
   var NUM_FMT = '#,##0.###';    // 数量（0.5 のような端数も出す）
@@ -181,7 +183,14 @@
     if (ex !== 0) { var re = push(['消費税の対象外', ex, '']); money(re, 1); }
     if (!byRate.length && ex === 0 && nt === 0) push(['区分はまだありません', '', '']);
 
-    if (g.bank) { push([]); push(['お振込先', g.bank]); }
+    /* ★振込先の分け方は 紙と同じ物を呼ぶ★（司さん 2026-08-16「全共通にしとんか？」）
+       ＝1行目 銀行/支店/種別/口座番号、★2行目 名義★。
+       Excel でも同じ形にする（紙だけ直すと、Excel を見た人には違う紙に見える）。 */
+    if (g.bank) {
+      push([]);
+      var bl = PAPER.bankLines(g.bank);
+      bl.forEach(function (line, i) { push([i === 0 ? 'お振込先' : '', line]); });
+    }
     if (inv.data && inv.data.memo) { push([]); push(['備考', inv.data.memo]); }
 
     /* ★列幅★ 会社が決めた幅(pt)から Excel の文字幅(wch)に直す。

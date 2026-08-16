@@ -76,22 +76,23 @@
 
      ★実測（Chromium・1行ずつ26行まで総当たり／2026-08-16）★
        紙 A4 297mm＝1123px − 上下の余白 10mm×2 ＝ ★使える高さ 1047px★
-       足元（締め＋振込先）＝ ★265px★（控除あり）／ ★208px★（控除なし）
-       → 載る最大 ＝ ★21行★（控除なし・余り0px）／ ★11行★（控除あり・余り0px）
-         ＋1行で −8px・−13px ＝ ★足元に食い込む★ ので ここが上限。
+       足元（締め＋振込先）＝ ★280px★（控除あり）／ ★222px★（控除なし）
+       → 載る最大 ＝ ★21行★（控除なし・余り0px）／ ★10行★（控除あり・余り0px）
+         ＋1行で −3px ＝ ★足元に食い込む★ ので ここが上限。
 
      ★数字が動いた履歴（★紙に何か足した日／詰めた日に 必ず測り直す★）★
        30/21/14（当てずっぽう・全部はみ出し）→ 16/7（行の高さを実物6.3mmに）
        → 16/6（締めに控除の行）→ 20/10（紙の頭を詰めた）
        → 22/12（紙をA4固定にして 足元を下端に貼った）
-       → ★21/11（振込先の名義を必ず次の行にした＝足元が +13px）★
+       → 21/11（振込先の名義を必ず次の行にした＝足元が +13px）
+       → ★21/10（振込先の箱に字の余白を入れた＝足元が さらに +15px）★
 
      ★実物（32枚）との突き合わせ★
        黒田空調/ENEOS ＝ 30行 ／ ★八木（控除あり）＝ 3行★（控除枠は4行）
        実物が30行 入るのは頭が小さいから。うちは 21行まで来た（差は
        「ご請求金額を大きく」「振込先を枠で囲う」＝★うちが決めて残した所★）。 */
   var PAPER_ROWS = 21;        // 控除を出さない紙（★実測＝物理の上限★）
-  var PAPER_ROWS_DED = 11;    // 控除を出す紙（★実測＝物理の上限★）
+  var PAPER_ROWS_DED = 10;    // 控除を出す紙（★実測＝物理の上限★）
   var DEDUCT_ROWS = 4;        // 控除の枠 ★会社が変えられる★（実物 八木＝E17:H20＝4行）
   var ROWS_FIRST = 12;
   var ROWS_REST = 24;
@@ -249,6 +250,22 @@
     var f = Math.max(0, Math.trunc(Number(frameRows) || 0));
     if (!f) return paginate(new Array(n).fill(0)).length;
     return Math.max(1, Math.ceil(n / f));
+  }
+
+  /* ★振込先を何行に分けるか＝ここが唯一の正★（司さん 2026-08-16）
+     ・1行目 … 銀行名／支店／種別／口座番号
+     ・2行目 … ★名義（会社名）★（★長い名義が中途半端な所で折れるのを避ける★）
+     ・★会社が自分で改行を入れているなら それに従う★（勝手に組み替えない）
+     ・名義が無ければ 1行のまま（空の行を作らない）
+     ★紙も Excel も この関数を呼ぶ★＝出し方ごとに書くと片方だけ直る事故になる。 */
+  function bankLines(bank) {
+    var t = textOf(bank);
+    if (!t) return [];
+    if (/\n/.test(t)) {
+      return t.split('\n').map(function (x) { return x.trim(); }).filter(function (x) { return x; });
+    }
+    var m = /^([\s\S]*?\d{5,8})[ 　]+(\S[\s\S]*)$/.exec(t);
+    return m ? [m[1].trim(), m[2].trim()] : [t];
   }
 
   /* ═══ 紙 ═══
@@ -594,24 +611,12 @@
          左右に並べるのは、紙の下半分を1列で長くしないため。
          ★2段組みは表で作る★（flex だと文が1文字ずつ縦に割れる） */
     /* ★口座番号だけ 大きく・等幅★（読み間違いが一番 困る所）
-       振込先は1本の文（「伊予銀行　今治支店　普通　4160657　ド）ゼロアクト」）で会社が持つ。
-       ★名義は最初から次の行に置く★（司さん 2026-08-16）
-         ＝長い名義が「ド）ゼロア／クト」のように ★中途半端な所で折れる★のを避ける。
-         銀行名・支店・種別・口座番号 が1行目／★名義は2行目★（毎回おなじ形）。
-       ★会社が自分で改行を入れているなら それに従う★（勝手に組み替えない）。 */
+       分け方（何行に分けるか）は ★bankLines が唯一の正★＝紙も Excel も同じ形にする。 */
     function bankHtml(bank) {
-      var t = esc(bank);
-      if (/\n/.test(bank)) {
-        return t.replace(/\n/g, '<br>').replace(/(\d{5,8})/g, '<span class="bank-no">$1</span>');
-      }
-      /* 口座番号（続いた数字 5〜8桁）の後ろに名義が続くなら、そこで1回だけ折る */
-      var m = /(\d{5,8})([ 　]+)(\S[\s\S]*)$/.exec(t);
-      if (m) {
-        return t.slice(0, m.index)
-          + '<span class="bank-no">' + m[1] + '</span><br>'
-          + '<span class="bank-nm">' + m[3] + '</span>';
-      }
-      return t.replace(/(\d{5,8})/g, '<span class="bank-no">$1</span>');
+      return bankLines(bank).map(function (line, i) {
+        var t = esc(line).replace(/(\d{5,8})/g, '<span class="bank-no">$1</span>');
+        return (i === 0) ? t : '<span class="bank-nm">' + t + '</span>';
+      }).join('<br>');
     }
     function footerBlock() {
       var left = '';
@@ -619,7 +624,7 @@
       /* ★⑧ 客が一番 使う情報＝ここへ振り込む★（司さん 2026-08-16）
          枠で囲って薄く塗る（★白黒コピーでも枠は残る濃さ★）。 */
       if (bank) left += '<div class="note note-bank"><div class="note-h">お振込先</div>'
-        + '<div class="note-b">' + bankHtml(bank) + '</div></div>';
+        + '<div class="note-b note-bb">' + bankHtml(bank) + '</div></div>';
       var memo = textOf(inv.data && inv.data.memo);
       if (memo) left += '<div class="note"><div class="note-h">備考</div><div class="note-b">' + esc(memo).replace(/\n/g, '<br>') + '</div></div>';
       return '<table class="foot"><tbody><tr>'
@@ -831,7 +836,11 @@
       /* ★ラベルと金額の間は td 側で決める★（.grand th,.grand td の一括指定の方が強いので、
          .grand-v だけに padding-left を書いても効かない＝2026-08-16 実測 0px だった） */
       '.grand th,.grand td{padding:0 0 1.5mm;vertical-align:baseline;white-space:nowrap;}',
-      '.grand th.grand-l{font-size:12pt;font-weight:700;color:' + INK + ';text-align:left;width:1%;}',
+      /* ★線は「ラベルの左端 → 金額の右端」まで1本★（司さん 2026-08-16）
+         ★紙の幅いっぱいには引かない★（何に対する線か分からなくなる）／
+         ★金額の下だけにもしない★（線が途中から始まって見える＝私の読み違い）。 */
+      '.grand th.grand-l{font-size:12pt;font-weight:700;color:' + INK + ';text-align:left;width:1%;',
+      'border-bottom:' + HAIR + ' solid ' + LINE + ';}',
       '.grand td.grand-v{font-size:20pt;font-weight:700;color:' + TH.grandInk + ';',
       'padding:0 0 1.5mm 12mm;text-align:left;width:1%;',
       'border-bottom:' + HAIR + ' solid ' + LINE + ';',
@@ -910,12 +919,15 @@
       '.ded-hd td{text-align:right;font-family:inherit;}',
       '.ded .r-blank th,.ded .r-blank td{color:transparent;}',
 
-      '.foot{width:100%;border-collapse:collapse;table-layout:fixed;margin:0;}',
+      '.foot{width:100%;border-collapse:collapse;table-layout:auto;margin:0;}',
       '.foot td{vertical-align:top;padding:0;}',
-      /* ★振込先を枠で囲った分、左を少し広げる★
-         （狭いままだと「ド）ゼロアクト」が「ド）ゼロア／クト」と折り返した＝2026-08-16 実測） */
-      '.foot-l{width:58%;min-width:70mm;padding-right:5mm;}',
-      '.foot-r{width:42%;min-width:60mm;}',
+      /* ★長い銀行名でも1行に収まる幅を左に回す★（司さん 2026-08-16）
+         幅を % で固定すると ★長い銀行名が途中で折り返す★。
+         ＝★（内訳）は中身なりの幅だけ取り、残りは全部 振込先に回す★（table-layout:auto）。
+         紙の中身幅 718px のうち（内訳）は約200px＝★振込先に約500px★使える
+         （「三菱UFJ銀行　丸の内中央支店　当座　1234567」で 224px＝倍以上の余裕）。 */
+      '.foot-l{width:auto;padding-right:5mm;}',
+      '.foot-r{width:1%;white-space:nowrap;}',
 
       /* ★小計/消費税/合計＝右下・枠なし・合計の上に線★ */
       '.sums{border-collapse:collapse;font-size:9.5pt;width:100%;margin:0 0 4mm;}',
@@ -957,8 +969,21 @@
       '.note{margin:0 0 3mm;}',
       /* ★⑧ 振込先＝客が一番 使う所★ 枠で囲って薄く塗る。
          ★色は うちの緑1色・薄く★／★枠は白黒コピーでも残る濃さ★（色ではなく濃さで作る）。 */
-      '.note-bank{border:' + HAIR + ' solid ' + LINE + ';background:' + TH.headBg + ';',
-      'border-radius:1.5mm;padding:2mm 3mm;margin:0 0 3mm;}',
+      /* ★塗りは字の幅に合わせる★（司さん 2026-08-16「余白がありすぎ」）
+         前は 左の欄いっぱい（幅58%）に広げていたので、
+         ★字の右に大きな空きがある箱★になっていた（実測 2026-08-16：右に 150px 以上の空き）。
+         ＝★中身なりの幅（inline-block）★。長い名義は 左の欄の幅までで折り返す。 */
+      /* ★塗った箱は 字の周りに余白を取る★（司さん 2026-08-16「余白が無いと逆に見にくい」）
+         ★幅は中身なり（display:table）★＝字の右に大きな空きは作らない。
+         ★border-collapse は継承する★＝足元の表（collapse）の中に display:table を置くと
+         ★padding が丸ごと無視される★（実測 2026-08-16：枠と字の間が 1px しか無かった）。
+         ＝separate に戻してから余白を付ける。 */
+      '.note-bank{display:table;border-collapse:separate;border:' + HAIR + ' solid ' + LINE + ';',
+      'background:' + TH.headBg + ';border-radius:1.5mm;padding:3mm 4mm;margin:0 0 3mm;}',
+      '.note-bank .note-h{margin-bottom:1.6mm;}',
+      /* 箱の中の字は 中身なりの幅（★最低幅は残す＝1文字ずつ縦に割れない★）
+         ※ .note-b とは別のクラスにしている＝「.note-b の決まり」を検査する所と混ざらないため */
+      '.note-bb{width:auto;min-width:22mm;}',
       '.note-bank .note-h{color:' + TH.headInk + ';font-weight:700;}',
       /* 口座番号（続いた数字）だけ 大きく等幅＝読み間違いを減らす */
       /* 名義は次の行（★毎回おなじ形★＝中途半端な所で折れない） */
@@ -997,6 +1022,8 @@
     build: build, css: css, esc: esc, yen: yen, comma: comma,
     dateStr: dateStr, jpDate: jpDate, honorOf: honorOf, taxLabel: taxLabel,
     paginate: paginate, sealMm: sealMm, TEMPLATE_ID: TEMPLATE_ID,
+    /* ★振込先の分け方は紙も Excel も同じ物を呼ぶ★ */
+    bankLines: bankLines,
     ROWS_FIRST: ROWS_FIRST, ROWS_REST: ROWS_REST,
     /* ★画面が「2枚になります」を出すために呼ぶ（自前で数えない）★ */
     showDeductOf: showDeductOf, frameRowsOf: frameRowsOf, pagesOf: pagesOf,
