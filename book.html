@@ -196,17 +196,6 @@ body {
   font-family:'Noto Sans JP',sans-serif;
   margin-right:6px;
 }
-#multi-select-ai-btn {
-  padding:2px 7px;
-  background:#52B788;
-  color:#ffffff;
-  font-size:10px;
-  font-weight:500;
-  border:none;
-  border-radius:3px;
-  cursor:pointer;
-  flex-shrink:0;
-}
 #multi-select-cancel-btn {
   padding:2px 5px;
   background:transparent;
@@ -1612,10 +1601,27 @@ function receivePasteData(pasteData) {
 
     return true;
   } catch (e) {
-    alert('⚠️ テンプレの受信に失敗しました：' + (e && e.message ? e.message : '不明なエラー'));
+    notify('<span class="toast-h">⚠️ テンプレの受信に失敗しました</span>' + (e && e.message ? e.message : '不明なエラー'), 6000, 'warn');
     console.error('[Exally] receivePasteData error:', e);
     return false;
   }
+}
+
+/* ★画面を止める alert は使わない★
+   alert は押すまで画面全体が止まる（白紙の印刷ダイアログで固まったのと同じ型）。
+   知らせは必ずここを通す。★知らせの出口は これ1つだけ★
+   （showToast はこの関数の別名。以前は配線の中でだけ作られていたので、
+     配線より前に知らせが要る場面で alert に落ちていた＝その落とし穴を無くす）
+   第3引数 kind='warn' で「読ませる用」の見た目にする。 */
+function notify(msg, duration, kind){
+  var t = document.getElementById('toast');
+  if(!t){ if(window.console) console.warn('[Exally] ' + msg); return; }
+  t.innerHTML = msg;
+  t.className = '';
+  if(kind) t.classList.add(kind);
+  t.classList.add('show');
+  clearTimeout(t._hideTimer);
+  t._hideTimer = setTimeout(function(){ t.classList.remove('show'); }, duration || 3000);
 }
 
 function render(){
@@ -2768,7 +2774,9 @@ window.addEventListener('load',updateBookVerBadge);
 <div id="multi-select-bar">
   <div id="multi-select-row1">
     <span id="multi-select-info"><span class="label">選択中(<span id="multi-select-count">0</span>):</span><span id="multi-select-addrs">-</span></span>
-    <button id="multi-select-ai-btn" onclick="multiSelectSendToAI()">AIへ</button>
+    <!-- ★「AIへ」ボタンは外した（2026-08-16）★
+         中身が出来ていないのに置いてあり、押すと「AI送信はSTEP6で実装予定」と出ていた。
+         ★出来ていない物のボタンは客に見せない★。作った時にここへ戻す。 -->
     <button id="multi-select-cancel-btn" onclick="toggleMultiSelect()">✕</button>
   </div>
   <div id="multi-select-expanded"></div>
@@ -3099,14 +3107,6 @@ function _rangeToAddr(rg){
   var displayName = needQuote ? "'" + rg.sheet.replace(/'/g,"''") + "'" : rg.sheet;
   return displayName + '!' + cellPart;
 }
-// AI送信用：常にクォート付きシート名（HyperFormula互換の安全形式）
-function _rangeToAddrEscape(rg){
-  var cellPart = (rg.r1===rg.r2 && rg.c1===rg.c2)
-    ? cellAddr(rg.r1, rg.c1)
-    : cellAddr(rg.r1, rg.c1) + ':' + cellAddr(rg.r2, rg.c2);
-  var sheetName = rg.sheet || sheets[activeSheet].name;
-  return "'" + sheetName.replace(/'/g,"''") + "'!" + cellPart;
-}
 // 複数選択モード中のタップ処理（追加 or 削除のトグル）
 function multiSelectTapCell(r,c){
   // この関数は onMD/onTE のモードON時処理が直接インラインで行うため、
@@ -3276,36 +3276,14 @@ function multiSelectRemoveRange(idx){
   }
   updateMultiSelectBar(); updateBar(); render();
 }
-// 「AIへ」ボタン（STEP6で本実装、今はトースト+コンソールで送信内容プレビュー）
-function multiSelectSendToAI(){
-  // AI送信用アドレス文字列（autoMainReset時はメインを除外）
-  var addrs = [];
-  if(!multiSelectAutoMainReset){
-    addrs.push(_rangeToAddrEscape({r1:selR1, c1:selC1, r2:selR2, c2:selC2, sheet:sheets[activeSheet].name}));
-  }
-  for(var i=0;i<selRanges.length;i++){
-    addrs.push(_rangeToAddrEscape(selRanges[i]));
-  }
-  if(addrs.length===0){
-    var toast0 = document.getElementById('toast');
-    if(toast0){
-      toast0.textContent = '範囲を選択してから押してください';
-      toast0.classList.add('show');
-      setTimeout(function(){ toast0.classList.remove('show'); }, 2000);
-    }
-    return;
-  }
-  var payload = addrs.join(', ');
-  if(typeof console!=='undefined') console.log('[multiSelectSendToAI] 送信予定:', payload);
-  var toast = document.getElementById('toast');
-  if(toast){
-    toast.textContent = 'AI送信はSTEP6で実装予定（' + addrs.length + '範囲プレビュー）';
-    toast.classList.add('show');
-    setTimeout(function(){ toast.classList.remove('show'); }, 2500);
-  } else {
-    alert('AI送信はSTEP6で実装予定（' + addrs.length + '範囲）');
-  }
-}
+/* ★multiSelectSendToAI は消した（2026-08-16）★
+   中身が無いのにボタンが在り、押すと「AI送信はSTEP6で実装予定」と出て、
+   トーストが無い時は alert で★画面が止まって★いた。
+   ・出来ていない物のボタンは客に見せない
+   ・画面を止める alert は使わない
+   ・「STEP6」のような中の言葉を人に見せない
+   選んだ範囲を文字にする _rangeToAddrEscape も、ここでしか使っていなかったので一緒に消した。
+   本当に作る時は、この2つを git の履歴から戻して繋ぐ。 */
 // シート削除時に呼ぶ：selRanges から削除されたシートの範囲を除去
 function _cleanupSelRangesOnSheetDelete(deletedSheetName){
   if(!deletedSheetName) return;
@@ -3401,7 +3379,7 @@ window.addEventListener('load', function() {
       }
     } catch(e) {
       console.error('[Exally] Paste data load failed:', e);
-      alert('⚠️ テンプレの受信に失敗しました：' + (e && e.message ? e.message : '不明なエラー'));
+      notify('<span class="toast-h">⚠️ テンプレの受信に失敗しました</span>' + (e && e.message ? e.message : '不明なエラー'), 6000, 'warn');
     }
   } catch(e) {
     console.error('Exally init error:', e);
@@ -3949,16 +3927,7 @@ function bindEvents(){
   //  第3引数 kind='warn' で「読ませる用」の見た目にする。
   //  ★普段の短い知らせ(濃い緑・中央寄せ)は、長い警告文だと読みにくい
   //    (半透明で下のグリッドが透ける＋中央寄せで行頭が揃わない)ため。
-  window.showToast=function(msg, duration, kind){
-    var t=document.getElementById('toast');
-    if(!t) return;
-    t.innerHTML=msg;
-    t.className='';                       // 前回の種類を残さない
-    if(kind) t.classList.add(kind);
-    t.classList.add('show');
-    clearTimeout(t._hideTimer);
-    t._hideTimer=setTimeout(function(){ t.classList.remove('show'); }, duration||3000);
-  };
+  window.showToast = notify;
   // 外部クリップボードからの貼り付け対応
   ci.addEventListener('paste', function(e){
     // 編集モード中は通常の貼り付け（textarea にテキスト挿入）→ スキップしてデフォルトへ
