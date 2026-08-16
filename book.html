@@ -2775,8 +2775,9 @@ window.addEventListener('load',updateBookVerBadge);
   <div id="multi-select-row1">
     <span id="multi-select-info"><span class="label">選択中(<span id="multi-select-count">0</span>):</span><span id="multi-select-addrs">-</span></span>
     <!-- ★「AIへ」ボタンは外した（2026-08-16）★
-         中身が出来ていないのに置いてあり、押すと「AI送信はSTEP6で実装予定」と出ていた。
-         ★出来ていない物のボタンは客に見せない★。作った時にここへ戻す。 -->
+         中身が出来ていないのに置いてあり、押すと★作る側の段取りの言葉★が画面に出ていた。
+         ★出来ていない物のボタンは客に見せない★。作った時にここへ戻す。
+         （★この注記にも その言葉を書き写さない★＝配信物を数えた人が「まだ残っている」と読む） -->
     <button id="multi-select-cancel-btn" onclick="toggleMultiSelect()">✕</button>
   </div>
   <div id="multi-select-expanded"></div>
@@ -3277,11 +3278,12 @@ function multiSelectRemoveRange(idx){
   updateMultiSelectBar(); updateBar(); render();
 }
 /* ★multiSelectSendToAI は消した（2026-08-16）★
-   中身が無いのにボタンが在り、押すと「AI送信はSTEP6で実装予定」と出て、
+   中身が無いのにボタンが在り、押すと★作る側の段取りの言葉★が画面に出て、
    トーストが無い時は alert で★画面が止まって★いた。
    ・出来ていない物のボタンは客に見せない
    ・画面を止める alert は使わない
-   ・「STEP6」のような中の言葉を人に見せない
+   ・中の言葉（作る側の段取り）を人に見せない
+   ・★この注記にも その言葉を書き写さない★（配信物を数えた人が「まだ残っている」と読むため）
    選んだ範囲を文字にする _rangeToAddrEscape も、ここでしか使っていなかったので一緒に消した。
    本当に作る時は、この2つを git の履歴から戻して繋ぐ。 */
 // シート削除時に呼ぶ：selRanges から削除されたシートの範囲を除去

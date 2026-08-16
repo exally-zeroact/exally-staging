@@ -262,6 +262,22 @@ T('★②-b 帯のボタンを実際に押して、出た知らせに中の言�
   if (blocked.length) throw new Error('★押したら画面を止める窓が開きました★ ' + blocked.join(' / '));
 });
 
+T('★②-c 配信するファイルの中身にも 中の言葉が1文字も無い（数えた人が誤読しない）', () => {
+  /* ★注記(コメント)に書き写すのも駄目★。配信物を grep で数えた人には
+     「まだ残っている」と読める。実際 2026-08-16 に テスト線の配信で2件と数えられた。
+     ★見るのは「出来ていない」と読める言葉だけ★。
+     `// STEP2: …` のような ★段落の目印★ は普通の書き方なので数えない
+     （それまで止めると、関係のない注記の書き換えを強いる＝直しが太る）。 */
+  const hits = [];
+  for (const f of files) {
+    const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
+    for (const m of src.matchAll(/実装予定|未実装|工事中|coming\s*soon/gi)) {
+      hits.push(f + ':' + src.slice(0, m.index).split('\n').length + ' ' + m[0]);
+    }
+  }
+  if (hits.length) throw new Error('★' + hits.length + '件★（注記の中でも書き写さない）\n     ' + hits.slice(0, 8).join('\n     '));
+});
+
 T('★③ ボタンの onclick が呼ぶ関数は全部 実在する（押しても何も無いボタンが無い）', () => {
   const targets = onclickTargets(doc);
   if (targets.length < 10) throw new Error('onclick を ' + targets.length + '個しか読めていない＝空振り');
