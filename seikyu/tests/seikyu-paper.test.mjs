@@ -429,6 +429,30 @@ T('★★紙の中の表は3つとも同じ作法（見出しの地・罫・余�
   bodies.forEach((sel) => ok(/border-bottom/.test(ruleOf(sel) || ''), sel + ' の本文に下罫線が無い'));
 });
 
+/* ★（内訳）も 明細と同じ寸法で読ませる★（司さん 2026-08-16
+   「ごちゃごちゃ小さくて見にくい／行のズレを直せ／余白を取れ」）
+   実測（Chromium 2026-08-16）：
+     直す前 … 字 9pt・行 22px・幅は auto で毎回動く（親を中身なりにしたら 50px まで潰れた）
+     直した後 … ★字 9.5pt・行 24px（明細と同じ）・幅 70mm 固定・列のずれ 0.0px★ */
+T('★★（内訳）は明細と同じ寸法（字・行の高さ・余白）で、列の幅が動かない★★', () => {
+  const css = PAPER.css();
+  const ruleOf = (sel) => { const i = css.indexOf(sel + '{'); return i < 0 ? null : css.slice(i + sel.length + 1, css.indexOf('}', i)); };
+  const rates = ruleOf('.rates') || '', items = ruleOf('.items') || '';
+  const fs = (r) => (/font-size:\s*([^;]+)/.exec(r) || [])[1];
+  eq(fs(rates), fs(items), '★（内訳）だけ字が小さい★: ' + fs(rates) + ' vs ' + fs(items));
+  ok(/table-layout:fixed/.test(rates), '★列の幅が毎回 動く（見出しと中身がずれて見える）★: ' + rates);
+  ok(/width:\s*\d+mm/.test(rates), '★幅が実寸で決まっていない（親のマス次第で潰れる）★: ' + rates);
+  const th = ruleOf('.rates th') || '', td = ruleOf('.rates td') || '';
+  const itd = ruleOf('.items td') || '';
+  const pad = (r) => (/padding:\s*([^;]+)/.exec(r) || [])[1];
+  // ★line-height を掴まないよう 行頭か ; の直後だけ見る★
+  const hgt = (r) => (/(?:^|;)height:\s*([^;]+)/.exec(r) || [])[1];
+  eq(pad(th), pad(itd), '★（内訳）の余白が明細と違う★: ' + pad(th) + ' vs ' + pad(itd));
+  eq(pad(td), pad(itd), '（内訳）の数の余白が明細と違う');
+  eq(hgt(th), hgt(itd), '★（内訳）の行の高さが明細と違う（行がずれて見える）★');
+  ok(/<colgroup>/.test(PAPER.build(sample()).html), '★列の幅を決める colgroup が無い★');
+});
+
 T('★★紙の線は1種類（太さも濃さも1つ）★★', () => {
   const css = PAPER.css();
   const found = {};

@@ -567,7 +567,10 @@
       }
       if (!rows) rows = '<tr><td class="r-none" colspan="3">区分はまだありません</td></tr>';
       return '<div class="bd"><div class="bd-h">（内訳）</div>'
-        + '<table class="rates"><thead><tr><th class="rt-l">区分</th><th class="rt-r">対象額</th><th class="rt-r">消費税</th></tr></thead>'
+        /* ★列の幅を決める★＝見出しと本文が必ず同じ幅で並ぶ（auto だと毎回 幅が動いてずれて見える） */
+        + '<table class="rates">'
+        + '<colgroup><col class="rc-k"><col class="rc-n"><col class="rc-n"></colgroup>'
+        + '<thead><tr><th class="rt-l">区分</th><th class="rt-r">対象額</th><th class="rt-r">消費税</th></tr></thead>'
         + '<tbody>' + rows + '</tbody></table></div>';
     }
 
@@ -627,9 +630,13 @@
         + '<div class="note-b note-bb">' + bankHtml(bank) + '</div></div>';
       var memo = textOf(inv.data && inv.data.memo);
       if (memo) left += '<div class="note"><div class="note-h">備考</div><div class="note-b">' + esc(memo).replace(/\n/g, '<br>') + '</div></div>';
+      var right = breakdownBlock();
+      /* ★（内訳）が無い時は 右のマスごと出さない★＝振込先が幅いっぱい使える
+         （空のマスを残すと 左が狭いままで、長い銀行名が折り返す） */
+      if (!right) return '<table class="foot"><tbody><tr><td class="foot-l">' + left + '</td></tr></tbody></table>';
       return '<table class="foot"><tbody><tr>'
         + '<td class="foot-l">' + left + '</td>'
-        + '<td class="foot-r">' + breakdownBlock() + '</td>'
+        + '<td class="foot-r">' + right + '</td>'
         + '</tr></tbody></table>';
     }
 
@@ -948,9 +955,21 @@
       '.sums-net td{color:' + TH.grandInk + ';}',
 
       /* （内訳）★枠で囲まない★ */
-      '.bd{margin:0 0 5mm;}',
+      /* ★（内訳）の周りにも余白★（右下にぴったり詰めない） */
+      '.bd{margin:0 0 5mm;padding-left:4mm;}',
       '.bd-h{font-size:8.5pt;color:' + SUB + ';margin:0 0 1mm;padding-left:' + EDGE + ';}',
-      '.rates{border-collapse:collapse;font-size:9pt;width:100%;}',
+      /* ★出す時は 締めと同じ大きさで読ませる★（前は 9pt で右下に押し込んで小さかった） */
+      /* ★（内訳）も 明細の表と同じ寸法で読ませる★（司さん 2026-08-16
+         「ごちゃごちゃ小さくて見にくい／行がずれる／余白を取れ」）
+         ・字 … 9pt → ★9.5pt（明細と同じ）★
+         ・行の高さ・左右の余白 … ★明細と同じ（ROW_H / ROW_PAD）★
+         ・★列の幅を決める（fixed）★＝見出しと本文が必ず同じ幅＝ずれて見えない
+           （auto だと 見出しの字と中身の数字で列の取り合いになり、毎回 幅が動く） */
+      /* ★幅は実寸で決める★（％にすると 親のマスが中身なりなので 50px まで潰れた＝2026-08-16 実測）
+         ＝（内訳）は必ず ★70mm★ 取り、残りは全部 振込先に回る（長い銀行名も1行に収まる）。 */
+      '.rates{border-collapse:collapse;font-size:9.5pt;width:70mm;table-layout:fixed;}',
+      '.rates col.rc-k{width:26mm;}',
+      '.rates col.rc-n{width:22mm;}',
       /* ★紙の中の表は 3つとも同じ作法★（司さん 2026-08-16「行がずれとる」の正体）
          明細・控除は「見出し＝薄い地・罫なし／本文＝下罫線」なのに、
          ★（内訳）だけ「見出しも本文と同じ下罫線」★で、見出し行だけ作りが違って見えていた。
@@ -959,10 +978,12 @@
       '.rates thead th{background:' + TH.headBg + ';color:' + TH.headInk + ';font-weight:700;',
       'font-size:8.5pt;border:0;padding:' + ROW_PAD + ';line-height:1.35;white-space:nowrap;}',
       '.rates th{color:' + SUB + ';border:0;border-bottom:' + HAIR + ' solid ' + LINE + ';',
-      'padding:1.2mm ' + EDGE + ';white-space:nowrap;font-weight:400;}',
+      'padding:' + ROW_PAD + ';height:' + ROW_H + ';line-height:' + ROW_LH + ';',
+      'white-space:nowrap;font-weight:400;}',
       '.rates .rt-l{text-align:left;}',
       '.rates .rt-r{text-align:right;}',
-      '.rates td{border:0;border-bottom:' + HAIR + ' solid ' + LINE + ';padding:1.2mm ' + EDGE + ';text-align:right;',
+      '.rates td{border:0;border-bottom:' + HAIR + ' solid ' + LINE + ';padding:' + ROW_PAD + ';',
+      'height:' + ROW_H + ';line-height:' + ROW_LH + ';text-align:right;',
       "white-space:nowrap;font-family:'DM Mono',ui-monospace,monospace;}",
       /* ★中身の1列目も 見出しと同じ左そろえ★
          th は既定が中央寄せなので、指定を忘れると
