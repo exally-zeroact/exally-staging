@@ -36,14 +36,15 @@
         aligns: {},
       },
       theme: {
-        ink: '#24422F',       // 本文
-        sub: '#5C7E6C',       // 補足
-        line: '#D4EAE0',      // 罫線
-        accent: '#2E7D54',    // 見出し
+        /* ★読ませる字は薄い黒／線は1種類★（司さん 2026-08-16・見本＝代行請求 invoice-pdf.js） */
+        ink: '#333333',       // 本文・数字・金額
+        sub: '#6B6B6B',       // 補足
+        line: '#B0B0B0',      // 罫線（★白黒/FAXで消えない濃さ★）
+        accent: '#B0B0B0',    // 飾り線も同じ（色で強弱を作らない）
         band: '#F0FAF4',      // 帯の地
-        headBg: '#F0FAF4',    // 表の見出しの地
-        headInk: '#2E7D54',
-        grandInk: '#2E7D54',
+        headBg: '#F2F2F2',    // 表の見出しの地（無彩色の面）
+        headInk: '#333333',
+        grandInk: '#333333',
         rule: 'rows',         // 罫線 = 横線だけ（うちの紙は縦罫を引かない）
         titleSpacing: '.32em',
         grandGo: 'ご',        // 「ご請求金額（税込）」＝ classic系の言い方（invoice-pdf.js:957）
@@ -59,14 +60,14 @@
         aligns: {},
       },
       theme: {
-        ink: '#24422F',
-        sub: '#7AA08C',
-        line: '#E4F1EA',
-        accent: '#3D9E72',
+        ink: '#333333',
+        sub: '#7A7A7A',       // すっきり＝補助文をもう一段 薄く
+        line: '#C4C4C4',      // すっきり＝罫をもう一段 薄く（消えない範囲で）
+        accent: '#C4C4C4',
         band: '#FFFFFF',
         headBg: '#FFFFFF',
-        headInk: '#3D9E72',
-        grandInk: '#3D9E72',
+        headInk: '#333333',
+        grandInk: '#333333',
         rule: 'rows',         // 罫線 = 横線だけ
         titleSpacing: '.5em',
         grandGo: '御',        // 「御請求金額（税込）」＝ elegant系の言い方（invoice-pdf.js:479）

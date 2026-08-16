@@ -316,7 +316,8 @@ T('★繰越と源泉が両方ある時：差引＝合計請求額（繰越こ�
   ok(!flat_(h).includes('>' + PAPER_.yen(gen.net) + '<'), '紙に繰越を無視した差引が残っている');
   // 見出しの額も、実際に請求している額（★見出しの中だけを見る★＝
   // 紙のどこかに同じ数字があるだけでは、見出しが直っている証明にならない）
-  const head = (/<span class="grand-v">([^<]*)<\/span>/.exec(h) || [])[1];
+  // ★見出しは表で組んだ（金額の下だけに線を引くため）★＝読む所も td に変わった
+  const head = (/<td class="grand-v">([^<]*)<\/td>/.exec(h) || [])[1];
   eq(head, PAPER_.yen(carry.grandTotal), '★紙の見出しが繰越を無視している★');
 
   // Excel

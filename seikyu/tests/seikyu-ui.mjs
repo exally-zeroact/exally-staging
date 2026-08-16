@@ -2058,13 +2058,15 @@ await TA('15-d. ★行数は会社ごとに変えられる（畳んだ中に在�
   // 増やすと「2枚目に回る」と言う
   $('s-rows').value = String(P2.PAPER_ROWS + 10); $('s-rows').dispatchEvent(new win.Event('input'));
   await sleep(20);
-  ok($('s-rows-note').textContent.indexOf('2枚目に回ります') >= 0,
-    '★1枚に入らない数を入れても黙っている★: ' + $('s-rows-note').textContent);
+  ok($('s-rows-note').textContent.indexOf('2枚目に送ります') >= 0,
+    '★1枚に載らない数を入れても黙っている★: ' + $('s-rows-note').textContent);
+  ok($('s-rows-note').textContent.indexOf(String(P2.PAPER_ROWS) + ' 行までしか載りません') >= 0,
+    '★上限が何行かを言っていない★: ' + $('s-rows-note').textContent);
   // 保存 → 倉庫に入る
-  $('s-rows').value = '30'; $('s-rows').dispatchEvent(new win.Event('input'));
+  $('s-rows').value = '18'; $('s-rows').dispatchEvent(new win.Event('input'));
   $('s-dedrows').value = '6'; $('s-dedrows').dispatchEvent(new win.Event('input'));
   $('b-set-save').click(); await sleep(60);
-  eq(db.pay_org[0].data.invoicePaperRows, 30, '明細の枠が保存されていない');
+  eq(db.pay_org[0].data.invoicePaperRows, 18, '明細の枠が保存されていない');
   eq(db.pay_org[0].data.invoiceDeductRows, 6, '控除の枠が保存されていない');
   // 空に戻すと既定へ
   $('s-rows').value = ''; $('s-rows').dispatchEvent(new win.Event('input'));

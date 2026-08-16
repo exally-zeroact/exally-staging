@@ -1904,9 +1904,15 @@
     var d = rowsSetting($('s-dedrows').value);
     var txt = '空のままなら 既定（控除を出さない紙 ' + PAPER.PAPER_ROWS + ' 行 ／ 出す紙 '
       + PAPER.PAPER_ROWS_DED + ' 行 ／ 控除の枠 ' + PAPER.DEDUCT_ROWS + ' 行）で刷ります。'
-      + 'この数は A4 1枚に収まるところまで実際に測った数です。';
-    if ((r !== null && r > PAPER.PAPER_ROWS) || (d !== null && d > PAPER.DEDUCT_ROWS)) {
-      txt += ' 増やした分は 1枚に入りきらず 2枚目に回ります（黙って詰めることはしません）。';
+      + 'この数は A4 1枚に載るところまで実際に測った数です。';
+    /* ★1枚に載る数には 物理の上限がある★（紙は A4 固定）。
+       大きい数を入れても そこで頭打ちにして、残りは2枚目に送る（黙って切らない）。 */
+    if (r !== null && r > PAPER.PAPER_ROWS) {
+      txt += ' 明細の枠は 1枚に ' + PAPER.PAPER_ROWS + ' 行までしか載りません（控除を出す紙は '
+        + PAPER.PAPER_ROWS_DED + ' 行）。それより多い分は 2枚目に送ります。';
+    }
+    if (d !== null && d > PAPER.DEDUCT_ROWS) {
+      txt += ' 控除の枠を増やすと、その分 明細に載る行が減ります。';
     }
     if (r === 0) txt += ' 明細の枠 0 ＝ 枠を作らず、打った行の数だけ刷ります。';
     setText('s-rows-note', txt);

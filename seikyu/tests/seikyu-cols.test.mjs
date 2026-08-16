@@ -312,12 +312,28 @@ T('★テンプレは2枚（代行請求と同じ classic 系 / elegant 系）�
   }
 });
 
-T('★どちらのテンプレも「#1A4A2E は使わない・#2E7D54 を使う」を守る', () => {
+/* ★紙の色は「薄い黒」★（司さん 2026-08-16「代行請求書アプリのように」）
+   ＝紙に「押せる物」は無いので、★色で強弱を作らない★（強弱は 大きさ と 太さ）。
+   ★緑を使わないのは違反ではない★（禁止は #1A4A2E ／ 緑を使うなら #2E7D54）。 */
+T('★どちらのテンプレも 禁止色を使わない・字は薄い黒（無彩色）', () => {
+  const soft = (v) => {
+    const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(v);
+    if (!m) return true;                        // 色でない指定（rule など）は見ない
+    const [r, g, b] = [1, 2, 3].map((i) => parseInt(m[i], 16));
+    return Math.max(r, g, b) - Math.min(r, g, b) <= 12;
+  };
   for (const id of ['std1', 'elegant']) {
     const th = TPL.get(id).theme;
     const j = JSON.stringify(th);
     ok(!/#1A4A2E/i.test(j), id + ' に使ってはいけない濃い緑がある');
-    ok(/#2E7D54|#3D9E72|#52B788/i.test(j), id + ' にうちの緑が1つも無い');
+    // ★緑を使うなら うちの緑だけ★（使わないのは可）
+    const greens = (j.match(/#[0-9A-Fa-f]{6}/g) || []).filter((c) => !soft(c));
+    ok(greens.every((c) => /#2E7D54|#3D9E72|#52B788/i.test(c)),
+      id + ' に決められていない色がある: ' + JSON.stringify(greens));
+    // ★読ませる字（本文・補助・金額）は無彩色★
+    ['ink', 'sub', 'grandInk', 'headInk'].forEach((k) => {
+      if (th[k]) ok(soft(th[k]), id + ' の ' + k + ' に色が付いている: ' + th[k]);
+    });
   }
 });
 

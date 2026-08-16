@@ -96,7 +96,10 @@ if (process.argv.includes('--self-test')) {
     ok(/background/.test(badRule) && /border-radius/.test(badRule), '作り物が壊れていない＝この検査が空振り');
     const good = (/\.grand\{([^}]*)\}/.exec(PAPER.css()) || [])[1] || '';
     ok(!/background/.test(good) && !/border-radius/.test(good), '本物の金額が箱に入っている');
-    ok(/border-bottom/.test(good), '本物の金額の下に線が無い');
+    // ★線は .grand ではなく .grand-v（金額のセル）に付く★（司さん 2026-08-16「金額の下までに」）
+    const gv = (/\.grand td\.grand-v\{([^}]*)\}/.exec(PAPER.css()) || [])[1] || '';
+    ok(/border-bottom/.test(gv), '本物の金額の下に線が無い');
+    ok(!/border-bottom/.test(good), '本物の線が紙の幅いっぱいに戻っている');
   });
 
   S('③ 文の箱を flex にした紙は「flex/grid を使わない」検査に落ちる', () => {
@@ -291,13 +294,19 @@ T('★法定6項目の見張りが空振りしていない（1つ抜いたら赤
   ok(H1.indexOf('T1234567890123') >= 0, '本物に登録番号が無い');
 });
 
-T('★御請求金額は「枠なし＋下に線」（塗りつぶした箱に入れない）', () => {
-  const rule = (/\.grand\{([^}]*)\}/.exec(PAPER.css()) || [])[1] || '';
+T('★御請求金額は「枠なし＋★金額の下だけ★に線」（塗りつぶした箱に入れない）', () => {
+  const css = PAPER.css();
+  const rule = (/\.grand\{([^}]*)\}/.exec(css) || [])[1] || '';
+  const val = (/\.grand-v\{([^}]*)\}/.exec(css) || [])[1] || '';
   ok(rule, '.grand の指定が無い');
   ok(!/background/.test(rule), '★金額が塗りつぶしの箱に入っている★: ' + rule);
   ok(!/border-radius/.test(rule), '★金額が角丸の箱に入っている★');
-  ok(/border-bottom\s*:\s*[\d.]+p?t?\s+solid/.test(rule), '金額の下に線が無い');
   ok(!/border\s*:\s*1px solid/.test(rule), '金額が枠で囲まれている');
+  /* ★線は金額の下だけ★（司さん 2026-08-16）＝紙の幅いっぱいに引かない */
+  ok(!/border-bottom/.test(rule), '★線が紙の幅いっぱいに引かれている★: ' + rule);
+  ok(/border-bottom\s*:/.test(val), '★金額の下に線が無い★: ' + val);
+  ok(/<table class="grand">/.test(H1), '★表で組んでいない（flex は文が縦に割れる）★');
+  ok(/<td class="grand-x">/.test(H1), '★金額の右の余りが無い＝線が右へ伸びる★');
 });
 
 T('★お振込先・備考も箱で囲まない（うちは囲まない）', () => {
@@ -345,6 +354,24 @@ T('★★振込先は枠で囲って 口座番号を大きく等幅にする（�
 });
 
 /* ★② 線は「上」に統一★（司さん 2026-08-16「明細の合計だけ下に線」） */
+/* ★紙の中の線は1種類★（司さん 2026-08-16「明細の合計の濃い上線はダサい／他と統一」）
+   前は 薄い罫 0.7pt/1px と 濃い緑 0.9pt/1.2pt が混ざっていて、
+   ★合計の線だけ 濃くて太い★＝1か所だけ作法が違って見えた。 */
+T('★★紙の線は1種類（太さも濃さも1つ）★★', () => {
+  const css = PAPER.css();
+  const found = {};
+  for (const m of css.matchAll(/border(?:-top|-bottom|-left|-right)?\s*:\s*([^;}]+)/g)) {
+    const v = m[1].trim();
+    if (/^0(px)?$/.test(v) || /^none$/.test(v) || /transparent/.test(v)) continue;
+    const w = (/([\d.]+)(pt|px)/.exec(v) || [])[0] || '(既定)';
+    const c = (/#[0-9a-fA-F]{3,6}/.exec(v) || [])[0] || '(色なし)';
+    found[w + ' ' + c.toUpperCase()] = (found[w + ' ' + c.toUpperCase()] || 0) + 1;
+  }
+  const kinds = Object.keys(found);
+  eq(kinds.length, 1, '★紙の中に線が ' + kinds.length + ' 種類ある（1種類にそろえる）★: '
+    + JSON.stringify(found));
+});
+
 T('★★線の向きが揃っている（合計の線は上・表そのものに下線を引かない）★★', () => {
   const css = PAPER.css();
   const items = (/\.items\{([^}]*)\}/.exec(css) || [])[1] || '';
@@ -480,9 +507,16 @@ T('★角印は薄く重ねる（実物と同じ扱い・文字を隠し切ら�
   ok(/object-fit\s*:\s*contain/.test(rule), '印が歪む（縦横比を保っていない）');
 });
 
-T('★ブロックの見出しが件名になる（給料明細の「支 給」と同じ置き方）', () => {
-  ok(/<div class="st">9月分 運転代行ご利用料金<\/div>/.test(H1),
-    '★件名がブロックの見出しになっていない★');
+/* ★件名の行は紙に出さない★（司さん 2026-08-16）
+   紙の頭に「2026年6月分」と書いてあるのに、その下に「7月分 …」と出て
+   ★同じ紙に2つの「◯月分」★が並んでいた（しかも前月と当月でズレて見える）。 */
+T('★★明細の上に「件名」の行を出さない（頭の「◯月分」と二重になる）★★', () => {
+  ok(!/9月分 運転代行ご利用料金/.test(H1), '★件名が紙に出ている（頭の月と二重）★');
+  ok(!/ご請求の内訳/.test(H1), '★中身の無い見出し（ご請求の内訳）が残っている★');
+  // 明細は「列の見出し」から始まる（実物32枚も 項目／金額 の見出しから始まっている）
+  ok(/<table class="items"><thead>/.test(H1), '明細の列の見出しが無い');
+  // ★件名そのものは 控えに残す★（紙に出さないだけ＝ファイル名などで使う）
+  ok(S1.inv.data && S1.inv.data.subject, '見本の件名が消えている（検査の前提が壊れた）');
 });
 
 T('★明細が多い時は次の紙へ送る（黙って切らない・3つの言葉が出る）', () => {
@@ -534,9 +568,27 @@ T('★2段組み（宛先と自社）は表で作る＝幅が足りなくても�
   ok(/\.party-from\{[^}]*min-width\s*:\s*\d/.test(CSS), '自社の欄に最低幅が無い');
 });
 
-T('★色の決まり（濃すぎる緑は使わない・全アプリ #2E7D54）', () => {
+/* ★読ませる字は「薄い黒」★（司さん 2026-08-16「代行請求書アプリのように」）
+   見本＝代行請求 invoice-pdf.js の役割分け（ink/muted/ruleHairline）。
+   ★紙に「押せる物」は無い＝色で強弱を作らない。強弱は 大きさ と 太さ で作る。★ */
+T('★★紙の字は薄い黒（色で強弱を作らない）／禁止色を使わない★★', () => {
   ok(!/#1A4A2E/i.test(CSS), '使ってはいけない濃い緑がある');
-  ok(/#2E7D54/i.test(CSS), '決められた緑が使われていない');
+  const soft = (v) => {
+    const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(v);
+    if (!m) return false;
+    const [r, g, b] = [1, 2, 3].map((i) => parseInt(m[i], 16));
+    return Math.max(r, g, b) - Math.min(r, g, b) <= 12;   // 無彩色（±12まで）
+  };
+  const inkish = ['#333333', '#6B6B6B', '#B0B0B0', '#F2F2F2'];
+  inkish.forEach((c) => ok(new RegExp(c, 'i').test(CSS), c + ' が使われていない'));
+  // ★本文・金額・見出しの字に 色を使っていない★
+  for (const sel of ['.grand-v', '.items th', '.sums-net th,.sums-net td', '.bank-no', '.st']) {
+    const i = CSS.indexOf(sel + '{');
+    if (i < 0) continue;
+    const rule = CSS.slice(i + sel.length + 1, CSS.indexOf('}', i));
+    const col = /color:\s*(#[0-9a-fA-F]{6})/.exec(rule);
+    if (col) ok(soft(col[1]), '★' + sel + ' の字に色が付いている★: ' + col[1]);
+  }
 });
 
 T('★網羅：税率の組み合わせ×内外×丸め を全部刷って、区分の数と合計が紙と一致', () => {
@@ -782,17 +834,17 @@ T('★続きの紙でも 数字は1回だけ（続きの案内は「続く」だ
   ok(/<thead>/.test(p2), '★2ページ目に明細の見出しが無い★');
 });
 
-/* ★A4 1枚に収まる数は「測った数」＝勝手に上げたら赤★
+/* ★A4 1枚に載る数は「測った数」＝勝手に上げたら赤★
    （2026-08-16 Chromium で1行ずつ26行まで総当たり：
-     1行25px・動かない部分 620px／872px → ★20行=1118px・10行=1121px★ が上限。
-     ＋1行で 1143px／1146px ＝ A4の1123px を超える）
+     紙 A4 1123px − 上下の余白 75.6px ＝ ★使える高さ 1047px★
+     足元 252px（控除あり）／195px（控除なし）
+     → ★22行（控除なし・余り0）★／★12行（控除あり・余り0）★ が上限。
+     ＋1行で −19px／−24px ＝ 足元に食い込む＝★紙は A4 固定なので黙って切れる★）
    ★紙に何かを足した日／詰めた日に この数は変わる★
-     ・締めに「控除」の行を足した → 7→6
-     ・紙の頭を詰めた（頭 389→290px）→ 16／6 → ★20／10★
-   ★必ず もう一度 測ってから 数字を書き換える。★ */
+     30/21/14 → 16/7 → 16/6 → 20/10 → ★22/12（A4固定＋足元を下端に貼った）★ */
 T('★★既定の行数は「A4 1枚に収まると実測した数」から動かさない★★', () => {
-  eq(PAPER.PAPER_ROWS, 20, '★控除なしの既定を測らずに変えた★');
-  eq(PAPER.PAPER_ROWS_DED, 10, '★控除ありの既定を測らずに変えた★');
+  eq(PAPER.PAPER_ROWS, 22, '★控除なしの既定を測らずに変えた★');
+  eq(PAPER.PAPER_ROWS_DED, 12, '★控除ありの既定を測らずに変えた★');
   eq(PAPER.DEDUCT_ROWS, 4, '★差し引きの枠（実物 八木＝4行）を変えた★');
   ok(PAPER.PAPER_ROWS > PAPER.PAPER_ROWS_DED,
     '★差し引きを出す紙の方が 明細を多く載せている（高さが足りなくなる）★');
@@ -802,7 +854,13 @@ T('★何枚になるかを画面に答えるのは 紙の lib（画面で数え
   eq(typeof PAPER.frameRowsOf, 'function', 'frameRowsOf が無い');
   eq(PAPER.frameRowsOf({}, {}), PAPER.PAPER_ROWS, '差し引き無しの既定が違う');
   eq(PAPER.frameRowsOf({}, { deduct: 100 }), PAPER.PAPER_ROWS_DED, '★控除を入れたのに枠が減っていない★');
-  eq(PAPER.frameRowsOf({}, { paperRows: 30 }), 30, '会社が決めた行数が効いていない');
+  eq(PAPER.frameRowsOf({}, { paperRows: 8 }), 8, '会社が決めた行数が効いていない');
+  /* ★物理の上限で頭打ち★＝紙は A4 固定なので、これ以上 載せると切れる。
+     ★黙って切らない★＝ここで止めて 残りは2枚目に送る。 */
+  eq(PAPER.frameRowsOf({}, { paperRows: 99 }), PAPER.PAPER_ROWS, '★上限を超えて載せようとしている（切れる）★');
+  eq(PAPER.frameRowsOf({}, { paperRows: 99, deduct: 1 }), PAPER.PAPER_ROWS_DED, '★控除ありでも上限を超えている★');
+  eq(PAPER.pagesOf(99, PAPER.frameRowsOf({}, { paperRows: 99 })), Math.ceil(99 / PAPER.PAPER_ROWS),
+    '★入り切らない分を2枚目に送っていない★');
   eq(PAPER.pagesOf(PAPER.PAPER_ROWS, PAPER.PAPER_ROWS), 1, '枠ぴったりで2枚と言っている');
   eq(PAPER.pagesOf(PAPER.PAPER_ROWS + 1, PAPER.PAPER_ROWS), 2, '★はみ出しているのに1枚と言っている★');
   eq(PAPER.pagesOf(0, PAPER.PAPER_ROWS), 1, '明細0本で0枚と言っている');
@@ -933,6 +991,28 @@ T('★★控除が0件の紙でも成り立つ（控除の行を出さない・�
   }
 });
 
+/* ★揃え★（司さん 2026-08-16「左揃えか中央か右かきっちりやれ」）
+   ・字の列＝左そろえ ／ 数の列＝右そろえ（★見出しも中身も同じ★）
+   ・表の外側の余白は1つ（EDGE）＝★どの表でも 数字の右端が同じ位置★
+   実測（2026-08-16 Chromium）：直す前 →「10% 対象」だけ 27.9px 右にずれていた
+                                直した後 → 数字の右端 7か所 0.0px ／（内訳）の左端 0.0px */
+T('★★揃えを決めて守る（見出しも中身も同じ／表ごとに違う余白を作らない）★★', () => {
+  const css = PAPER.css();
+  const ruleOf = (sel) => { const i = css.indexOf(sel + '{'); return i < 0 ? null : css.slice(i + sel.length + 1, css.indexOf('}', i)); };
+  ok(/text-align:left/.test(ruleOf('.rates .rt-l') || ''), '（内訳）の見出し「区分」が左そろえでない');
+  ok(/text-align:right/.test(ruleOf('.rates .rt-r') || ''), '（内訳）の数の見出しが右そろえでない');
+  ok(/text-align:left/.test(ruleOf('.rates tbody th') || ''),
+    '★中身の1列目が中央寄せのまま（見出しとずれる）★: ' + ruleOf('.rates tbody th'));
+  ok(/text-align:right/.test(ruleOf('.rates td') || ''), '（内訳）の数が右そろえでない');
+  const pads = ['.sums th', '.sums td', '.rates td', '.bsum th'].map((sel) => {
+    const r = ruleOf(sel) || '';
+    const m = /padding:\s*[\d.]+mm\s+([\d.]+mm)/.exec(r);
+    return m ? m[1] : null;
+  });
+  ok(pads.every((x) => x && x === pads[0]),
+    '★表ごとに外側の余白が違う（数字の右端が揃わない）★: ' + JSON.stringify(pads));
+});
+
 /* ★③ 言葉は給料明細にそろえる（支給／控除）★（司さん 2026-08-15）
    ★人に見せる字に「差し引く」が0件★＝タグを外した本文から数える（コメントは数えない）。 */
 T('★★紙に「差し引く」と書かない（給料明細と同じ「控除」で通す）★★', () => {
@@ -986,9 +1066,11 @@ T('★★表の中の合計行が 金額の列と消費税の列の真下に来�
    請求書では 支給→★ご請求の内訳★／控除→★差し引く★ に読み替える。 */
 T('★★左にも右にも「見出しの行」が在る（1行目が同じ高さから始まる）★★', () => {
   const h = framed(3).html;
-  ok(/<div class="st">/.test(h), 'ブロックの見出しが無い');
-  eq((h.match(/<div class="st">/g) || []).length, 2, '★片方にしか見出しが無い★');
-  ok(/<tr class="ded-hd">/.test(h), '★右（差し引く）に見出しの行が無い＝左と1行ずれる★');
+  /* ★明細の上の「件名」は消した★ので、ブロックの見出しは控除だけ。
+     代わりに ★どちらも「列の見出しの行」から始まる★＝1行目の高さが揃う。 */
+  eq((h.match(/<div class="st">/g) || []).length, 1, '★ブロックの見出しが増減している★');
+  ok(/<table class="items"><thead>/.test(h), '★明細に列の見出しが無い★');
+  ok(/<tr class="ded-hd">/.test(h), '★控除に見出しの行が無い＝明細と1行ずれる★');
   const st = (/\.st\{([^}]*)\}/.exec(PAPER.css()) || [])[1] || '';
   ok(/border-bottom/.test(st), '見出しの下に線が無い');
 });
