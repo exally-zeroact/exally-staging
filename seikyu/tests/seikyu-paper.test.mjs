@@ -510,7 +510,9 @@ T('★★複数ページの決まり（何枚のうち何枚目・宛名は全�
     eq(/控除計/.test(flat), last, (i + 1) + '枚目の控除の出し方が違う');
     // ★途中の紙は「このページの小計」と「次ページへ続く」★
     eq(/次ページへ続く/.test(flat), !last, (i + 1) + '枚目の「続く」の出し方が違う');
-    eq(/このページの小計/.test(flat), !last, (i + 1) + '枚目の小計の出し方が違う');
+    /* ★表の中の合計行は「そのページの合計」★（司さん 2026-08-16）
+       ＝複数ページなら ★最後の紙も「このページの小計」★（全体の合計は締めに出す）。 */
+    ok(/このページの小計/.test(flat), (i + 1) + '枚目に「このページの小計」が無い');
     // ★ご請求金額は1枚目だけ★（各ページに出すと総額が何度も出て迷う）
     /* ★ご請求金額は「客が振り込む時に見る紙」＝最後の1枚だけ★
        見本＝代行請求 invoice-pdf.js:777「単ページのみ上部に御請求金額」＝
@@ -1165,7 +1167,7 @@ T('★★締めの中で一番 強いのは「請求額」（途中の合計よ�
 function sumsOfPaper(html) {
   const t = (/<table class="sums">([\s\S]*?)<\/table>/.exec(html) || [])[1] || '';
   const out = {};
-  for (const m of t.matchAll(/<tr[^>]*><th>([\s\S]*?)<\/th><td>([\s\S]*?)<\/td><\/tr>/g)) {
+  for (const m of t.matchAll(/<tr[^>]*><th>([\s\S]*?)<\/th><td[^>]*>([\s\S]*?)<\/td><\/tr>/g)) {
     const k = m[1].replace(/<[^>]+>/g, '').trim();
     const v = m[2].replace(/<[^>]+>/g, '').trim();
     out[k] = /^-?¥[\d,]+$/.test(v) ? Number(v.replace(/[¥,]/g, '')) : v;
@@ -1431,12 +1433,95 @@ T('★★控除が増えたら1枚に載る明細が減る（枠4件までは変
   const M = PAPER.maxRowsOf;
   eq(M(true, 1, 0), PAPER.PAPER_ROWS_DED, '控除0件で減っている');
   eq(M(true, 1, 4), PAPER.PAPER_ROWS_DED, '★控除の枠（4件）までは減らさない★');
-  eq(M(true, 1, 5), PAPER.PAPER_ROWS_DED - 1, '★控除5件で1行 減っていない★');
-  eq(M(true, 1, 8), PAPER.PAPER_ROWS_DED - 4, '★控除8件で4行 減っていない★');
+  eq(M(true, 1, 5), PAPER.PAPER_ROWS_DED - 2, '★控除5件で減っていない（超えた分＋保険1行）★');
+  eq(M(true, 1, 8), PAPER.PAPER_ROWS_DED - 5, '★控除8件で減っていない（超えた4件＋保険1行）★');
   eq(M(false, 1, 8), PAPER.PAPER_ROWS, '控除を出さない紙で減らしている');
   ok(M(true, 1, 99) >= 1, '★控除が極端に多い時に 0行や負の数にしている★');
-  eq(PAPER.frameRowsOf({}, { deduct: 1, dedLines: 8 }), PAPER.PAPER_ROWS_DED - 4,
+  eq(PAPER.frameRowsOf({}, { deduct: 1, dedLines: 8 }), PAPER.PAPER_ROWS_DED - 5,
     '★枠を決める所に 控除の件数が効いていない★');
+});
+
+/* ★表の中の合計＝そのページの分／締めの合計＝全ページの分★（司さん 2026-08-16
+     「赤丸はそのページの合計やないと なぜ？ってなる」
+     「全ページ明細合計、全ページ消費税合計にしたら 行を増やさなくてもいけるのでは」）
+   ＝★どちらも 何を足した数かを 字で書く★・★締めはページ数で伸びない★。 */
+T('★★表の中は「このページの小計」・締めは「全ページの」＋締めは何枚でも同じ行数★★', () => {
+  const mk = (n) => {
+    const lines = Array.from({ length: n }, (_, i) => ({ name: '工事 ' + (i + 1), amount: 9500, rate: STD }));
+    const t = TAX.compute({ lines, taxMode: 'exclusive', rounding: 'floor' });
+    return PAPER.build({ inv: { doc_type: 'invoice', no: 'X', issue_ymd: '2026-07-21', tax_mode: 'exclusive', data: {} },
+      tax: t, partner: { name: '八木工業 株式会社', keisho: '御中' },
+      org: { yago: '合同会社ZEROact', bank: '伊予銀行　今治支店　普通　4160657　ド）ゼロアクト' },
+      deduct: 11340, deductLines: [{ name: '弁当代', amount: 11340 }] });
+  };
+  const sumsRowsOf = (h) => ((/<table class="sums">([\s\S]*?)<\/table>/.exec(h) || [])[1] || '').match(/<tr[\s>]/g) || [];
+  const sheetsOf = (h) => h.split('class="sheet"').slice(1);
+
+  /* ── 1枚物 ── 表の中は「明細の合計」／締めに「全ページの」は要らない */
+  const one = mk(5);
+  eq(one.pages, 1, '5行で複数ページになっている');
+  ok(/明細の合計/.test(one.html), '1枚物に「明細の合計」が無い');
+  ok(!/このページの小計/.test(one.html), '★1枚しかないのに「このページの小計」と書いている★');
+  ok(!/全ページの/.test(one.html), '★1枚しかないのに「全ページの」と書いている★');
+
+  /* ── 複数ページ ── どの紙の表も「このページの小計」／締めは「全ページの」 */
+  const many = mk(60);
+  ok(many.pages >= 3, '60行で3枚以上にならない: ' + many.pages);
+  sheetsOf(many.html).forEach((s, i) => {
+    const foot = (/<tfoot>([\s\S]*?)<\/tfoot>/.exec(s) || [])[1] || '';
+    if (!foot) return;                                  // 締めだけの紙（明細の表が無い）
+    ok(/このページの小計/.test(foot), '★' + (i + 1) + '枚目の表の合計が「このページの小計」でない★');
+    ok(!/明細の合計/.test(foot), '★' + (i + 1) + '枚目の表に 全体の合計を書いている★');
+  });
+  ok(/全ページの\s*明細の合計/.test(many.html.replace(/<[^>]+>/g, '')),
+    '★締めに「全ページの 明細の合計」が無い（表の数と何が違うのか分からない）★');
+
+  /* ★ここが要★ 何枚になっても 締めの行数は変わらない
+     （ページごとに1行ずつ増やすと 4枚目から必ず はみ出す＝実測 −28px） */
+  const base = sumsRowsOf(mk(5).html).length;
+  [26, 60, 100, 300].forEach((n) => {
+    const b = mk(n);
+    eq(sumsRowsOf(b.html).length, base,
+      '★' + n + '行（' + b.pages + '枚）で締めの行数が変わった＝ページ数で締めが伸びている★');
+  });
+
+  /* ★表の中の合計は 実際に そのページに載っている明細の和★
+     ★紙に出た字を足して確かめる★（中の値どうしで閉じない＝同じ計算を2回するだけになる） */
+  const yen = (s) => Number(String(s).replace(/[^\d]/g, ''));
+  let tally = 0, tallyTax = 0, checked = 0;
+  sheetsOf(many.html).forEach((s, i) => {
+    const tbl = (/<table class="items">([\s\S]*?)<\/table>/.exec(s) || [])[1];
+    if (!tbl) return;                                   // 締めだけの紙
+    const head = [...((/<thead>([\s\S]*?)<\/thead>/.exec(tbl) || [])[1] || '')
+      .matchAll(/<th[^>]*>([\s\S]*?)<\/th>/g)].map((m) => m[1].replace(/<[^>]+>/g, '').trim());
+    const iAmt = head.indexOf('金額'), iTax = head.indexOf('消費税');
+    ok(iAmt >= 0 && iTax >= 0, (i + 1) + '枚目：見出しに 金額／消費税 の列が無い（' + head.join('/') + '）');
+    const body = (/<tbody>([\s\S]*?)<\/tbody>/.exec(tbl) || [])[1] || '';
+    const cols = (ix) => [...body.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/g)].reduce((a, tr) => {
+      if (/r-blank/.test(tr[0])) return a;              // 空の枠
+      const tds = [...tr[1].matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/g)].map((m) => m[1].replace(/<[^>]+>/g, '').trim());
+      return a + yen(tds[ix] || 0);
+    }, 0);
+    const real = cols(iAmt), realTax = cols(iTax);
+    ok(real > 0 && realTax > 0,
+      '★' + (i + 1) + '枚目：明細の 金額／消費税 を1つも読めていない（見張りが何も見ていない）★');
+    const foot = (/<tfoot>([\s\S]*?)<\/tfoot>/.exec(tbl) || [])[1] || '';
+    /* 合計行も ★列の番号をたどって★ 読む（並び順で当てると 列を足した日に黙って外れる） */
+    let col = 0; const at = {};
+    for (const m of foot.matchAll(/<(?:th|td)([^>]*)>([\s\S]*?)<\/(?:th|td)>/g)) {
+      at[col] = m[2].replace(/<[^>]+>/g, '').trim();
+      col += Number((/colspan="(\d+)"/.exec(m[1]) || [])[1] || 1);
+    }
+    eq(yen(at[iAmt]), real, '★' + (i + 1) + '枚目：表の合計が そのページの明細の和と違う★');
+    eq(yen(at[iTax]), realTax, '★' + (i + 1) + '枚目：表の消費税が そのページの消費税の和と違う★');
+    tally += real; tallyTax += realTax; checked++;
+  });
+  ok(checked >= 2, '★2枚以上 数えていない（見張りが何も見ていない）★ ' + checked);
+  const S = sumsOfPaper(many.html);
+  eq(tally, S['全ページの 明細の合計'],
+    '★各ページの小計を足しても 締めの「全ページの 明細の合計」にならない★');
+  eq(tallyTax, S[Object.keys(S).find((k) => k.indexOf('全ページの 消費税') === 0)],
+    '★各ページの消費税を足しても 締めの「全ページの 消費税」にならない★');
 });
 
 /* ★頭の並びは どの紙も同じ★（司さん 2026-08-16「統一感でるやろが」）

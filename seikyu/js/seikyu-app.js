@@ -1323,16 +1323,25 @@
     var own = (v.data && v.data.paperRows);
     var rows = (own === undefined || own === null || own === '') ? st.paperRows : own;
     if (rows !== null && rows !== undefined && rows !== '') pi.paperRows = rows;
-    var frame = PAPER.frameRowsOf(v, pi);
     var n = (t.lines || []).length;
-    var pages = PAPER.pagesOf(n, frame);
+    /* ★枚数は紙の lib が決めた物をそのまま使う★（画面で ceil し直さない）
+       ＝締めがページ数で伸びる分まで数えているのは planOf だけ。 */
+    pi.lineCount = n;
+    var laid = PAPER.planOf(v, pi);
+    var frame = laid.frameRows;
+    var pages = laid.plan ? laid.plan.length : PAPER.pagesOf(n, frame);
     /* ★1枚に収まっている間は 何も言わない★（司さん 2026-08-16 ⑤）
        既定は ★A4 1枚に収まるように測って決めてある★ので、ふだんは案内が要らない。
        毎回 出すと「読まなくていい字」が増えて、本当に読ませたい時に効かなくなる。 */
-    if (!frame || pages <= 1) { setText('pages-note', ''); show($('pages-note'), false); return; }
+    if (!laid.plan || pages <= 1) { setText('pages-note', ''); show($('pages-note'), false); return; }
     show($('pages-note'), true);
-    setText('pages-note', '明細 ' + n + ' 行 ＝ 紙は ' + pages + ' 枚になります（1枚の枠は ' + frame
-      + ' 行）。1枚に収めたい時は 枠を増やしてください。');
+    /* ★枠が0＝最後の紙は締めだけ★（控除や区分が多くて A4 を使い切っている）
+       この時に「1枚の枠は 0 行」と出すと意味が通らないので、起きている事をそのまま書く。 */
+    setText('pages-note', frame
+      ? ('明細 ' + n + ' 行 ＝ 紙は ' + pages + ' 枚になります（1枚の枠は ' + frame
+        + ' 行）。1枚に収めたい時は 枠を増やしてください。')
+      : ('明細 ' + n + ' 行 ＝ 紙は ' + pages + ' 枚になります。控除や区分が多いので '
+        + '★最後の紙は 締めと振込先だけ★ になります。'));
     /* ★その場から飛べる★＝設定のどこを触ればよいか探させない */
     var b = document.createElement('button');
     b.type = 'button'; b.className = 'btn-ghost'; b.id = 'b-goto-rows';

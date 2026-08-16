@@ -231,7 +231,10 @@
   function planPages(n, midRows, lastRows) {
     var total = Math.max(0, Math.trunc(Number(n) || 0));
     var mid = Math.max(1, Math.trunc(Number(midRows) || 1));
-    var last = Math.max(1, Math.trunc(Number(lastRows) || 1));
+    /* ★0 も許す＝「最後の紙は締めだけ（明細を1本も載せない）」★
+       控除が多い・区分が多い・ページが多い紙は、締めだけで A4 を使い切る。
+       そこへ無理に1行 押し込むと ★黙って はみ出す★（実測 −193px）。 */
+    var last = Math.max(0, Math.trunc(Number(lastRows) || 0));
     if (total <= last) return [Math.max(total, 0)];          // 1枚で収まる
     var rest = total - last;                                  // 途中の紙へ回す分
     var midPages = Math.ceil(rest / mid);
@@ -294,7 +297,10 @@
     var base = showDeduct ? PAPER_ROWS_DED : PAPER_ROWS;
     var n = Math.max(0, Math.trunc(Number(rateRows) || 0));
     var d = Math.max(0, Math.trunc(Number(dedLines) || 0));
-    var over = showDeduct ? Math.max(0, d - DEDUCT_ROWS) : 0;   // 控除の枠を超えた件数
+    /* 控除の枠を超えた件数ぶん 明細を減らす。★超えた時は +1行 の保険★
+       （実測：ちょうど引くだけだと −2px 超えた紙が出た） */
+    var over = 0;
+    if (showDeduct && d > DEDUCT_ROWS) over = (d - DEDUCT_ROWS) + 1;
     return Math.max(1, base - Math.max(0, n - RATE_ROWS_FREE) - over);
   }
   /* 紙に出る区分の数（税率ごと＋非課税＋対象外）＝（内訳）の行数 */
@@ -311,6 +317,38 @@
     var f = Math.max(0, Math.trunc(Number(frameRows) || 0));
     if (!f) return paginate(new Array(n).fill(0)).length;
     return Math.max(1, Math.ceil(n / f));
+  }
+
+  /* ★何枚になるか・どの紙に何行 載せるか を決める唯一の場所★
+     ＝紙（build）も 画面（「2枚になります」の案内）も ★ここを呼ぶ★。
+     別々に数えると「画面は2枚・紙は3枚」が出る（同じ型の事故を何度もやっている）。
+
+     ★締めはページ数で伸びる★（司さん 2026-08-16「明細の合計1ページ・2ページ…と増やしていくべき」）
+       ページが増える → 締めが伸びる → 最後の紙に載る明細が減る → またページが増える…
+       ＝★収まるまで数え直す★。frame は必ず ★減る方向だけ★ に動かすので 必ず止まる。
+     ★会社が枠を決めている時（paperRows）は動かさない★＝毎月おなじ顔にする約束。 */
+  function planOf(inv, o) {
+    o = o || {};
+    var n = Math.max(0, Math.trunc(Number(o.lineCount) || 0));
+    var given = (o.paperRows !== undefined ? o.paperRows : (inv && inv.data && inv.data.paperRows));
+    var fixed = !!(Number(given) > 0);
+    var base = frameRowsOf(inv, o);
+    if (!base) return { frameRows: 0, midRows: 0, plan: null };
+    var mid = fixed ? base : Math.max(base, MID_ROWS);
+    var frame = base;
+    var plan = planPages(n, mid, frame);
+    if (!fixed) {
+      for (var k = 0; k < 60; k++) {
+        /* ★締めはページ数で伸びない★（全ページの合計を2行 書くだけ）＝1行だけ保険を取る。
+           ここを「ページごとに1行」にすると 4枚目以降で必ず はみ出す（実測 −28px）。 */
+        var extra = (plan.length > 1) ? 1 : 0;
+        var f2 = Math.min(frame, Math.max(0, base - extra));   // ★減る方向だけ★
+        if (f2 === frame) break;
+        frame = f2;
+        plan = planPages(n, mid, f2);
+      }
+    }
+    return { frameRows: frame, midRows: mid, plan: plan };
   }
 
   /* ★振込先を何行に分けるか＝ここが唯一の正★（司さん 2026-08-16）
@@ -395,8 +433,9 @@
        ・使わない紙は ★その分の高さを明細に回す★（入る行数が増える） */
     var showDeduct = showDeductOf(inv, o);
     /* ★枠の本数は 控除の枠を出すかで変わる★（出すと明細に使える高さが減る） */
-    frameRows = frameRowsOf(inv, { paperRows: frameRowsGiven, showDeductResolved: showDeduct,
-      rateRows: rateRowsOf(tax), dedLines: deductLines.length });
+    var planInput = { paperRows: frameRowsGiven, showDeductResolved: showDeduct,
+      rateRows: rateRowsOf(tax), dedLines: deductLines.length, lineCount: lines.length };
+    frameRows = frameRowsOf(inv, planInput);
     var gen = o.gensen || null;     // ★源泉徴収（引く紙だけ）★
     var carry = o.carry || null;    // ★繰越（前回の残り）★
     /* ★ページごとに載る本数が違う★（司さん 2026-08-16）
@@ -404,9 +443,9 @@
          途中の紙 … それらが無い＝★MID_ROWS（実測30行）★まで載る
        ＝途中の紙の余白ぶん 紙が増えるのをやめる。
        ★会社が枠を決めている時（paperRows）は その数を全ページで使う★（毎月おなじ顔） */
-    var fixedFrame = !!(Number(frameRowsGiven) > 0);
-    var midRows = fixedFrame ? frameRows : Math.max(frameRows, MID_ROWS);
-    var plan = frameRows ? planPages(lines.length, midRows, frameRows) : null;
+    var laid = planOf(inv, planInput);        // ★数えるのは1か所★（画面もこれを呼ぶ）
+    frameRows = laid.frameRows;
+    var plan = laid.plan;
     var pages = plan ? splitByPlan(lines, plan) : paginate(lines, o.page);
     if (!pages.length) pages = [[]];
     var multi = pages.length > 1;
@@ -581,11 +620,19 @@
        ＝締めの一番 下の行と、振込先の箱に出す金額を ★同じ物から作る★。
        別々に計算すると、片方だけ直した日に ★紙の中で額が食い違う★。 */
     function sumsRows() {
-      var rows = [
-        ['', '明細の合計', yen(tax.subtotal)],
-        ['', taxLabel(tax, inv.tax_mode), yen(tax.taxTotal)],
-        ['sums-mid', '合計', yen(tax.grandTotal)],
-      ];
+      /* ★表の中は「このページの小計」・締めは「全ページの合計」★（司さん 2026-08-16）
+           表の中の合計＝そのページの分。締めの合計＝紙 全部の分。
+           ★どちらも 何を足した数かを 字で書く★＝「なぜ数が違うのか」を起こさせない。
+         ★ページごとに1行ずつ増やさない★（司さん 2026-08-16
+           「全ページ明細合計、全ページ消費税合計にしたら行を増やさなくてもいけるのでは」）
+           ＝ページが増えても締めの高さが変わらない。
+           実測：ページごとに並べると 明細100行・控除8件で締めが13行＝370px になり
+           ★−28px はみ出した★（明細4枚以上で必ず起きる）。この書き方なら 何枚でも2行。 */
+      var rows = [];
+      var allPfx = multi ? '全ページの ' : '';
+      rows.push(['', allPfx + '明細の合計', yen(tax.subtotal)]);
+      rows.push(['', allPfx + taxLabel(tax, inv.tax_mode), yen(tax.taxTotal)]);
+      rows.push(['sums-mid', '合計', yen(tax.grandTotal)]);
       var hasRealDeduct = showDeduct && (deduct === null || Number(deduct) !== 0);
       if (hasRealDeduct) {
         var billedNet = (deduct === null) ? null : (tax.grandTotal - deduct);
@@ -815,7 +862,11 @@
           var pageTax = pageLines.reduce(function (a2, x) { return a2 + (Number(x.tax) || 0); }, 0);
           /* ★合計行は表の中★（列の真下に来る）。最後の紙は紙ぜんぶの合計、
              途中の紙は そのページの分（★どちらも同じ場所・同じ列★）。 */
-          var foot = last
+          /* ★表の中の合計行は「そのページの合計」★（司さん 2026-08-16
+             「そのページの合計やないと なぜ？ってなる」）
+             ＝複数ページの時は ★最後の紙も「このページの小計」★（全体の合計は締めに出す）。
+             1枚しかない紙は そのページ＝全体なので「明細の合計」と書く。 */
+          var foot = (last && !multi)
             ? itemsFootHtml(pageLines, '明細の合計', tax.subtotal, tax.taxTotal)
             : itemsFootHtml(pageLines, 'このページの小計', pageSub, pageTax);
           /* ★明細の上に「件名」の行を出さない★（司さん 2026-08-16）
@@ -823,6 +874,11 @@
              ★同じ紙に2つの「◯月分」★が並んでいた（しかも 前月と当月でズレて見える）。
              ＝★この行は出さない★（件名は控えとしてデータに残す・ファイル名では使う）。
              実物32枚も 明細の上は「項目／金額」の見出しから始まっている。 */
+          /* ★締めだけの紙には 明細の表を出さない★（司さん 2026-08-16 の「賢くやれ」の裏側）
+             控除が多い／区分が多い／ページが多い紙は、締めだけで A4 を使い切る。
+             そこに ★中身0行の表と「このページの小計 ¥0」★ を出すと、
+             「なぜ0円のページがあるのか」になる＝表ごと出さない。 */
+          if (last && multi && !pageLines.length && !frameOfPage(idx, true)) return '' + deductBlock();
           var itemsBlk = '<div class="blk blk-items">'
             + '<table class="items"><thead><tr>' + headHtml + '</tr></thead>'
             + '<tbody>' + rowsHtmlOf(pageLines, offset, frameOfPage(idx, last)) + '</tbody>' + foot + '</table>'
@@ -1064,6 +1120,8 @@
          「合計＝太字／請求額＝細字」になり、★払う額の方が弱く見える★
          （2026-08-15 実物のスクショで見つけた。給料明細も最後の行が主役）。 */
       '.sums-mid th,.sums-mid td{border-top:' + HAIR + ' solid ' + LINE + ';color:' + INK + ';}',
+      /* 締めの中の枝（本文より少し小さく・罫は引かない） */
+      '.sums-sub th,.sums-sub td{color:' + SUB + ';font-size:9pt;}',
       /* ★締めの最後の1行＝実際に払う額★ 大きさは変えず、線と太さで一番 強くする。 */
       '.sums-net th,.sums-net td{border-top:' + HAIR + ' solid ' + LINE + ';font-weight:700;color:' + INK + ';}',
       '.sums-net td{color:' + TH.grandInk + ';}',
@@ -1172,7 +1230,7 @@
     ROWS_FIRST: ROWS_FIRST, ROWS_REST: ROWS_REST,
     /* ★画面が「2枚になります」を出すために呼ぶ（自前で数えない）★ */
     showDeductOf: showDeductOf, frameRowsOf: frameRowsOf, pagesOf: pagesOf,
-    maxRowsOf: maxRowsOf, rateRowsOf: rateRowsOf, planPages: planPages, MID_ROWS: MID_ROWS,
+    maxRowsOf: maxRowsOf, rateRowsOf: rateRowsOf, planPages: planPages, planOf: planOf, MID_ROWS: MID_ROWS,
     PAPER_ROWS: PAPER_ROWS, PAPER_ROWS_DED: PAPER_ROWS_DED, DEDUCT_ROWS: DEDUCT_ROWS,
   };
 });
