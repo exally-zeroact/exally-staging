@@ -236,14 +236,34 @@
     o = o || {};
     var given = (o.paperRows !== undefined ? o.paperRows : (inv && inv.data && inv.data.paperRows));
     var ded = (o.showDeductResolved !== undefined) ? !!o.showDeductResolved : showDeductOf(inv, o);
-    var max = maxRowsOf(ded);
+    var max = maxRowsOf(ded, o.rateRows);
     var n = Math.max(0, Math.trunc(Number(given) || max));
     /* ★物理の上限で頭打ち★＝紙は A4 固定なので、これ以上は載せると切れる。
        ★黙って切らない★＝ここで止めて、残りは2枚目に送る。画面はその事を人に言う。 */
     return Math.min(n, max);
   }
-  /* 1枚に載る最大（控除の箱を出すかで変わる）★実測値★ */
-  function maxRowsOf(showDeduct) { return showDeduct ? PAPER_ROWS_DED : PAPER_ROWS; }
+  /* 1枚に載る最大（★控除の箱を出すか★と ★（内訳）の区分の数★で変わる）★実測値★
+     ★区分が増えると（内訳）が伸びる★＝その分 明細に使える高さが減る。
+     実測（2026-08-16 Chromium）：（内訳）の高さ ＝ 区分1で48px、1区分ごとに +24.5px。
+       区分3までは 振込先の箱（109px）の方が高いので ★行数は減らない★。
+       区分4で内訳122px＝振込先を超える → ★そこから1区分ごとに1行 減らす★。
+     ※今の法律の区分は最大4（10%/8%/非課税/対象外）だが、
+       ★法が変われば率は増える★（率の一覧は kyuyo/lib が唯一の正）。
+       実測：区分6＋明細12行で ★52px はみ出した＝黙って切れた★ので、ここで止める。 */
+  var RATE_ROWS_FREE = 3;     // ここまでは（内訳）が振込先より低い＝行数に影響しない
+  function maxRowsOf(showDeduct, rateRows) {
+    var base = showDeduct ? PAPER_ROWS_DED : PAPER_ROWS;
+    var n = Math.max(0, Math.trunc(Number(rateRows) || 0));
+    return Math.max(1, base - Math.max(0, n - RATE_ROWS_FREE));
+  }
+  /* 紙に出る区分の数（税率ごと＋非課税＋対象外）＝（内訳）の行数 */
+  function rateRowsOf(tax) {
+    var t = tax || {};
+    var n = (Array.isArray(t.byRate) ? t.byRate.length : 0);
+    if (t.nontaxable && Number(t.nontaxable.base)) n += 1;
+    if (t.exempt && Number(t.exempt.base)) n += 1;
+    return n;
+  }
   /* 明細が何本で 何枚になるか（枠0＝詰める指定の時は 昔の数え方に任せて1枚と言わない） */
   function pagesOf(lineCount, frameRows) {
     var n = Math.max(0, Math.trunc(Number(lineCount) || 0));
@@ -334,7 +354,8 @@
        ・使わない紙は ★その分の高さを明細に回す★（入る行数が増える） */
     var showDeduct = showDeductOf(inv, o);
     /* ★枠の本数は 控除の枠を出すかで変わる★（出すと明細に使える高さが減る） */
-    frameRows = frameRowsOf(inv, { paperRows: frameRowsGiven, showDeductResolved: showDeduct });
+    frameRows = frameRowsOf(inv, { paperRows: frameRowsGiven, showDeductResolved: showDeduct,
+      rateRows: rateRowsOf(tax) });
     var gen = o.gensen || null;     // ★源泉徴収（引く紙だけ）★
     var carry = o.carry || null;    // ★繰越（前回の残り）★
     /* ★1ページに入るのは 枠の本数まで★（入り切らない時だけ次のページ） */
@@ -1062,7 +1083,7 @@
     ROWS_FIRST: ROWS_FIRST, ROWS_REST: ROWS_REST,
     /* ★画面が「2枚になります」を出すために呼ぶ（自前で数えない）★ */
     showDeductOf: showDeductOf, frameRowsOf: frameRowsOf, pagesOf: pagesOf,
-    maxRowsOf: maxRowsOf,
+    maxRowsOf: maxRowsOf, rateRowsOf: rateRowsOf,
     PAPER_ROWS: PAPER_ROWS, PAPER_ROWS_DED: PAPER_ROWS_DED, DEDUCT_ROWS: DEDUCT_ROWS,
   };
 });

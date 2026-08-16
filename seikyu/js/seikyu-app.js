@@ -1317,7 +1317,8 @@
   function drawPagesNote(t) {
     var v = S.cur;
     if (!v || !t || !t.ok) { setText('pages-note', ''); return; }
-    var pi = { deduct: currentDeduct(), deductLines: DOC.deductionsOf(v) };
+    /* ★区分（内訳）の数でも 載る行数は変わる★＝紙と同じ数を使う（画面で数え直さない） */
+    var pi = { deduct: currentDeduct(), deductLines: DOC.deductionsOf(v), rateRows: PAPER.rateRowsOf(t) };
     var st = settings();
     var own = (v.data && v.data.paperRows);
     var rows = (own === undefined || own === null || own === '') ? st.paperRows : own;

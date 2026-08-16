@@ -467,6 +467,30 @@ T('★★区分が増えても紙が崩れない（軽減8%・非課税・対象
   ok(/class="rates"/.test(one.h), '1種類の紙に（内訳）の表が無い');
 });
 
+/* ★区分が増えたら 載る行数を減らす★（司さん 2026-08-16「どの業種にも対応する」）
+   紙は A4 固定なので、（内訳）が伸びた分を放っておくと ★黙って切れる★。
+   実測（2026-08-16 Chromium）：
+     （内訳）の高さ ＝ 区分1で48px／1区分ごとに +24.5px
+     区分3までは 振込先の箱（109px）の方が高い＝★行数に影響しない★
+     ★区分6＋明細12行で 52px はみ出した★（＝切れた）→ ここで止める。 */
+T('★★区分が増えたら1枚に載る行数を減らす（黙って切らない）★★', () => {
+  const M = PAPER.maxRowsOf;
+  eq(M(true, 1), PAPER.PAPER_ROWS_DED, '区分1で行数が減っている');
+  eq(M(true, 3), PAPER.PAPER_ROWS_DED, '★区分3までは減らさない（実測：内訳が振込先より低い）★');
+  eq(M(true, 4), PAPER.PAPER_ROWS_DED - 1, '★区分4で1行 減っていない★');
+  eq(M(true, 6), PAPER.PAPER_ROWS_DED - 3, '★区分6で3行 減っていない★');
+  eq(M(false, 6), PAPER.PAPER_ROWS - 3, '控除なしの紙で減っていない');
+  ok(M(true, 99) >= 1, '★区分が極端に多い時に 0行や負の数にしている★');
+  // ★数える所は1か所★（紙も画面も同じ数）
+  const t = TAX.compute({ lines: [
+    { name: 'a', amount: 1000, rate: STD }, { name: 'b', amount: 1000, rate: RED },
+    { name: 'c', amount: 1000, rate: 0, nontax: true }, { name: 'd', amount: 1000, rate: 0 },
+  ], taxMode: 'exclusive', rounding: 'floor' });
+  eq(PAPER.rateRowsOf(t), 4, '区分の数え方が違う');
+  eq(PAPER.frameRowsOf({}, { deduct: 1, rateRows: 4 }), PAPER.PAPER_ROWS_DED - 1,
+    '★枠を決める所に 区分の数が効いていない★');
+});
+
 T('★★（内訳）は明細と同じ寸法（字・行の高さ・余白）で、列の幅が動かない★★', () => {
   const css = PAPER.css();
   const ruleOf = (sel) => { const i = css.indexOf(sel + '{'); return i < 0 ? null : css.slice(i + sel.length + 1, css.indexOf('}', i)); };
