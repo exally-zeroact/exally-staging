@@ -473,6 +473,47 @@ T('★★区分が増えても紙が崩れない（軽減8%・非課税・対象
      （内訳）の高さ ＝ 区分1で48px／1区分ごとに +24.5px
      区分3までは 振込先の箱（109px）の方が高い＝★行数に影響しない★
      ★区分6＋明細12行で 52px はみ出した★（＝切れた）→ ここで止める。 */
+/* ★複数ページになった時の決まり★（司さん 2026-08-16「複数ページになったらどうするんど」）
+   見本＝代行請求 invoice-pdf.js：1ページ＝A4固定・各ページに宛名/自社・"1 / 3" のページ番号・
+   途中は「このページの小計」＋「次ページへ続く」・最後に合計。
+   ★1枚だけ抜けても気づける★ように 全体の枚数を必ず出す。 */
+T('★★複数ページの決まり（何枚のうち何枚目・宛名は全ページ・締めは最後だけ）★★', () => {
+  const mk = (n) => {
+    const lines = Array.from({ length: n }, (_, i) => ({ name: '工事 ' + (i + 1), amount: 9500, rate: STD }));
+    const t = TAX.compute({ lines, taxMode: 'exclusive', rounding: 'floor' });
+    return PAPER.build({ inv: { doc_type: 'invoice', no: '202607-001', issue_ymd: '2026-07-21', data: {} },
+      tax: t, partner: S1.partner, org: S1.org, deduct: 100, deductLines: [{ name: 'a', amount: 100 }] });
+  };
+  const one = mk(3);
+  eq(one.pages, 1, '3行で2枚になっている');
+  ok(!/class="pageno"/.test(one.html), '★1枚しかないのにページ番号を出している★');
+
+  const many = mk(26);
+  ok(many.pages >= 3, '26行で3枚以上にならない: ' + many.pages);
+  const sheets = many.html.split('class="sheet"').slice(1);
+  eq(sheets.length, many.pages, '刷った枚数と数えた枚数が違う');
+  sheets.forEach((p, i) => {
+    const flat = p.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+    // ★何枚のうち何枚目か★（1枚 抜けても気づける）
+    ok(flat.indexOf((i + 1) + ' / ' + many.pages + ' ページ') >= 0,
+      '★' + (i + 1) + '枚目に「◯ / ◯ ページ」が無い（抜けに気づけない）★: ' + flat.slice(0, 80));
+    // ★どの紙にも 宛名・番号・登録番号★（1枚だけ持って行っても誰宛か分かる）
+    ok(/藤原建設株式会社/.test(flat), (i + 1) + '枚目に宛名が無い');
+    ok(/202607-001/.test(flat), (i + 1) + '枚目に請求番号が無い');
+    ok(/T1234567890123/.test(flat), (i + 1) + '枚目に登録番号が無い');
+    const last = (i === sheets.length - 1);
+    // ★締め・控除・振込先・（内訳）は最後の1枚だけ★（途中に出すと二重に見える）
+    eq(/請求額/.test(flat), last, (i + 1) + '枚目の締めの出し方が違う');
+    eq(/お振込先/.test(flat), last, (i + 1) + '枚目の振込先の出し方が違う');
+    eq(/控除計/.test(flat), last, (i + 1) + '枚目の控除の出し方が違う');
+    // ★途中の紙は「このページの小計」と「次ページへ続く」★
+    eq(/次ページへ続く/.test(flat), !last, (i + 1) + '枚目の「続く」の出し方が違う');
+    eq(/このページの小計/.test(flat), !last, (i + 1) + '枚目の小計の出し方が違う');
+    // ★ご請求金額は1枚目だけ★（各ページに出すと総額が何度も出て迷う）
+    eq(/ご請求金額/.test(flat), i === 0, (i + 1) + '枚目の「ご請求金額」の出し方が違う');
+  });
+});
+
 T('★★区分が増えたら1枚に載る行数を減らす（黙って切らない）★★', () => {
   const M = PAPER.maxRowsOf;
   eq(M(true, 1), PAPER.PAPER_ROWS_DED, '区分1で行数が減っている');
@@ -680,7 +721,10 @@ T('★明細が多い時は次の紙へ送る（黙って切らない・3つの�
   ok(b.pages > 1, '1枚に押し込めている: ' + b.pages);
   ok(/このページの小計/.test(b.html), '「このページの小計」が無い');
   ok(/次ページへ続く →/.test(b.html), '「次ページへ続く →」が無い');
-  ok(/1ページ目/.test(b.html) && /2ページ目/.test(b.html), '「nページ目」が無い');
+  // ★何枚のうち何枚目か★（司さん 2026-08-16。前は「1ページ目」だけで枚数が分からなかった）
+  ok(new RegExp('1 / ' + b.pages + ' ページ').test(b.html)
+    && new RegExp('2 / ' + b.pages + ' ページ').test(b.html),
+    '★「◯ / ◯ ページ」が無い（1枚 抜けても気づけない）★');
   // ★全部の行が どれかの紙に出ている（黙って落ちていない）
   for (let i = 0; i < many.length; i++) ok(b.html.indexOf('行' + (i + 1) + '<') >= 0, (i + 1) + '行目が紙から消えた');
   // 金額のラベルは1枚目にだけ（invoice-pdf.js:719「単ページのみ上部に御請求金額」と同じ考え）

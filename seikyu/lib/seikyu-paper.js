@@ -461,7 +461,10 @@
         + (g.invoiceNo ? '<div class="from-sub">登録番号 ' + esc(g.invoiceNo) + '</div>' : '')
         + (g.sealDataUrl ? '<img class="seal" style="width:' + sealMm(g.sealSizeMm) + 'mm;height:' + sealMm(g.sealSizeMm) + 'mm" src="' + esc(g.sealDataUrl) + '" alt="会社の印">' : '')
         + '</td></tr></tbody></table>'
-        + (multi ? '<div class="pageno">' + (pageIdx + 1) + 'ページ目</div>' : '');
+        /* ★何枚のうちの何枚目か★（司さん 2026-08-16「複数ページになったらどうするんど」）
+           「2ページ目」だけだと ★全部で何枚か分からない＝1枚 抜けても気づけない★。
+           見本＝代行請求 invoice-pdf.js:748 も ★"1 / 3" を出している★。 */
+        + (multi ? '<div class="pageno">' + (pageIdx + 1) + ' / ' + pages.length + ' ページ</div>' : '');
     }
 
     /* ── 挨拶（★下記の通り御請求申し上げます。★） ── */
