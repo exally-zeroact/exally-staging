@@ -80,19 +80,21 @@
        → 載る最大 ＝ ★21行★（控除なし・余り0px）／ ★10行★（控除あり・余り0px）
          ＋1行で −3px ＝ ★足元に食い込む★ ので ここが上限。
 
-     ★数字が動いた履歴（★紙に何か足した日／詰めた日に 必ず測り直す★）★
+     ★数字が動いた履歴（★紙に何か足した日／並べ替えた日に 必ず測り直す★）★
        30/21/14（当てずっぽう・全部はみ出し）→ 16/7（行の高さを実物6.3mmに）
-       → 16/6（締めに控除の行）→ 20/10（紙の頭を詰めた）
-       → 22/12（紙をA4固定にして 足元を下端に貼った）
-       → 21/11（振込先の名義を必ず次の行にした＝足元が +13px）
-       → ★21/10（振込先の箱に字の余白を入れた＝足元が さらに +15px）★
+       → 16/6（締めに控除の行）→ 20/10（紙の頭を詰めた）→ 22/12（A4固定＋足元を下端に）
+       → 21/11（振込先の名義を次の行に）→ 21/10（箱に字の余白）
+       → 19/9（頭の並びを どの紙も同じにした＝挨拶と ページ番号が明細の上に来た）
+       → ★18/8（振込先の高さを 3行ぶんで固定＝名義が長い会社でも 行数が変わらない）★
+         ・1枚物 … 控除あり ★9行★／控除なし ★19行★（実測・余り0px）
+         ・複数ページの最後の紙は もう少し入るが、★1枚物に合わせる★（毎月おなじ顔）
 
      ★実物（32枚）との突き合わせ★
        黒田空調/ENEOS ＝ 30行 ／ ★八木（控除あり）＝ 3行★（控除枠は4行）
        実物が30行 入るのは頭が小さいから。うちは 21行まで来た（差は
        「ご請求金額を大きく」「振込先を枠で囲う」＝★うちが決めて残した所★）。 */
-  var PAPER_ROWS = 21;        // 控除を出さない紙（★実測＝物理の上限★）
-  var PAPER_ROWS_DED = 10;    // 控除を出す紙（★実測＝物理の上限★）
+  var PAPER_ROWS = 18;        // 控除を出さない紙（★実測＝物理の上限★）
+  var PAPER_ROWS_DED = 8;    // 控除を出す紙（★実測＝物理の上限★）
   var DEDUCT_ROWS = 4;        // 控除の枠 ★会社が変えられる★（実物 八木＝E17:H20＝4行）
   var ROWS_FIRST = 12;
   var ROWS_REST = 24;
@@ -217,6 +219,40 @@
     return pages;
   }
 
+  /* ★途中のページには もっと明細が載る★（司さん 2026-08-16
+     「控除を最後に持ってくるなら 余白のぶん 項目を増やしてページを減らせ」）
+     途中の紙には ★控除も締めも振込先も（内訳）も無い★＝その高さが丸ごと明細に使える。
+     実測（Chromium 2026-08-16）：★途中の紙は 30行★（31行で −25px＝足元に食い込む）
+       ＝最後の紙（控除あり8行）の ★3.75倍★。前は全ページ同じ8行で刷っていて、
+         途中の紙に ★22行ぶんの余白★ ができ、紙が無駄に増えていた。
+     ★分け方★：最後の紙に「最後の紙の枠」ぶん残し、残りを途中の紙へ ★均等に★ 配る
+       （均等＝途中の紙の顔が揃う。片方だけスカスカにしない） */
+  var MID_ROWS = 30;
+  function planPages(n, midRows, lastRows) {
+    var total = Math.max(0, Math.trunc(Number(n) || 0));
+    var mid = Math.max(1, Math.trunc(Number(midRows) || 1));
+    var last = Math.max(1, Math.trunc(Number(lastRows) || 1));
+    if (total <= last) return [Math.max(total, 0)];          // 1枚で収まる
+    var rest = total - last;                                  // 途中の紙へ回す分
+    var midPages = Math.ceil(rest / mid);
+    var per = Math.ceil(rest / midPages);                     // ★均等に配る★
+    var plan = [];
+    var left = rest;
+    for (var i = 0; i < midPages; i++) {
+      var take = Math.min(per, left);
+      plan.push(take); left -= take;
+    }
+    plan.push(total - (rest - left));                         // 最後の紙（残り全部）
+    return plan;
+  }
+  /* 明細を「ページごとの本数」で切り分ける（★黙って切らない★＝全部どこかの紙に載る） */
+  function splitByPlan(lines, plan) {
+    var out = [], i = 0;
+    for (var p = 0; p < plan.length; p++) { out.push(lines.slice(i, i + plan[p])); i += plan[p]; }
+    if (i < lines.length) out[out.length - 1] = out[out.length - 1].concat(lines.slice(i));
+    return out;
+  }
+
   /* ★「差し引くを出すか」「枠は何行か」「何枚になるか」を決めるのは ここ1か所★
      画面（2枚になりますの案内）と紙が別々に判定すると、
      ★画面は「1枚」・紙は2枚★という食い違いが必ず出る（過去に同じ型の事故あり）。
@@ -236,7 +272,7 @@
     o = o || {};
     var given = (o.paperRows !== undefined ? o.paperRows : (inv && inv.data && inv.data.paperRows));
     var ded = (o.showDeductResolved !== undefined) ? !!o.showDeductResolved : showDeductOf(inv, o);
-    var max = maxRowsOf(ded, o.rateRows);
+    var max = maxRowsOf(ded, o.rateRows, o.dedLines);
     var n = Math.max(0, Math.trunc(Number(given) || max));
     /* ★物理の上限で頭打ち★＝紙は A4 固定なので、これ以上は載せると切れる。
        ★黙って切らない★＝ここで止めて、残りは2枚目に送る。画面はその事を人に言う。 */
@@ -251,10 +287,15 @@
        ★法が変われば率は増える★（率の一覧は kyuyo/lib が唯一の正）。
        実測：区分6＋明細12行で ★52px はみ出した＝黙って切れた★ので、ここで止める。 */
   var RATE_ROWS_FREE = 3;     // ここまでは（内訳）が振込先より低い＝行数に影響しない
-  function maxRowsOf(showDeduct, rateRows) {
+  /* ★控除の件数が枠（DEDUCT_ROWS）を超えたら その分 明細に使える行が減る★
+     （司さん 2026-08-16「控除項目が増えたら ちゃんと行が増えるようにもやれよ」）
+     ＝控除の箱は 件数ぶん伸びるので、伸びた分だけ 明細の枠を減らして はみ出させない。 */
+  function maxRowsOf(showDeduct, rateRows, dedLines) {
     var base = showDeduct ? PAPER_ROWS_DED : PAPER_ROWS;
     var n = Math.max(0, Math.trunc(Number(rateRows) || 0));
-    return Math.max(1, base - Math.max(0, n - RATE_ROWS_FREE));
+    var d = Math.max(0, Math.trunc(Number(dedLines) || 0));
+    var over = showDeduct ? Math.max(0, d - DEDUCT_ROWS) : 0;   // 控除の枠を超えた件数
+    return Math.max(1, base - Math.max(0, n - RATE_ROWS_FREE) - over);
   }
   /* 紙に出る区分の数（税率ごと＋非課税＋対象外）＝（内訳）の行数 */
   function rateRowsOf(tax) {
@@ -355,14 +396,25 @@
     var showDeduct = showDeductOf(inv, o);
     /* ★枠の本数は 控除の枠を出すかで変わる★（出すと明細に使える高さが減る） */
     frameRows = frameRowsOf(inv, { paperRows: frameRowsGiven, showDeductResolved: showDeduct,
-      rateRows: rateRowsOf(tax) });
+      rateRows: rateRowsOf(tax), dedLines: deductLines.length });
     var gen = o.gensen || null;     // ★源泉徴収（引く紙だけ）★
     var carry = o.carry || null;    // ★繰越（前回の残り）★
-    /* ★1ページに入るのは 枠の本数まで★（入り切らない時だけ次のページ） */
-    var pages = paginate(lines, frameRows
-      ? { rowsFirst: frameRows, rowsRest: frameRows }
-      : o.page);
+    /* ★ページごとに載る本数が違う★（司さん 2026-08-16）
+         最後の紙 … 控除・締め・振込先・（内訳）が乗る＝frameRows（実測して決めた数）
+         途中の紙 … それらが無い＝★MID_ROWS（実測30行）★まで載る
+       ＝途中の紙の余白ぶん 紙が増えるのをやめる。
+       ★会社が枠を決めている時（paperRows）は その数を全ページで使う★（毎月おなじ顔） */
+    var fixedFrame = !!(Number(frameRowsGiven) > 0);
+    var midRows = fixedFrame ? frameRows : Math.max(frameRows, MID_ROWS);
+    var plan = frameRows ? planPages(lines.length, midRows, frameRows) : null;
+    var pages = plan ? splitByPlan(lines, plan) : paginate(lines, o.page);
+    if (!pages.length) pages = [[]];
     var multi = pages.length > 1;
+    /* そのページの枠（空の行を何本 出すか）＝そのページに配った本数 */
+    function frameOfPage(idx, isLast) {
+      if (!plan) return frameRows;
+      return isLast ? frameRows : (plan[idx] || frameRows);
+    }
 
     /* 明細の見出し（items のとおり・その順） */
     var headHtml = spec.items.map(function (k, c) {
@@ -408,12 +460,13 @@
       return '<tfoot><tr class="r-sum">' + cells + '</tr></tfoot>';
     }
 
-    function rowsHtmlOf(pageLines, offset) {
+    function rowsHtmlOf(pageLines, offset, frame) {
+      var fr = (frame === undefined) ? frameRows : frame;
       /* ★1行も無い時は「無い」と言う★（空の枠だけだと、消えたのか元から無いのか分からない）。
          言った上で ★残りは空の枠★＝紙の顔は同じ高さのまま。 */
       if (!pageLines.length) {
         return '<tr><td class="c-empty" colspan="' + spec.items.length + '">明細がまだ1行もありません</td></tr>'
-          + blankRowsHtml(Math.max(0, frameRows - 1));
+          + blankRowsHtml(Math.max(0, fr - 1));
       }
       return pageLines.map(function (ln, i) {
         return '<tr>' + spec.items.map(function (k) {
@@ -430,7 +483,7 @@
           return '<td class="c-col c-' + al + ((cell.kind === 'text' && !noWrap) ? ' c-wrap' : '')
             + (noWrap ? ' c-nowrap' : '') + '">' + body + '</td>';
         }).join('') + '</tr>';
-      }).join('') + blankRowsHtml(frameRows - pageLines.length);
+      }).join('') + blankRowsHtml(fr - pageLines.length);
     }
 
     /* ── 頭（宛名・自社・日付） ★ラベルの後ろは全角スペース★ ── */
@@ -451,8 +504,10 @@
         + '<td class="party-to">'
         + '<div class="to-name">' + (esc(p.name) || '（取引先が未選択）') + (honorOf(p) ? '　' + esc(honorOf(p)) : '') + '</div>'
         + (p.person ? '<div class="to-sub">' + esc(p.person) + '　様</div>' : '')
-        + (p.zip ? '<div class="to-sub">〒' + esc(p.zip) + '</div>' : '')
-        + (p.addr ? '<div class="to-sub">' + esc(p.addr) + '</div>' : '')
+        /* ★宛先の下に住所は出さない★（司さん 2026-08-16「要らんくないか？」）
+           ・実物32枚とも ★0枚★（機械で数えた）
+           ・適格請求書の記載事項は ★受け取る側の「名称」★ まで＝住所は要らない
+           ★データは消していない★（取引先マスタの住所はそのまま。必要になれば戻せる） */
         + '</td>'
         + '<td class="party-from">'
         + '<div class="from-name">' + (esc(g.yago) || '（自社情報が未入力）') + '</div>'
@@ -464,25 +519,32 @@
         /* ★何枚のうちの何枚目か★（司さん 2026-08-16「複数ページになったらどうするんど」）
            「2ページ目」だけだと ★全部で何枚か分からない＝1枚 抜けても気づけない★。
            見本＝代行請求 invoice-pdf.js:748 も ★"1 / 3" を出している★。 */
-        + (multi ? '<div class="pageno">' + (pageIdx + 1) + ' / ' + pages.length + ' ページ</div>' : '');
+        ;   /* ★ページ番号はここでは出さない★＝明細のすぐ上（金額の下）に置く */
     }
 
     /* ── 挨拶（★下記の通り御請求申し上げます。★） ── */
-    function leadBlock() {
-      /* ★「◯年◯月分」＝請求日の★前月★★
-         うちの実物32枚の標準様式は全部 =TEXT(EDATE(請求日,-1),"yyyy年m月分")。
-         ここが「当月」だと、7月に出す紙に「7月分」と書いてしまう（★実物は6月分★）。
-         決め方は seikyu-doc.js が唯一の正。読めない日付なら出さない（でっち上げない）。 */
+    /* ★「◯年◯月分」＝請求日の★前月★★
+       うちの実物32枚の標準様式は全部 =TEXT(EDATE(請求日,-1),"yyyy年m月分")。
+       ここが「当月」だと、7月に出す紙に「7月分」と書いてしまう（★実物は6月分★）。
+       決め方は seikyu-doc.js が唯一の正。読めない日付なら出さない（でっち上げない）。
+
+       ★頭の並びは どの紙も同じ★（司さん 2026-08-16）
+         ◯月分（1枚目）→ 下記の通り…（金額の直上）→ ご請求金額 → ◯/◯ページ → 明細
+       ＝★ページ番号は いつも明細のすぐ上★・★挨拶は いつも金額のすぐ上★。 */
+    function periodBlock() {
       var lead = (inv.data && inv.data.lead) || '';
       if (!lead) lead = DOC.periodLabelOf(inv.issue_ymd);
+      if (!lead) return '';
+      return '<div class="lead"><div class="lead-l"><span class="lead-p">' + esc(lead) + '</span></div></div>';
+    }
+    function greetBlock() {
       var greet = isQuote ? '下記の通り御見積申し上げます。' : '下記の通り御請求申し上げます。';
-      /* ★⑦ 頭を詰める★（司さん 2026-08-16「入力したい所が押し下げられている」）
-         ・「◯月分」と挨拶は ★1行にまとめる★
-         ・挨拶は ★小さく★（毎月おなじ文＝読まれない。消しはしない＝商習慣） */
-      return '<div class="lead"><div class="lead-l">'
-        + (lead ? '<span class="lead-p">' + esc(lead) + '</span>' : '')
-        + '<span class="lead-g">' + greet + '</span>'
-        + '</div></div>';
+      return '<div class="lead lead-greet"><div class="lead-l"><span class="lead-g">' + greet + '</span></div></div>';
+    }
+    /* ★何枚のうち何枚目か★（1枚で収まる紙には出さない） */
+    function pagenoBlock(pageIdx) {
+      if (!multi) return '';
+      return '<div class="pageno">' + (pageIdx + 1) + ' / ' + pages.length + ' ページ</div>';
     }
 
     /* ── 御請求金額（★枠なし・ラベル＋大きい金額・下に線★） ── */
@@ -515,29 +577,15 @@
          源泉徴収を引く紙は、合計の下に ★源泉徴収税額★ と ★差引お支払額★ を足す。
          ★足した2行が迷子にならないよう、合計の直下に続けて並べ、
            いちばん下（実際に払う額）を太くする★ */
-    function totalsBlock() {
-      /* ★締め★ 小計はブロックの合計が持っているので、ここは 消費税 → 合計 → 請求額。
-         ★大きい数字は紙の頭に1つだけ★（給料明細の差引支給額と同じ）＝ここは全部 小さく。 */
-      /* ★一番 下の行＝実際に払う額★ 何行 出るかは紙ごとに違う（控除・源泉の有無）ので、
-         ★最後の1行に印を付ける★のは組み終わってから（下の netLast）。
-         ここで「合計」を太くしてしまうと、控除のある紙で
-         ★合計＝太字／請求額＝細字★ になり、払う額の方が弱く見える。 */
-      /* ★④ 請求額までの筋道を1本で見せる★（司さん 2026-08-15）
-           明細の合計 → 消費税 → 合計 → 控除 → 請求額
-         ★控除の箱の下の「控除計」は残す★＝ブロックの合計（箱の足し算）と
-           ここ（払う額までの計算）は役目が違う。給料明細も両方 在る。 */
+    /* ★この紙で「実際に振り込む額」は1か所で決める★（司さん 2026-08-16）
+       ＝締めの一番 下の行と、振込先の箱に出す金額を ★同じ物から作る★。
+       別々に計算すると、片方だけ直した日に ★紙の中で額が食い違う★。 */
+    function sumsRows() {
       var rows = [
         ['', '明細の合計', yen(tax.subtotal)],
         ['', taxLabel(tax, inv.tax_mode), yen(tax.taxTotal)],
         ['sums-mid', '合計', yen(tax.grandTotal)],
       ];
-      /* ★控除の「1行ずつ」は ②の枠が持つ★（同じ物を2か所に出さない）。
-         ここには ★控除計 と 請求額★ だけを出す。★税額は動かさない★。
-         ★控除が読めない時は 請求額も数字にしない★
-           ＝0として計算した額を「請求額」と大きく出すと、★引き忘れた紙★ になる。 */
-      /* ★控除が本当に在る紙だけ★ 控除と請求額の2行を足す。
-         0件（空の枠だけ出している会社）で「控除 -¥0／請求額＝合計」を出すと
-         ★同じ数字が2回 並ぶだけ★になる。 */
       var hasRealDeduct = showDeduct && (deduct === null || Number(deduct) !== 0);
       if (hasRealDeduct) {
         var billedNet = (deduct === null) ? null : (tax.grandTotal - deduct);
@@ -545,16 +593,24 @@
         rows.push(['', '請求額', (billedNet === null ? '（未確認）' : yen(billedNet))]);
       }
       if (gen && gen.on) {
-        /* ★差引お支払額は「合計請求額（繰越こみ・控除ずみ）− 源泉」★
-           gen.net は この1通だけで出した額なので、繰越があると足りない。
-           順番は seikyu-doc.js が唯一の正。 */
         var pay = DOC.payableOf(tax, carry, gen, deduct);
         rows.push(['sums-minus', esc(gen.label), '-' + yen(gen.amount)]);
         rows.push(['', esc(gen.netLabel), (pay === null ? '（未確認）' : yen(pay))]);
       }
-      /* ★最後の1行だけ sums-net★（＝この紙で実際に払う額。控除も源泉も無ければ「合計」がそれ） */
       rows[rows.length - 1][0] = 'sums-net';
-      return '<table class="sums"><tbody>' + rows.map(function (r) {
+      return rows;
+    }
+    /* 締めの一番 下の行＝★この紙で実際に払う額★（字のまま返す＝「（未確認）」もそのまま） */
+    function payTextOf() {
+      var r = sumsRows();
+      return r[r.length - 1][2];
+    }
+
+    function totalsBlock() {
+      /* ★締め★ 明細の合計 → 消費税 → 合計 →（控除）→ 請求額。
+         ★大きい数字は紙の頭に1つだけ★なので ここは全部 小さく、
+         ★一番 下の行（＝実際に払う額）だけ 線と太さで強く★する。 */
+      return '<table class="sums"><tbody>' + sumsRows().map(function (r) {
         return '<tr' + (r[0] ? ' class="' + r[0] + '"' : '') + '><th>' + r[1] + '</th><td>' + r[2] + '</td></tr>';
       }).join('') + '</tbody></table>';
     }
@@ -729,7 +785,24 @@
         /* ★繰越は1ページ目の金額のすぐ下★（前回の残りを含む額なので、金額の根拠として先に見せる）
            ここに並べないと carryBlock() は作られるだけで紙に載らない
            （2026-08-11：関数はあるのに1度も呼ばれていなかった＝lib緑でも紙に出ない） */
-        + (idx === 0 ? leadBlock() + grandBlock() + carryBlock() : '')
+        /* ★金額（と その根拠の繰越）は「客が振り込む時に見る紙」に置く★
+           見本＝代行請求 invoice-pdf.js:777 は
+             ★if (!multi) cy = drawGrandBox(page, cy); // 単ページのみ上部に御請求金額★
+           ＝複数ページの時は ★1枚目に出さず★、最後の1枚（まとめ）にだけ出している。
+           うちも同じにする：
+             1枚で収まる紙 … 頭に「ご請求金額」（今までどおり）
+             複数ページ    … ★最後の紙（振込先と同じ紙）にだけ★ 出す
+           「◯月分＋挨拶」は 1枚目の頭のまま（紙の始まりの挨拶なので）。 */
+        /* ★どの紙も同じ並び★（司さん 2026-08-16「統一感でるやろが」）
+             ◯月分（1枚目だけ）
+             下記の通り御請求申し上げます。 ← ★金額のすぐ上★
+             ご請求金額（税込）             ← 1枚物は1枚目／複数ページは ★最後の紙★
+             ◯ / ◯ ページ                  ← ★いつも明細のすぐ上★
+             （明細） */
+        + (idx === 0 ? periodBlock() : '')
+        + ((((idx === 0 && !multi) || (last && multi)))
+          ? greetBlock() + grandBlock() + carryBlock() : '')
+        + pagenoBlock(idx)
         /* ★2カラム★ 左＝①ご請求の内訳（明細）／右＝②差し引く＋③締め
              ★2段組みは表で作る★（flex だと文が1文字ずつ縦に割れる＝前科あり）。
              ★明細の枠が固定★なので、右の「請求額」は ★中身が1行でも28行でも同じ高さ★に来る。
@@ -752,7 +825,7 @@
              実物32枚も 明細の上は「項目／金額」の見出しから始まっている。 */
           var itemsBlk = '<div class="blk blk-items">'
             + '<table class="items"><thead><tr>' + headHtml + '</tr></thead>'
-            + '<tbody>' + rowsHtmlOf(pageLines, offset) + '</tbody>' + foot + '</table>'
+            + '<tbody>' + rowsHtmlOf(pageLines, offset, frameOfPage(idx, last)) + '</tbody>' + foot + '</table>'
             /* 金額の列も消費税の列も無い様式だけ、昔どおり表の外に出す（置き場所が無いため） */
             + (foot ? '' : (last ? blockSum('明細の合計', yen(tax.subtotal)) : blockSum('このページの小計', yen(pageSub))))
             + '</div>';
@@ -769,6 +842,11 @@
         ;
       /* ★紙の下端に貼る物★＝締め（払う額）と 振込先。
          毎月おなじ場所に来る＝経理が探し直さない（実物のExcelも下に固定で置いてある）。 */
+      /* ★複数ページの時は 最後の紙にも「ご請求金額」を出す★（司さん 2026-08-16
+         「最後に振込先あるならそこにご請求金額のせるべきでは？」）
+         ＝客は ★振込先が在る最後の紙★ を見て振り込む。金額が1枚目にしか無いと
+         ★紙をめくり直す（そして間違える）★。
+         ★1枚で収まる紙は 今までどおり頭に1回だけ★（同じ紙に2回は出さない）。 */
       var foot = ''
         + (last ? totalsBlock() : '')
         + (last
@@ -859,15 +937,18 @@
       /* ★角印は薄く重ねる（下の文字を隠し切らない）★
          大きさは会社が決める（10〜40mm・既定21mm）。文字の上に少しかかってよい。 */
       '.seal{display:inline-block;object-fit:contain;margin-top:2mm;opacity:.95;}',
-      '.pageno{font-size:9.5pt;color:' + SUB + ';margin:0 0 3mm;}',
+      '.pageno{font-size:9.5pt;color:' + SUB + ';margin:0 0 2.4mm;}',
+      '.lead-greet{margin:0 0 1.6mm;}',
 
       /* 挨拶。★block＋十分な幅＝1文字ずつ縦に割れない★ */
-      '.lead{margin:0 0 3mm;}',
+      /* ★「◯月分」と挨拶は ひと続きの文★＝間を空けない（司さん 2026-08-16）
+         行を2つに分けた時に 両方へ下の余白（3mm）が付いて ★11px ずつ空いていた★。 */
+      '.lead{margin:0 0 1mm;}',
       /* ★挨拶は小さく（毎月おなじ文）／「◯月分」は本文の大きさのまま★ */
       '.lead-p{font-size:9.5pt;color:' + INK + ';margin-right:4mm;}',
       '.lead-g{font-size:8.5pt;color:' + SUB + ';}',
       '.lead-l{display:block;width:100%;min-width:80mm;font-size:9.5pt;color:' + SUB + ';',
-      'line-height:1.9;white-space:normal;word-break:normal;overflow-wrap:break-word;}',
+      'line-height:1.45;white-space:normal;word-break:normal;overflow-wrap:break-word;}',
 
       /* ★御請求金額＝枠なし。ラベル（小）＋金額（大）＋★金額の下だけ★に細い線★
          （司さん 2026-08-16「下線も金額の下までにしろ」）
@@ -1038,11 +1119,16 @@
          ★padding が丸ごと無視される★（実測 2026-08-16：枠と字の間が 1px しか無かった）。
          ＝separate に戻してから余白を付ける。 */
       '.note-bank{display:table;border-collapse:separate;border:' + HAIR + ' solid ' + LINE + ';',
-      'background:' + TH.headBg + ';border-radius:1.5mm;padding:3mm 4mm;margin:0 0 3mm;}',
+      'background:' + TH.headBg + ';border-radius:1.5mm;padding:2.4mm 4mm;margin:0 0 2.4mm;}',
       '.note-bank .note-h{margin-bottom:1.6mm;}',
+
       /* 箱の中の字は 中身なりの幅（★最低幅は残す＝1文字ずつ縦に割れない★）
          ※ .note-b とは別のクラスにしている＝「.note-b の決まり」を検査する所と混ざらないため */
-      '.note-bb{width:auto;min-width:22mm;}',
+      /* ★振込先の高さは いつも同じ★（司さん 2026-08-16 の並びの統一と同じ考え）
+         名義が長くて2行になる会社と 1行の会社で ★足元の高さが変わると 載る行数も変わる★
+         （実測 2026-08-16：長い名義で +24px＝1行ぶん はみ出した）。
+         ＝★2行ぶんの高さを最初から取る★＝どの会社でも 紙の顔が同じ・行数も同じ。 */
+      '.note-bb{width:auto;min-width:22mm;min-height:83px;}',
       '.note-bank .note-h{color:' + TH.headInk + ';font-weight:700;}',
       /* 口座番号（続いた数字）だけ 大きく等幅＝読み間違いを減らす */
       /* 名義は次の行（★毎回おなじ形★＝中途半端な所で折れない） */
@@ -1086,7 +1172,7 @@
     ROWS_FIRST: ROWS_FIRST, ROWS_REST: ROWS_REST,
     /* ★画面が「2枚になります」を出すために呼ぶ（自前で数えない）★ */
     showDeductOf: showDeductOf, frameRowsOf: frameRowsOf, pagesOf: pagesOf,
-    maxRowsOf: maxRowsOf, rateRowsOf: rateRowsOf,
+    maxRowsOf: maxRowsOf, rateRowsOf: rateRowsOf, planPages: planPages, MID_ROWS: MID_ROWS,
     PAPER_ROWS: PAPER_ROWS, PAPER_ROWS_DED: PAPER_ROWS_DED, DEDUCT_ROWS: DEDUCT_ROWS,
   };
 });

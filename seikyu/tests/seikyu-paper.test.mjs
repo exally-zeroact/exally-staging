@@ -488,8 +488,10 @@ T('★★複数ページの決まり（何枚のうち何枚目・宛名は全�
   eq(one.pages, 1, '3行で2枚になっている');
   ok(!/class="pageno"/.test(one.html), '★1枚しかないのにページ番号を出している★');
 
-  const many = mk(26);
-  ok(many.pages >= 3, '26行で3枚以上にならない: ' + many.pages);
+  /* ★途中の紙には控除も締めも無い＝もっと載る★ので、26行でも2枚（司さん 2026-08-16）。
+     枚数そのものではなく ★複数ページになる★ことだけを前提にする。 */
+  const many = mk(60);
+  ok(many.pages >= 3, '60行で3枚以上にならない: ' + many.pages);
   const sheets = many.html.split('class="sheet"').slice(1);
   eq(sheets.length, many.pages, '刷った枚数と数えた枚数が違う');
   sheets.forEach((p, i) => {
@@ -510,7 +512,10 @@ T('★★複数ページの決まり（何枚のうち何枚目・宛名は全�
     eq(/次ページへ続く/.test(flat), !last, (i + 1) + '枚目の「続く」の出し方が違う');
     eq(/このページの小計/.test(flat), !last, (i + 1) + '枚目の小計の出し方が違う');
     // ★ご請求金額は1枚目だけ★（各ページに出すと総額が何度も出て迷う）
-    eq(/ご請求金額/.test(flat), i === 0, (i + 1) + '枚目の「ご請求金額」の出し方が違う');
+    /* ★ご請求金額は「客が振り込む時に見る紙」＝最後の1枚だけ★
+       見本＝代行請求 invoice-pdf.js:777「単ページのみ上部に御請求金額」＝
+       複数ページの時は1枚目に出さない。 */
+    eq(/ご請求金額/.test(flat), last, (i + 1) + '枚目の「ご請求金額」の出し方が違う');
   });
 });
 
@@ -727,8 +732,12 @@ T('★明細が多い時は次の紙へ送る（黙って切らない・3つの�
     '★「◯ / ◯ ページ」が無い（1枚 抜けても気づけない）★');
   // ★全部の行が どれかの紙に出ている（黙って落ちていない）
   for (let i = 0; i < many.length; i++) ok(b.html.indexOf('行' + (i + 1) + '<') >= 0, (i + 1) + '行目が紙から消えた');
-  // 金額のラベルは1枚目にだけ（invoice-pdf.js:719「単ページのみ上部に御請求金額」と同じ考え）
-  eq((b.html.match(/ご請求金額（税込）/g) || []).length, 1, '金額のラベルが2枚以上に出ている');
+  /* ★金額は 1枚目の頭と 最後の紙（振込先が在る紙）の2か所★（司さん 2026-08-16）
+     ＝客は最後の紙を見て振り込むので、そこに金額が無いと 紙をめくり直す。
+     （代行請求 invoice-pdf.js は multi の時 1ページ目に出さず 最後のサマリーに出す＝
+       「最後の紙に金額が在る」点は同じ考え） */
+  eq((b.html.match(/ご請求金額（税込）/g) || []).length, 1,
+    '★複数ページなのに 金額が1枚目にも出ている（代行請求と同じ＝最後の1枚だけ）★');
   // 合計・振込先は最後の紙にだけ
   eq((b.html.match(/お振込先/g) || []).length, 1, 'お振込先が2枚以上に出ている');
   // ページの小計の合計＝全体の小計
@@ -1041,8 +1050,8 @@ T('★続きの紙でも 数字は1回だけ（続きの案内は「続く」だ
      30/21/14 → 16/7 → 16/6 → 20/10 → 22/12（A4固定＋足元を下端に貼った）
      → 21/11（振込先の名義を必ず次の行に）→ ★21/10（箱に字の余白を入れた）★ */
 T('★★既定の行数は「A4 1枚に収まると実測した数」から動かさない★★', () => {
-  eq(PAPER.PAPER_ROWS, 21, '★控除なしの既定を測らずに変えた★');
-  eq(PAPER.PAPER_ROWS_DED, 10, '★控除ありの既定を測らずに変えた★');
+  eq(PAPER.PAPER_ROWS, 18, '★控除なしの既定を測らずに変えた★');
+  eq(PAPER.PAPER_ROWS_DED, 8, '★控除ありの既定を測らずに変えた★');
   eq(PAPER.DEDUCT_ROWS, 4, '★差し引きの枠（実物 八木＝4行）を変えた★');
   ok(PAPER.PAPER_ROWS > PAPER.PAPER_ROWS_DED,
     '★差し引きを出す紙の方が 明細を多く載せている（高さが足りなくなる）★');
@@ -1352,6 +1361,168 @@ T('★知らない形を渡されたら1カラムに倒す（黙って壊れな�
     ok(!/<table class="cols2">/.test(h), '知らない形（' + bad + '）で2カラムになった');
     ok(/class="items"/.test(h) && /請求額/.test(h), '知らない形（' + bad + '）で崩れている');
   }
+});
+
+/* ★複数ページの時は 最後の紙にも「ご請求金額」を出す★（司さん 2026-08-16
+   「最後に振込先あるならそこにご請求金額のせるべきでは？」）
+   客は ★振込先が在る最後の紙★ を見て振り込む。金額が1枚目にしか無いと
+   ★紙をめくり直す（そして間違える）★。
+   ★1枚で収まる紙は 頭に1回だけ★（同じ紙に2回は出さない）。 */
+/* ★宛先の下に住所は出さない★（司さん 2026-08-16「要らんくないか？」）
+   ・実物32枚とも ★0枚★（機械で数えた：御中/様 の下3行に住所らしき字が在るか）
+   ・適格請求書の記載事項は ★受け取る側の「名称」★ まで（住所は要らない）
+   ★データは消していない★＝取引先マスタの住所はそのまま。 */
+T('★★宛先の下に住所を刷らない（名前と敬称・担当者だけ）★★', () => {
+  const h = PAPER.build({ inv: { doc_type: 'invoice', no: 'X', issue_ymd: '2026-09-30', data: {} },
+    tax: S1.tax, org: S1.org,
+    partner: { name: '八木工業 株式会社', keisho: '御中', zip: '794-0000', addr: '愛媛県今治市1-2-3', person: '山田' } }).html;
+  ok(/八木工業 株式会社/.test(h), '宛名が消えている');
+  ok(/御中/.test(h), '敬称が消えている');
+  ok(/山田/.test(h), '★担当者まで消している（誰宛かが分からなくなる）★');
+  ok(!/愛媛県今治市1-2-3/.test(h), '★宛先の下に住所が出ている★');
+  ok(!/794-0000/.test(h), '★宛先の下に郵便番号が出ている★');
+  /* ★自社の住所は出す★（発行する側の情報＝紙に要る） */
+  ok(/愛媛県今治市4-5-6/.test(h) || /今治市/.test(h.split('party-from')[1] || ''), '自社の住所まで消している');
+});
+
+/* ★途中のページには もっと明細が載る★（司さん 2026-08-16
+   「控除を最後に持ってくるなら 余白のぶん 項目を増やしてページを減らせ」）
+   途中の紙には 控除も締めも振込先も（内訳）も無い＝その高さが丸ごと明細に使える。
+   実測（Chromium 2026-08-16）：★途中の紙は30行★（31行で −25px）
+   ＝最後の紙（控除あり8行）の3.75倍。前は全ページ8行で刷っていて紙が無駄に増えていた。 */
+T('★★途中の紙は目一杯 載せて 紙を増やさない（最後の紙だけ控除と締めの分 少なく）★★', () => {
+  const mk = (n, ded) => {
+    const lines = Array.from({ length: n }, (_, i) => ({ name: '工事 ' + (i + 1), amount: 9500, rate: STD }));
+    const t = TAX.compute({ lines, taxMode: 'exclusive', rounding: 'floor' });
+    const dl = Array.from({ length: ded || 0 }, (_, i) => ({ name: 'd' + i, amount: 1000 }));
+    return PAPER.build({ inv: { doc_type: 'invoice', no: 'X', issue_ymd: '2026-07-21', data: {} },
+      tax: t, partner: S1.partner, org: Object.assign({}, S1.org, { bank: '伊予銀行 普通 1234567 カ）ゼロアクト' }),
+      deduct: dl.reduce((a, x) => a + x.amount, 0), deductLines: dl });
+  };
+  /* ★同じ本数でも 前より紙が減る★（全ページ同じ枠で刷っていた時＝ceil(n / 最後の枠)） */
+  const cases = [[26, 1], [40, 1], [60, 0], [100, 1]];
+  cases.forEach(([n, ded]) => {
+    const b = mk(n, ded);
+    const last = PAPER.maxRowsOf(!!ded, 1, ded);
+    const old = Math.ceil(n / last);          // 昔の分け方（全ページ同じ枠）
+    ok(b.pages < old, '★' + n + '行：紙が減っていない（' + b.pages + '枚／昔なら' + old + '枚）★');
+    /* ★1行も落ちていない★ */
+    for (let i = 1; i <= n; i++) ok(b.html.indexOf('工事 ' + i + '<') >= 0, n + '行：' + i + '行目が消えた');
+  });
+  /* ★分け方の決め★＝最後の紙は「最後の枠」ぶん、途中は同じ本数（均等） */
+  const plan = (n, mid, last) => PAPER.planPages ? PAPER.planPages(n, mid, last) : null;
+  if (plan) {
+    eq(plan(8, 30, 8).length, 1, '8行で2枚になっている');
+    const p2 = plan(26, 30, 8);
+    eq(p2.length, 2, '26行の枚数が違う: ' + JSON.stringify(p2));
+    eq(p2[p2.length - 1], 8, '★最後の紙が「最後の枠」ぶんでない★: ' + JSON.stringify(p2));
+    eq(p2.reduce((a, x) => a + x, 0), 26, '★分けたら本数が変わった（行が落ちる）★');
+    const p3 = plan(100, 30, 8);
+    eq(p3.reduce((a, x) => a + x, 0), 100, '100行で本数が変わった');
+    ok(p3.slice(0, -1).every((x) => x <= 30), '★途中の紙が30行を超えている（切れる）★: ' + JSON.stringify(p3));
+    ok(Math.max(...p3.slice(0, -1)) - Math.min(...p3.slice(0, -1)) <= 1, '★途中の紙が均等でない★: ' + JSON.stringify(p3));
+  }
+});
+
+/* ★控除の件数が増えたら 明細に載る行を減らす★（司さん 2026-08-16
+   「控除項目が増えたら ちゃんと行が増えるようにもやれよ」）
+   控除の箱は件数ぶん伸びるので、伸びた分だけ 明細の枠を減らして はみ出させない。 */
+T('★★控除が増えたら1枚に載る明細が減る（枠4件までは変わらない）★★', () => {
+  const M = PAPER.maxRowsOf;
+  eq(M(true, 1, 0), PAPER.PAPER_ROWS_DED, '控除0件で減っている');
+  eq(M(true, 1, 4), PAPER.PAPER_ROWS_DED, '★控除の枠（4件）までは減らさない★');
+  eq(M(true, 1, 5), PAPER.PAPER_ROWS_DED - 1, '★控除5件で1行 減っていない★');
+  eq(M(true, 1, 8), PAPER.PAPER_ROWS_DED - 4, '★控除8件で4行 減っていない★');
+  eq(M(false, 1, 8), PAPER.PAPER_ROWS, '控除を出さない紙で減らしている');
+  ok(M(true, 1, 99) >= 1, '★控除が極端に多い時に 0行や負の数にしている★');
+  eq(PAPER.frameRowsOf({}, { deduct: 1, dedLines: 8 }), PAPER.PAPER_ROWS_DED - 4,
+    '★枠を決める所に 控除の件数が効いていない★');
+});
+
+/* ★頭の並びは どの紙も同じ★（司さん 2026-08-16「統一感でるやろが」）
+     ◯月分（1枚目だけ）
+     下記の通り御請求申し上げます。 ← ★金額のすぐ上★
+     ご請求金額（税込）             ← 1枚物は1枚目／複数ページは最後の紙
+     ◯ / ◯ ページ                  ← ★いつも明細のすぐ上★
+     （明細） */
+T('★★頭の並びが どの紙も同じ（挨拶→金額→ページ番号→明細）★★', () => {
+  const mk = (n) => {
+    const lines = Array.from({ length: n }, (_, i) => ({ name: '工事 ' + (i + 1), amount: 9500, rate: STD }));
+    const t = TAX.compute({ lines, taxMode: 'exclusive', rounding: 'floor' });
+    return PAPER.build({ inv: { doc_type: 'invoice', no: 'X', issue_ymd: '2026-07-21', data: {} },
+      tax: t, partner: S1.partner, org: S1.org });
+  };
+  const order = (p2) => {
+    const at = (re) => { const m = re.exec(p2); return m ? m.index : -1; };
+    return { 月: at(/lead-p/), 挨拶: at(/lead-g/), 金額: at(/class="grand"/),
+             ページ: at(/class="pageno"/), 明細: at(/class="items"/) };
+  };
+  /* 1枚物：◯月分 → 挨拶 → 金額 → 明細（ページ番号は出さない） */
+  const one = order(mk(3).html.split('class="sheet"')[1]);
+  ok(one.月 >= 0 && one.月 < one.挨拶, '★1枚物：◯月分が挨拶より下★');
+  ok(one.挨拶 < one.金額, '★1枚物：挨拶が金額より下（金額のすぐ上に置く決め）★');
+  ok(one.金額 < one.明細, '★1枚物：金額が明細より下★');
+  eq(one.ページ, -1, '1枚物にページ番号が出ている');
+
+  /* 複数ページ */
+  const many = mk(26);
+  const sheets = many.html.split('class="sheet"').slice(1);
+  sheets.forEach((p2, i) => {
+    const o = order(p2);
+    const last = (i === sheets.length - 1);
+    ok(o.ページ >= 0 && o.ページ < o.明細, '★' + (i + 1) + '枚目：ページ番号が明細のすぐ上に無い★');
+    if (i === 0) {
+      ok(o.月 >= 0 && o.月 < o.ページ, '★1枚目：ページ番号が「◯月分」の下に無い★');
+      eq(o.金額, -1, '1枚目に金額が出ている');
+    }
+    if (last) {
+      ok(o.挨拶 >= 0 && o.挨拶 < o.金額, '★最後の紙：挨拶が金額のすぐ上に無い★');
+      ok(o.金額 < o.ページ, '★最後の紙：ページ番号が金額の下に無い★');
+      ok(o.ページ < o.明細, '最後の紙：ページ番号が明細より下');
+    }
+  });
+});
+
+/* ★金額はいつも同じ場所★（司さん 2026-08-16「1ページでも複数ページでも同じ場所にしろ」）
+   ＝紙の頭（宛名の下・明細の上）。複数ページの時は ★最後の紙の頭★（＝振込先と同じ紙）。 */
+T('★★「ご請求金額」はいつも紙の頭・複数ページなら最後の1枚だけ★★', () => {
+  const mk = (n) => {
+    const lines = Array.from({ length: n }, (_, i) => ({ name: '工事 ' + (i + 1), amount: 9500, rate: STD }));
+    const t = TAX.compute({ lines, taxMode: 'exclusive', rounding: 'floor' });
+    return PAPER.build({ inv: { doc_type: 'invoice', no: 'X', issue_ymd: '2026-07-21', data: {} },
+      tax: t, partner: S1.partner,
+      org: Object.assign({}, S1.org, { bank: '伊予銀行 今治支店 普通 1234567 カ）ゼロアクト' }) });
+  };
+  /* 1枚の紙＝頭に1回だけ（2回 出さない） */
+  const one = mk(3);
+  eq(one.pages, 1, '3行で2枚になっている');
+  eq((one.html.match(/ご請求金額/g) || []).length, 1, '★1枚の紙に2回 出ている★');
+  const b1 = one.html.split('</head>')[1] || '';
+  ok(b1.indexOf('ご請求金額') < b1.indexOf('class="items"'), '1枚の紙で金額が明細より下に在る');
+
+  /* 複数ページ＝1枚目の頭と 最後の紙（振込先が在る紙）に出る */
+  const many = mk(26);
+  ok(many.pages >= 2, '26行で複数ページにならない');
+  const sheets = many.html.split('class="sheet"').slice(1);
+  sheets.forEach((p2, i) => {
+    const last = (i === sheets.length - 1);
+    eq(/ご請求金額/.test(p2), last,
+      '★' + (i + 1) + '枚目の「ご請求金額」の出し方が違う（最後の1枚だけ）★');
+    // ★振込先と同じ紙に在る★（客が見る紙で 金額を探させない）
+    if (last) {
+      ok(/お振込先/.test(p2), '最後の紙に振込先が無い');
+      /* ★場所は1枚物と同じ「頭（明細の上）」★＝足元に移していない */
+      const iG = p2.indexOf('ご請求金額'), iT = p2.indexOf('class="items"'), iS = p2.indexOf('class="sums"');
+      ok(iG >= 0 && iT >= 0 && iG < iT, '★最後の紙で金額が明細より下に出ている（場所が違う）★');
+      ok(iS < 0 || iG < iS, '★金額が締めより下に出ている★');
+    }
+  });
+  /* ★金額は最後の紙に1回だけ★（同じ数字を何度も出さない） */
+  const v = [...many.html.matchAll(/<td class="grand-v">([^<]*)<\/td>/g)].map((m) => m[1].trim());
+  eq(v.length, 1, '★金額が最後の1枚だけに出ていない★: ' + JSON.stringify(v));
+  /* ★1枚で収まる紙は 今までどおり頭に1回★ */
+  const oneV = [...one.html.matchAll(/<td class="grand-v">([^<]*)<\/td>/g)];
+  eq(oneV.length, 1, '1枚の紙で金額の出方が違う');
 });
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
