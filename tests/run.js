@@ -24,6 +24,8 @@ const FILES = [
   'no-dead-ui.test.mjs',     // ★出来ていない物のボタン/画面を止める窓/中の言葉(STEP6・実装予定)を客に見せない
   ['no-dead-ui.test.mjs', '--self-test'],
   'book-open.test.mjs',      // ★受け取ったブックを「開いて何も変えずに保存」しても1バイトも変わらない(zip直編集の3本＋book-open.js)
+  'table-refs.test.mjs',     // ★表の名前での参照(Table[列名])→A1範囲。実物の式11,669本が1本残らず#ERRORだった
+  ['table-refs.test.mjs', '--self-test'], // ★わざと壊して赤になるかの自己確認(16通り)
   'no-duplicate-libs.test.mjs', // ★同じ物を2箇所に置かせない(法定データのコピペ・ドリフト防止)
   'excel-version.test.mjs', // ★その式が相手のExcelで動くか(Excelに無い23個＝常時 / 版マーカー14個＝版連動)
   ['excel-version.test.mjs', '--self-test'],

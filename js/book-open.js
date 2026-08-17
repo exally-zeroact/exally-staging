@@ -48,7 +48,33 @@
 
       // ★表示用の読み取り（見るだけ）★
       var wb = root.XLSX.read(bytes, { type: 'array', cellFormula: true, cellNF: true, sheetStubs: false });
-      var out = wb.SheetNames.map(function (nm) { return sheetToGrid(wb.Sheets[nm], nm); });
+
+      /* ★表の名前での参照（Table[列名]）を、実際のA1範囲に直す★（2026-08-18）
+         読み込みライブラリは .xlsb で ★表の名前も列名も捨てる★。
+           実Excelの真値 =INDEX(R8.1[白石正人], MATCH(B4, R8.1[日付], 0))
+           受け取る式     =INDEX(Table1[#Data],  MATCH(B4, Table1[#Data], 0))
+         ＝INDEX と MATCH が同じ範囲を指す壊れた式になり、司さんの実物では
+         ★式 15,126本のうち 11,669本が 1本残らず #ERROR★ になっていた。
+         計算する側をいくら直しても、届く前に消えているので直らない。
+         ★合わないセルは直さない（元のまま＝#ERROR のまま）★＝壊すより断る。 */
+      var trFixes = {};
+      var trStats = null;
+      var pre = Promise.resolve();
+      if (kind !== 'xls' && root.TableRefs && root.ZipSurgeon) {
+        pre = root.TableRefs.resolve(bytes, kind, wb, root.ZipSurgeon).then(function (r) {
+          if (r && r.ok) { trFixes = r.fixes || {}; trStats = r.stats || null; }
+          else if (r && root.console) root.console.warn('[Exally] 表の参照を直せませんでした: ' + r.why);
+        }).catch(function (e) {
+          if (root.console) root.console.warn('[Exally] 表の参照を直せませんでした', e);
+        });
+      }
+      return pre.then(function () { return finish(bytes, kind, wb, file, trFixes, trStats); });
+    });
+  }
+
+  /** 読み終わった物をグリッドの形にして、控え(base)を作る */
+  function finish(bytes, kind, wb, file, trFixes, trStats) {
+      var out = wb.SheetNames.map(function (nm) { return sheetToGrid(wb.Sheets[nm], nm, trFixes); });
       /* ★控えは「見せている文字」ではなく「元の生の値」から作る★（2026-08-09）
          画面用に 46043 を "1/21(水)" にして見せているので、その文字を控えにすると
          ★計算し直した瞬間に 46043 と食い違い、全部「変わった」ことになる★
@@ -73,9 +99,9 @@
            ・答えがエラーの数式セル（記録11）に当たって★保存そのものが断られる★
            が起きる（実物14シート・2万セルで実際に起きた 2026-08-09）。 */
         base: base,
+        tableRefs: trStats,        // ★何本 直したか（見張りと報告が読む。画面には出さない）
       };
       return { kind: kind, sheets: out, opened: opened };
-    });
   }
 
   /* ★日本語の曜日（aaa / aaaa）を先に本物の文字へ置き換える★
@@ -90,15 +116,18 @@
     return String(fmt).replace(/a{4}/g, '"' + w + '曜日"').replace(/a{3}/g, '"' + w + '"');
   }
 
-  /** SheetJS の1シート → グリッドの形 { name, data:{'r,c':{v,f,d,numFmt}}, colW, ... } */
-  function sheetToGrid(ws, name) {
-    var data = {}, X = root.XLSX;
+  /** SheetJS の1シート → グリッドの形 { name, data:{'r,c':{v,f,d,numFmt}}, colW, ... }
+   *  tableFixes … 'シート名|r,c' → 表の参照を A1 範囲に直した式（TableRefs が作る）。
+   *               ★無い物は元のまま★＝直せなかったセルは触らない。 */
+  function sheetToGrid(ws, name, tableFixes) {
+    var data = {}, X = root.XLSX, fixes = tableFixes || {};
     Object.keys(ws).forEach(function (a) {
       if (a.charAt(0) === '!') return;
       var c = ws[a], rc = X.utils.decode_cell(a);
       var cell = { v: '', f: '', d: '' };
-      if (c.f) {
-        cell.f = '=' + c.f;
+      if (c.f !== undefined && c.f !== null && c.f !== '') {
+        var fixed = fixes[name + '|' + rc.r + ',' + rc.c];
+        cell.f = fixed !== undefined ? fixed : ('=' + c.f);
         cell.d = c.v !== undefined && c.v !== null ? c.v : '';   // ★ファイルの答え（キャッシュ）をそのまま出す★
       } else {
         cell.v = c.v !== undefined && c.v !== null ? c.v : '';

@@ -1,0 +1,164 @@
+{
+  "table": {
+    "name": "売上T",
+    "sheet": "元表",
+    "range": "A2:F8",
+    "header": "A2:F2",
+    "data": "A3:F7",
+    "totals": "A8:F8",
+    "cols": [
+      "日付",
+      "名前",
+      "金額",
+      "時間",
+      "単価 ",
+      "倍"
+    ]
+  },
+  "cases": [
+    {
+      "sheet": "元表",
+      "addr": "H1",
+      "label": "SUMのみ_単列",
+      "formula": "=SUM(売上T[金額])",
+      "text": "15000",
+      "value": 15000.0
+    },
+    {
+      "sheet": "元表",
+      "addr": "H2",
+      "label": "INDEX_MATCH",
+      "formula": "=INDEX(売上T[金額], MATCH(\"う\", 売上T[名前], 0))",
+      "text": "3000",
+      "value": 3000.0
+    },
+    {
+      "sheet": "元表",
+      "addr": "H3",
+      "label": "列の範囲",
+      "formula": "=SUM(売上T[[金額]:[時間]])",
+      "text": "15015",
+      "value": 15015.0
+    },
+    {
+      "sheet": "元表",
+      "addr": "H4",
+      "label": "見出し行",
+      "formula": "=COUNTA(売上T[#Headers])",
+      "text": "6",
+      "value": 6.0
+    },
+    {
+      "sheet": "元表",
+      "addr": "H5",
+      "label": "合計行",
+      "formula": "=SUM(売上T[#Totals])",
+      "text": "15020",
+      "value": 15020.0
+    },
+    {
+      "sheet": "元表",
+      "addr": "H6",
+      "label": "表ぜんぶ",
+      "formula": "=COUNTA(売上T[#All])",
+      "text": "40",
+      "value": 40.0
+    },
+    {
+      "sheet": "元表",
+      "addr": "H7",
+      "label": "Data明示_単列",
+      "formula": "=SUM(売上T[[#Data],[金額]])",
+      "text": "15000",
+      "value": 15000.0
+    },
+    {
+      "sheet": "元表",
+      "addr": "H8",
+      "label": "空白入りの列名",
+      "formula": "=SUM(売上T[[単価 ]])",
+      "text": "4500",
+      "value": 4500.0
+    },
+    {
+      "sheet": "元表",
+      "addr": "H9",
+      "label": "見出しとData",
+      "formula": "=COUNTA(売上T[[#Headers],[#Data]])",
+      "text": "36",
+      "value": 36.0
+    },
+    {
+      "sheet": "元表",
+      "addr": "H10",
+      "label": "2つの列を引き算",
+      "formula": "=SUM(売上T[金額])-SUM(売上T[時間])",
+      "text": "14985",
+      "value": 14985.0
+    },
+    {
+      "sheet": "別シート",
+      "addr": "A1",
+      "label": "別シートから",
+      "formula": "=SUM(売上T[金額])",
+      "text": "15000",
+      "value": 15000.0
+    },
+    {
+      "sheet": "別シート",
+      "addr": "A2",
+      "label": "別シートから",
+      "formula": "=INDEX(売上T[[単価 ]], MATCH(\"え\", 売上T[名前], 0))",
+      "text": "1100",
+      "value": 1100.0
+    },
+    {
+      "sheet": "別シート",
+      "addr": "A3",
+      "label": "別シートから",
+      "formula": "=COUNTA(売上T[#All])",
+      "text": "40",
+      "value": 40.0
+    },
+    {
+      "sheet": "元表",
+      "addr": "F3",
+      "label": "自分の行[@金額]",
+      "formula": "=[@金額]*2",
+      "text": "2000",
+      "value": 2000.0
+    },
+    {
+      "sheet": "元表",
+      "addr": "F4",
+      "label": "自分の行[@金額]",
+      "formula": "=[@金額]*2",
+      "text": "4000",
+      "value": 4000.0
+    },
+    {
+      "sheet": "元表",
+      "addr": "F5",
+      "label": "自分の行[@金額]",
+      "formula": "=[@金額]*2",
+      "text": "6000",
+      "value": 6000.0
+    },
+    {
+      "sheet": "元表",
+      "addr": "F6",
+      "label": "自分の行[@金額]",
+      "formula": "=[@金額]*2",
+      "text": "8000",
+      "value": 8000.0
+    },
+    {
+      "sheet": "元表",
+      "addr": "F7",
+      "label": "自分の行[@金額]",
+      "formula": "=[@金額]*2",
+      "text": "10000",
+      "value": 10000.0
+    }
+  ]
+}
