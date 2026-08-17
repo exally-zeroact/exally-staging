@@ -149,6 +149,13 @@ jobs:
         run: node seikyu/tests/seikyu-no-star.mjs
       - name: ★画面の「★」(わざと1つ戻して赤になるかの自己確認)
         run: node seikyu/tests/seikyu-no-star.mjs --self-test
+      # ★呼ぶ側だけ写して本番を白画面にした前科★（sha一致・CI緑でも捕まらない）。
+      #   請求書は seikyu/ の外を11本 呼んでいる（うち kyuyo/lib が2本＝法定の率）。
+      #   ★1本でも消えたら赤★／★台帳に無い物を呼び始めても赤★＝運ぶ日に同じ数で突き合わせる。
+      - name: ★請求書 呼ばれる側 (外を呼ぶ11本が在るか・率の写しを作っていないか・未配線は台帳つきか)
+        run: node seikyu/tests/dep-guard.test.mjs
+      - name: ★請求書 呼ばれる側 (わざと1本 隠して赤になるかの自己確認)
+        run: node seikyu/tests/dep-guard.test.mjs --self-test
 
       # ── 給与(kyuyo/) 由来（据置） ──
       - name: Payroll unit tests (依存なし・実数リテラル+回帰)
