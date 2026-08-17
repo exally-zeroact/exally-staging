@@ -38,7 +38,7 @@ function sampleSheets() {
       '3,0': { v: '合計', f: '合計', d: '合計', bold: true },
       '3,1': { f: '=SUM(B2:B3)', v: '=SUM(B2:B3)', d: '23000', numFmt: '#,##0' },
       '4,0': { v: '0007', f: '0007', d: '0007' },              // ★数値にしてはいけない
-      '4,1': { v: '1,234', f: '1,234', d: '1,234' },           // ★数値にしてはいけない
+      '4,1': { v: '1,234', f: '1,234', d: '1,234' },           // ★E3: 数 1234 になる（実Excel実測）
       '5,0': { v: '色つき', f: '色つき', d: '色つき', bgColor: '#FFFF00' },
       '6,0': { f: '=SORT(B2:B3)', v: '=SORT(B2:B3)', d: '8000' },  // 配列を返す式
       '7,0': { v: '結合', f: '結合', d: '結合', merged: { r: 7, c: 0 }, mergeEnd: { r: 7, c: 1 } }
@@ -50,7 +50,7 @@ function sampleSheets() {
 if (process.argv.includes('--self-test')) {
   console.log('\n[grid-xlsx --self-test] ★わざと壊して赤になるか');
   const cases = [
-    ['① 「1,234」を数値にしてしまう', () => { if (typeof G.asValue('1,234') === 'number') throw new Error('数値になった'); }],
+    ['① 「1,234」を数にし損ねる（E3・合計が黙って小さくなる）', () => { if (G.asValue('1,234') !== 1234) throw new Error('数にならない'); }],
     ['② 式セルの f を落とす', () => { const b = G.gridToBook(sampleSheets()); if (!b.sheets[0].cells.B4.f) throw new Error('式が消えた'); }],
     ['③ 表示形式(z)を落とす', () => { const b = G.gridToBook(sampleSheets()); if (b.sheets[0].cells.B2.z !== '#,##0') throw new Error('表示形式が消えた'); }],
     ['④ 太字セルを警告し損ねる', () => { const w = G.exportWarnings(sampleSheets(), {}); if (!w.some(x => x.kind === 'style-lost')) throw new Error('警告が出ない'); }],
@@ -83,8 +83,11 @@ T('③ ★数値判定が book.html の toHFVal と同じ規則（＝落とし�
   // '0007' → 7。グリッドのエンジン(toHFVal)が既に 7 として計算しているので、ここも 7 でなければ
   // Excel の =SUM だけがグリッドと違う数字になる。実Excelも打ち込んだ 0007 は 7 にする(golden INPUT_typed_0007)。
   eq(b.sheets[0].cells.A5.v, 7); eq(b.sheets[0].cells.A5.t, 'n');
-  // '1,234' は isNaN なので文字列のまま。グリッドのエンジンも文字列として扱う(台帳 R11)。
-  eq(b.sheets[0].cells.B5.v, '1,234'); eq(b.sheets[0].cells.B5.t, 's');
+  /* ★2026-08-18(E3) 変更: '1,234' は ★数 1234★ にする。
+     前は「isNaN なので文字列のまま」だったが、★実Excelは 1234（書式 #,##0）にする★（実測30通り）。
+     文字のままだと =SUM が拾わず、★#ERROR も出ずに合計が黙って小さくなる★＝金が落ちる。 */
+  eq(b.sheets[0].cells.B5.v, 1234); eq(b.sheets[0].cells.B5.t, 'n');
+  eq(b.sheets[0].cells.B5.z, '#,##0', '★桁区切りの書式も一緒に書く（相手の画面から桁区切りを消さない）');
 });
 /* ★2026-08-05 に決まりを1つ変えた（理由を残す）★
    前: 「日付に見える文字は日付にしない」
@@ -99,7 +102,8 @@ T('③ ★数値判定が book.html の toHFVal と同じ規則（＝落とし�
 T('③b 日付はExcelと同じ数にする／日付でない物は文字のまま（2026-08-05 変更）', () => {
   eq(G.asValue('2026-07-31'), 46234, '日付はシリアル値');
   eq(G.asValue('007-1234'), '007-1234', '電話番号のような物は文字のまま');
-  eq(G.asValue('1,234'), '1,234', 'カンマ付きは文字のまま（台帳 R11・変更なし）');
+  eq(G.asValue('1,234'), 1234, '★E3: カンマ付きは数（実Excel実測・2026-08-18 変更）');
+  eq(G.asValue('1,23'), '1,23', '★3桁未満の組は Excel も文字のまま');
 });
 
 T('★日付を数で書くなら、日付の表示形式も一緒に書く（Excelで裸の数字に見えない）', () => {
@@ -171,7 +175,7 @@ T('⑪ ★実際に xlsx を書いて読み戻せる（式・値・表示形式�
   // ★表示形式は writeBook が運ばないと実Excelで「G/標準」になる(2026-08-02 実機で踏んだ)
   eq(cells.B4.z, '#,##0', '表示形式がファイルに入っている');
   eq(cells.A5.v, 7, 'toHFVal と同じ規則で数値');
-  eq(cells.B5.v, '1,234', '桁区切り付きは文字列のまま');
+  eq(cells.B5.v, 1234, '★E3: 桁区切り付きは数（実Excelと同じ）');
   if (!buf || !buf.length) throw new Error('ファイルが空');
 });
 
@@ -196,8 +200,11 @@ T('⑬ ★★数値判定が book.html の toHFVal とズレたら赤（ズレ�
     if (!mm) throw new Error('book.html から ' + n + ' を取り出せない（名前が変わった？）');
     return mm[0];
   }).join('\n');
-  const toHFVal = new Function(helpers + '\nreturn (' + m[0].replace(/^function toHFVal/, 'function') + ')')();
-  const samples = ['0007', '1,234', '2026-07-31', '007-1234', '15000', '1.50', '-3', '0', '  12  ', 'あ', ''];
+  /* ★toHFVal は lib/typed-value.js を呼ぶ（1,234 を数にする規則）。同じ入れ物に渡す★
+     渡さないと「TypedValue is not defined」で、本題と関係ない所で赤くなる。 */
+  const TV = require(path.join(ROOT, 'lib/typed-value.js'));
+  const toHFVal = new Function('TypedValue', helpers + '\nreturn (' + m[0].replace(/^function toHFVal/, 'function') + ')')(TV);
+  const samples = ['0007', '1,234', '１，２３４', '1,23', '2026-07-31', '007-1234', '15000', '1.50', '-3', '0', '  12  ', 'あ', ''];
   const ng = [];
   for (const s of samples) {
     const a = G.asValue(s);

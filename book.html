@@ -1136,15 +1136,18 @@ background:#FFE066 !important;
 }
 </style>
 
-<script src="hyperformula.full.min.js?v=be5e852c"></script>
+<script src="hyperformula.full.min.js?v=dd7ebaac"></script>
 
-<script src="exally-formula.js?v=be5e852c"></script>
+<script src="exally-formula.js?v=dd7ebaac"></script>
 <!-- グリッド→xlsx の変換と「落ちる物」の警告(純関数・軽い)。SheetJS本体(930KB)と lib/xlsx-io.js は
      初回の「Excelに保存」で初めて読み込む＝グリッドの表示を重くしない -->
-<script src="js/file-out.js?v=be5e852c"></script>
-<script src="lib/grid-xlsx.js?v=be5e852c"></script>
-  <script src="lib/grid-refedit.js?v=be5e852c"></script>
-<script src="lib/excel-version.js?v=be5e852c"></script>
+<script src="js/file-out.js?v=dd7ebaac"></script>
+<!-- ★打ち込んだ文字の解釈（1,234 を数にする）。★計算側も書き出し側も この1本を呼ぶ★
+     grid-xlsx.js より先に読む（grid-xlsx.js が読み込み時に掴む） -->
+<script src="lib/typed-value.js?v=dd7ebaac"></script>
+<script src="lib/grid-xlsx.js?v=dd7ebaac"></script>
+  <script src="lib/grid-refedit.js?v=dd7ebaac"></script>
+<script src="lib/excel-version.js?v=dd7ebaac"></script>
 
 <script>
 /* ===== canvas-formula-engine.js (inlined) ===== */
@@ -1223,6 +1226,12 @@ function dateFmtForFormula(f, lookup){
   return null;
 }
 // シート名→HF数値IDに変換（HFはindex番号を要求）
+/* 打った文字が桁区切りなら、Excelが当てるのと同じ表示形式を返す（そうでなければ null）。
+   ★規則は lib/typed-value.js の1本だけ。ここは呼ぶだけ★ */
+function _typedNumFmt(v){
+  var t = TypedValue.parseTyped(v);
+  return (t && t.numFmt) ? t.numFmt : null;
+}
 function toHFVal(v){
   if(v===''||v===null||v===undefined) return null;
   if(typeof v==='string'&&v[0]==='=') return v; // 数式はそのまま
@@ -1230,6 +1239,11 @@ function toHFVal(v){
   if(typeof v==='string'){
     var _pd=(typeof parseDateStr==='function')?parseDateStr(v):null;
     if(_pd) return dateSerial(_pd.y,_pd.m,_pd.d);
+    /* ★桁区切り（1,234）と全角（１，２３４）は Excel と同じ「数」にする（E3）★
+       文字のままだと =SUM() が拾わず、★#ERROR も出ずに合計が黙って小さくなる★。
+       規則は lib/typed-value.js の1本だけに置く（書き出す側 lib/grid-xlsx.js も同じ物を呼ぶ）。 */
+    var _tv = TypedValue.parseTyped(v);
+    if(_tv) return _tv.num;
   }
   if(typeof v==='string'&&v.trim()!==''&&!isNaN(v)) return parseFloat(v); // 数値文字列→number
   return v;
@@ -3456,6 +3470,11 @@ function setCell(r,c,v,noUndo){
   if(!existing.numFmt){
     if(datePart){
       next.numFmt = (v.indexOf('-')>=0) ? 'yyyy-mm-dd' : 'yyyy/m/d';
+    } else if(_typedNumFmt(v)){
+      /* ★1,234 と打ったら Excel と同じ #,##0 を当てる（E3）★
+         中身は数 1234 にするので、書式を当てないと画面から桁区切りが消えて
+         「打った物が変わった」ように見える。実Excelも同じ書式を当てる（実測）。 */
+      next.numFmt = _typedNumFmt(v);
     } else if(typeof dateFmtForFormula==='function'){
       var _df = dateFmtForFormula(v, function(ref){
         var m=/^([A-Za-z]{1,3})(\d{1,7})$/.exec(ref); if(!m) return null;
@@ -6264,8 +6283,8 @@ function initPopupResize(){
 <div id="popup-overlay" ontouchstart="event.stopPropagation()" ontouchmove="event.stopPropagation()" ontouchend="event.stopPropagation()"></div>
 <!-- ★テスト環境の帯★ 本番の倉庫では出ない。今どの倉庫かは js/supa-config.js が唯一の正。
      ホスト名では決めない（配り方は変わるが「本番のデータか」は変わらないため）。 -->
-<script src="js/supa-config.js?v=be5e852c"></script>
-<script src="js/env-badge.js?v=be5e852c"></script>
+<script src="js/supa-config.js?v=dd7ebaac"></script>
+<script src="js/env-badge.js?v=dd7ebaac"></script>
 </body>
 <div id="ai-response-popup">
   <div id="popup-header">

@@ -18,6 +18,8 @@ const FILES = [
   ['grid-date.test.mjs', '--self-test'],
   'grid-colwidth.test.mjs',  // ★渡した相手の画面で ######## にならないか(日付の列に幅を付ける)
   ['grid-colwidth.test.mjs', '--self-test'],
+  'typed-value.test.mjs',    // ★E3: 1,234 が文字列で合計に入らない(金が落ちる・期限9/30)
+  ['typed-value.test.mjs', '--self-test'],
   'grid-refedit.test.mjs',   // ★書き間違えた式を直せるか(=B1+30 の B1 を A1 に直せる／数字の直後で式を壊さない)
   ['grid-refedit.test.mjs', '--self-test'],
   'grid-edit-ui.mjs',        // ★本物の book.html を読み込んで、本物の insertRefAddr を動かす(画面の中で直せるか)

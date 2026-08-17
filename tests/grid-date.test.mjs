@@ -34,6 +34,7 @@ const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const require_ = createRequire(import.meta.url);
 const SRC = fs.readFileSync(path.join(ROOT, 'book.html'), 'utf8');
 const G = require_(path.join(ROOT, 'lib/grid-xlsx.js'));
+const TV = require_(path.join(ROOT, 'lib/typed-value.js'));
 
 let pass = 0, fail = 0;
 const T = (n, fn) => { try { fn(); pass++; console.log('  ✓ ' + n); } catch (e) { fail++; console.log('  ✗ ' + n + ' — ' + (e && e.message)); } };
@@ -49,7 +50,9 @@ function grab(name, argsRe) {
 /* いくつかの関数をまとめて1つの入れ物で動かす（お互いを呼べるように） */
 function build(names) {
   const body = names.map(n => grab(n)).join('\n');
-  return new Function(body + '\nreturn {' + names.map(n => n + ':' + n).join(',') + '};')();
+  /* ★toHFVal は lib/typed-value.js を呼ぶ（1,234 を数にする規則）。同じ入れ物に渡す★
+     渡さないと「TypedValue is not defined」で、本題（日付）と関係ない所で赤くなる。 */
+  return new Function('TypedValue', body + '\nreturn {' + names.map(n => n + ':' + n).join(',') + '};')(TV);
 }
 
 /* ★純関数: 日付文字列 → Excelのシリアル値。self-testで作り物を通せる。
@@ -148,7 +151,8 @@ T('★連続コピー(オートフィル)も数を日付にしない', () => {
    → ここで本当に呼び出して、例外が出ないことと答えを見る。 */
 T('★★setCell を実際に動かす（打つたびに例外が出ないこと）★★', () => {
   const src = fs.readFileSync(path.join(ROOT, 'book.html'), 'utf8');
-  const names = ['dateSerial', 'parseDateStr', 'parseDate', 'dateFmtForFormula', 'toHFVal', 'setCell'];
+  /* ★_typedNumFmt を足した（E3: 1,234 に #,##0 を当てる）。足さないと『打つと例外』になる★ */
+  const names = ['dateSerial', 'parseDateStr', 'parseDate', 'dateFmtForFormula', '_typedNumFmt', 'toHFVal', 'setCell'];
   const body = names.map(n => grab(n)).join('\n');
   // setCell が触る外の物だけを最小限そろえる（HFやcanvasは使わない）
   const harness = `
@@ -163,9 +167,9 @@ T('★★setCell を実際に動かす（打つたびに例外が出ないこと
     ${body}
     return { setCell: setCell, sheets: sheets };
   `;
-  const H = new Function(harness)();
+  const H = new Function('TypedValue', harness)(TV);
   const errs = [];
-  for (const [r, c, v] of [[0, 0, '締め日'], [0, 1, '2026/8/31'], [1, 1, '15000'], [2, 1, '0007'], [3, 1, 'あ'], [4, 1, '']]) {
+  for (const [r, c, v] of [[0, 0, '締め日'], [0, 1, '2026/8/31'], [1, 1, '15000'], [2, 1, '0007'], [3, 1, 'あ'], [4, 1, ''], [5, 1, '1,234'], [6, 1, '１，２３４']]) {
     try { H.setCell(r, c, v); } catch (e) { errs.push('setCell(' + r + ',' + c + ',' + JSON.stringify(v) + ') → ' + e.message); }
   }
   if (errs.length) throw new Error('打つと例外が出る:\n      ' + errs.join('\n      '));
@@ -209,7 +213,9 @@ T('★日付でない式には日付の見た目を付けない（誤検知を�
 
 T('★書き出し(xlsx)も画面と同じ規則（ズレると落としたファイルだけ日付が違う）', () => {
   const ng = [];
-  for (const s of ['2026/8/31', '2026-08-31', '0007', '1,234', '15000', 'あ', '']) {
+  /* ★1,234 は 2026-08-18(E3)から「数 1234」になった（実Excelの実測に合わせた）。
+     ここは「画面と書き出しが同じか」だけを見るので、両方が数になっていれば緑。 */
+  for (const s of ['2026/8/31', '2026-08-31', '0007', '1,234', '１，２３４', '15000', 'あ', '']) {
     const a = G.asValue(s), b = B.toHFVal(s);
     const same = (a === '' && b === null) || a === b;
     if (!same) ng.push(JSON.stringify(s) + ': 書き出し=' + JSON.stringify(a) + ' / 画面=' + JSON.stringify(b));
