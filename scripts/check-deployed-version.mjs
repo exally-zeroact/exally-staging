@@ -76,15 +76,42 @@ export function judgeVersion(want, stamps) {
   return { ok: true, why: null };
 }
 
-async function get(url) {
-  try {
-    const r = await fetch(url, { redirect: 'follow' });
-    return { status: r.status, body: await r.text() };
-  } catch (e) { return { status: 0, body: '', error: String(e && e.message || e) }; }
+/* ★HTTP 200 は「そのファイルが在る」ではない★（2026-08-18 に自分で踏んだ）
+   保護のかかった配信は ★どのパスでも 302 → ログイン画面 200★ を返す。
+   redirect を追って status だけ見ると、.js が1本も無くても ★12本ぜんぶ OK★ になった。
+   ⇒ ① redirect は追わない ② 中身の署名（元のファイルの頭）が入っているかまで見る
+      ③ 保護で読めない物は ★🟡未測定★ にする（緑にも赤にもしない） */
+const SSO_RE = /_vercel\/sso|vercel\.com\/sso-api|sso\.vercel\.com|Redirecting/i;
+
+export function judgeAsset(res, sig) {
+  if (res.status === 0) return { state: 'ng', why: '繋がらない' + (res.error ? '（' + res.error + '）' : '') };
+  if (res.status >= 300 && res.status < 400) {
+    const loc = res.location || '';
+    if (SSO_RE.test(loc)) return { state: 'unknown', why: '★保護がかかっていて中身を読めない（未測定）' };
+    return { state: 'ng', why: 'HTTP ' + res.status + ' で飛ばされる → ' + loc };
+  }
+  if (res.status !== 200) return { state: 'ng', why: 'HTTP ' + res.status };
+  if (SSO_RE.test(res.body.slice(0, 400))) return { state: 'unknown', why: '★保護の画面が返っている（未測定）' };
+  const ct = String(res.contentType || '');
+  if (/\.js$/.test(sig.name) && /text\/html/i.test(ct)) return { state: 'ng', why: '中身がHTML（' + ct + '）＝別の物が返っている' };
+  /* ★比べる前に改行をそろえる★（CRLF/LF の差で本物の差が見かけの差に埋もれる／逆に嘘の赤が出る） */
+  const nl = s => String(s).replace(/\r\n/g, '\n');
+  if (sig.head && nl(res.body).indexOf(nl(sig.head)) < 0) {
+    return { state: 'ng', why: '★中身がうちのファイルと違う★（頭の署名が入っていない）' };
+  }
+  return { state: 'ok', why: null };
 }
-async function head(url) {
-  try { return (await fetch(url, { method: 'HEAD', redirect: 'follow' })).status; }
-  catch (e) { return 0; }
+
+async function get(url, noFollow) {
+  try {
+    const r = await fetch(url, { redirect: noFollow ? 'manual' : 'follow' });
+    return {
+      status: r.status,
+      location: r.headers.get('location'),
+      contentType: r.headers.get('content-type'),
+      body: await r.text(),
+    };
+  } catch (e) { return { status: 0, body: '', error: String(e && e.message || e) }; }
 }
 
 /* ══ self-test（判定そのものを、わざと壊して赤にする） ══════════════════ */
@@ -112,6 +139,44 @@ if (process.argv.includes('--self-test')) {
   T('★このリポジトリが養う配信を決められている', () => {
     if (!/^https:\/\//.test(DEFAULT_HOST)) throw new Error('配信の住所が決まっていない');
   });
+  /* ★2026-08-18 自分で踏んだ穴。redirect を追って status だけ見ると、
+     .js が1本も無い配信でも「12本ぜんぶ OK」になった。 */
+  const SIG = { name: 'lib/table-refs.js', head: '/* table-refs.js — ' };
+  T('中身の署名が入っていれば緑', () => {
+    const v = judgeAsset({ status: 200, contentType: 'application/javascript', body: '/* table-refs.js — ★…' }, SIG);
+    if (v.state !== 'ok') throw new Error('緑にならない: ' + v.why);
+  });
+  T('★保護のログイン画面へ飛ばされたら 緑にも赤にもせず 🟡未測定', () => {
+    const v = judgeAsset({ status: 302, location: 'https://vercel.com/sso-api?url=…', body: 'Redirecting...' }, SIG);
+    if (v.state !== 'unknown') throw new Error('未測定にならない: ' + v.state);
+  });
+  T('★200でも中身が保護の画面なら 🟡未測定（嘘の緑を作らない）', () => {
+    const v = judgeAsset({ status: 200, contentType: 'text/html', body: 'Redirecting... to _vercel/sso' }, SIG);
+    if (v.state !== 'unknown') throw new Error('未測定にならない: ' + v.state);
+  });
+  T('★200でも .js の中身がHTMLなら赤', () => {
+    const v = judgeAsset({ status: 200, contentType: 'text/html; charset=utf-8', body: '<!doctype html><html>…' }, SIG);
+    if (v.state !== 'ng') throw new Error('赤にならない: ' + v.state);
+  });
+  T('★200でも中身がうちのファイルと違えば赤（署名が無い）', () => {
+    const v = judgeAsset({ status: 200, contentType: 'application/javascript', body: 'console.log("別の物")' }, SIG);
+    if (v.state !== 'ng') throw new Error('赤にならない: ' + v.state);
+  });
+  T('★404は赤', () => {
+    if (judgeAsset({ status: 404, body: '' }, SIG).state !== 'ng') throw new Error('赤にならない');
+  });
+  T('★繋がらなければ赤（未測定に逃がさない）', () => {
+    if (judgeAsset({ status: 0, body: '', error: 'ENOTFOUND' }, SIG).state !== 'ng') throw new Error('赤にならない');
+  });
+  T('★保護でない転送は赤（別の所へ飛ばされている）', () => {
+    const v = judgeAsset({ status: 308, location: 'https://other.example/', body: '' }, SIG);
+    if (v.state !== 'ng') throw new Error('赤にならない: ' + v.state);
+  });
+  T('★改行の違い(CRLF/LF)だけで赤にしない（比べる前にそろえる）', () => {
+    const v = judgeAsset({ status: 200, contentType: 'application/javascript', body: '/* a\r\nb */' },
+      { name: 'x.js', head: '/* a\nb */' });
+    if (v.state !== 'ok') throw new Error('嘘の赤が出た: ' + v.why);
+  });
   console.log('\n  ── 実測 ── わざと壊した通り数を含め ' + (pass + fail) + ' 件 / 赤にできた ' + pass + ' 件');
   console.log('\n' + pass + ' passed, ' + fail + ' failed');
   process.exitCode = fail ? 1 : 0;
@@ -124,39 +189,56 @@ if (process.argv.includes('--self-test')) {
 
   const pages = [];
   for (const p of PAGES) {
-    if (!fs.existsSync(path.join(ROOT, p))) { pages.push({ page: p, ok: false, why: '★このリポジトリに ' + p + ' が無い' }); continue; }
-    const r = await get(HOST + '/' + p);
-    if (r.status !== 200) { pages.push({ page: p, status: r.status, ok: false, why: 'HTTP ' + r.status + (r.error ? ' / ' + r.error : '') }); continue; }
+    if (!fs.existsSync(path.join(ROOT, p))) { pages.push({ page: p, state: 'ng', why: '★このリポジトリに ' + p + ' が無い' }); continue; }
+    const r = await get(HOST + '/' + p, true);
+    const a = judgeAsset(r, { name: p, head: '' });
+    if (a.state !== 'ok') { pages.push({ page: p, status: r.status, ...a }); continue; }
     const stamps = stampsOf(r.body);
-    pages.push({ page: p, status: 200, stamps, ...judgeVersion(want, stamps) });
+    const v = judgeVersion(want, stamps);
+    pages.push({ page: p, status: 200, stamps, state: v.ok ? 'ok' : 'ng', why: v.why });
   }
 
-  /* 部品が配信に実在するか（★遅れて読む物を含める★） */
+  /* 部品が配信に実在するか（★遅れて読む物を含める／中身の署名まで見る★） */
   const localHtml = fs.existsSync(path.join(ROOT, ASSET_PAGE)) ? fs.readFileSync(path.join(ROOT, ASSET_PAGE), 'utf8') : '';
   const assets = assetsOf(localHtml);
   const assetResults = [];
   for (const a of assets) {
-    const st = await head(HOST + '/' + a);
-    assetResults.push({ asset: a, status: st, ok: st === 200 });
+    /* ★署名＝うちのファイルの頭。これが返ってこなければ「別の物」★
+       先頭の空白/BOMを避けて、実在する文字列を60字だけ使う */
+    let sigHead = '';
+    try {
+      const local = fs.readFileSync(path.join(ROOT, a), 'utf8');
+      sigHead = local.replace(/^﻿/, '').trim().slice(0, 60);
+    } catch (e) { sigHead = ''; }
+    const r = await get(HOST + '/' + a, true);
+    assetResults.push({ asset: a, status: r.status, ...judgeAsset(r, { name: a, head: sigHead }) });
   }
 
-  const ngPages = pages.filter(x => !x.ok);
-  const ngAssets = assetResults.filter(x => !x.ok);
+  const ngPages = pages.filter(x => x.state === 'ng');
+  const unkPages = pages.filter(x => x.state === 'unknown');
+  const ngAssets = assetResults.filter(x => x.state === 'ng');
+  const unkAssets = assetResults.filter(x => x.state === 'unknown');
+  const mark = s => (s === 'ok' ? '✓' : s === 'unknown' ? '🟡' : '✗');
 
   if (JSON_OUT) {
-    console.log(JSON.stringify({ host: HOST, want, ngPages: ngPages.length, ngAssets: ngAssets.length, pages, assets: assetResults }, null, 1));
+    console.log(JSON.stringify({ host: HOST, want, ngPages: ngPages.length, unkPages: unkPages.length, ngAssets: ngAssets.length, unkAssets: unkAssets.length, pages, assets: assetResults }, null, 1));
   } else {
     console.log('\n[check-deployed-version] 配信されている物が 今のコードと同じ版か');
     console.log('  配信先      ' + HOST + (IS_STAGING ? '（テスト線）' : '（本番）'));
     console.log('  今のコード  ?v=' + want + '\n');
     console.log('■ 画面');
-    pages.forEach(x => console.log('  ' + (x.ok ? '✓' : '✗') + ' ' + x.page
+    pages.forEach(x => console.log('  ' + mark(x.state) + ' ' + x.page
       + (x.stamps ? '  配信=?v=' + x.stamps.join(',') : '') + (x.why ? '\n      ' + x.why : '')));
-    console.log('\n■ ' + ASSET_PAGE + ' が読む部品（★遅れて読む物を含む★）');
-    assetResults.forEach(x => console.log('  ' + (x.ok ? '✓' : '✗') + ' ' + String(x.status).padEnd(4) + ' ' + x.asset));
+    console.log('\n■ ' + ASSET_PAGE + ' が読む部品（★遅れて読む物を含む／中身の署名まで見る★）');
+    assetResults.forEach(x => console.log('  ' + mark(x.state) + ' ' + String(x.status).padEnd(4) + ' ' + x.asset + (x.why ? '  ／ ' + x.why : '')));
     console.log('\n── 実測 ──');
-    console.log('  画面 OK ' + (pages.length - ngPages.length) + ' / NG ' + ngPages.length);
-    console.log('  部品 ' + assetResults.length + '本を数えて OK ' + (assetResults.length - ngAssets.length) + ' / NG ' + ngAssets.length);
+    console.log('  画面 ' + pages.length + '枚を数えて OK ' + (pages.length - ngPages.length - unkPages.length) + ' / NG ' + ngPages.length + ' / 🟡未測定 ' + unkPages.length);
+    console.log('  部品 ' + assetResults.length + '本を数えて OK ' + (assetResults.length - ngAssets.length - unkAssets.length) + ' / NG ' + ngAssets.length + ' / 🟡未測定 ' + unkAssets.length);
+    if (unkPages.length || unkAssets.length) {
+      console.log('\n🟡 ★保護がかかっていて中身を読めない＝「異常なし」ではありません（未測定）★');
+      console.log('  保護された配信は ★どのパスでも 302→ログイン画面 200★ を返すので、');
+      console.log('  status だけ見ると「部品が全部そろっている」という嘘の緑になります（2026-08-18 に踏んだ）。');
+    }
     if (ngPages.length || ngAssets.length) {
       console.log('\n★直し方★ 配信の合図が届いていない事がある（2026-08-18 に実際に起きた）。');
       console.log('  ・意味のある1コミットを push し直す（★空コミットは使わない＝CIが動かない★）');
@@ -164,5 +246,7 @@ if (process.argv.includes('--self-test')) {
       console.log('  ・押した後は ★間を空けて1回だけ★ 確かめる（叩き続けない）');
     }
   }
+  /* ★未測定も緑にしない★（保護で読めないのを「異常なし」と書かない） */
   if (ngPages.length || ngAssets.length) process.exitCode = 3;
+  else if (unkPages.length || unkAssets.length) process.exitCode = 2;
 }
