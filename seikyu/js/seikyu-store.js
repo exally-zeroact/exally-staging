@@ -259,7 +259,33 @@
       },
       partners: {
         list: function () { return suite ? suite.partners.list() : Promise.resolve([]); },
-        /* ★丸ごと置換しない★ 既存の data（hub が入れた名称・住所など）を残して足す */
+        /* ★請求書の中で 取引先を作れる★（司さん 2026-08-17）
+           ＝★Rakually は別アプリ★。取引先は ★請求書の持ち物★なのに、
+             「他のアプリの画面で追加してください」と ★外へ出して★ いた。
+             初めて使う人は ★1通も出さないうちに 必ず外へ出される★＝一番の壁だった。
+           ★同じ名前の相手を2つ作らない★＝すでに在れば その相手を返す（作らない）。 */
+        create: function (p) {
+          if (!suite) return Promise.resolve({ ok: false, reason: '共有データ層がありません' });
+          var name = String((p && p.name) || '').trim();
+          if (!name) return Promise.resolve({ ok: false, reason: '会社名を入れてください' });
+          return suite.partners.list().then(function (list) {
+            var same = list.filter(function (x) { return String(((x.data || {}).name || '')).trim() === name; })[0];
+            if (same) return { ok: true, id: same.id, already: true };
+            var data = {};
+            ['name', 'honor', 'keisho', 'addr', 'zip', 'tel', 'person', 'invoiceNo', 'code'].forEach(function (k) {
+              var v = (p || {})[k];
+              if (v !== undefined && String(v).trim() !== '') data[k] = String(v).trim();
+            });
+            /* ★敬称は空にしない★（紙の宛名が「会社名 」で終わる） */
+            if (!data.honor) { data.honor = '御中'; data.keisho = '御中'; }
+            var sort = list.reduce(function (a, x) { return Math.max(a, Number(x.sort) || 0); }, -1) + 1;
+            return Promise.resolve(suite.partners.upsert({ sort: sort, data: data })).then(function (r) {
+              if (!r || !r.ok) return { ok: false, reason: (r && r.reason) || '保存できませんでした' };
+              return { ok: true, id: r.id || (r.data && r.data.id) || null, already: false };
+            });
+          });
+        },
+        /* ★丸ごと置換しない★ 既存の data（他の画面が入れた名称・住所など）を残して足す */
         patch: function (id, add) {
           if (!suite) return Promise.resolve({ ok: false, reason: '共有データ層がありません' });
           return suite.partners.list().then(function (list) {

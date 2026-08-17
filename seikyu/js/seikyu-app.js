@@ -315,10 +315,14 @@
     fillSelect($('e-partner'), [{ v: '', t: '（選んでください）' }].concat(S.partners.map(function (p) {
       return { v: p.id, t: (p.data && p.data.name) || '(名称未設定)' };
     })), v.partner_id || '');
-    // ★注意書きは「今 困っている時」だけ出す（いつも出ていると読まれない）
+    /* ★注意書きは「今 困っている時」だけ出す（いつも出ていると読まれない）
+       ★外のアプリへ行かせない★（司さん 2026-08-17）
+         前は「Exally のハブで追加してください」＝★1通も出さないうちに 外へ出していた★。
+         ＝★その場で作れる口を出す★（会社名だけ答えたら 相手が出来て そのまま選ばれる）。 */
     var noPartner = !S.partners.length;
     show($('e-partner-hint'), noPartner);
-    if (noPartner) setText('e-partner-hint', '取引先がまだ1社もありません。Exally のハブ（共有データ ▸ 取引先）で追加してください。');
+    if (noPartner) setText('e-partner-hint', '取引先がまだ1社もありません。下に会社名を入れると、その相手を作ってそのまま使えます。');
+    show($('pt-new'), noPartner && !locked());
 
     $('e-issue').value = v.issue_ymd || '';
     var term = (v.data && v.data.term) || { kind: 'none', n: 0 };
@@ -1869,8 +1873,25 @@
   }
 
   /* ═══ 設定の画面 ═══ */
+  /* ★今 紙に刷られる自社の情報を そのまま見せる★（司さん 2026-08-17）
+     ★置き場所の説明ではなく 中身を出す★＝この画面で「何が刷られるか」が分かる。
+     ★入っていない物は「（未入力）」と字で置く★＝空欄を黙って飛ばさない。 */
+  function drawOrgView() {
+    var box2 = $('org-view'); if (!box2) return;
+    var g = S.org || {};
+    var rows = [
+      ['会社名', g.yago], ['住所', g.addr], ['電話', g.tel], ['インボイス登録番号', g.invoiceNo],
+    ];
+    box2.innerHTML = rows.map(function (r) {
+      var v = String(r[1] == null ? '' : r[1]).trim();
+      return '<div class="ov-row"><span class="ov-k">' + esc(r[0]) + '</span>'
+        + '<span class="ov-v' + (v ? '' : ' ov-none') + '">' + esc(v || '（未入力）') + '</span></div>';
+    }).join('');
+  }
+
   function fillSettings() {
     var s = settings();
+    drawOrgView();
     fillSelect($('s-format'), DOC.NUMBER_FORMATS.map(function (f) {
       return { v: f.key, t: f.label + '（' + f.sample + '）' };
     }), s.format);
@@ -1976,6 +1997,30 @@
       if (!r.ok) { box('set-err', '保存できませんでした（' + r.reason + '）'); return; }
       S.org = r.data;
       box('set-ok', '保存しました。');
+    });
+  }
+
+  /* ★その場で相手を作る★（司さん 2026-08-17「Rakually は別アプリ」）
+     ＝★他のアプリへ行かせない★。聞くのは ★会社名 1つだけ★。
+       残り（敬称・住所・登録番号・支払いの約束…）は ★使う時に聞く★＝ここでは聞かない。
+     ★答えたら その場で結果を返す★＝作った相手が すぐ選ばれた状態になる。 */
+  function newPartner() {
+    var name = String($('pt-new-name').value || '').trim();
+    show($('pt-new-msg'), false);
+    if (!name) { box('pt-new-msg', '会社名を入れてください。'); show($('pt-new-msg'), true); return Promise.resolve(); }
+    return S.store.partners.create({ name: name }).then(function (r) {
+      if (!r.ok) { setText('pt-new-msg', '作れませんでした（' + r.reason + '）'); show($('pt-new-msg'), true); return; }
+      return S.store.partners.list().then(function (list) {
+        S.partners = list;
+        if (S.cur) S.cur.partner_id = r.id;          // ★作った相手を そのまま使う★
+        $('pt-new-name').value = '';
+        fillEdit();
+        recalc();
+        setText('pt-new-msg', r.already
+          ? '「' + name + '」は もう在ったので、その相手を選びました。'
+          : '「' + name + '」を作って、この請求書の相手にしました。敬称は「御中」にしています（設定で変えられます）。');
+        show($('pt-new-msg'), true);
+      });
     });
   }
 
@@ -2164,6 +2209,9 @@
     };
     $('b-set-save').onclick = function () { return saveSettings(); };
     $('b-pt-save').onclick = function () { return savePartner(); };
+    $('b-pt-new').onclick = function () { return newPartner(); };
+    /* Enter でも作れる（打ってから ボタンを探させない） */
+    $('pt-new-name').onkeydown = function (e) { if (e.key === 'Enter') { e.preventDefault(); newPartner(); } };
 
     // 画面を回した・幅が変わった時も、下見が切れないように合わせ直す
     global.addEventListener('resize', fitPreview);

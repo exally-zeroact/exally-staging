@@ -156,6 +156,13 @@ jobs:
         run: node seikyu/tests/dep-guard.test.mjs
       - name: ★請求書 呼ばれる側 (わざと1本 隠して赤になるかの自己確認)
         run: node seikyu/tests/dep-guard.test.mjs --self-test
+      # ★この画面は Rakually の物★（司さん 2026-08-17「Rakuallyは別アプリなんはいつ理解するわけ？」）
+      #   客が読む字に他アプリの名前を出さない／取引先を作るのに外のアプリへ行かせない。
+      #   ★字を消すだけでは嘘★（押したら別のアプリに着く）なので 出口ごと数える。
+      - name: ★請求書 これはRakuallyの画面か (客が読む字・紙・取引先を外へ出さない・自社は中身を見せる)
+        run: node seikyu/tests/seikyu-own-name.mjs
+      - name: ★請求書 これはRakuallyの画面か (わざと他アプリの名前を戻して赤になるかの自己確認)
+        run: node seikyu/tests/seikyu-own-name.mjs --self-test
 
       # ── 給与(kyuyo/) 由来（据置） ──
       - name: Payroll unit tests (依存なし・実数リテラル+回帰)

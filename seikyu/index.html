@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>請求書 — Exally</title>
+<title>請求書 — Rakually</title>
 <meta name="theme-color" content="#2E7D54">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -12,8 +12,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@500&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 <!-- ★見た目の本体はスイート共通の皮。請求書の app.css は差分だけ（読む順は皮が先） -->
-<link rel="stylesheet" href="../css/exally-ui.css?v=8a384641">
-<link rel="stylesheet" href="css/app.css?v=8a384641">
+<link rel="stylesheet" href="../css/exally-ui.css?v=c1c2dd45">
+<link rel="stylesheet" href="css/app.css?v=c1c2dd45">
 </head>
 <body>
 
@@ -22,7 +22,7 @@
 <div id="app" hidden>
 
 <header class="appbar">
-  <a class="back" href="../hub.html">← Exally</a>
+  <a class="back" href="../hub.html">← Rakually</a>
   <div class="logo">請求書</div>
   <div class="grow"></div>
 </header>
@@ -67,10 +67,20 @@
       <!-- ★どこから来た紙かを出す（見積 → 請求 のつながりを画面に見せる）★ -->
       <p class="hint" id="from-quote" style="display:none"></p>
 
+      <!-- ★取引先は ここで作れる★（司さん 2026-08-17）
+           前は「別のアプリの画面で追加してください」と ★外へ出して★ いた。
+           初めて使う人は 1通も出さないうちに 必ず外へ出される＝一番の壁だった。
+           ★聞いてあげる。埋めさせない★＝会社名を1つ答えたら その場で相手が出来て、選ばれる。
+           残り（敬称・住所・登録番号…）は ★使う時に聞く★（ここでは聞かない）。 -->
       <div class="frow">
         <div class="flabel">だれに</div>
         <select class="finput" id="e-partner"></select>
         <p class="hint" id="e-partner-hint" style="display:none"></p>
+        <div class="pt-new" id="pt-new" style="display:none">
+          <input class="finput" id="pt-new-name" type="text" placeholder="会社名を入れてください">
+          <button class="btn-primary" type="button" id="b-pt-new">この相手を作る</button>
+        </div>
+        <p class="hint" id="pt-new-msg" style="display:none"></p>
       </div>
       <div class="frow2">
         <div class="frow">
@@ -334,7 +344,7 @@
 
     <div class="card">
       <div class="card-h">取引先の「請求書で使う」項目</div>
-      <p class="hint">名称・住所・登録番号は Exally のハブ（共有データ ▸ 取引先）が本体です。ここではそこに無い、請求書だけで使う項目を足します。</p>
+      <p class="hint">会社名・住所・登録番号は、給与や請求書で同じ物を使うので 1か所にまとめて持っています。ここでは、そこに無い「請求書だけで使う項目」を足します。</p>
       <div class="frow">
         <div class="flabel">取引先を選ぶ</div>
         <select class="finput" id="s-partner"></select>
@@ -376,19 +386,24 @@
         <label class="check"><input type="checkbox" id="s-pgensen"><span>この取引先は源泉徴収の対象（新しく作る1通に最初から入る）</span></label>
         <p class="hint">対象かどうかは相手（払う側）が決めます。1通ごとに変える時は、入力の「細かく決める」から。</p>
       </div>
+      <!-- ★取引先を足すのは 入力の画面（だれに）で出来る★＝ここから外のアプリへ出さない -->
       <div class="btn-row">
         <button class="btn-primary" type="button" id="b-pt-save">この取引先を保存</button>
-        <a class="btn-ghost" style="text-decoration:none;display:inline-block" href="../hub.html">ハブで取引先を追加</a>
       </div>
       <div class="ok" id="pt-ok" style="display:none"></div>
       <div class="bad" id="pt-err" style="display:none"></div>
     </div>
 
+    <!-- ★今 紙に刷られる自社の情報を そのまま見せる★（司さん 2026-08-17）
+         前は「別のアプリの画面が本体です」と ★置き場所の説明だけ★ を出していて、
+         ★自分の会社の何が刷られるのか この画面では分からなかった★。
+         ★直すのは1か所★（給与と同じ物を使うので ここでは直さない）＝二重に持たない。 -->
     <div class="card">
-      <div class="card-h">自社の情報</div>
-      <p class="hint" id="org-view">屋号・住所・電話・インボイス登録番号は Exally のハブ（共有データ ▸ 会社）が本体です。ここでは直しません（同じ物を2か所で持たないため）。</p>
+      <div class="card-h">自社の情報（紙に刷られる物）</div>
+      <div id="org-view"></div>
+      <p class="hint">給与の明細と同じ会社の情報を使っています。直すと どちらの紙にも効きます。</p>
       <div class="btn-row">
-        <a class="btn-ghost" style="text-decoration:none;display:inline-block" href="../hub.html">ハブで会社情報を直す</a>
+        <a class="btn-ghost" style="text-decoration:none;display:inline-block" href="../hub.html">会社の情報を直す</a>
       </div>
     </div>
 
@@ -454,33 +469,33 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../js/supa-config.js?v=8a384641"></script>
-<script src="../lib/xlsx.full.min.js?v=8a384641"></script>
-<script src="../js/file-out.js?v=8a384641"></script>
-<script src="../js/suite-data.js?v=8a384641"></script>
-<script src="../kyuyo/lib/shouhizei-ritsu.js?v=8a384641"></script>
+<script src="../js/supa-config.js?v=c1c2dd45"></script>
+<script src="../lib/xlsx.full.min.js?v=c1c2dd45"></script>
+<script src="../js/file-out.js?v=c1c2dd45"></script>
+<script src="../js/suite-data.js?v=c1c2dd45"></script>
+<script src="../kyuyo/lib/shouhizei-ritsu.js?v=c1c2dd45"></script>
 <!-- ★源泉徴収の率と式は【給与の lib】が持つ＝請求書側には率を1つも書かない★
      （国税庁 No.2798。100万円の境目も、1円未満の切り捨ても、あちらの gensenA が唯一の正） -->
-<script src="../kyuyo/lib/shiharai-chosho.js?v=8a384641"></script>
-<script src="lib/seikyu-tax.js?v=8a384641"></script>
-<script src="lib/seikyu-gensen.js?v=8a384641"></script>
-<script src="lib/seikyu-carry.js?v=8a384641"></script>
-<script src="lib/seikyu-cols.js?v=8a384641"></script>
-<script src="lib/seikyu-templates.js?v=8a384641"></script>
-<script src="lib/seikyu-doc.js?v=8a384641"></script>
-<script src="lib/seikyu-name.js?v=8a384641"></script>
-<script src="lib/seikyu-paper.js?v=8a384641"></script>
-<script src="lib/seikyu-aoa.js?v=8a384641"></script>
-<script src="js/seikyu-store.js?v=8a384641"></script>
-<script src="js/seikyu-out.js?v=8a384641"></script>
-<script src="js/seikyu-app.js?v=8a384641"></script>
-<script src="../js/exally-login.js?v=8a384641"></script>
-<script src="js/auth.js?v=8a384641"></script>
+<script src="../kyuyo/lib/shiharai-chosho.js?v=c1c2dd45"></script>
+<script src="lib/seikyu-tax.js?v=c1c2dd45"></script>
+<script src="lib/seikyu-gensen.js?v=c1c2dd45"></script>
+<script src="lib/seikyu-carry.js?v=c1c2dd45"></script>
+<script src="lib/seikyu-cols.js?v=c1c2dd45"></script>
+<script src="lib/seikyu-templates.js?v=c1c2dd45"></script>
+<script src="lib/seikyu-doc.js?v=c1c2dd45"></script>
+<script src="lib/seikyu-name.js?v=c1c2dd45"></script>
+<script src="lib/seikyu-paper.js?v=c1c2dd45"></script>
+<script src="lib/seikyu-aoa.js?v=c1c2dd45"></script>
+<script src="js/seikyu-store.js?v=c1c2dd45"></script>
+<script src="js/seikyu-out.js?v=c1c2dd45"></script>
+<script src="js/seikyu-app.js?v=c1c2dd45"></script>
+<script src="../js/exally-login.js?v=c1c2dd45"></script>
+<script src="js/auth.js?v=c1c2dd45"></script>
 <!-- ★Service Worker は登録しない＝キャッシュで古い版が居座る問題を根絶。
      開くたびに既存SWを登録解除＋全キャッシュ削除して常に最新にする（給与と同じ）。 -->
 <script>try{if('serviceWorker'in navigator){navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister();});});}if(window.caches){caches.keys().then(function(ks){ks.forEach(function(k){caches.delete(k);});});}}catch(e){}</script>
 <!-- ★テスト環境の帯★ 本番の倉庫では出ない。今どの倉庫かは js/supa-config.js が唯一の正。
      ホスト名では決めない（配り方は変わるが「本番のデータか」は変わらないため）。 -->
-<script src="../js/env-badge.js?v=8a384641"></script>
+<script src="../js/env-badge.js?v=c1c2dd45"></script>
 </body>
 </html>
