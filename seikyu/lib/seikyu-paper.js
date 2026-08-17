@@ -432,6 +432,9 @@
        ・★控除を1件でも入れたら 自動で「使う」★（入れたのに出ない事故を作らない）
        ・使わない紙は ★その分の高さを明細に回す★（入る行数が増える） */
     var showDeduct = showDeductOf(inv, o);
+    /* ★税込で打つ紙か★＝金額の列に刷るのが「税込の額」になる。
+       ここを見ないと ★列を足した数と その真下の数が食い違う紙★が出る（実測 204通り）。 */
+    var inclusive = (inv.tax_mode === 'inclusive');
     /* ★枠の本数は 控除の枠を出すかで変わる★（出すと明細に使える高さが減る） */
     var planInput = { paperRows: frameRowsGiven, showDeductResolved: showDeduct,
       rateRows: rateRowsOf(tax), dedLines: deductLines.length, lineCount: lines.length };
@@ -630,7 +633,9 @@
            ★−28px はみ出した★（明細4枚以上で必ず起きる）。この書き方なら 何枚でも2行。 */
       var rows = [];
       var allPfx = multi ? '全ページの ' : '';
-      rows.push(['', allPfx + '明細の合計', yen(tax.subtotal)]);
+      /* ★税込で打つ紙は ここが「税抜」★＝表の中の「（税込）」と同じ言葉にしない。
+         同じ「明細の合計」で 62,000 と 56,364 が並ぶと、必ず「なぜ？」になる。 */
+      rows.push(['', allPfx + '明細の合計' + (inclusive ? '（税抜）' : ''), yen(tax.subtotal)]);
       rows.push(['', allPfx + taxLabel(tax, inv.tax_mode), yen(tax.taxTotal)]);
       rows.push(['sums-mid', '合計', yen(tax.grandTotal)]);
       var hasRealDeduct = showDeduct && (deduct === null || Number(deduct) !== 0);
@@ -865,10 +870,21 @@
           /* ★表の中の合計行は「そのページの合計」★（司さん 2026-08-16
              「そのページの合計やないと なぜ？ってなる」）
              ＝複数ページの時は ★最後の紙も「このページの小計」★（全体の合計は締めに出す）。
-             1枚しかない紙は そのページ＝全体なので「明細の合計」と書く。 */
-          var foot = (last && !multi)
-            ? itemsFootHtml(pageLines, '明細の合計', tax.subtotal, tax.taxTotal)
-            : itemsFootHtml(pageLines, 'このページの小計', pageSub, pageTax);
+             1枚しかない紙は そのページ＝全体なので「明細の合計」と書く。
+
+             ★★合計に出す数は「その列に刷った字を足した数」でなければならない★★
+             （司さん 2026-08-17「検算は 描いた文字を1行ずつ足せ」）
+             ＝★tax.subtotal を使ってはいけない★。
+               ★税込で打つ紙★では 金額の列に ★税込の額★が刷られるのに、
+               tax.subtotal は ★税抜★なので、
+                 列を足すと 62,000 ／ その真下に 56,364
+               という紙が出る（★実測 2026-08-17・936通り中 204通り★）。
+               1枚物だけ tax.subtotal を使っていたので、★1枚物ほど狂っていた★。 */
+          var footLabel = (last && !multi) ? '明細の合計' : 'このページの小計';
+          /* ★税込で打つ紙は「（税込）」と書く★
+             ＝締めの「明細の合計」は税抜なので、★同じ言葉で違う数★にしない。 */
+          if (inclusive) footLabel += '（税込）';
+          var foot = itemsFootHtml(pageLines, footLabel, pageSub, pageTax);
           /* ★明細の上に「件名」の行を出さない★（司さん 2026-08-16）
              紙の頭に「2026年6月分」と書いてあるのに、その下に「7月分 工事代金」と出ていて
              ★同じ紙に2つの「◯月分」★が並んでいた（しかも 前月と当月でズレて見える）。

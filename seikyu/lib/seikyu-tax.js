@@ -189,12 +189,27 @@
         row.tax = t;
         acc += t;
       }
-      var lastRow = b.rows[b.rows.length - 1];
+      /* ★端数は後ろの行から寄せる。ただし ★行の税額をマイナスにしない★★
+         （司さん 2026-08-17「検算は 描いた文字を1行ずつ足せ」で見つけた）
+         切り上げ(ceil)だと 行ごとの和が 税率ごとの税額を ★上回る★ので 端数は マイナス。
+         それを最後の1行だけに押し付けると、その行の税額が ★マイナスになって紙に出る★。
+         ★実測 2026-08-17：1680通り中 168通り（10.0%）でマイナス・最悪 −43円★
+           例）9行・切り上げ … 最後の行の税が 1円 なのに −3円 を押し付けて ★−2円★。
+         ＝★吸収できる行まで さかのぼって分けて寄せる★（0円で止める）。
+         ★寄せたら spread に1行ずつ残す★＝黙って寄せない。 */
       var resid = tax - acc;
-      if (lastRow && resid !== 0) {
-        lastRow.tax += resid;
-        spread.push({ pct: b.pct, residual: resid, line: lastRow.index + 1, name: lastRow.name || '' });
+      for (var z = b.rows.length - 1; z >= 0 && resid !== 0; z--) {
+        var rw = b.rows[z];
+        /* この行が引き受けられる幅（プラスはいくらでも／マイナスは その行の税額まで） */
+        var take = (resid > 0) ? resid : -Math.min(-resid, rw.tax);
+        if (take === 0) continue;
+        rw.tax += take;
+        resid -= take;
+        spread.push({ pct: b.pct, residual: take, line: rw.index + 1, name: rw.name || '' });
       }
+      /* ★どの行も引き受けられなかった分は 黙って捨てない★
+         （その税率の行が全部 0円＝そもそも税額も0のはずなので、ふつうは起きない） */
+      if (resid !== 0) spread.push({ pct: b.pct, residual: resid, line: null, name: '（寄せ先が無い）' });
     }
 
     var subtotal = taxableBase + exemptBase + nontaxBase;

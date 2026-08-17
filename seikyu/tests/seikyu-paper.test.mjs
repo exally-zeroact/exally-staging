@@ -1441,6 +1441,82 @@ T('★★控除が増えたら1枚に載る明細が減る（枠4件までは変
     '★枠を決める所に 控除の件数が効いていない★');
 });
 
+/* ★★表の合計は「その列に刷った字を足した数」と1円も違わない★★
+     （司さん 2026-08-17「検算は 描いた文字を1行ずつ足せ」）
+   ★税込で打つ紙★では 金額の列に ★税込の額★が刷られるのに、
+   合計行だけ tax.subtotal（＝税抜）を出していた。
+     実測 2026-08-17：936通り中 ★204通り★で、列を足すと 62,000／その真下に 56,364。
+     ★1枚物だけ tax.subtotal を使っていたので、1枚物ほど狂っていた★。
+   ★見本を選んで測らない★＝行数×区分×丸め方×税込税抜 を全部 測って 通り数を出す。 */
+T('★★税込でも税抜でも、列を足した数と 合計行が1円も違わない★★', () => {
+  const yen = (s) => Number(String(s).replace(/[^\d-]/g, '')) || 0;
+  const prices = [19000, 1900, 333, 1, 99991, 12345];
+  let pat = 0, pages = 0;
+  const ngFoot = [], ngLabel = [];
+  for (const rows of [1, 3, 8, 17, 26, 40, 60]) {
+    for (const kubun of [1, 2, 4]) {
+      for (const rounding of ['floor', 'round', 'ceil']) {
+        for (const taxMode of ['exclusive', 'inclusive']) {
+          const lines = [];
+          if (kubun >= 2) lines.push({ name: '弁当', qty: 3, unit: '個', price: 597, rate: RED });
+          if (kubun >= 4) {
+            lines.push({ name: '駐車場', qty: 1, unit: '式', price: 30001, rate: 0, nontax: true });
+            lines.push({ name: '立替', qty: 1, unit: '式', price: 5003, rate: 0 });
+          }
+          for (let i = lines.length; i < rows; i++) {
+            lines.push({ name: '工事 ' + (i + 1), qty: 3, unit: '人', price: prices[i % prices.length], rate: STD });
+          }
+          const t = TAX.compute({ lines, taxMode, rounding });
+          if (!t.ok) continue;
+          const b = PAPER.build({
+            inv: { doc_type: 'invoice', no: 'X', issue_ymd: '2026-07-21', tax_mode: taxMode, data: {} },
+            tax: t, partner: { name: '八木工業 株式会社', keisho: '御中' },
+            org: { yago: '合同会社ZEROact', bank: '伊予銀行　今治支店　普通　4160657　ド）ゼロアクト' },
+            deduct: 1000, deductLines: [{ name: '弁当代', amount: 1000 }],
+          });
+          pat++;
+          const tag = rows + '行/' + kubun + '区分/' + rounding + '/' + taxMode;
+          b.html.split('class="sheet"').slice(1).forEach((s, i) => {
+            const tbl = (/<table class="items">([\s\S]*?)<\/table>/.exec(s) || [])[1];
+            if (!tbl) return;                                   // 締めだけの紙
+            pages++;
+            const head = [...((/<thead>([\s\S]*?)<\/thead>/.exec(tbl) || [])[1] || '')
+              .matchAll(/<th[^>]*>([\s\S]*?)<\/th>/g)].map((m) => m[1].replace(/<[^>]+>/g, '').trim());
+            const iA = head.indexOf('金額'), iT = head.indexOf('消費税');
+            const body = (/<tbody>([\s\S]*?)<\/tbody>/.exec(tbl) || [])[1] || '';
+            const colSum = (ix) => [...body.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/g)].reduce((a, tr) => {
+              if (/r-blank/.test(tr[0])) return a;
+              const c = [...tr[1].matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/g)].map((m) => m[1].replace(/<[^>]+>/g, '').trim());
+              return a + yen(c[ix]);
+            }, 0);
+            const foot = (/<tfoot>([\s\S]*?)<\/tfoot>/.exec(tbl) || [])[1] || '';
+            let col = 0; const at = {};
+            for (const m of foot.matchAll(/<(?:th|td)([^>]*)>([\s\S]*?)<\/(?:th|td)>/g)) {
+              at[col] = m[2].replace(/<[^>]+>/g, '').trim();
+              col += Number((/colspan="(\d+)"/.exec(m[1]) || [])[1] || 1);
+            }
+            if (yen(at[iA]) !== colSum(iA)) ngFoot.push(tag + ' ' + (i + 1) + '枚目 金額 ' + at[iA] + ' vs 列の和 ' + colSum(iA));
+            if (yen(at[iT]) !== colSum(iT)) ngFoot.push(tag + ' ' + (i + 1) + '枚目 消費税 ' + at[iT] + ' vs 列の和 ' + colSum(iT));
+          });
+          /* ★同じ言葉で違う数を出さない★（表は税込・締めは税抜） */
+          const label = (/<th class="c-col c-left c-sumlabel"[^>]*>([\s\S]*?)<\/th>/.exec(b.html) || [])[1] || '';
+          const S = sumsOfPaper(b.html);
+          if (taxMode === 'inclusive') {
+            if (!/（税込）/.test(label)) ngLabel.push(tag + ' 表の合計に（税込）が無い: ' + label);
+            if (!Object.keys(S).some((k) => /明細の合計（税抜）/.test(k))) ngLabel.push(tag + ' 締めに（税抜）が無い');
+          } else if (/（税込）|（税抜）/.test(label)) {
+            ngLabel.push(tag + ' 税抜の紙に（税込/税抜）を書いている: ' + label);
+          }
+        }
+      }
+    }
+  }
+  console.log('      ★測った通り数 ' + pat + '★（刷った枚数 ' + pages + '）');
+  ok(pat >= 100, '★測った数が少なすぎる＝見本を選んで測っている★ ' + pat);
+  eq(ngFoot.length, 0, '★列を足した数と 合計行が違う★ ' + ngFoot.slice(0, 4).join(' / '));
+  eq(ngLabel.length, 0, '★同じ言葉で違う数を出している★ ' + ngLabel.slice(0, 4).join(' / '));
+});
+
 /* ★表の中の合計＝そのページの分／締めの合計＝全ページの分★（司さん 2026-08-16
      「赤丸はそのページの合計やないと なぜ？ってなる」
      「全ページ明細合計、全ページ消費税合計にしたら 行を増やさなくてもいけるのでは」）

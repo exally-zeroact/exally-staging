@@ -438,5 +438,66 @@ T('★★ENEOS の実物と1円も違わない（35,000 ＋ 3,500 ＝ 38,500）�
   eq(r.spread.length, 0, '端数が出ないはずなのに寄せている');
 });
 
+/* ★行の消費税をマイナスにしない★（司さん 2026-08-17「検算は 描いた文字を1行ずつ足せ」で発見）
+   切り上げ(ceil)だと 行ごとの和が 税率ごとの税額を ★上回る★ので、端数は ★マイナス★。
+   それを最後の1行だけに押し付けると ★その行の税額がマイナスのまま紙に出る★。
+   ★見本を1つ選んで測らない★（司さん 2026-08-17）
+     ＝行数×区分×丸め方×税込税抜×単価の並び を ★全部 測って 何通り測ったかを出す★。 */
+T('★★どの紙でも 行の消費税がマイナスにならない／足すと必ず税額に一致する★★', () => {
+  const prices = [19000, 1900, 333, 1, 7, 99991, 12345, 2, 11];
+  let pat = 0, spreadPapers = 0;
+  const neg = [], mism = [], orphan = [];
+  for (const rows of [1, 2, 3, 5, 9, 17, 26, 40, 60, 100]) {
+    for (const kubun of [1, 2, 3, 4]) {
+      for (const rounding of ['floor', 'round', 'ceil']) {
+        for (const taxMode of ['exclusive', 'inclusive']) {
+          for (const pi of [0, 1, 2, 3, 4, 5, 6]) {
+            const lines = [];
+            if (kubun >= 2) lines.push({ name: '弁当', qty: 3, unit: '個', price: 597, rate: RED });
+            if (kubun >= 3) lines.push({ name: '駐車場', qty: 1, unit: '式', price: 30001, rate: 0, nontax: true });
+            if (kubun >= 4) lines.push({ name: '立替', qty: 1, unit: '式', price: 5003, rate: 0 });
+            for (let i = lines.length; i < rows; i++) {
+              lines.push({ name: '工事 ' + (i + 1), qty: 3, unit: '人', price: prices[(i + pi) % prices.length], rate: STD });
+            }
+            const r = TAX.compute({ lines, taxMode, rounding });
+            if (!r.ok) continue;
+            pat++;
+            const tag = rows + '行/' + kubun + '区分/' + rounding + '/' + taxMode + '/p' + pi;
+            const bad = r.lines.filter((l) => Number(l.tax) < 0);
+            if (bad.length) neg.push(tag + ' → ' + bad.map((l) => l.name + ' ' + l.tax + '円').join(','));
+            const sum = r.lines.reduce((a, l) => a + (Number(l.tax) || 0), 0);
+            if (sum !== r.taxTotal) mism.push(tag + ' 行の和 ' + sum + ' ≠ 税額 ' + r.taxTotal);
+            if ((r.spread || []).some((x) => x.line === null)) orphan.push(tag);
+            if ((r.spread || []).length) spreadPapers++;
+          }
+        }
+      }
+    }
+  }
+  console.log('      ★測った通り数 ' + pat + '★（うち端数を寄せた紙 ' + spreadPapers + '通り）');
+  ok(pat >= 1000, '★測った数が少なすぎる＝見本を選んで測っている★ ' + pat);
+  ok(spreadPapers > 0, '★端数を1回も寄せていない＝この検査が何も見ていない★');
+  eq(neg.length, 0, '★行の消費税がマイナスで紙に出る★ ' + neg.slice(0, 4).join(' / '));
+  eq(mism.length, 0, '★行を足しても税額に合わない＝紙の中で辻褄が崩れる★ ' + mism.slice(0, 4).join(' / '));
+  eq(orphan.length, 0, '★寄せ先が無くて端数が余った★ ' + orphan.slice(0, 4).join(' , '));
+});
+
+T('★端数は「引き受けられる行」までさかのぼって分けて寄せる（1行に押し付けない）', () => {
+  /* ★実測で出た形★＝最後の行の税が1円しかないのに −3円 を寄せようとして ★−2円★ になった。 */
+  const r = TAX.compute({
+    lines: [
+      { name: '大', qty: 3, unit: '人', price: 99991, rate: STD },
+      { name: '小1', qty: 3, unit: '人', price: 2, rate: STD },
+      { name: '小2', qty: 3, unit: '人', price: 11, rate: STD },
+    ],
+    taxMode: 'exclusive', rounding: 'ceil',
+  });
+  ok(r.ok, r.errors.join('/'));
+  ok(r.lines.every((l) => l.tax >= 0), '★マイナスの税額が残っている★ ' + JSON.stringify(r.lines.map((l) => l.tax)));
+  eq(r.lines.reduce((a, l) => a + l.tax, 0), r.taxTotal, '足すと税額に合わない');
+  ok(r.spread.length >= 1, '★寄せたのに記録が無い（黙って寄せている）★');
+  ok(r.spread.every((x) => x.line !== null), '寄せ先が無い記録が残っている');
+});
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
