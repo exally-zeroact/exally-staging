@@ -31,6 +31,30 @@
 | https://exally-zeroact.github.io/payslip-app-test/ | テスト 給与 | ★2026-08-04 に塞いだ | 中身を消し、案内1枚＋自動転送（`404.html` で直リンクも拾う） |
 | https://exally-test.vercel.app/ （`/index.html` `/home.html` `/exally-home.html`） | 本番 ハブ | ★2026-08-04 に塞いだ | `vercel.json` の `redirects` で **308**。★この4本だけ★ |
 
+## これから塞ぐ入口（★号令待ち。まだ1バイトも外していない★）
+
+給与(`kyuyo/`)は **Rakually へ移る**。**★22人が今 `exally.vercel.app/kyuyo/` を使っている★**ので、
+移る日まで**消さない・外さない**。ここは「移す日に上の『古い入口』へ移す物の一覧」。
+機械でも毎週 数を出す（`check-hosts.mjs` の `PLANNED`。**★まだ塞いでいないので赤にしない★**
+＝自分のせいでない赤が毎週鳴ると、赤そのものが信用されなくなるため）。
+
+| 古くなるURL | 飛び先 | 気をつける事 |
+|---|---|---|
+| `https://exally.vercel.app/kyuyo/` | `<Rakuallyの本番URL>/` | 308 |
+| `https://exally.vercel.app/kyuyo/index.html` | `<Rakuallyの本番URL>/` | 308 |
+| `https://exally.vercel.app/kyuyo/meisai.html?t=…&c=…` | `<Rakuallyの本番URL>/meisai.html` | ★うしろ（`?t=` `?c=` `#`）を落とさない★＝従業員に配ったQR/リンクの形 |
+| `https://exally.vercel.app/kyuyo/meisai`（`.html` 無し） | `<Rakuallyの本番URL>/meisai.html` | ★`.html` を付け直す★（旧ホストで実際に404に着地した） |
+| `https://exally.vercel.app/kyuyo/admin.html` | `<Rakuallyの本番URL>/admin.html` | 308 |
+| `https://exally.vercel.app/sw.js` | **飛ばさない** | ★端末に住み着いた Service Worker はサーバを塞いでも消えない★。`kyuyo/admin.html` が `/sw.js` を登録している |
+
+**★先に行き先を決めないと外せない物 3件★**（下調べ: `docs/KYUYO_MOVE_INVENTORY.md`）
+
+1. **`api/claude.js` が `kyuyo/lib/` を3本 `require`**（`shakaihoken-hyo` / `koyo-hoken` / `shouhizei-ritsu`）
+   — ★画面では気づけない★。押した時に関数が500になる型。
+2. `hub.html` のタイル `<a href="kyuyo/">`
+3. **テスト線の `seikyu/` が `kyuyo/lib/` を2本 読む**（`shiharai-chosho` / `shouhizei-ritsu`）
+   — ★kyuyo を先に外すと請求書が死ぬ★
+
 ### ★exally-test は「古いホームだけ」を塞ぐ（実務が同居している）★
 
 `exally-test.vercel.app` には **代行請求システム（`/daikou-seikyu.html`）が実務で毎日動いています**。

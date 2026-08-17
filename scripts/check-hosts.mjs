@@ -99,6 +99,40 @@ const OLD = [
   },
 ];
 
+/* ★これから塞ぐ入口（号令待ち）★ 2026-08-18 登録
+ *   給与(kyuyo/)は Rakually へ移る。★22人が今 使っているので、移る日まで1バイトも外さない★。
+ *   ここは「移す日に OLD へ移す物の一覧」＝★先に書いておく場所★。
+ *   ★まだ塞いでいない物を赤にしない★。塞いでいないのは予定どおりなので、
+ *   赤にすると自分のせいでない赤が毎週鳴り、★赤そのものが信用されなくなる★（pending と分ける理由）。
+ *   ★数だけ毎回 出す★＝「一覧が在るのに誰も見ていない」を作らない。
+ *   詳しい下調べ: docs/KYUYO_MOVE_INVENTORY.md
+ */
+const PLANNED = [
+  { name: '給与トップ', from: 'https://exally.vercel.app/kyuyo/', to: '<Rakuallyの本番URL>/' },
+  { name: '給与トップ(index.html)', from: 'https://exally.vercel.app/kyuyo/index.html', to: '<Rakuallyの本番URL>/' },
+  {
+    name: '★Web明細(配布リンクの形)', from: 'https://exally.vercel.app/kyuyo/meisai.html?t=…&c=…',
+    to: '<Rakuallyの本番URL>/meisai.html',
+    why: '★従業員に配ったQR/リンク。うしろ(?t= ?c= #)を落とすと明細が開けなくなる',
+  },
+  {
+    name: '★Web明細(.html 無しの形)', from: 'https://exally.vercel.app/kyuyo/meisai',
+    to: '<Rakuallyの本番URL>/meisai.html',
+    why: '★.html を付け直さないと 404 に着地する（旧ホストで実際に踏んだ）',
+  },
+  { name: '給与 管理', from: 'https://exally.vercel.app/kyuyo/admin.html', to: '<Rakuallyの本番URL>/admin.html' },
+  {
+    name: '★/sw.js は飛ばさない', from: 'https://exally.vercel.app/sw.js', to: '（飛ばさない）',
+    why: '★端末に住み着いた Service Worker はサーバを塞いでも消えない。kyuyo/admin.html が /sw.js を登録している',
+  },
+];
+/* ★先に行き先を決めないと外せない物★（2026-08-18 実測。docs/KYUYO_MOVE_INVENTORY.md の0章） */
+const BLOCKERS = [
+  '★api/claude.js が kyuyo/lib/ を3本 require（shakaihoken-hyo / koyo-hoken / shouhizei-ritsu）＝画面では気づけない',
+  'hub.html のタイル <a href="kyuyo/">',
+  '★テスト線の seikyu/ が kyuyo/lib/ を2本 読む（shiharai-chosho / shouhizei-ritsu）',
+];
+
 async function get(url) {
   try {
     const r = await fetch(url, { redirect: 'manual', headers: { 'User-Agent': 'Kyually-host-check/1.0' } });
@@ -155,6 +189,19 @@ if (process.argv.includes('--self-test')) {
   T('★sw.js が飛ばされていたら赤', () => { if (judge(SW, { status: 308, location: 'https://new/', body: '' }).ok) throw new Error('赤にならない'); });
   T('★sw.js の中身がキルスイッチでなければ赤', () => { if (judge(SW, { status: 200, location: null, body: 'self.addEventListener("fetch",...)' }).ok) throw new Error('赤にならない'); });
   T('sw.js がキルスイッチのままなら緑', () => { if (!judge(SW, { status: 200, location: null, body: 'registration.unregister()' }).ok) throw new Error('緑にならない'); });
+  /* ★これから塞ぐ入口の一覧が、黙って空になったり 二重管理になったりしないよう見張る★ */
+  T('★これから塞ぐ入口の一覧が空になっていない', () => { if (!PLANNED.length) throw new Error('一覧が空＝誰も見ていない状態'); });
+  T('★これから塞ぐ入口が「古い入口」にも入っていない（二重管理しない）', () => {
+    const olds = new Set(OLD.map(o => o.url.split('?')[0]));
+    const dup = PLANNED.filter(p => olds.has(p.from.split('?')[0]));
+    if (dup.length) throw new Error('両方に居る: ' + dup.map(d => d.from).join(','));
+  });
+  T('★Web明細は「うしろを落とさない」と「.html を付け直す」の両方が一覧に在る', () => {
+    const t = PLANNED.map(p => p.from + ' ' + (p.why || '')).join('|');
+    if (!/\?t=/.test(t)) throw new Error('うしろ(?t=)の形が一覧に無い');
+    if (!PLANNED.some(p => /\/meisai$/.test(p.from))) throw new Error('.html 無しの形が一覧に無い');
+  });
+  T('★先に行き先を決める物の一覧が空になっていない', () => { if (!BLOCKERS.length) throw new Error('一覧が空'); });
   console.log('\n' + pass + ' passed, ' + fail + ' failed');
   process.exitCode = fail ? 1 : 0;
 } else {
@@ -194,9 +241,17 @@ if (process.argv.includes('--self-test')) {
       + '\n      ' + x.url
       + (x.location ? '\n      → ' + x.location + (x.landStatus ? '  [飛び先 HTTP ' + x.landStatus + ']' : '') : (x.to ? '\n      → ' + x.to : ''))
       + '\n      ' + (x.how || '—') + (x.why ? '  ／ ' + x.why : '')));
+    console.log('\n■ これから塞ぐ入口（★号令待ち。まだ塞いでいないので赤にしない★）');
+    PLANNED.forEach(x => console.log('  ・' + x.name + '\n      ' + x.from + '\n      → ' + x.to
+      + (x.why ? '\n      ' + x.why : '')));
+    console.log('  ★先に行き先を決めないと外せない物 ' + BLOCKERS.length + '件★');
+    BLOCKERS.forEach(b => console.log('      - ' + b));
+
     console.log('\n── 実測 ──');
     console.log('  今の入口 OK ' + (results.live.length - ngLive.length) + ' / NG ' + ngLive.length);
     console.log('  古い入口 OK ' + (results.old.length - ngOld.length) + ' / NG ' + ngOld.length);
+    console.log('  これから塞ぐ入口 ' + PLANNED.length + '件（★まだ0件も塞いでいない＝予定どおり★）'
+      + ' / 先に決める物 ' + BLOCKERS.length + '件');
   }
 
   if (ngLive.length || ngOld.length) process.exitCode = 3;
