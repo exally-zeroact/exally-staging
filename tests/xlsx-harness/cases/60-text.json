@@ -338,6 +338,101 @@
       "id": "TEXTJOIN_blank_skip",
       "func": "TEXTJOIN",
       "f": "=TEXTJOIN(\"|\",TRUE,G1:G3)"
+    },
+    {
+      "id": "TEXT_weekday_ja",
+      "func": "TEXT",
+      "f": "=TEXT(F1,\"aaa\")",
+      "why": "★曜日。司さんの実物に730本ある形。書式に y/m/d/h/s が1文字も無いので、数の書式として扱われてシリアル値(46053)がそのまま出ていた"
+    },
+    {
+      "id": "TEXT_weekday_ja_long",
+      "func": "TEXT",
+      "f": "=TEXT(F1,\"aaaa\")"
+    },
+    {
+      "id": "TEXT_weekday_ja_locale",
+      "func": "TEXT",
+      "f": "=TEXT(F1,\"[$-411]aaa\")",
+      "why": "★言語の指定つき。実物のセル書式は m/d\\([$-411]aaa\\) の形"
+    },
+    {
+      "id": "TEXT_weekday_in_date",
+      "func": "TEXT",
+      "f": "=TEXT(F1,\"m/d(aaa)\")"
+    },
+    {
+      "id": "TEXT_weekday_section",
+      "func": "TEXT",
+      "f": "=TEXT(F1,\"aaa;@\")",
+      "why": "★『正;負;ゼロ;文字』の区画つき。1区画目だけを使うか"
+    },
+    {
+      "id": "TEXT_weekday_en",
+      "func": "TEXT",
+      "f": "=TEXT(F1,\"ddd\")",
+      "why": "★日本語UIのExcelでも英語で出る(実測)。想像で日本語にしない"
+    },
+    {
+      "id": "TEXT_weekday_en_long",
+      "func": "TEXT",
+      "f": "=TEXT(F1,\"dddd\")"
+    },
+    {
+      "id": "TEXT_month_en",
+      "func": "TEXT",
+      "f": "=TEXT(F1,\"mmm\")"
+    },
+    {
+      "id": "TEXT_month_en_long",
+      "func": "TEXT",
+      "f": "=TEXT(F1,\"mmmm\")"
+    },
+    {
+      "id": "TEXT_month_initial",
+      "func": "TEXT",
+      "f": "=TEXT(F1,\"mmmmm\")"
+    },
+    {
+      "id": "TEXT_minute_vs_month",
+      "func": "TEXT",
+      "f": "=TEXT(46053.5,\"hh:mm\")",
+      "why": "★m は月か分か。時(h)の直後なら分。月にすると 12:01 になる"
+    },
+    {
+      "id": "TEXT_time_hms",
+      "func": "TEXT",
+      "f": "=TEXT(46053.5,\"h:mm:ss\")"
+    },
+    {
+      "id": "TEXT_date_and_time",
+      "func": "TEXT",
+      "f": "=TEXT(46053.5,\"m/d h:mm\")",
+      "why": "★同じ書式の中に 月の m と 分の mm が両方ある"
+    },
+    {
+      "id": "TEXT_time_ampm",
+      "func": "TEXT",
+      "f": "=TEXT(0.75,\"h:mm AM/PM\")",
+      "why": "★AM/PM が付くと h は12時間制になる(18時→6)"
+    },
+    {
+      "id": "TEXT_weekday_nested",
+      "func": "TEXT",
+      "f": "=LEN(TEXT(F1,\"aaaa\"))",
+      "why": "★入れ子でも効くか(プラグイン側に居る証拠)"
+    },
+    {
+      "id": "TEXT_era_wareki",
+      "func": "TEXT",
+      "f": "=TEXT(F1,\"ge.m.d\")",
+      "why": "★和暦は未対応。台帳(known-diffs)に載せて毎回レポートに出す"
+    },
+    {
+      "id": "TEXT_elapsed_hours",
+      "func": "TEXT",
+      "f": "=TEXT(F1,\"[h]:mm\")",
+      "why": "★経過時間[h]は未対応。台帳に載せて毎回レポートに出す"
     }
   ]
 }

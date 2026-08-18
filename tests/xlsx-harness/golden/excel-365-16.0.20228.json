@@ -2,7 +2,7 @@
   "meta": {
     "source": "real-excel",
     "product": "O365HomePremRetail",
-    "version": "16.0.20228.20124",
+    "version": "16.0.20228.20158",
     "platform": "x64",
     "updateChannel": "http://officecdn.microsoft.com/pr/492350f6-3a01-4f97-b9c0-c7c6ddf67d60",
     "uiLanguageId": 1041,
@@ -13,7 +13,7 @@
     "listSep": ",",
     "date1904": false,
     "formulaProperty": ".Formula (US-English) only; .FormulaLocal is NOT used",
-    "caseCount": 403,
+    "caseCount": 420,
     "volatileSkipped": [
       "TODAY_serial",
       "NOW_int_is_today"
@@ -1388,6 +1388,108 @@
       "t": "s",
       "v": "0|0",
       "text": "0|0"
+    },
+    "TEXT_weekday_ja": {
+      "f": "=TEXT(F1,\"aaa\")",
+      "t": "s",
+      "v": "土",
+      "text": "土"
+    },
+    "TEXT_weekday_ja_long": {
+      "f": "=TEXT(F1,\"aaaa\")",
+      "t": "s",
+      "v": "土曜日",
+      "text": "土曜日"
+    },
+    "TEXT_weekday_ja_locale": {
+      "f": "=TEXT(F1,\"[$-411]aaa\")",
+      "t": "s",
+      "v": "土",
+      "text": "土"
+    },
+    "TEXT_weekday_in_date": {
+      "f": "=TEXT(F1,\"m/d(aaa)\")",
+      "t": "s",
+      "v": "1/31(土)",
+      "text": "1/31(土)"
+    },
+    "TEXT_weekday_section": {
+      "f": "=TEXT(F1,\"aaa;@\")",
+      "t": "s",
+      "v": "土",
+      "text": "土"
+    },
+    "TEXT_weekday_en": {
+      "f": "=TEXT(F1,\"ddd\")",
+      "t": "s",
+      "v": "Sat",
+      "text": "Sat"
+    },
+    "TEXT_weekday_en_long": {
+      "f": "=TEXT(F1,\"dddd\")",
+      "t": "s",
+      "v": "Saturday",
+      "text": "Saturday"
+    },
+    "TEXT_month_en": {
+      "f": "=TEXT(F1,\"mmm\")",
+      "t": "s",
+      "v": "Jan",
+      "text": "Jan"
+    },
+    "TEXT_month_en_long": {
+      "f": "=TEXT(F1,\"mmmm\")",
+      "t": "s",
+      "v": "January",
+      "text": "January"
+    },
+    "TEXT_month_initial": {
+      "f": "=TEXT(F1,\"mmmmm\")",
+      "t": "s",
+      "v": "J",
+      "text": "J"
+    },
+    "TEXT_minute_vs_month": {
+      "f": "=TEXT(46053.5,\"hh:mm\")",
+      "t": "s",
+      "v": "12:00",
+      "text": "12:00"
+    },
+    "TEXT_time_hms": {
+      "f": "=TEXT(46053.5,\"h:mm:ss\")",
+      "t": "s",
+      "v": "12:00:00",
+      "text": "12:00:00"
+    },
+    "TEXT_date_and_time": {
+      "f": "=TEXT(46053.5,\"m/d h:mm\")",
+      "t": "s",
+      "v": "1/31 12:00",
+      "text": "1/31 12:00"
+    },
+    "TEXT_time_ampm": {
+      "f": "=TEXT(0.75,\"h:mm AM/PM\")",
+      "t": "s",
+      "v": "6:00 PM",
+      "text": "6:00 PM"
+    },
+    "TEXT_weekday_nested": {
+      "f": "=LEN(TEXT(F1,\"aaaa\"))",
+      "t": "n",
+      "v": 3.0,
+      "text": "3"
+    },
+    "TEXT_era_wareki": {
+      "f": "=TEXT(F1,\"ge.m.d\")",
+      "t": "s",
+      "v": "R8.1.31",
+      "text": "R8.1.31"
+    },
+    "TEXT_elapsed_hours": {
+      "f": "=TEXT(F1,\"[h]:mm\")",
+      "t": "s",
+      "v": "1105272:00",
+      "text": "1105272:00"
     },
     "SORT_bare": {
       "f": "=SORT(E1:E6)",

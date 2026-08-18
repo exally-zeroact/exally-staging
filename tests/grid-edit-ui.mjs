@@ -22,23 +22,37 @@ console.log('\n[grid-edit-ui] 本物の book.html で「書き間違えた式を
 const html = fs.readFileSync(path.join(ROOT, 'book.html'), 'utf8');
 
 /* canvas は jsdom に無いので、最低限の偽物を用意する（描画は見ない・落とさないため） */
+/* canvas は jsdom に無いので、偽物を用意する（描画は見ない・落とさないため）
+   ★弱い偽物だと、途中で例外が出て「その先の行が動かない」★（2026-08-18 実際に踏んだ:
+     window.showToast = notify; の行まで届かず、showToast is not defined になった。
+     関数の宣言は巻き上がるので insertRefAddr は在る＝★在るのに壊れている★が起きる）。
+   ⇒ ★何を呼ばれても落ちない偽物にする★ */
 const CANVAS_STUB = `
 (function(){
   var noop=function(){};
-  var ctx={ save:noop,restore:noop,beginPath:noop,moveTo:noop,lineTo:noop,stroke:noop,fill:noop,
-    fillRect:noop,strokeRect:noop,clearRect:noop,rect:noop,clip:noop,arc:noop,closePath:noop,
-    fillText:noop,strokeText:noop,setLineDash:noop,translate:noop,scale:noop,setTransform:noop,
-    measureText:function(){return {width:40};}, createLinearGradient:function(){return {addColorStop:noop};},
-    drawImage:noop, putImageData:noop, getImageData:function(){return {data:[]};} };
+  var ctx=new Proxy({}, { get:function(t,k){
+    if(k==='measureText') return function(){ return {width:40}; };
+    if(k==='canvas') return {width:800,height:600};
+    if(k==='getImageData') return function(){ return {data:[]}; };
+    if(k==='createLinearGradient'||k==='createPattern') return function(){ return {addColorStop:noop}; };
+    return noop;
+  }});
   HTMLCanvasElement.prototype.getContext=function(){ return ctx; };
 })();`;
 
-const dom = new JSDOM(html, {
+/* ★順番が要る（2026-08-18 実際に踏んだ）★
+   前は「HTMLをそのまま読ませる（＝インラインが先に動く）→ 後から外の部品を流す」だった。
+   すると ★インラインの中で 外の部品を触る行で例外が出て、その先が動かない★。
+   関数の宣言は巻き上がるので insertRefAddr は在るのに、
+   window.showToast = notify; の代入まで届かず ★在るのに壊れている★状態になった。
+   ⇒ ★インラインを外してから読ませ、外の部品 → インライン の順に流す★（他の検査と同じ形）。 */
+const dom = new JSDOM(html.replace(/<script[\s\S]*?<\/script>/g, ''), {
   runScripts: 'dangerously', url: 'http://localhost/', pretendToBeVisual: true,
   resources: undefined,
   beforeParse(w) {
     w.fetch = () => Promise.reject(new Error('no net'));
     w.scrollTo = () => {};
+    w.alert = () => {};
     w.matchMedia = w.matchMedia || (() => ({ matches: false, addListener() {}, removeListener() {}, addEventListener() {}, removeEventListener() {} }));
     w.requestAnimationFrame = (cb) => setTimeout(() => cb(Date.now()), 0);
     w.cancelAnimationFrame = () => {};
@@ -47,18 +61,41 @@ const dom = new JSDOM(html, {
 });
 const win = dom.window, doc = win.document;
 
-/* 外部scriptは jsdom が取りに行かないので、手で流し込む（?v= を落として実ファイルを読む） */
+const inject = (code) => { const el = doc.createElement('script'); el.textContent = code; doc.body.appendChild(el); };
+
+/* ① 外の部品（?v= を落として実ファイルを読む） */
 const srcs = [...html.matchAll(/<script src="([^"]+)"><\/script>/g)].map((m) => m[1].split('?')[0])
   .filter((s) => !/^https?:/.test(s));
 const loaded = [], skipped = [];
 for (const src of srcs) {
   const p = path.join(ROOT, src);
   if (!fs.existsSync(p)) { skipped.push(src + '(無い)'); continue; }
-  try { win.eval(fs.readFileSync(p, 'utf8')); loaded.push(src); }
+  try { inject(fs.readFileSync(p, 'utf8')); loaded.push(src); }
   catch (e) { skipped.push(src + '(' + String(e.message).slice(0, 40) + ')'); }
 }
+/* ② インライン */
+let inlineN = 0, inlineNG = 0;
+for (const m of html.matchAll(/<script(?![^>]*\ssrc=)[^>]*>([\s\S]*?)<\/script>/g)) {
+  inlineN++;
+  try { inject(m[1]); } catch (e) { inlineNG++; }
+}
+/* ③ ★読み込みの合図をもう一度 出す★
+   後から script を足す形だと DOMContentLoaded / load は ★もう終わっている★ので、
+   その中で登録される物（例 window.showToast = notify）が ★一生 動かない★。
+   2026-08-18 実際に踏んだ: insertRefAddr は在るのに showToast が無い状態になった。 */
+try { doc.dispatchEvent(new win.Event('DOMContentLoaded', { bubbles: true })); } catch (e) { /* 出せなくても続ける */ }
+try { win.dispatchEvent(new win.Event('load')); } catch (e) { /* 同上 */ }
+
 console.log('  読み込んだ部品: ' + loaded.join(' / '));
+console.log('  インラインの script: ' + inlineN + '本（流せなかった ' + inlineNG + '本）');
 if (skipped.length) console.log('  読めなかった部品: ' + skipped.join(' / '));
+
+/* ★本物のページが持っている物が、この入れ物でも本当に在るか先に確かめる★
+   在ると思い込んで動かすと「無いから落ちた」のか「作りが悪い」のか分からなくなる。 */
+T('★本物のページが持っている知らせの口(showToast)が在る', () => {
+  ok(typeof win.showToast === 'function',
+    'showToast が無い＝インラインの script が途中で止まっている（偽物が弱いか、本物が壊れている）');
+});
 
 T('lib/grid-refedit.js が入っている（window.GridRefEdit）', () => {
   ok(win.GridRefEdit && typeof win.GridRefEdit.refEditAt === 'function', 'GridRefEdit が無い');

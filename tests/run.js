@@ -25,6 +25,17 @@ const FILES = [
   'grid-edit-ui.mjs',        // ★本物の book.html を読み込んで、本物の insertRefAddr を動かす(画面の中で直せるか)
   'no-dead-ui.test.mjs',     // ★出来ていない物のボタン/画面を止める窓/中の言葉(STEP6・実装予定)を客に見せない
   ['no-dead-ui.test.mjs', '--self-test'],
+  'word-export-import.test.mjs',   // ★言い方を「書き出す↔読み込む」に固定
+  ['word-export-import.test.mjs', '--self-test'],
+  'excel-parity.test.mjs',         // ★Excelとの差を機械で数え直す(表が古くなったら赤)
+  ['excel-parity.test.mjs', '--self-test'],
+  'cross-sheet.test.mjs',          // ★他のシートを参照している合計が黙って小さくならないか(527,000が186,000)
+  'smart-rounding.test.mjs',       // ★計算の結果を14桁で丸めさせない(消費税が1円ズレる)
+  ['smart-rounding.test.mjs', '--self-test'],
+  'text-format.test.mjs',          // ★TEXT()の書式コード(曜日aaa)。実物730本がシリアル値のまま出ていた
+  ['text-format.test.mjs', '--self-test'],
+  'no-silent-optional.test.mjs',   // ★typeofで守って「無ければ黙って素通り」を許さない
+  ['no-silent-optional.test.mjs', '--self-test'],
   'book-open.test.mjs',      // ★受け取ったブックを「開いて何も変えずに保存」しても1バイトも変わらない(zip直編集の3本＋book-open.js)
   'diff-preview.test.mjs',   // ★直す前に必ず見せる(方針ver.6の②)。1直しで3シート18本 書き換わる
   ['diff-preview.test.mjs', '--self-test'],

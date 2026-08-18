@@ -158,6 +158,11 @@ T('★★setCell を実際に動かす（打つたびに例外が出ないこと
   const harness = `
     var sheets=[{name:'S',data:{},colW:{},rowH:{}}], activeSheet=0;
     var undoStack=[], redoStack=[], hf=null;
+    /* ★2026-08-18 追加: 最初の1直しの前に全シートの控えを取る仕掛け。
+       ここは「打っても例外が出ないか」を見る所なので、外の物は最小限そろえる。 */
+    var _baselineTaken=false, _editedCells={};
+    var BookOpen={ isOpened:function(){ return false; } };
+    function loadSheetIntoEngine(){}
     function _hfSid(){ return 0; }
     function setCellFormula(){ return null; }
     function evalFormula(v){ return v; }

@@ -187,32 +187,76 @@ function _fmtSections(fmt) {
 function _fmtLit(s) { return String(s).replace(/"([^"]*)"/g,'$1').replace(/\\(.)/g,'$1'); }
 function _fmtIsDate(fmt) {
   var f = String(fmt).replace(/"[^"]*"/g,'');
-  return /[ymdhs]/i.test(f) && !/[#0]/.test(f);
+  //  ★aaa/aaaa(曜日)だけの書式には y/m/d/h/s が1文字も無い。ここで拾わないと
+  //    数の書式として扱われ、どの形にも当てはまらず ★シリアル値がそのまま出る★
+  //    （司さんの実物 =TEXT(A5,"aaa") 730本が 46023 と表示されていた 2026-08-10 実測）
+  //  ★和暦(ggge / gge / ge)も日付の書式。元号の字はまだ訳せない(台帳 TEXT_era_wareki)が、
+  //    ここで拾わないと数の書式に落ちて ★シリアル値がそのまま答えになる★。
+  //    後ろに英字が続く物(General)は別物なので除く。
+  return (/[ymdhs]/i.test(f) || /a{3,4}/i.test(f) || /g{1,3}e(?![a-z])/i.test(f)) && !/[#0]/.test(f);
+}
+
+/* ★書式コードで使う名前は 実Excel(16.0.20228・日本語UI 1041)に1つずつ聞いて決めた（2026-08-10 実測）
+     aaa=土 / aaaa=土曜日 …日本語。★ddd=Sat / dddd=Saturday / mmm=Jan / mmmm=January / mmmmm=J
+     ＝日本語UIのExcelでも英語のまま出る（想像ではなく実測値）。 */
+var _WD_JA  = ['日','月','火','水','木','金','土'];
+var _WD_EN  = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+var _MON_EN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+/* 頭に付く言語の指定（[$-411] など）を外す。「その言語で出せ」の指示で、
+   何を出すかは a/d/m の側で決まる。実物の書式は m/d\([$-411]aaa\) の形。 */
+function _fmtStripLocale(fmt) { return String(fmt).replace(/\[\$-[0-9A-Za-z]+\]/g, ''); }
+
+/* 書式コードを かたまりに切る。引用符の中はまとめて1個（中の m を月にしないため） */
+var _FMT_TOK  = /"[^"]*"|am\/pm|a\/p|aaaa|aaa|dddd|ddd|mmmmm|mmmm|mmm|yyyy|yy|mm|m|dd|d|hh|h|ss|s|[\s\S]/gi;
+var _FMT_DATE_TOK = /^(yyyy|yy|mmmmm|mmmm|mmm|mm|m|dddd|ddd|dd|d|aaaa|aaa|hh|h|ss|s)$/i;
+/* ★m は「月」か「分」か★ = 時(h)のすぐ後、または秒(s)のすぐ前なら分。
+   実Excel実測: TEXT(46053.5,"hh:mm")="12:00"（月なら 12:01 になる）／ "mm:ss"="00:00" */
+function _fmtIsMinute(toks, i) {
+  var j, t;
+  for (j=i-1; j>=0; j--) { t=toks[j]; if(t.charAt(0)==='"') continue; if(_FMT_DATE_TOK.test(t)) return /^hh?$/i.test(t); }
+  for (j=i+1; j<toks.length; j++) { t=toks[j]; if(t.charAt(0)==='"') continue; if(_FMT_DATE_TOK.test(t)) return /^ss?$/i.test(t); }
+  return false;
 }
 // シリアル値 → 日付(1900系。Excelの1900年閏年バグ域=シリアル60以前は扱わない)
 function _fmtDate(serial, fmt) {
   var days = Math.floor(serial);
   var ms   = Math.round((serial - days) * 86400) * 1000;
   var d    = new Date(Date.UTC(1899,11,30) + days*86400000 + ms);
-  var Y=d.getUTCFullYear(), Mo=d.getUTCMonth()+1, D=d.getUTCDate();
+  var Y=d.getUTCFullYear(), Mo=d.getUTCMonth()+1, D=d.getUTCDate(), W=d.getUTCDay();
   var H=d.getUTCHours(), Mi=d.getUTCMinutes(), S=d.getUTCSeconds();
   var p2=function(v){ return (v<10?'0':'')+v; };
-  return String(fmt).replace(/"[^"]*"|yyyy|yy|mm|m|dd|d|hh|h|ss|s/gi, function(t){
-    if(t.charAt(0)==='"') return t.slice(1,-1);
-    switch(t.toLowerCase()){
-      case 'yyyy': return String(Y);
-      case 'yy':   return p2(Y%100);
-      case 'mm':   return p2(Mo);
-      case 'm':    return String(Mo);
-      case 'dd':   return p2(D);
-      case 'd':    return String(D);
-      case 'hh':   return p2(H);
-      case 'h':    return String(H);
-      case 'ss':   return p2(S);
-      case 's':    return String(S);
-      default:     return t;
+  var toks = String(fmt).match(_FMT_TOK) || [];
+  var ampm = toks.some(function(t){ return /^(am\/pm|a\/p)$/i.test(t); });
+  var Hd   = ampm ? (H%12===0 ? 12 : H%12) : H;   // 実測 TEXT(0.75,"h:mm AM/PM")="6:00 PM"
+  var out = '';
+  for (var i=0;i<toks.length;i++) {
+    var t = toks[i];
+    if (t.charAt(0)==='"') { out += t.slice(1,-1); continue; }
+    switch (t.toLowerCase()) {
+      case 'yyyy':  out += String(Y); break;
+      case 'yy':    out += p2(Y%100); break;
+      case 'mmmmm': out += _MON_EN[Mo-1].charAt(0); break;
+      case 'mmmm':  out += _MON_EN[Mo-1]; break;
+      case 'mmm':   out += _MON_EN[Mo-1].slice(0,3); break;
+      case 'mm':    out += _fmtIsMinute(toks,i) ? p2(Mi) : p2(Mo); break;
+      case 'm':     out += _fmtIsMinute(toks,i) ? String(Mi) : String(Mo); break;
+      case 'dddd':  out += _WD_EN[W]; break;
+      case 'ddd':   out += _WD_EN[W].slice(0,3); break;
+      case 'dd':    out += p2(D); break;
+      case 'd':     out += String(D); break;
+      case 'aaaa':  out += _WD_JA[W]+'曜日'; break;
+      case 'aaa':   out += _WD_JA[W]; break;
+      case 'hh':    out += p2(Hd); break;
+      case 'h':     out += String(Hd); break;
+      case 'ss':    out += p2(S); break;
+      case 's':     out += String(S); break;
+      case 'am/pm': out += (H<12?'AM':'PM'); break;
+      case 'a/p':   out += (H<12?'A':'P'); break;
+      default:      out += t;
     }
-  });
+  }
+  return out;
 }
 function _fmtNumber(num, fmt) {
   var secs = _fmtSections(fmt);
@@ -236,10 +280,10 @@ function _fmtNumber(num, fmt) {
   return sign + _fmtLit(pre) + parts.join('.') + pct + _fmtLit(suf);
 }
 function _applyTextFormat(num, fmt) {
-  var bare = String(fmt).replace(/"[^"]*"/g,'');
-  if(/m{3,}|d{3,}/i.test(bare)) return null;   // 月名/曜日名(mmm・dddd)は未対応=HFに任せる
-  if(_fmtIsDate(fmt)) return _fmtDate(num, fmt);
-  return _fmtNumber(num, fmt);
+  var f = _fmtStripLocale(fmt);
+  //  ★日付の書式は「正;負;ゼロ;文字」の1区画目だけを使う（実測 TEXT(46053,"aaa;@")="土"）
+  if(_fmtIsDate(f)) return _fmtDate(num, _fmtSections(f)[0]);
+  return _fmtNumber(num, f);
 }
 
 // --- 統計 ---

@@ -26,6 +26,7 @@
     "R18_aggregate_scope": "★AGGREGATE は集計番号 1〜17 に対応。18/19(PERCENTILE.EXC/QUARTILE.EXC)は未対応で #VALUE! を返す＝黙って近い値を出さない。使いたくなった時に真値ケースを足してから実装する",
     "R19_bare_array_functions": "★解決済(2026-08-02)。配列を返すプラグイン関数は arraySizeMethod で出力の大きさを申告しないと、素の呼び出しが #VALUE! になる。包んだ形(=SUM(SORT(...)))だけは動くので、入れ子のケースしか無かったハーネスでは見えなかった。★再発防止: tests/xlsx-harness/bare-form.test.mjs が「素の形のケースが無い関数」を赤にする。",
     "R20_case_shape_bias": "★テストのケースは『客が最初に書く形』から作る。包んだ形・入れ子は後から足す。P1/P2で入れ子ばかり直した副作用で、ケースも入れ子ばかりになり、一番自然な書き方(=SORT(A1:A10))が壊れていることに一致362という数字では気づけなかった(R19)。見張りは bare-form.test.mjs。例外は理由必須(今は揮発性の TODAY / NOW の2つだけ)。",
+    "R22_text_format_code_scope": "★TEXT の書式コードのうち、うちが読める字の範囲。読めない字は【そのまま素通り】して字面が残る（例 ge.m.d → ge.1.31）。2026-08-10 に 曜日(aaa/aaaa/ddd/dddd)・月名(mmm/mmmm/mmmmm)・言語指定([$-411])・区画(;)・時刻の分(hh:mm の mm)・AM/PM を実Excelの真値つきで実装した。★残っているのは 和暦(g/gg/ggg/e/ee) と 経過時間([h]/[m]/[s]) の2つ。どちらも実Excelの真値をケースに入れてあるので、レポートに毎回並ぶ。",
     "R21_duplicate_libs": "★同じ物を2箇所に置かない。特に法定データ。ルートの shakaihoken-hyo.js が kyuyo/lib/ 版と76行違っていた(古い方が残っていた)。誰も読んでいなかったので実害は出ていないが、grepして古い方を掴めば社保が静かにずれる。『最賃38県が誤値』の事故と同じ形。消すだけでなく tests/no-duplicate-libs.test.mjs で二度と生えないようにした。"
   },
   "nesting_pending": {
@@ -134,6 +135,28 @@
       "exally": "2026-07-31",
       "excel365": "46234",
       "note": "『2026-07-31』と打っても日付にならない=日付計算に使えない"
+    },
+    {
+      "id": "TEXT_era_wareki",
+      "func": "TEXT",
+      "root": "R22_text_format_code_scope",
+      "class": "A",
+      "due": "2026-09-30",
+      "money_impact": false,
+      "exally": "ge.1.31",
+      "excel365": "R8.1.31",
+      "note": "★和暦(g=R / gg=令 / ggg=令和 / e=年 / ee=2桁)は未対応。元号の切り替わり日の表が要るので、真値ケースを足してから実装する。今は書式の字がそのまま残る＝シリアル値が出るよりはマシだが、Excelとは違う"
+    },
+    {
+      "id": "TEXT_elapsed_hours",
+      "func": "TEXT",
+      "root": "R22_text_format_code_scope",
+      "class": "A",
+      "due": "2026-09-30",
+      "money_impact": false,
+      "exally": "[0]:00",
+      "excel365": "1105272:00",
+      "note": "★経過時間 [h]/[m]/[s] は未対応。24時間を超える合計時間の書き方で、勤怠の合計で使われる。角括弧を書式の指示として読んでいないため [0] と出る"
     }
   ],
   "spill_note": {
@@ -162,7 +185,7 @@
   "version_scope": {
     "class": "C",
     "note": "★『版対応』が今どこまでを担保しているかの正直な線引き。聞かれた時にこの項目をそのまま見せられるように書く。",
-    "golden_source": "実Excel 365 / 16.0.20228.20124（O365HomePremRetail・x64・日本語1041・国別81・小数点'.'・桁区切り','・1900日付系）。★goldenはこの1版だけ。",
+    "golden_source": "実Excel 365 / 16.0.20228.20158（O365HomePremRetail・x64・日本語1041・国別81・小数点'.'・桁区切り','・1900日付系）。★goldenはこの1版だけ。2026-08-10 に Excel が 16.0.20228.20124 → .20158 に上がったので全ケースを取り直した：★既存403ケースは値も表示文字(text)も1件残らず同一★（＝Excel側の答えは変わっていない）。差は新設した17ケースだけ。",
     "verified": [
       "この1版の実Excelが出した値と、うちのグリッドの答えが 362件中 362件一致（compare.mjs）",
       "うちが書き出した xlsx を同じ実Excelで開いて再計算し 358/362 一致（差4件は file_roundtrip_known）",
