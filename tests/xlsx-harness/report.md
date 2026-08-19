@@ -1,7 +1,7 @@
 # 版対応 検証ハーネス レポート
 
-- 生成日: 2026-08-06
-- 真値: **O365HomePremRetail 16.0.20228.20124** (x64 / Current Channel)
+- 生成日: 2026-08-19
+- 真値: **O365HomePremRetail 16.0.20228.20158** (x64 / Current Channel)
 - ロケール: UI=1041 / 国=81 / 小数点='.' 桁区切り=',' / 日付システム=1900
 - 計算経路: **book.html の setCellFormula(本番と同じ)**。生の HyperFormula ではない。
 
@@ -12,12 +12,12 @@
 
 | 判定 | 件数 |
 |---|---|
-| 一致 | 403 |
-| 不一致(既知) | 0 |
+| 一致 | 418 |
+| 不一致(既知) | 2 |
 | 不一致(新規) | 0 |
 | 未検証 | 0 |
 | 揮発性 | 2 |
-| **合計** | 405 |
+| **合計** | 422 |
 
 ※ 「未検証」は緑ではない。その版の真値がまだ無い、という意味。
 
@@ -25,7 +25,7 @@
 
 | 版 | 状態 |
 |---|---|
-| Excel 365 (16.0.20228.20124) | **真値**（このリポジトリの基準） |
+| Excel 365 (16.0.20228.20158) | **真値**（このリポジトリの基準） |
 | LibreOffice | **未検証**（goldenが無い。CIの別ジョブで生成する） |
 | Excel 2016 / 2019 / Mac | **未検証**（実機が無い。golden/RECIPE.md の手順でその環境で1回走らせれば埋まる） |
 
@@ -35,7 +35,7 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 
 | ケース | 式 | 見方 | 期待 | 実際 | 判定 |
 |---|---|---|---|---|---|
-| TODAY_serial | `=TODAY()*1` | 実行時点の日付シリアルと一致するか | 46240 | 46240 | OK |
+| TODAY_serial | `=TODAY()*1` | 実行時点の日付シリアルと一致するか | 46253 | 46253 | OK |
 | NOW_int_is_today | `=INT(NOW())-TODAY()` | NOWの整数部がTODAYと一致するか | 0 | 0 | OK |
 
 ## 不一致（新規）＝赤
@@ -44,7 +44,10 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 
 ## 不一致（既知＝台帳にあり・緑だが必ず全件出す）
 
-なし。
+| 区分 | 関数 | ケース | 式 | Exally | Excel真値 | 中身と期限 |
+|---|---|---|---|---|---|---|
+| A | TEXT | TEXT_era_wareki | `=TEXT(F1,"ge.m.d")` | ge.1.31 | R8.1.31 | ★和暦(g=R / gg=令 / ggg=令和 / e=年 / ee=2桁)は未対応。元号の切り替わり日の表が要るので、真値ケースを足してから実装する。今は書式の字がそのまま残る＝シリアル値が出るよりはマシだが、Excelとは違う / 期限 2026-09-30 |
+| A | TEXT | TEXT_elapsed_hours | `=TEXT(F1,"[h]:mm")` | [0]:00 | 1105272:00 | ★経過時間 [h]/[m]/[s] は未対応。24時間を超える合計時間の書き方で、勤怠の合計で使われる。角括弧を書式の指示として読んでいないため [0] と出る / 期限 2026-09-30 |
 
 ## 入力の型が保たれるか（別枠）
 
@@ -54,7 +57,7 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 | ケース | 打ち込んだ値 | Exally | Excel(標準書式セル) | Excel型 | 判定 | 中身 |
 |---|---|---|---|---|---|---|
 | INPUT_typed_0007 | `0007` | 7 | 7 | n | 一致 |  |
-| INPUT_typed_comma | `1,234` | 1,234 | 1234 | n | 不一致(既知) | 『1,234』と打っても数値にならない=以降の合計に入らない。グリッドの入力処理(book.html)側の話なので関数プラグインでは直らない |
+| INPUT_typed_comma | `1,234` | 1234 | 1234 | n | 一致 | 『1,234』と打っても数値にならない=以降の合計に入らない。グリッドの入力処理(book.html)側の話なので関数プラグインでは直らない |
 | INPUT_typed_datelike | `2026-07-31` | 46234 | 46234 | n | 一致 | 『2026-07-31』と打っても日付にならない=日付計算に使えない |
 | INPUT_typed_code | `007-1234` | 007-1234 | 007-1234 | s | 一致 |  |
 
@@ -68,7 +71,7 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 ## 経路の固定（将来 生HF に落ちたら気付くための錠）
 
 - 独自層(_jsComputeFormula)が答えたケース: **0件**
-- 生HFと本番経路で答えが違うケース: **215件** … この差が消えたら「素通りに落ちた」ということ
+- 生HFと本番経路で答えが違うケース: **227件** … この差が消えたら「素通りに落ちた」ということ
 - 独自層の入口: {"jsSetCount":1,"entryPoints":1,"pluginRegistered":true,"pluginCount":43}（1つだけであること）
 
 ## 全ケース
@@ -118,7 +121,7 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 | SUM | SUM_range | `=SUM(E1:E6)` | 2100 | 2100 | 未検証 | 2100 | 一致 |  |
 | SUM | SUM_text_ignored | `=SUM(A1:B8)` | 3501.775 | 3501.775 | 未検証 | 3501.775 | 一致 |  |
 | SUM | SUM_blank | `=SUM(G1:G3)` | 0 | 0 | 未検証 | 0 | 一致 |  |
-| SUM | SUM_float | `=SUM(A4,0.2)` | 0.3 | 0.30000000000000004 | 未検証 | 0.3 | 一致 |  |
+| SUM | SUM_float | `=SUM(A4,0.2)` | 0.30000000000000004 | 0.30000000000000004 | 未検証 | 0.3 | 一致 |  |
 | SUM | SUM_mixed_args | `=SUM(E1:E3,100,A1)` | 1700 | 1700 | 未検証 | 1700 | 一致 |  |
 | SUMPRODUCT | SUMPRODUCT_2range | `=SUMPRODUCT(C1:C6,E1:E6)` | 97100 | 97100 | 未検証 | 97100 | 一致 |  |
 | SUMPRODUCT | SUMPRODUCT_1range | `=SUMPRODUCT(E1:E6)` | 2100 | 2100 | 未検証 | 2100 | 一致 |  |
@@ -303,6 +306,23 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 | TEXTJOIN | TEXTJOIN_keep | `=TEXTJOIN("\|",FALSE,G1:G3)` | \|0\|0 | \|0\|0 | 未検証 | #NAME? | 一致 |  |
 | TEXTJOIN | TEXTJOIN_nums | `=TEXTJOIN(",",TRUE,E1:E6)` | 100,200,300,400,500,600 | 100,200,300,400,500,600 | 未検証 | #NAME? | 一致 |  |
 | TEXTJOIN | TEXTJOIN_blank_skip | `=TEXTJOIN("\|",TRUE,G1:G3)` | 0\|0 | 0\|0 | 未検証 | #NAME? | 一致 |  |
+| TEXT | TEXT_weekday_ja | `=TEXT(F1,"aaa")` | 土 | 土 | 未検証 | aaa | 一致 |  |
+| TEXT | TEXT_weekday_ja_long | `=TEXT(F1,"aaaa")` | 土曜日 | 土曜日 | 未検証 | aaaa | 一致 |  |
+| TEXT | TEXT_weekday_ja_locale | `=TEXT(F1,"[$-411]aaa")` | 土 | 土 | 未検証 | [$-411]aaa | 一致 |  |
+| TEXT | TEXT_weekday_in_date | `=TEXT(F1,"m/d(aaa)")` | 1/31(土) | 1/31(土) | 未検証 | 1/31(aaa) | 一致 |  |
+| TEXT | TEXT_weekday_section | `=TEXT(F1,"aaa;@")` | 土 | 土 | 未検証 | aaa;@ | 一致 |  |
+| TEXT | TEXT_weekday_en | `=TEXT(F1,"ddd")` | Sat | Sat | 未検証 | 3131 | 一致 |  |
+| TEXT | TEXT_weekday_en_long | `=TEXT(F1,"dddd")` | Saturday | Saturday | 未検証 | 3131 | 一致 |  |
+| TEXT | TEXT_month_en | `=TEXT(F1,"mmm")` | Jan | Jan | 未検証 | 010 | 一致 |  |
+| TEXT | TEXT_month_en_long | `=TEXT(F1,"mmmm")` | January | January | 未検証 | 0100 | 一致 |  |
+| TEXT | TEXT_month_initial | `=TEXT(F1,"mmmmm")` | J | J | 未検証 | 01000 | 一致 |  |
+| TEXT | TEXT_minute_vs_month | `=TEXT(46053.5,"hh:mm")` | 12:00 | 12:00 | 未検証 | 12:00 | 一致 |  |
+| TEXT | TEXT_time_hms | `=TEXT(46053.5,"h:mm:ss")` | 12:00:00 | 12:00:00 | 未検証 | 12:00:00 | 一致 |  |
+| TEXT | TEXT_date_and_time | `=TEXT(46053.5,"m/d h:mm")` | 1/31 12:00 | 1/31 12:00 | 未検証 | 1/31 12:00 | 一致 |  |
+| TEXT | TEXT_time_ampm | `=TEXT(0.75,"h:mm AM/PM")` | 6:00 PM | 6:00 PM | 未検証 | 6:00 PM | 一致 |  |
+| TEXT | TEXT_weekday_nested | `=LEN(TEXT(F1,"aaaa"))` | 3 | 3 | 未検証 | 4 | 一致 |  |
+| TEXT | TEXT_era_wareki | `=TEXT(F1,"ge.m.d")` | ge.1.31 | R8.1.31 | 未検証 | ge.1.31 | 不一致(既知) | A |
+| TEXT | TEXT_elapsed_hours | `=TEXT(F1,"[h]:mm")` | [0]:00 | 1105272:00 | 未検証 | [0]:00 | 不一致(既知) | A |
 | SORT | SORT_bare | `=SORT(E1:E6)` | 100 | 100 | 未検証 | #NAME? | 一致 |  |
 | UNIQUE | UNIQUE_bare | `=UNIQUE(D1:D6)` | A | A | 未検証 | #NAME? | 一致 |  |
 | FILTER | FILTER_bare | `=FILTER(E1:E6,D1:D6="A")` | 100 | 100 | 未検証 | 100 | 一致 |  |
@@ -451,21 +471,21 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 | MODE.SNGL | MODE_sngl | `=MODE.SNGL(I1:I6)` | 4 | 4 | 未検証 | #NAME? | 一致 |  |
 | MODE | MODE_nested | `=ROUND(MODE(I1:I6),0)` | 4 | 4 | 未検証 | #NAME? | 一致 |  |
 | TRIMMEAN | TRIMMEAN_bare | `=TRIMMEAN(I1:I6,0.4)` | 4.25 | 4.25 | 未検証 | #NAME? | 一致 |  |
-| TRIMMEAN | TRIMMEAN_zero | `=TRIMMEAN(I1:I6,0)` | 4.66666666666667 | 4.666666666666667 | 未検証 | #NAME? | 一致 |  |
+| TRIMMEAN | TRIMMEAN_zero | `=TRIMMEAN(I1:I6,0)` | 4.666666666666667 | 4.666666666666667 | 未検証 | #NAME? | 一致 |  |
 | TRIMMEAN | TRIMMEAN_nested | `=ROUND(TRIMMEAN(I1:I6,0.4),2)` | 4.25 | 4.25 | 未検証 | #NAME? | 一致 |  |
 | PERCENTRANK | PERCENTRANK_bare | `=PERCENTRANK(I1:I6,4)` | 0.2 | 0.2 | 未検証 | #NAME? | 一致 |  |
 | PERCENTRANK | PERCENTRANK_top | `=PERCENTRANK(I1:I6,9)` | 1 | 1 | 未検証 | #NAME? | 一致 |  |
 | PERCENTRANK | PERCENTRANK_sig | `=PERCENTRANK(I1:I6,4,5)` | 0.2 | 0.2 | 未検証 | #NAME? | 一致 |  |
 | PERCENTRANK | PERCENTRANK_nested | `=ROUND(PERCENTRANK(I1:I6,4)*100,0)` | 20 | 20 | 未検証 | #NAME? | 一致 |  |
-| KURT | KURT_bare | `=KURT(I1:I6)` | 3.20791195716835 | 3.2079119571683474 | 未検証 | #NAME? | 一致 |  |
+| KURT | KURT_bare | `=KURT(I1:I6)` | 3.2079119571683474 | 3.2079119571683474 | 未検証 | #NAME? | 一致 |  |
 | KURT | KURT_nested | `=ROUND(KURT(I1:I6),4)` | 3.2079 | 3.2079 | 未検証 | #NAME? | 一致 |  |
-| INTERCEPT | INTERCEPT_bare | `=INTERCEPT(E1:E6,C1:C6)` | 213.3608815427 | 213.36088154269973 | 未検証 | #NAME? | 一致 |  |
+| INTERCEPT | INTERCEPT_bare | `=INTERCEPT(E1:E6,C1:C6)` | 213.36088154269973 | 213.36088154269973 | 未検証 | #NAME? | 一致 |  |
 | INTERCEPT | INTERCEPT_nested | `=ROUND(INTERCEPT(E1:E6,C1:C6),4)` | 213.3609 | 213.3609 | 未検証 | #NAME? | 一致 |  |
-| FORECAST | FORECAST_bare | `=FORECAST(30,E1:E6,C1:C6)` | 345.592286501377 | 345.59228650137743 | 未検証 | #NAME? | 一致 |  |
-| FORECAST.LINEAR | FORECAST_linear | `=FORECAST.LINEAR(30,E1:E6,C1:C6)` | 345.592286501377 | 345.59228650137743 | 未検証 | #NAME? | 一致 |  |
+| FORECAST | FORECAST_bare | `=FORECAST(30,E1:E6,C1:C6)` | 345.59228650137743 | 345.59228650137743 | 未検証 | #NAME? | 一致 |  |
+| FORECAST.LINEAR | FORECAST_linear | `=FORECAST.LINEAR(30,E1:E6,C1:C6)` | 345.59228650137743 | 345.59228650137743 | 未検証 | #NAME? | 一致 |  |
 | FORECAST | FORECAST_nested | `=ROUND(FORECAST(30,E1:E6,C1:C6),2)` | 345.59 | 345.59 | 未検証 | #NAME? | 一致 |  |
-| IRR | IRR_bare | `=IRR(J1:J5)` | 0.153221378771815 | 0.15322137877181552 | 未検証 | #NAME? | 一致 |  |
-| IRR | IRR_guess | `=IRR(J1:J5,0.2)` | 0.153221378771815 | 0.15322137876909325 | 未検証 | #NAME? | 一致 |  |
+| IRR | IRR_bare | `=IRR(J1:J5)` | 0.15322137877181535 | 0.15322137877181552 | 未検証 | #NAME? | 一致 |  |
+| IRR | IRR_guess | `=IRR(J1:J5,0.2)` | 0.15322137877181524 | 0.15322137876909325 | 未検証 | #NAME? | 一致 |  |
 | IRR | IRR_nested | `=ROUND(IRR(J1:J5)*100,2)` | 15.32 | 15.32 | 未検証 | #NAME? | 一致 |  |
 | PERMUT | PERMUT_bare | `=PERMUT(6,3)` | 120 | 120 | 未検証 | #NAME? | 一致 |  |
 | PERMUT | PERMUT_k0 | `=PERMUT(6,0)` | 1 | 1 | 未検証 | #NAME? | 一致 |  |
