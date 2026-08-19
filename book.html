@@ -567,11 +567,31 @@ box-shadow:0 -2px 10px rgba(30,60,40,0.06);
 
 /* ★スマホの幅で頭が詰まるのを止める（2026-08-09 iPhone 390px で実際に詰まった）★
    「Excelを開く」を足したら、ロゴが切れて 365 の切替が画面の外へ出た。
-   狭い時は ★絵文字だけにして、開いているファイル名は隠す★（名前は保存の時のお知らせにも出る）。 */
+
+   ★2026-08-19 直し：狭い時に「絵だけ」にしていたのが間違いだった★
+     司さんのiPhoneで 上の3つが 📂 / 💾 / 📊365 の ★絵だけ★ になっていて、
+     せっかく言い方を「Excelを読み込む／Excelに書き出す」に揃えたのに ★字が1文字も出ていなかった★。
+     💾（フロッピー）は今の人に通じないし、📂 も「開く」か「読み込む」か分からない。
+   ⇒★字は消さない。入らないなら 絵の方をやめて 字を残す★
+     （tests/mobile-labels.test.mjs が、幅を狭くして字が消えたら赤にする） */
 @media (max-width: 560px) {
-  #openBookBtn .hdr-lb, #saveBookBtn .hdr-lb { display: none; }
-  #openBookBtn, #saveBookBtn { padding: 4px 10px; }
+  /* ★絵をやめる（字の場所を空ける）★ */
+  #openBookBtn .hdr-ic, #saveBookBtn .hdr-ic, #bookVerBtn .hdr-ic { display: none; }
+  /* ★長い方の言葉「Excelを／Excelに」だけ落として、動きの言葉は必ず残す★
+     （版の切替は「Excel版 365」で入る＝実測 105px。幅320でもはみ出さない） */
+  #openBookBtn .hdr-lb-long, #saveBookBtn .hdr-lb-long { display: none; }
+  /* ★padding はタグに直書き（style=）してあるので !important でないと効かない★
+     ＝実測して気づいた（78pxのまま動かなかった） */
+  #openBookBtn, #saveBookBtn, #bookVerBtn { padding: 4px 9px !important; }
   #openedFileLabel { display: none; }
+  .exally-logo-ja { display: none; }          /* ロゴの読み仮名を畳んで 字の場所にする */
+  #header { padding: 0 10px; }
+}
+/* ★一番狭い機種（320px＝iPhone SE 第1世代）★ 字は消さないまま ロゴが切れるのを止める
+   （実測: 直す前は「Exally」57px が 27px の枠に押し込まれて切れていた） */
+@media (max-width: 360px) {
+  .exally-logo-en { font-size: 16px; }
+  #openBookBtn, #saveBookBtn, #bookVerBtn { padding: 4px 7px !important; }
 }
 #sheet-tabs {
 position:relative;
@@ -611,6 +631,9 @@ text-decoration:none;
 .book-bn-i.active{color:#2E4038;}
 .book-bn-i.active .book-bn-lb{font-weight:700;}
 .book-bn-i.book-bn-disabled{cursor:not-allowed;opacity:0.45;pointer-events:none;}
+/* ★まだ出来ていない物★ 薄いのは同じだが ★押せる★＝押したら理由が出る
+   （2026-08-19 司さん：薄いだけで理由が出ていない＝何が起きたか分からない） */
+.book-bn-i.book-bn-notyet{opacity:0.45;cursor:pointer;}
 .book-bn-ic{font-size:15px;line-height:1;display:inline-flex;align-items:center;justify-content:center;height:16px;}
 .book-bn-ic svg{width:15px;height:15px;}
 .book-bn-lb{font-size:9px;font-weight:700;letter-spacing:-0.3px;margin-top:2px;white-space:nowrap;color:inherit;}
@@ -2789,7 +2812,7 @@ function detectTimePattern(values){
 </div>
 
 <div id="header">
-  <div style="display:flex;align-items:baseline;gap:5px;flex:1;">
+  <div style="display:flex;align-items:baseline;gap:5px;flex:1 1 auto;min-width:0;overflow:hidden;">
     <span class="exally-logo-en">Exally</span>
     <span class="exally-logo-ja">エクサリー</span>
   </div>
@@ -2804,13 +2827,13 @@ function detectTimePattern(values){
     <button class="book-header-nav-item" onclick="openBookVerModal()" title="Excelバージョン">📊</button>
     <button class="book-header-nav-item" onclick="location.href='chat.html?tab=settings'" title="設定">⚙️</button>
   </nav>
-  <div style="display:flex;align-items:center;gap:6px;">
+  <div style="display:flex;align-items:center;gap:6px;flex:0 0 auto;">
     <!-- ★受け取り口★ 元のファイルは預からない。開いた瞬間に作業用の控えを持ち、保存はそれを書き換える -->
     <input type="file" id="bookFileInput" accept=".xlsx,.xlsm,.xlsb,.xls" style="display:none" onchange="onPickBookFile(this)">
-    <button id="openBookBtn" onclick="document.getElementById('bookFileInput').click()" style="background:#F0FAF4;border:1px solid #C8ECD8;color:#3D9E72;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;" title="Excelファイルを読み込む（.xlsx / .xlsm / .xlsb）">📂 <span class="hdr-lb">Excelを読み込む</span></button>
+    <button id="openBookBtn" onclick="document.getElementById('bookFileInput').click()" style="background:#F0FAF4;border:1px solid #C8ECD8;color:#3D9E72;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;" title="Excelファイルを読み込む（.xlsx / .xlsm / .xlsb）"><span class="hdr-ic">📂</span> <span class="hdr-lb"><span class="hdr-lb-long">Excelを</span>読み込む</span></button>
     <span id="openedFileLabel" style="font-size:11px;color:#3D9E72;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
-    <button id="saveBookBtn" onclick="saveXlsx()" style="background:#52B788;border:1px solid #52B788;color:#fff;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;" title="Excelファイルとして書き出す（.xlsx / .xlsm / .xlsb）">💾 <span class="hdr-lb">Excelに書き出す</span></button>
-    <button onclick="openBookVerModal()" style="background:#F0FAF4;border:1px solid #C8ECD8;color:#3D9E72;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px;" title="Excelバージョン切替">📊 <span id="bookVerLabel">365</span> ▼</button>
+    <button id="saveBookBtn" onclick="saveXlsx()" style="background:#52B788;border:1px solid #52B788;color:#fff;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;" title="Excelファイルとして書き出す（.xlsx / .xlsm / .xlsb）"><span class="hdr-ic">💾</span> <span class="hdr-lb"><span class="hdr-lb-long">Excelに</span>書き出す</span></button>
+    <button id="bookVerBtn" onclick="openBookVerModal()" style="background:#F0FAF4;border:1px solid #C8ECD8;color:#3D9E72;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;" title="相手が使っているExcelの版を選ぶ"><span class="hdr-ic">📊</span> <span class="hdr-lb"><span class="hdr-lb-long">Excel</span>版 <span id="bookVerLabel">365</span></span> ▼</button>
   </div>
 </div>
 
@@ -6908,7 +6931,7 @@ document.addEventListener('DOMContentLoaded', function(){ checkRequiredFns(); })
     <button class="book-bn-i" onclick="location.href='chat.html'"><span class="book-bn-ic">🤖</span><span class="book-bn-lb">AI</span></button>
     <button class="book-bn-i active"><span class="book-bn-ic"><svg><use href="#grid-sm"/></svg></span><span class="book-bn-lb">ブック</span></button>
     <button class="book-bn-i" onclick="location.href='template.html'"><span class="book-bn-ic"><svg><use href="#template-sm"/></svg></span><span class="book-bn-lb">テンプレ</span></button>
-    <button class="book-bn-i book-bn-disabled"><span class="book-bn-ic"><svg><use href="#stamp-sm"/></svg></span><span class="book-bn-lb">ハンコ</span></button>
+    <button class="book-bn-i book-bn-notyet" onclick="showToast('電子ハンコは まだ出来ていません（準備中）')"><span class="book-bn-ic"><svg><use href="#stamp-sm"/></svg></span><span class="book-bn-lb">ハンコ</span></button>
     <button class="book-bn-i" onclick="location.href='chat.html?tab=book'"><span class="book-bn-ic"><svg><use href="#book-sm"/></svg></span><span class="book-bn-lb">数式帳</span></button>
     <button class="book-bn-i" onclick="location.href='chat.html?tab=quiz'"><span class="book-bn-ic">🎯</span><span class="book-bn-lb">クイズ</span></button>
     <button class="book-bn-i" onclick="location.href='chat.html?tab=settings'"><span class="book-bn-ic">⚙️</span><span class="book-bn-lb">設定</span></button>

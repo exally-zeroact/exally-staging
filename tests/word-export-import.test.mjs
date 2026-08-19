@@ -126,6 +126,14 @@ if (process.argv.includes('--self-test')) {
     if (s.indexOf('Excelを開く') >= 0) throw new Error('CSSの注記まで見ている');
     if (s.indexOf('Excelを読み込む') < 0) throw new Error('客に出る字を落とした');
   });
+  T('★言葉をタグで割っても 人が読む字として見つけられる（2026-08-19 実際に踏んだ）', () => {
+    const 剥がす = (h) => h.replace(/<script[\s\S]*?<\/script>/g, ' ').replace(/<style[\s\S]*?<\/style>/g, ' ').replace(/<[^>]+>/g, '');
+    const 割れた = '<button><span class="hdr-ic">📂</span> <span class="hdr-lb"><span class="hdr-lb-long">Excelを</span>読み込む</span></button>';
+    if (剥がす(割れた).indexOf('Excelを読み込む') < 0) throw new Error('タグを外しても繋がらない＝実際の画面を見ていない');
+    /* ★本当に字が無くなったら見つからない事も確かめる（何でも通す判定にしない）★ */
+    const 絵だけ = '<button><span class="hdr-ic">📂</span></button>';
+    if (剥がす(絵だけ).indexOf('Excelを読み込む') >= 0) throw new Error('字が無いのに見つけた事になっている');
+  });
   T('★禁じる言い方の一覧が空になっていない', () => { if (BAD.length < 3) throw new Error('一覧が痩せている'); });
   console.log('\n  ── 実測 ── 確かめた ' + (pass + fail) + ' 通り / 通った ' + pass + ' 通り');
   console.log('\n' + pass + ' passed, ' + fail + ' failed');
@@ -156,10 +164,19 @@ T('★数えた物が0本になっていない（検査が空振りしていな�
 });
 /* ★正しい言い方が実際に使われている事も見る（消しただけで言い換えていない、を防ぐ） */
 T('★「Excelを読み込む」「Excelに書き出す」が実際に画面に出ている', () => {
-  const html = fs.readdirSync(ROOT).filter(f => /\.html$/i.test(f))
-    .map(f => stripComments(fs.readFileSync(path.join(ROOT, f), 'utf8'))).join('\n');
-  if (html.indexOf('Excelを読み込む') < 0) throw new Error('「Excelを読み込む」が画面に無い');
-  if (html.indexOf('Excelに書き出す') < 0) throw new Error('「Excelに書き出す」が画面に無い');
+  /* ★タグを外してから探す★（2026-08-19）
+     スマホで字が消えていたのを直した時、言葉を
+       <span class="hdr-lb-long">Excelを</span>読み込む
+     のように ★タグで割った★。人が読む字は同じでも、生のHTMLを探すと見つからない。
+     ⇒ ★人が読む字＝タグを外した後の字★ で見る。 */
+  const 読める字 = fs.readdirSync(ROOT).filter(f => /\.html$/i.test(f))
+    .map(f => stripComments(fs.readFileSync(path.join(ROOT, f), 'utf8')))
+    .join('\n')
+    .replace(/<script[\s\S]*?<\/script>/g, ' ')   // 中の言葉は画面の字ではない
+    .replace(/<style[\s\S]*?<\/style>/g, ' ')
+    .replace(/<[^>]+>/g, '');                     // タグを外す＝割れた言葉が繋がる
+  if (読める字.indexOf('Excelを読み込む') < 0) throw new Error('「Excelを読み込む」が画面に無い');
+  if (読める字.indexOf('Excelに書き出す') < 0) throw new Error('「Excelに書き出す」が画面に無い');
 });
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

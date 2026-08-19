@@ -25,6 +25,8 @@ const FILES = [
   'grid-edit-ui.mjs',        // ★本物の book.html を読み込んで、本物の insertRefAddr を動かす(画面の中で直せるか)
   'excel-shortcuts.test.mjs',             // ★Excelと同じキー割り当てを 本物の画面に実際に押して確かめる(真値は実Excelから機械で取った)
   ['excel-shortcuts.test.mjs', '--self-test'],
+  'mobile-labels.test.mjs',               // ★スマホの幅で 字を消して「絵だけ」にするのを禁じる(司さんのiPhoneで 📂💾📊 の絵だけになっていた)
+  ['mobile-labels.test.mjs', '--self-test'],
   'no-dead-ui.test.mjs',     // ★出来ていない物のボタン/画面を止める窓/中の言葉(STEP6・実装予定)を客に見せない
   ['no-dead-ui.test.mjs', '--self-test'],
   'word-export-import.test.mjs',   // ★言い方を「書き出す↔読み込む」に固定
