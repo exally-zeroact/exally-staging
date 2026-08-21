@@ -1169,26 +1169,27 @@ background:#FFE066 !important;
 }
 </style>
 
-<script src="hyperformula.full.min.js?v=2700a75f"></script>
+<script src="hyperformula.full.min.js?v=171c8216"></script>
 
-<script src="exally-formula.js?v=2700a75f"></script>
+<script src="exally-formula.js?v=171c8216"></script>
 <!-- グリッド→xlsx の変換と「落ちる物」の警告(純関数・軽い)。SheetJS本体(930KB)と lib/xlsx-io.js は
      初回の「Excelに書き出す」で初めて読み込む＝グリッドの表示を重くしない -->
-<script src="js/file-out.js?v=2700a75f"></script>
+<script src="js/file-out.js?v=171c8216"></script>
 <!-- ★打ち込んだ文字の解釈（1,234 を数にする）。★計算側も書き出し側も この1本を呼ぶ★
      grid-xlsx.js より先に読む（grid-xlsx.js が読み込み時に掴む） -->
-<script src="lib/typed-value.js?v=2700a75f"></script>
-<script src="lib/grid-xlsx.js?v=2700a75f"></script>
+<script src="lib/typed-value.js?v=171c8216"></script>
+<script src="lib/grid-xlsx.js?v=171c8216"></script>
   <!-- ★式の中の参照を「カーソルの位置で」直せるようにする★
        2026-08-06 司さんが実機で踏んだ: 「=B1+30」の B1 を直そうと A1 を触ると
        「=B1+30A1」になり ★B1 を直す手段が無かった★。テスト線では直っていたが
        ★本番には運ばれていなかった★（2026-08-18 差を数えて見つけた）。 -->
-  <script src="lib/grid-refedit.js?v=2700a75f"></script>
-<script src="lib/autosum.js?v=2700a75f"></script>
-<script src="lib/grid-sort.js?v=2700a75f"></script>
-<script src="lib/grid-filter.js?v=2700a75f"></script>
-<script src="lib/grid-find.js?v=2700a75f"></script>
-<script src="lib/excel-version.js?v=2700a75f"></script>
+  <script src="lib/grid-refedit.js?v=171c8216"></script>
+<script src="lib/autosum.js?v=171c8216"></script>
+<script src="lib/grid-sort.js?v=171c8216"></script>
+<script src="lib/grid-filter.js?v=171c8216"></script>
+<script src="lib/grid-find.js?v=171c8216"></script>
+<script src="lib/grid-print.js?v=171c8216"></script>
+<script src="lib/excel-version.js?v=171c8216"></script>
 
 <script>
 /* ===== canvas-formula-engine.js (inlined) ===== */
@@ -1489,6 +1490,36 @@ function clearFilter(){
   var ctl = document.getElementById('ctx-clear-filter'); if(ctl) ctl.style.display = 'none';
   render();
   showToast(戻す ? (戻す + '行を戻しました') : '絞り込みはかかっていません');
+}
+
+/* ══ 印刷 ══════════════════════════════════════════════════════════════
+   ★紙だけの新しい窓で刷る★（全アプリの決まり。画面のCSSを紙用に切り替えない）
+   ★実Excel の既定に合わせた★（COMで読んだ）
+     A4縦／余白 上下1.90cm・左右1.78cm／★枠線は刷らない★／★行と列の番号も刷らない★
+   ★真似られない事★
+     ★1ページに何行 入るかは 印刷する機械で変わる★（実Excelは39行だが 紙の計算では41行）。
+     ブラウザに刷ってもらうので ★ページの切れ目は Excel と同じにならない★。
+   ★うちの方が良い所★
+     Excel は 列の幅より長い字が ★紙で欠ける★。うちは 表で刷るので ★折り返して全部 出る★。
+   ★白紙の印刷ダイアログを出さない★＝中身が0なら 刷らずに理由を出す。 */
+function printSheet(){
+  hideCtxMenu();
+  var sh = sheets[activeSheet];
+  /* 2セル以上 選んでいれば その範囲だけ。1セルなら 中身が在る所ぜんぶ。 */
+  var 範囲 = (selR1!==selR2 || selC1!==selC2)
+    ? { r1:selR1, c1:selC1, r2:selR2, c2:selC2 } : null;
+  var html = GridPrint.buildHtml({
+    data: sh.data, range: 範囲, sheetName: sh.name,
+    fileName: (typeof BookOpen!=='undefined' && BookOpen.isOpened && BookOpen.isOpened())
+      ? (BookOpen.current && BookOpen.current().name) || '' : '',
+  });
+  if(!html){ showToast('刷る中身が在りません（先に何か入れてね）'); return; }
+  var w = window.open('', '_blank');
+  if(!w){ showToast('新しい窓を開けませんでした（ポップアップを許してね）'); return; }
+  w.document.open(); w.document.write(html); w.document.close();
+  /* 中身が出来てから刷る（★下絵0枚のまま印刷ダイアログを出さない★） */
+  setTimeout(function(){ try{ w.focus(); w.print(); }catch(e){ /* 窓が閉じられたら何もしない */ } }, 200);
+  showToast('紙の窓を開きました（そのまま印刷を押してね）');
 }
 
 /* ══ 検索と置換 ══════════════════════════════════════════════════════
@@ -3114,6 +3145,7 @@ function detectTimePattern(values){
   <div class="ctx-item" id="ctx-clear-filter" style="display:none" onclick="clearFilter()">🔽 絞り込みを解除</div>
   <div class="ctx-item" onclick="freezePanes()">🧊 ここで固定（選んだセルの 上と左）</div>
   <div class="ctx-item" id="ctx-unfreeze" style="display:none" onclick="unfreezePanes()">🧊 固定をやめる</div>
+  <div class="ctx-item" onclick="printSheet()">🖨️ 印刷（Ctrl+P）</div>
   <div class="ctx-divider"></div>
   <div class="ctx-item" onclick="ctxInsertRow()">➕ 行を挿入（上）</div>
   <div class="ctx-item" onclick="ctxInsertCol()">➕ 列を挿入（左）</div>
@@ -5188,6 +5220,7 @@ function onKD(e){
     if(e.key==='1'){ e.preventDefault(); openFmtModal(); return; }
     if(ek==='f'){ e.preventDefault(); openFind(false); return; }
     if(ek==='h'){ e.preventDefault(); openFind(true); return; }
+    if(ek==='p'){ e.preventDefault(); printSheet(); return; }
     if(ek==='d'){ e.preventDefault(); fillFromEdge('down'); return; }
     if(ek==='r'){ e.preventDefault(); fillFromEdge('right'); return; }
     if(e.key===';'){ e.preventDefault(); putNowValue('date'); return; }
@@ -7325,6 +7358,6 @@ document.addEventListener('DOMContentLoaded', function(){ checkRequiredFns(); })
 <!-- ★テスト環境の帯★ 本番の倉庫では出ない。今どの倉庫かは js/supa-config.js が唯一の正。
      ホスト名では決めない（配り方は変わるが「本番のデータか」は変わらないため）。
      ★この2本だけが 本番の book.html との違い★（他は1バイトも同じにする）。 -->
-<script src="js/supa-config.js?v=2700a75f"></script>
-<script src="js/env-badge.js?v=2700a75f"></script>
+<script src="js/supa-config.js?v=171c8216"></script>
+<script src="js/env-badge.js?v=171c8216"></script>
 </html>
