@@ -8,7 +8,9 @@ const SHAKAIHOKEN_HYO = require('../kyuyo/lib/shakaihoken-hyo.js');
 const KOYO_HOKEN      = require('../kyuyo/lib/koyo-hoken.js');
 const SHOUHIZEI_RITSU = require('../kyuyo/lib/shouhizei-ritsu.js');
 
-const client = new Anthropic({
+/* ★let にしてある理由★＝下の __setClient（テスト用の窓）から 偽のAIに差し替えて、
+   ★失敗した時に本当に何を返すか★を機械で押すため。本番では 1ミリも挙動が変わらない。 */
+let client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
@@ -272,17 +274,39 @@ module.exports = async (req, res) => {
 
   } catch (err) {
     console.error('Claude API error:', err);
-
-    let errorText = '申し訳ありません。エラーが発生しました。しばらくしてから再度お試しください。';
-    if (err.status === 401 || (err.message && err.message.includes('API key'))) {
-      errorText = 'APIキーが設定されていません。VercelのEnvironment VariablesにANTHROPIC_API_KEYを設定してください。';
-    } else if (err.code === 'ECONNRESET' || err.code === 'ETIMEDOUT') {
-      errorText = '接続がタイムアウトしました。もう一度お試しください。';
-    }
-
-    return res.status(200).json({ text: errorText, tsv: '' });
+    /* ★2026-08-21 直した：失敗しても 200 で「答えのふり」をしていた★
+       ・鍵が無い時 …「APIキーが設定されていません。VercelのEnvironment Variables…」
+         ＝★中の言葉を そのまま客に見せていた★（客は Vercel を知らない）
+       ・残高が尽きた時・混み合い …「しばらくしてから再度お試しください」だけ
+         ＝★押し直しても直らない物に「もう一度」と言う＝何度でも空振りする★
+         （アマかせ 2026-08-18 の事故と同じ型）
+       ・画面(lib/ai-reason.js)は 200 を「つながった」と読むので、
+         ★この言い訳が AIの答えとして 吹き出しに出ていた★。
+       ⇒★理由は 番号と合言葉で返す。客に見せる言葉は 画面が1か所で作る★ */
+    const k = 失敗を分ける(err);
+    return res.status(k.status).json({ error: k.合言葉, text: '', tsv: '' });
   }
 };
+
+/* ★失敗を 客に伝わる形に分ける（純関数・テストが直接 叩く）★
+   Anthropic の返し方:
+     残高切れ … status 400 ＋ message に "credit balance is too low"
+                （2026-08-18 アマかせで実際に出た字）
+     鍵 …       status 401 / 403
+     混み合い … status 429
+   ★400 を そのまま返すと 画面は「送る中身が 足りません」と言う＝嘘になる★ので
+   ★残高切れは 402（お金が要る）に 分けてから返す★。 */
+function 失敗を分ける(err) {
+  const msg = (err && err.message) || '';
+  const st = err && err.status;
+  if (/credit balance/i.test(msg) || /insufficient[_ ]?quota/i.test(msg)) return { status: 402, 合言葉: 'zandaka' };
+  if (st === 401 || st === 403 || /api[ _-]?key/i.test(msg)) return { status: 401, 合言葉: 'kagi' };
+  if (st === 429) return { status: 429, 合言葉: 'komiai' };
+  if (err && (err.code === 'ECONNRESET' || err.code === 'ETIMEDOUT' || err.code === 'ETIME')) {
+    return { status: 504, 合言葉: 'jikangire' };
+  }
+  return { status: 502, 合言葉: 'ai_shippai' };
+}
 
 // ★テスト用の窓（tests/api-claude.test.mjs が使う）。
 //   Vercel は module.exports を「関数として呼ぶ」だけなので、
@@ -290,3 +314,7 @@ module.exports = async (req, res) => {
 //   なぜ要るか: 基準数値が黙って NaN / undefined になっても、画面は普通に出てしまう。
 //   機械が数値そのものを見るための口。
 module.exports.__buildStatutoryPrompt = buildStatutoryPrompt;
+/* ★失敗した時に 本当に何を返すかを 機械が押すための窓★
+   （本番は module.exports を 関数として呼ぶだけなので 挙動は変わらない） */
+module.exports.__失敗を分ける = 失敗を分ける;
+module.exports.__setClient = (c) => { client = c; };

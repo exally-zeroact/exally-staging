@@ -1197,30 +1197,31 @@ background:#FFE066 !important;
 }
 </style>
 
-<script src="hyperformula.full.min.js?v=a506ac9e"></script>
+<script src="hyperformula.full.min.js?v=a5f4689d"></script>
 
-<script src="exally-formula.js?v=a506ac9e"></script>
+<script src="exally-formula.js?v=a5f4689d"></script>
 <!-- グリッド→xlsx の変換と「落ちる物」の警告(純関数・軽い)。SheetJS本体(930KB)と lib/xlsx-io.js は
      初回の「Excelに書き出す」で初めて読み込む＝グリッドの表示を重くしない -->
-<script src="js/file-out.js?v=a506ac9e"></script>
+<script src="js/file-out.js?v=a5f4689d"></script>
 <!-- ★打ち込んだ文字の解釈（1,234 を数にする）。★計算側も書き出し側も この1本を呼ぶ★
      grid-xlsx.js より先に読む（grid-xlsx.js が読み込み時に掴む） -->
-<script src="lib/typed-value.js?v=a506ac9e"></script>
-<script src="lib/grid-xlsx.js?v=a506ac9e"></script>
+<script src="lib/typed-value.js?v=a5f4689d"></script>
+<script src="lib/grid-xlsx.js?v=a5f4689d"></script>
   <!-- ★式の中の参照を「カーソルの位置で」直せるようにする★
        2026-08-06 司さんが実機で踏んだ: 「=B1+30」の B1 を直そうと A1 を触ると
        「=B1+30A1」になり ★B1 を直す手段が無かった★。テスト線では直っていたが
        ★本番には運ばれていなかった★（2026-08-18 差を数えて見つけた）。 -->
-  <script src="lib/grid-refedit.js?v=a506ac9e"></script>
-<script src="lib/autosum.js?v=a506ac9e"></script>
-<script src="lib/grid-sort.js?v=a506ac9e"></script>
-<script src="lib/grid-filter.js?v=a506ac9e"></script>
-<script src="lib/grid-find.js?v=a506ac9e"></script>
-<script src="lib/grid-print.js?v=a506ac9e"></script>
-<script src="lib/menu-place.js?v=a506ac9e"></script>
-<script src="lib/grid-stats.js?v=a506ac9e"></script>
-<script src="lib/grid-valid.js?v=a506ac9e"></script>
-<script src="lib/excel-version.js?v=a506ac9e"></script>
+  <script src="lib/grid-refedit.js?v=a5f4689d"></script>
+<script src="lib/autosum.js?v=a5f4689d"></script>
+<script src="lib/grid-sort.js?v=a5f4689d"></script>
+<script src="lib/grid-filter.js?v=a5f4689d"></script>
+<script src="lib/grid-find.js?v=a5f4689d"></script>
+<script src="lib/grid-print.js?v=a5f4689d"></script>
+<script src="lib/ai-reason.js?v=a5f4689d"></script>
+<script src="lib/menu-place.js?v=a5f4689d"></script>
+<script src="lib/grid-stats.js?v=a5f4689d"></script>
+<script src="lib/grid-valid.js?v=a5f4689d"></script>
+<script src="lib/excel-version.js?v=a5f4689d"></script>
 
 <script>
 /* ===== canvas-formula-engine.js (inlined) ===== */
@@ -6771,6 +6772,14 @@ function explainCell(){
     prompt+='このセルが何をしているか1〜3行で簡潔に解説してね。書き込み不要。';
   }
   _explainAddr=addr; _explainFormula=formula||''; _explainText='';
+  /* ★中身が無い物に AIを呼ばない（お金を使わない）★
+     （2026-08-21 指示役：空の A1 で AIが呼ばれていた） */
+  var 送る字 = isRange ? cells : [ (getCell(selR1,selC1).v||''), (getCell(selR1,selC1).f||'') ];
+  var 可否 = AiReason.呼んでよいか(送る字);
+  if(!可否.呼ぶ){
+    showExplainPopup(addr, formula, 可否.言葉);
+    return;
+  }
   showExplainPopup(addr,formula,null);
   _sendExplain(prompt);
 }
@@ -6818,15 +6827,34 @@ function deepDiveExplain(){
     if(input){ input.value=prompt; document.getElementById('ai-send').click(); }
   },150);
 }
-async function _sendExplain(prompt){
+/* ★AIを呼ぶ口は ここの1本だけ★
+   （2026-08-21 指示役）前は 3か所とも
+   「AIに接続できなかったよ。もう一度試してみてね。」だけを出していた。
+   ★テスト線には AIの窓口がそもそも無いので、何度 試しても 失敗する★。
+   理由と 次の一手は lib/ai-reason.js（お金を使わずに測った真値付き）。 */
+async function _aiFetch(body){
+  var 本番か = /vercel\.app$/.test(location.hostname) || !/github\.io$/.test(location.hostname);
   try{
-    var res=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({message:prompt,history:[]})});
-    var data=await res.json();
-    showExplainPopup(_explainAddr,_explainFormula,data.text||'エラーが発生したよ');
+    var res = await fetch('/api/claude', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
+    });
+    var 中身 = '', 理由 = '';
+    if(res.ok){
+      try{ var d = await res.json(); 中身 = (d && d.text) || ''; }catch(e){ 中身 = ''; }
+    } else {
+      /* ★失敗した時は サーバが「なぜ」を 合言葉で返す（zandaka / kagi / komiai …）★
+         テスト線(GitHub Pages)の 404/405 は HTML なので ここは空のまま＝番号で読む */
+      try{ var e2 = await res.json(); 理由 = (e2 && e2.error) || ''; }catch(e){ 理由 = ''; }
+    }
+    return AiReason.読む({ status: res.status, ネット切れ: false, 中身: 中身, 理由: 理由, 本番か: 本番か });
   }catch(e){
-    showExplainPopup(_explainAddr,_explainFormula,'AIに接続できなかったよ。もう一度試してみてね。');
+    return AiReason.読む({ status: null, ネット切れ: true, 中身: '', 本番か: 本番か });
   }
+}
+
+async function _sendExplain(prompt){
+  var r = await _aiFetch({ message: prompt, history: [] });
+  showExplainPopup(_explainAddr, _explainFormula, r.言葉);
 }
 var aiHistory = [];
 
@@ -6871,17 +6899,14 @@ async function sendToAI(){
   document.getElementById('ai-response-area').appendChild(thinkDiv);
   document.getElementById('ai-response-area').scrollTop = 9999;
 
-  try {
-    var res = await fetch('/api/claude', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ message: userMsg, history: aiHistory })
-    });
-    var data = await res.json();
-    var aiText = data.text || 'エラーが発生したよ';
+  {
+    var r = await _aiFetch({ message: userMsg, history: aiHistory });
+    var aiText = r.言葉;
 
     var th = document.getElementById('ai-thinking');
     if(th) th.remove();
+
+    if(!r.ok){ addAIChatMsg('ai', aiText); document.getElementById('ai-send').disabled = false; return; }
 
     // 括弧カウントでJSONを正確に抽出
     var extracted = extractWriteAction(aiText);
@@ -6897,10 +6922,6 @@ async function sendToAI(){
 
     if(extracted) showWriteConfirm(extracted.json.cells);
 
-  } catch(e) {
-    var th = document.getElementById('ai-thinking');
-    if(th) th.remove();
-    addAIChatMsg('ai','AIに接続できなかったよ。もう一度試してみてね。');
   }
   document.getElementById('ai-send').disabled = false;
 }
@@ -7399,16 +7420,12 @@ async function _sendToAIMobile(text){
   thinkEl.innerHTML = '<span style="color:#3D9E72;font-size:12px;">考え中...</span>';
   if(respArea){ respArea.appendChild(thinkEl); respArea.scrollTop = 9999; }
 
-  try {
-    var res = await fetch('/api/claude', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ message: userMsg, history: aiHistory })
-    });
-    var data = await res.json();
-    var aiText = data.text || 'エラーが発生したよ';
+  {
+    var r = await _aiFetch({ message: userMsg, history: aiHistory });
+    var aiText = r.言葉;
     var th = document.getElementById('popup-thinking');
     if(th) th.remove();
+    if(!r.ok){ _addPopupMsg('ai', aiText); if(sendBtn) sendBtn.disabled = false; return; }
     var extracted = extractWriteAction(aiText);
     var displayText = extracted
       ? (aiText.substring(0, extracted.start) + aiText.substring(extracted.end)).trim()
@@ -7419,10 +7436,6 @@ async function _sendToAIMobile(text){
     if(aiHistory.length > 40) aiHistory = aiHistory.slice(-40);
     if(extracted) showWriteConfirm(extracted.json.cells);
     if(respArea) respArea.scrollTop = respArea.scrollHeight;
-  } catch(e){
-    var th2 = document.getElementById('popup-thinking');
-    if(th2) th2.remove();
-    _addPopupMsg('ai','AIに接続できなかったよ。もう一度試してみてね。');
   }
   if(sendBtn) sendBtn.disabled = false;
 }
@@ -7640,6 +7653,6 @@ document.addEventListener('DOMContentLoaded', function(){ checkRequiredFns(); })
 <!-- ★テスト環境の帯★ 本番の倉庫では出ない。今どの倉庫かは js/supa-config.js が唯一の正。
      ホスト名では決めない（配り方は変わるが「本番のデータか」は変わらないため）。
      ★この2本だけが 本番の book.html との違い★（他は1バイトも同じにする）。 -->
-<script src="js/supa-config.js?v=a506ac9e"></script>
-<script src="js/env-badge.js?v=a506ac9e"></script>
+<script src="js/supa-config.js?v=a5f4689d"></script>
+<script src="js/env-badge.js?v=a5f4689d"></script>
 </html>

@@ -71,5 +71,133 @@ T('検査が空振りしていない（テスト用の窓が実際に生えて�
   if (typeof handler !== 'function') throw new Error('api/claude.js が関数を export していない（Vercelが呼べない）');
 });
 
+/* ── ★失敗した時に 何を返すか（2026-08-22）★ ──────────────────────────
+ *  前は ★どんな失敗でも status 200★ ＋ 言い訳を text に入れて返していた。
+ *  画面は 200 を「つながった」と読むので ★言い訳が AIの答えとして 吹き出しに出る★。
+ *  ここは ★偽のAIを差し込んで ハンドラを本当に呼び★、返る番号と合言葉を数える。
+ *  （★本物のネットは 1回も使わない＝お金を使わない★） */
+const 分ける = handler.__失敗を分ける;
+const 失敗 = (o) => Object.assign(new Error(o.message || 'err'), o);
+const 受け皿 = () => {
+  const box = { 出た: null };
+  box.res = {
+    setHeader() {}, status(c) { this._c = c; return this; },
+    json(b) { box.出た = { status: this._c, body: b }; return this; },
+    end() { box.出た = { status: this._c, body: null }; return this; },
+  };
+  return box;
+};
+const 呼ぶ = async (err) => {
+  handler.__setClient({ messages: { create: async () => { throw err; } } });
+  const box = 受け皿();
+  await handler({ method: 'POST', body: { message: 'これ何？', history: [] }, headers: {} }, box.res);
+  return box.出た;
+};
+
+console.log('');
+console.log('[api-claude] ★失敗した時に 200 で「答えのふり」をしないか★');
+
+const 表 = [
+  ['残高が尽きた（Anthropicは 400 で返す）', 失敗({ status: 400, message: 'Your credit balance is too low to access the Anthropic API.' }), 402, 'zandaka'],
+  ['鍵がだめ（401）', 失敗({ status: 401, message: 'invalid x-api-key' }), 401, 'kagi'],
+  ['鍵がだめ（403）', 失敗({ status: 403, message: 'forbidden' }), 401, 'kagi'],
+  ['鍵が置かれていない', 失敗({ message: 'The ANTHROPIC_API_KEY environment variable is missing or empty' }), 401, 'kagi'],
+  ['混み合っている（429）', 失敗({ status: 429, message: 'rate limit' }), 429, 'komiai'],
+  ['時間切れ（ETIMEDOUT）', 失敗({ code: 'ETIMEDOUT', message: 'timeout' }), 504, 'jikangire'],
+  ['向こうが落ちた（500）', 失敗({ status: 500, message: 'overloaded' }), 502, 'ai_shippai'],
+  ['何だか分からない', 失敗({ message: 'なにか' }), 502, 'ai_shippai'],
+];
+for (const [名, err, 待つ番号, 待つ合言葉] of 表) {
+  const k = 分ける(err);
+  T('★' + 名 + ' → ' + 待つ番号 + ' / ' + 待つ合言葉, () => {
+    if (k.status !== 待つ番号) throw new Error('番号が ' + k.status + '（★200 を返すと 画面は つながった事にする★）');
+    if (k.合言葉 !== 待つ合言葉) throw new Error('合言葉が ' + k.合言葉);
+  });
+}
+
+const AT = async (n, fn) => { try { await fn(); pass++; console.log('  ✓ ' + n); } catch (e) { fail++; console.log('  ✗ ' + n + ' — ' + (e && e.message)); } };
+
+await AT('★ハンドラを 本当に呼ぶ：失敗したら 200 を返さない★', async () => {
+  const r = await 呼ぶ(失敗({ status: 401, message: 'invalid x-api-key' }));
+  if (!r) throw new Error('返事が無い');
+  if (r.status === 200) throw new Error('★失敗したのに 200 を返している（前の作り）★');
+  if (r.status !== 401) throw new Error('番号が ' + r.status);
+  if (r.body.error !== 'kagi') throw new Error('合言葉が ' + r.body.error);
+});
+await AT('★ハンドラを 本当に呼ぶ：中の言葉を 客に返さない★', async () => {
+  const r = await 呼ぶ(失敗({ message: 'The ANTHROPIC_API_KEY environment variable is missing' }));
+  const 字 = JSON.stringify(r.body);
+  for (const 中の字 of ['Vercel', 'Environment', 'ANTHROPIC', 'エラーが発生しました', 'お試しください']) {
+    if (字.indexOf(中の字) >= 0) throw new Error('★中の言葉「' + 中の字 + '」を 客に返している★：' + 字);
+  }
+  if (r.body.text !== '') throw new Error('★text に 何か入れている（画面が それを AIの答えとして出す）★：' + 字);
+});
+await AT('★ちゃんと答えられた時は 今までどおり 200 で text を返す（殺していない）★', async () => {
+  handler.__setClient({ messages: { create: async () => ({ content: [{ type: 'text', text: 'これは合計だよ。' }] }) } });
+  const box = 受け皿();
+  await handler({ method: 'POST', body: { message: 'これ何？', history: [] }, headers: {} }, box.res);
+  if (!box.出た || box.出た.status !== 200) throw new Error('200 を返していない：' + JSON.stringify(box.出た));
+  if (box.出た.body.text !== 'これは合計だよ。') throw new Error('答えを 書き換えている：' + JSON.stringify(box.出た.body));
+});
+await AT('★中身なしの POST は 今までどおり 400（画面が「聞きたい事を書いてね」と言う）★', async () => {
+  const box = 受け皿();
+  await handler({ method: 'POST', body: {}, headers: {} }, box.res);
+  if (!box.出た || box.出た.status !== 400) throw new Error('400 でない：' + JSON.stringify(box.出た));
+});
+
+
+/* ── ★自己確認：わざと壊して 赤になるか（★repo は読むだけ★）★ ──
+ *  api/claude.js の中身を ★読み込んだ字の上で★ 壊し、vm の中で組み立て直して押す。
+ *  ファイルには 1バイトも書かない。 */
+if (process.argv.includes('--self-test')) {
+  const vm = await import('node:vm');
+  const fs = await import('node:fs');
+  const 元 = fs.readFileSync(path.join(ROOT, 'api/claude.js'), 'utf8');
+  const 偽AI = class { constructor() { this.messages = { create: async () => { throw Object.assign(new Error('invalid x-api-key'), { status: 401 }); } }; } };
+  const 積む = (src) => {
+    const m = { exports: {} };
+    const req = (id) => (id === '@anthropic-ai/sdk' ? 偽AI : require_(path.resolve(ROOT, 'api', id)));
+    vm.runInNewContext(src, { module: m, exports: m.exports, require: req, console: { error() {}, log() {} }, process, Date, JSON, Math, RegExp, Object, Array, String, Number, Boolean, Error });
+    return m.exports;
+  };
+  const 押す = async (h, err) => {
+    if (h.__setClient) h.__setClient({ messages: { create: async () => { throw err; } } });
+    let 出た = null;
+    const res = { setHeader() {}, status(c) { this._c = c; return this; }, json(b) { 出た = { status: this._c, body: b }; return this; }, end() { return this; } };
+    await h({ method: 'POST', body: { message: 'これ何？', history: [] }, headers: {} }, res);
+    return 出た;
+  };
+  const 残高err = Object.assign(new Error('Your credit balance is too low to access the Anthropic API.'), { status: 400 });
+  const 鍵err = Object.assign(new Error('invalid x-api-key'), { status: 401 });
+  const BREAKS = [
+    ['★前の作りに戻す（何でも 200 ＋ 言い訳）★',
+      (t) => t.replace('    const k = 失敗を分ける(err);', '    return res.status(200).json({ text: "申し訳ありません。エラーが発生しました。しばらくしてから再度お試しください。", tsv: "" });'),
+      async (h) => (await 押す(h, 鍵err)).status !== 200],
+    ['★残高切れを 400 のまま返す（画面が「送る中身が足りません」と嘘を言う）★',
+      (t) => t.replace("  if (/credit balance/i.test(msg) || /insufficient[_ ]?quota/i.test(msg)) return { status: 402, 合言葉: 'zandaka' };", ''),
+      async (h) => (await 押す(h, 残高err)).status === 402],
+    ['★鍵の見分けを 外す★',
+      (t) => t.replace("  if (st === 401 || st === 403 || /api[ _-]?key/i.test(msg)) return { status: 401, 合言葉: 'kagi' };", ''),
+      async (h) => (await 押す(h, 鍵err)).body.error === 'kagi'],
+    ['★中の言葉を text に入れて返す★',
+      (t) => t.replace("    return res.status(k.status).json({ error: k.合言葉, text: '', tsv: '' });",
+        "    return res.status(k.status).json({ error: k.合言葉, text: 'VercelのEnvironment VariablesにANTHROPIC_API_KEYを設定してください。', tsv: '' });"),
+      async (h) => (await 押す(h, 鍵err)).body.text === ''],
+  ];
+  console.log('');
+  console.log('[self-test] わざと壊して 赤くなるかを数える（★ファイルには書かない★）');
+  let red = 0;
+  for (const [名, 壊す, 通れば緑] of BREAKS) {
+    const bad = 壊す(元);
+    if (bad === 元) { console.log('  ★置換できず★  ' + 名); continue; }
+    let 赤 = false;
+    try { 赤 = !(await 通れば緑(積む(bad))); } catch (e) { 赤 = true; }
+    if (赤) { red++; console.log('  赤くなった  ' + 名); } else console.log('  ★素通り★  ' + 名);
+  }
+  console.log('');
+  console.log('  ' + red + '/' + BREAKS.length + ' 通りで赤くなった');
+  process.exit(red === BREAKS.length ? 0 : 1);
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
