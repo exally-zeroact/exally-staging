@@ -43,6 +43,10 @@ const FILES = [
   ['grid-stats.test.mjs', '--self-test'],
   'ctx-menu.test.mjs',                    // ★右クリックが画面の中に収まる(743pxが619pxの画面で 上へ470px はみ出した事故)
   ['ctx-menu.test.mjs', '--self-test'],
+  'cond-format.test.mjs',                 // ★条件付き書式の当たり判定(実Excelの真値と突き合わせ)
+  ['cond-format.test.mjs', '--self-test'],
+  'cond-format-ui.test.mjs',              // ★本物の画面で 実際に押す(部品が緑=画面で使える ではない)
+  ['cond-format-ui.test.mjs', '--self-test'],
   'ai-reason.test.mjs',                   // ★AIに繋がらない時の理由と次の一手／★空のセルでAIを呼ばない(お金)★
   ['ai-reason.test.mjs', '--self-test'],
   'no-dead-ui.test.mjs',     // ★出来ていない物のボタン/画面を止める窓/中の言葉(STEP6・実装予定)を客に見せない

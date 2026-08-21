@@ -1197,31 +1197,32 @@ background:#FFE066 !important;
 }
 </style>
 
-<script src="hyperformula.full.min.js?v=ce61df33"></script>
+<script src="hyperformula.full.min.js?v=7a84efb8"></script>
 
-<script src="exally-formula.js?v=ce61df33"></script>
+<script src="exally-formula.js?v=7a84efb8"></script>
 <!-- グリッド→xlsx の変換と「落ちる物」の警告(純関数・軽い)。SheetJS本体(930KB)と lib/xlsx-io.js は
      初回の「Excelに書き出す」で初めて読み込む＝グリッドの表示を重くしない -->
-<script src="js/file-out.js?v=ce61df33"></script>
+<script src="js/file-out.js?v=7a84efb8"></script>
 <!-- ★打ち込んだ文字の解釈（1,234 を数にする）。★計算側も書き出し側も この1本を呼ぶ★
      grid-xlsx.js より先に読む（grid-xlsx.js が読み込み時に掴む） -->
-<script src="lib/typed-value.js?v=ce61df33"></script>
-<script src="lib/grid-xlsx.js?v=ce61df33"></script>
+<script src="lib/typed-value.js?v=7a84efb8"></script>
+<script src="lib/grid-xlsx.js?v=7a84efb8"></script>
   <!-- ★式の中の参照を「カーソルの位置で」直せるようにする★
        2026-08-06 司さんが実機で踏んだ: 「=B1+30」の B1 を直そうと A1 を触ると
        「=B1+30A1」になり ★B1 を直す手段が無かった★。テスト線では直っていたが
        ★本番には運ばれていなかった★（2026-08-18 差を数えて見つけた）。 -->
-  <script src="lib/grid-refedit.js?v=ce61df33"></script>
-<script src="lib/autosum.js?v=ce61df33"></script>
-<script src="lib/grid-sort.js?v=ce61df33"></script>
-<script src="lib/grid-filter.js?v=ce61df33"></script>
-<script src="lib/grid-find.js?v=ce61df33"></script>
-<script src="lib/grid-print.js?v=ce61df33"></script>
-<script src="lib/ai-reason.js?v=ce61df33"></script>
-<script src="lib/menu-place.js?v=ce61df33"></script>
-<script src="lib/grid-stats.js?v=ce61df33"></script>
-<script src="lib/grid-valid.js?v=ce61df33"></script>
-<script src="lib/excel-version.js?v=ce61df33"></script>
+  <script src="lib/grid-refedit.js?v=7a84efb8"></script>
+<script src="lib/autosum.js?v=7a84efb8"></script>
+<script src="lib/grid-sort.js?v=7a84efb8"></script>
+<script src="lib/grid-filter.js?v=7a84efb8"></script>
+<script src="lib/grid-find.js?v=7a84efb8"></script>
+<script src="lib/grid-print.js?v=7a84efb8"></script>
+<script src="lib/ai-reason.js?v=7a84efb8"></script>
+<script src="lib/menu-place.js?v=7a84efb8"></script>
+<script src="lib/grid-stats.js?v=7a84efb8"></script>
+<script src="lib/grid-valid.js?v=7a84efb8"></script>
+<script src="lib/cond-format.js?v=7a84efb8"></script>
+<script src="lib/excel-version.js?v=7a84efb8"></script>
 
 <script>
 /* ===== canvas-formula-engine.js (inlined) ===== */
@@ -1552,6 +1553,196 @@ function printSheet(){
   /* 中身が出来てから刷る（★下絵0枚のまま印刷ダイアログを出さない★） */
   setTimeout(function(){ try{ w.focus(); w.print(); }catch(e){ /* 窓が閉じられたら何もしない */ } }, 200);
   showToast('紙の窓を開きました（そのまま印刷を押してね）');
+}
+
+/* ══ 条件付き書式 ══════════════════════════════════════
+   ★実Excel 16.0.20228 を COM で押して測った通り★（2026-08-22・真値 tests/fixtures/cond-format-golden.json）
+     ・当たり判定は lib/cond-format.js（純関数）。ここは ★見せ方と 置き場所★ だけ
+     ・★見た目だけ。値も式も 1バイトも変えない（合計は1円も動かない）★
+     ・★手で塗った色は 消さない★＝条件を外すと 元の色に戻る（Excelと同じ）
+     ・★番号の小さいルールが勝つ★
+   ルールは sheets[i].condFormats に [{範囲,種類,演算,値1,値2,書式}] で持つ。
+   ★第1弾では ファイルに書き出さない★（色は styles.xml の dxfs に足す事になり
+     「元のファイルを1バイトも触らない」に触れるため。docs/SPEC_cond_format.md の4） */
+
+var _cfPassCache = null;                 /* 1回の描き直しの間だけ 範囲の値を覚える */
+function _cfBeginPass(){ _cfPassCache = null; }
+function _cfRules(){
+  var sh = sheets[activeSheet];
+  if(!sh.condFormats) sh.condFormats = [];
+  return sh.condFormats;
+}
+function _cfInRange(r,c,範囲){
+  return 範囲 && r>=範囲.r1 && r<=範囲.r2 && c>=範囲.c1 && c<=範囲.c2;
+}
+function _cfRangeVals(i,ru){
+  if(!_cfPassCache) _cfPassCache = {};
+  if(_cfPassCache[i]) return _cfPassCache[i];
+  var 出 = [];
+  for(var r=ru.範囲.r1;r<=ru.範囲.r2;r++) for(var c=ru.範囲.c1;c<=ru.範囲.c2;c++) 出.push(getCell(r,c));
+  _cfPassCache[i] = 出;
+  return 出;
+}
+/** ★式のルールは 本物の計算エンジンで測る（決め打ちしない）★ */
+function _cfFormulaHit(ru,r,c){
+  try{
+    var 式 = CondFormat.式をずらす(ru.値1, r-ru.範囲.r1, c-ru.範囲.c1);
+    if(式.charAt(0)!=='=') 式 = '='+式;
+    var v = hf.calculateFormula(式, _hfSid(activeSheet));
+    return v===true || v===1;
+  }catch(e){ return false; }        /* ★分からない時は 当てない★ */
+}
+/** そのセルに 実際に描く書式（当たらなければ null） */
+function cfFormatAt(r,c,cell){
+  var rules = (sheets[activeSheet]||{}).condFormats;
+  if(!rules || !rules.length) return null;
+  var 出 = null;
+  for(var i=0;i<rules.length;i++){
+    var ru = rules[i];
+    if(!_cfInRange(r,c,ru.範囲)) continue;
+    var 文脈 = { 範囲の値たち: _cfRangeVals(i,ru) };
+    if(ru.種類==='式'){ (function(ru2,r2,c2){ 文脈.式で判定 = function(){ return _cfFormulaHit(ru2,r2,c2); }; })(ru,r,c); }
+    if(!CondFormat.当たるか(cell, ru, 文脈)) continue;
+    var f = ru.書式 || {};
+    出 = 出 || {};
+    if(出.塗り===undefined && f.塗り) 出.塗り = f.塗り;
+    if(出.文字色===undefined && f.文字色) 出.文字色 = f.文字色;
+    if(出.太字===undefined && f.太字!==undefined) 出.太字 = !!f.太字;
+  }
+  return 出;
+}
+
+/* ── 窓 ─────────────────────────────────────────── */
+function _cfSel(){ return { r1:Math.min(selR1,selR2), c1:Math.min(selC1,selC2), r2:Math.max(selR1,selR2), c2:Math.max(selC1,selC2) }; }
+function _cfWhere(範囲){
+  return colLetter(範囲.c1)+(範囲.r1+1) + ((範囲.r1===範囲.r2&&範囲.c1===範囲.c2)?'':('〜'+colLetter(範囲.c2)+(範囲.r2+1)));
+}
+function openCondFormat(){
+  hideCtxMenu();
+  var 範囲 = _cfSel();
+  document.getElementById('cfWhere').textContent = _cfWhere(範囲);
+  document.getElementById('cfKind').value = 'セルの値';
+  document.getElementById('cfOp').value = 'より大きい';
+  document.getElementById('cfV1').value = '';
+  document.getElementById('cfV2').value = '';
+  document.getElementById('cfFill').value = CondFormat.既定の書式.塗り;
+  document.getElementById('cfColor').value = CondFormat.既定の書式.文字色;
+  document.getElementById('cfBold').checked = false;
+  cfKindChange();
+  renderCfList();
+  document.getElementById('cfOverlay').style.display='flex';
+}
+function closeCondFormat(){ document.getElementById('cfOverlay').style.display='none'; }
+function cfKindChange(){
+  var k = document.getElementById('cfKind').value;
+  var op = document.getElementById('cfOp');
+  var 見せる = function(id,出す){ document.getElementById(id).style.display = 出す ? 'flex' : 'none'; };
+  op.innerHTML = '';
+  var 並び = (k==='セルの値') ? ['より大きい','より小さい','以上','以下','等しい','等しくない','範囲内']
+           : (k==='上位下位') ? ['上位','下位'] : [];
+  for(var i=0;i<並び.length;i++){ var o=document.createElement('option'); o.value=並び[i]; o.textContent=並び[i]; op.appendChild(o); }
+  見せる('cfOpRow', 並び.length>0);
+  見せる('cfV1Row', k==='セルの値'||k==='文字を含む'||k==='上位下位'||k==='式');
+  見せる('cfV2Row', k==='セルの値');
+  document.getElementById('cfV1Label').textContent =
+    (k==='文字を含む') ? '含む字' : (k==='上位下位') ? '何個' : (k==='式') ? '式' : '数か文字';
+  document.getElementById('cfV1').placeholder =
+    (k==='文字を含む') ? 'りんご' : (k==='上位下位') ? '10' : (k==='式') ? '=$A1>25' : '25';
+  if(k==='上位下位' && !document.getElementById('cfV1').value) document.getElementById('cfV1').value = '10';
+  cfCount();
+}
+function _cfFormFromWindow(){
+  var k = document.getElementById('cfKind').value;
+  var v1 = document.getElementById('cfV1').value;
+  /* ★数の読み方は lib/typed-value.js の1本だけ★（カンマを外す規則を ここに写さない）
+     1,234 と打たれても 実Excelと同じ読み方になる。 */
+  var 数に = function(t){
+    var 字 = String(t);
+    if(字.trim()==='') return t;
+    /* ★1,234 のような 桁区切りは TypedValue が読む（規則は1本だけ）★ */
+    var r = (typeof TypedValue!=='undefined') ? TypedValue.parseTyped(字) : null;
+    if(r && typeof r.num==='number') return r.num;
+    var n = Number(字);
+    return (!isNaN(n) && 字.trim()!=='') ? n : t;
+  };
+  var 値1 = (k==='セルの値' || k==='上位下位') ? 数に(v1) : v1;
+  var 値2 = 数に(document.getElementById('cfV2').value);
+  return {
+    範囲: _cfSel(),
+    種類: k,
+    演算: document.getElementById('cfOp').value,
+    値1: 値1,
+    値2: 値2,
+    書式: {
+      塗り: document.getElementById('cfFill').value,
+      文字色: document.getElementById('cfColor').value,
+      太字: document.getElementById('cfBold').checked,
+    },
+  };
+}
+/** ★押す前に「今 何個 当たるか」を出す★ */
+function cfCount(){
+  var ru = _cfFormFromWindow();
+  var セルたち = [], 位置 = [];
+  for(var r=ru.範囲.r1;r<=ru.範囲.r2;r++) for(var c=ru.範囲.c1;c<=ru.範囲.c2;c++){ セルたち.push(getCell(r,c)); 位置.push([r,c]); }
+  var n = 0;
+  for(var i=0;i<セルたち.length;i++){
+    var 文脈 = { 範囲の値たち: セルたち };
+    if(ru.種類==='式'){ (function(p){ 文脈.式で判定 = function(){ return _cfFormulaHit(ru,p[0],p[1]); }; })(位置[i]); }
+    if(CondFormat.当たるか(セルたち[i], ru, 文脈)) n++;
+  }
+  document.getElementById('cfCount').textContent =
+    '今の決め方だと ' + n + '個 当たります（' + セルたち.length + 'マス中）';
+  return n;
+}
+function applyCondFormat(){
+  var ru = _cfFormFromWindow();
+  if(ru.種類==='文字を含む' && !String(ru.値1).trim()){ document.getElementById('cfMsg').textContent='含む字を 入れてください'; return; }
+  if(ru.種類==='式' && !String(ru.値1).trim()){ document.getElementById('cfMsg').textContent='式を 入れてください'; return; }
+  if(ru.種類==='セルの値' && String(ru.値1).trim()===''){ document.getElementById('cfMsg').textContent='比べる物を 入れてください'; return; }
+  var n = cfCount();
+  _cfRules().unshift(ru);                 /* ★新しい物を先頭＝一番強い（Excelの画面と同じ）★ */
+  document.getElementById('cfMsg').textContent = '';
+  renderCfList();
+  _cfBeginPass(); render();
+  showToast('<span class="toast-h">' + n + '個に 色を付けました</span>'
+    + _cfWhere(ru.範囲) + '／見た目だけです。値も式も 変えていません。');
+}
+function cfDeleteRule(i){ _cfRules().splice(i,1); renderCfList(); _cfBeginPass(); render(); }
+function cfMoveRule(i,d){
+  var a = _cfRules();
+  var j = i + d;
+  if(j<0 || j>=a.length) return;
+  var t = a[i]; a[i]=a[j]; a[j]=t;
+  renderCfList(); _cfBeginPass(); render();
+}
+function _cfDescribe(ru){
+  var 場所 = _cfWhere(ru.範囲);
+  var 中 = (ru.種類==='セルの値') ? (ru.演算==='範囲内' ? (ru.値1+'〜'+ru.値2+' の間') : (ru.値1+' '+ru.演算))
+        : (ru.種類==='文字を含む') ? ('「'+ru.値1+'」を含む')
+        : (ru.種類==='上位下位') ? (ru.演算+' '+ru.値1+'個')
+        : (ru.種類==='式') ? ('式 '+ru.値1)
+        : ru.種類;
+  return 場所 + '／' + 中;
+}
+function renderCfList(){
+  var box = document.getElementById('cfList');
+  var a = _cfRules();
+  if(!a.length){ box.innerHTML = '<div style="font-size:12px;color:#333333;">まだ 1つも付けていません</div>'; return; }
+  var h = '';
+  for(var i=0;i<a.length;i++){
+    var f = a[i].書式||{};
+    h += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid #EAF6F0;">'
+      +  '<span style="display:inline-block;width:22px;height:16px;border:1px solid #C8ECD8;border-radius:4px;background:'
+      +  (f.塗り||'#ffffff') + ';color:' + (f.文字色||'#333333') + ';font-size:10px;text-align:center;line-height:16px;'
+      +  (f.太字?'font-weight:700;':'') + '">あ</span>'
+      +  '<span style="flex:1;font-size:12px;color:#333333;">' + (i+1) + '. ' + _cfDescribe(a[i]) + '</span>'
+      +  '<button onclick="cfMoveRule(' + i + ',-1)" title="上へ（強くする）" style="background:#F0FAF4;border:1px solid #C8ECD8;color:#3D9E72;border-radius:8px;padding:2px 8px;font-size:12px;cursor:pointer;font-family:inherit;">↑</button>'
+      +  '<button onclick="cfMoveRule(' + i + ',1)" title="下へ" style="background:#F0FAF4;border:1px solid #C8ECD8;color:#3D9E72;border-radius:8px;padding:2px 8px;font-size:12px;cursor:pointer;font-family:inherit;">↓</button>'
+      +  '<button onclick="cfDeleteRule(' + i + ')" title="消す" style="background:#F0FAF4;border:1px solid #C8ECD8;color:#3D9E72;border-radius:8px;padding:2px 8px;font-size:12px;cursor:pointer;font-family:inherit;">消す</button>'
+      +  '</div>';
+  }
+  box.innerHTML = h;
 }
 
 /* ══ 入力の決まり（データの入力規則）══════════════════
@@ -2333,6 +2524,7 @@ function _doRender() {
 }
 
 function _renderPass() {
+  _cfBeginPass();                      /* ★条件付き書式：1回の描き直しの間だけ 範囲の値を覚える★ */
   var sC=xToC(HDR_W), sR=yToR(HDR_H), eC=sC, eR=sR;
   while(colX(eC)<wrapW && eC<COLS-1) eC++;
   while(rowY(eR)<wrapH && eR<ROWS-1) eR++;
@@ -2341,13 +2533,15 @@ function _renderPass() {
   ctx.fillStyle=C_CELL_BG;
   ctx.fillRect(HDR_W,HDR_H,wrapW,wrapH);
 
-  // 2. bgColorあるセルを上塗り
+  // 2. bgColorあるセルを上塗り（★条件付き書式が在れば そちらが勝つ＝手の塗りは消さない★）
   for(var r=sR;r<=eR+1;r++) for(var c=sC;c<=eC+1;c++){
     var cell=getCell(r,c);
-    if(!cell.bgColor) continue;
+    var cf=cfFormatAt(r,c,cell);
+    var 塗り=(cf&&cf.塗り)||cell.bgColor;
+    if(!塗り) continue;
     var cx=colX(c),cy=rowY(r),cw=cW(c),ch=rH(r);
     if(cx+cw<HDR_W||cx>wrapW||cy+ch<HDR_H||cy>wrapH) continue;
-    ctx.fillStyle=cell.bgColor;
+    ctx.fillStyle=塗り;
     ctx.fillRect(cx,cy,cw,ch);
   }
 
@@ -2586,14 +2780,15 @@ function drawText(r,c){
 
   // フォント
   var fontSize = Math.max(9, Math.min(72, Math.round((cell.fontSize||12)*scale)));
-  var weight = cell.bold ? 'bold' : 'normal';
+  var _cf = (typeof cfFormatAt==='function') ? cfFormatAt(r,c,cell) : null;   /* ★条件付き書式★ */
+  var weight = ((_cf && _cf.太字!==undefined) ? _cf.太字 : cell.bold) ? 'bold' : 'normal';
   var style  = cell.italic ? 'italic' : 'normal';
   ctx.font = style+' '+weight+' '+fontSize+'px "Noto Sans JP",sans-serif';
 
   // 文字色
   var isFormula = cell.f && cell.f[0]==='=';
   var showRaw = isFormula && cell.d===cell.f;
-  ctx.fillStyle = showRaw ? C_FORMULA : (cell.color||C_CELL_TXT);
+  ctx.fillStyle = showRaw ? C_FORMULA : ((_cf&&_cf.文字色) || cell.color || C_CELL_TXT);
 
   // 文字揃え
   var align = cell.align||'left';
@@ -3316,6 +3511,7 @@ function detectTimePattern(values){
   <div class="ctx-item" onclick="freezePanes()">🧊 ここで固定（選んだセルの 上と左）</div>
   <div class="ctx-item" id="ctx-unfreeze" style="display:none" onclick="unfreezePanes()">🧊 固定をやめる</div>
   <div class="ctx-item" onclick="printSheet()">🖨️ 印刷（Ctrl+P）</div>
+  <div class="ctx-item" onclick="openCondFormat()">🎨 条件付き書式（当てはまったら 色を付ける）</div>
   <div class="ctx-item" onclick="openValid()">✅ 入力の決まり（一覧から選ぶ／数の範囲）</div>
   <div class="ctx-item" id="ctx-bad-cells" style="display:none" onclick="showBadCells()">⚠️ 決まりに合っていない値を数える</div>
   <div class="ctx-divider"></div>
@@ -3480,6 +3676,65 @@ function detectTimePattern(values){
 </div>
 
 
+<!-- ★条件付き書式★ Excel の「ホーム→条件付き書式」に当たる窓。
+     ★1画面で終わらせる★（Excelの二段構えは真似ない＝迷わせない）。
+     ★押す前に「今 何個 当たるか」を出す★ -->
+<div id="cfOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:10000;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#ffffff;border-radius:20px;width:100%;max-width:520px;max-height:88vh;overflow:auto;display:flex;flex-direction:column;">
+    <div style="padding:16px 18px 10px;border-bottom:1px solid #D4EDE1;">
+      <div style="font-size:16px;font-weight:700;color:#2E7D54;">条件付き書式</div>
+      <div style="font-size:12px;color:#333333;margin-top:4px;">場所 … <span id="cfWhere">A1</span></div>
+    </div>
+    <div style="padding:14px 18px;font-size:13px;color:#333333;line-height:1.8;">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+        <span style="min-width:5.5em;">どうなったら</span>
+        <select id="cfKind" onchange="cfKindChange()" style="flex:1;min-width:150px;font-size:16px;padding:6px 8px;border:1px solid #C8ECD8;border-radius:8px;font-family:inherit;color:#333333;background:#ffffff;">
+          <option value="セルの値">セルの値が</option>
+          <option value="文字を含む">文字を含む</option>
+          <option value="重複する値">重複する値</option>
+          <option value="一意の値">一意の値</option>
+          <option value="上位下位">上位／下位</option>
+          <option value="式">式で決める</option>
+        </select>
+      </div>
+      <div id="cfOpRow" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+        <span style="min-width:5.5em;">比べ方</span>
+        <select id="cfOp" onchange="cfCount()" style="flex:1;min-width:150px;font-size:16px;padding:6px 8px;border:1px solid #C8ECD8;border-radius:8px;font-family:inherit;color:#333333;background:#ffffff;"></select>
+      </div>
+      <div id="cfV1Row" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+        <span id="cfV1Label" style="min-width:5.5em;">数か文字</span>
+        <input id="cfV1" type="text" oninput="cfCount()" placeholder="25" style="flex:1;min-width:120px;font-size:16px;padding:6px 8px;border:1px solid #C8ECD8;border-radius:8px;font-family:inherit;color:#333333;">
+      </div>
+      <div id="cfV2Row" style="display:none;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+        <span style="min-width:5.5em;">もう一つ</span>
+        <input id="cfV2" type="text" oninput="cfCount()" placeholder="範囲内の時だけ" style="flex:1;min-width:120px;font-size:16px;padding:6px 8px;border:1px solid #C8ECD8;border-radius:8px;font-family:inherit;color:#333333;">
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+        <span style="min-width:5.5em;">どう見せる</span>
+        <label style="display:inline-flex;align-items:center;gap:4px;">塗り
+          <input id="cfFill" type="color" value="#FFC7CE" style="width:38px;height:28px;border:1px solid #C8ECD8;border-radius:6px;background:#fff;padding:2px;"></label>
+        <label style="display:inline-flex;align-items:center;gap:4px;">文字
+          <input id="cfColor" type="color" value="#9C0006" style="width:38px;height:28px;border:1px solid #C8ECD8;border-radius:6px;background:#fff;padding:2px;"></label>
+        <label style="display:inline-flex;align-items:center;gap:4px;"><input id="cfBold" type="checkbox">太字</label>
+      </div>
+      <div id="cfCount" style="font-size:12px;color:#3D9E72;font-weight:700;margin-top:6px;">今の決め方だと 0個 当たります</div>
+      <div style="font-size:12px;color:#333333;margin-top:8px;line-height:1.6;">
+        見た目だけです。値も式も 変わりません（合計も動きません）。
+        手で塗った色は 消しません（この決まりを消すと 元の色に戻ります）。
+        同じマスに 2つ当たった時は 上に在る方が勝ちます。
+      </div>
+      <div id="cfMsg" style="font-size:12px;color:#B3261E;margin-top:8px;min-height:1.6em;line-height:1.6;"></div>
+      <div style="margin-top:10px;">
+        <div style="font-size:12px;font-weight:700;color:#2E7D54;">付けた決まり（上が強い）</div>
+        <div id="cfList" style="margin-top:4px;"></div>
+      </div>
+    </div>
+    <div style="padding:10px 18px 14px;border-top:1px solid #D4EDE1;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+      <button onclick="closeCondFormat()" style="background:#F0FAF4;border:1px solid #C8ECD8;color:#3D9E72;border-radius:20px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">閉じる</button>
+      <button onclick="applyCondFormat()" style="background:#52B788;border:1px solid #52B788;color:#fff;border-radius:20px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">この決まりで 色を付ける</button>
+    </div>
+  </div>
+</div>
 <!-- ★入力の決まり★ Excel の「データの入力規則」に当たる窓。
      ★出す物は 全部 動く物だけ★／★測った2つ（一覧から選ぶ・整数の範囲）だけ出す★ -->
 <div id="validOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:10000;align-items:center;justify-content:center;padding:16px;">
@@ -7586,7 +7841,7 @@ var REQUIRED_FNS = [
   'render', 'parseDate', 'parseDateStr', 'parseTime', 'dateFmtForFormula',
   'updateActionBtn', 'updateFormulaDisplay', 'updateMultiSelectBar',
   'initFormulaEngine', 'extractRefs', 'rebuildSheetTabs', 'switchSheet', 'loadSheetIntoEngine', 'quoteSheetRefs',
-  'recalcSheet', 'convertFormula', 'forDisplay', 'fmtForDisplay', 'applyNumFmt',
+  'recalcSheet', 'convertFormula', 'forDisplay', 'fmtForDisplay', 'applyNumFmt', 'cfFormatAt',
   // exally-formula.js が持っている物（★読み込みに失敗したら計算そのものが動かない★）
   'initExallyFormula', 'addSheetToEngine'
 ];
@@ -7658,6 +7913,6 @@ document.addEventListener('DOMContentLoaded', function(){ checkRequiredFns(); })
 <!-- ★テスト環境の帯★ 本番の倉庫では出ない。今どの倉庫かは js/supa-config.js が唯一の正。
      ホスト名では決めない（配り方は変わるが「本番のデータか」は変わらないため）。
      ★この2本だけが 本番の book.html との違い★（他は1バイトも同じにする）。 -->
-<script src="js/supa-config.js?v=ce61df33"></script>
-<script src="js/env-badge.js?v=ce61df33"></script>
+<script src="js/supa-config.js?v=7a84efb8"></script>
+<script src="js/env-badge.js?v=7a84efb8"></script>
 </html>
