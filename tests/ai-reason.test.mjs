@@ -232,6 +232,17 @@ T('★押し直しても直らない物に「もう一度」と言わない（�
     ok(r.次.indexOf('管理者') >= 0, '★誰に言えばよいかを 出していない★：' + r.次);
   }
 });
+T('★客に見せる字に ★ を書かない（★は うちの覚え書きの印）★', () => {
+  const 全部 = [{ status: 404, 本番か: false }, { status: 404, 本番か: true }, { status: 401, 本番か: true },
+                { status: 402, 理由: 'zandaka', 本番か: true }, { status: 429, 本番か: true },
+                { status: 504, 本番か: true }, { status: 502, 本番か: true }, { status: 400, 本番か: true },
+                { status: null, ネット切れ: true, 本番か: true }, { status: 200, 中身: '', 本番か: true }];
+  for (const 入れる of 全部) {
+    const 言葉 = win.AiReason.読む(入れる).言葉;
+    ok(言葉.indexOf('★') < 0, '★客の字に ★ が出ている★：' + 言葉);
+  }
+  ok(win.AiReason.呼んでよいか(['']).言葉.indexOf('★') < 0, '★空の時の字に ★ が出ている★');
+});
 T('★押し直せば直る物には ちゃんと「もう一度」と言う★', () => {
   for (const 入れる of [{ status: 500, 本番か: true }, { status: 200, 中身: '', 本番か: true }]) {
     ok(win.AiReason.読む(入れる).次.indexOf('もう一度') >= 0, '次の一手が無い');
@@ -357,6 +368,37 @@ await AT('★残高切れ(402)を 実際に押すと 画面に 理由と 次の�
   ok(字.indexOf('残高を足してほしい') >= 0, '★次の一手が 画面に出ていない★：' + 字);
   ok(字.indexOf('もう一度') < 0, '★直らないのに「もう一度」と 画面に出ている★：' + 字);
 });
+await AT('★繋がらなかった時は「深掘り」を出さない（押しても また失敗する）★', async () => {
+  reset();
+  win.setCell(0, 0, '100');
+  win.sel(0, 0, 0, 0);
+  await 押す({ status: 404 }, async () => {
+    win.explainCell();
+    await new Promise((r) => setTimeout(r, 30));
+  });
+  const deep = doc.getElementById('explain-deep');
+  ok(deep, '深掘りボタンが 見つからない');
+  eq(deep.style.display, 'none', '★繋がっていないのに 深掘りを出している★');
+  const copy = [...doc.querySelectorAll('#explain-popup .explain-footer button')]
+    .find((b) => b.textContent.indexOf('コピー') >= 0);
+  ok(copy && copy.style.display !== 'none', '★コピーまで消している（管理者に貼れなくなる）★');
+});
+await AT('★空のセルでも「深掘り」を出さない★', async () => {
+  reset();
+  win.sel(0, 0, 0, 0);
+  win.explainCell();
+  eq(doc.getElementById('explain-deep').style.display, 'none', '★中身が無いのに 深掘りを出している★');
+});
+await AT('★繋がった時は 深掘りが 出る（機能を殺していない）★', async () => {
+  reset();
+  win.setCell(0, 0, '100');
+  win.sel(0, 0, 0, 0);
+  await 押す({ status: 200, body: { text: 'これは100だよ' } }, async () => {
+    win.explainCell();
+    await new Promise((r) => setTimeout(r, 30));
+  });
+  eq(doc.getElementById('explain-deep').style.display, '', '★繋がったのに 深掘りが 消えている★');
+});
 await AT('★鍵がだめ(401)を 実際に押しても 中の言葉（Vercel…）は 出ない★', async () => {
   reset();
   win.setCell(0, 0, '100');
@@ -387,7 +429,7 @@ if (SELF) {
     ['book.html', '★字が在っても 呼ばない（機能を殺す）★',
       (s) => s.replace('  var 可否 = AiReason.呼んでよいか(送る字);', '  var 可否 = { 呼ぶ: false, 言葉: "だめ" };')],
     ['book.html', '★理由を捨てて 古い言い方に戻す★',
-      (s) => s.replace('  showExplainPopup(_explainAddr, _explainFormula, r.言葉);',
+      (s) => s.replace('  showExplainPopup(_explainAddr, _explainFormula, r.言葉, r.ok);',
         "  showExplainPopup(_explainAddr, _explainFormula, 'AIに接続できなかったよ。もう一度試してみてね。');")],
     ['book.html', '★呼ぶ口を もう1本 増やす（言い方がばらける）★',
       (s) => s.replace('async function _sendExplain(prompt){',
@@ -409,11 +451,19 @@ if (SELF) {
     ['lib/ai-reason.js', '★合言葉を 読まない（番号だけ見る）★',
       (s) => s.replace("    if (合言葉 === 'zandaka') return 残高();", '')],
     ['lib/ai-reason.js', '★残高切れなのに「もう一度」と言う★',
-      (s) => s.replace("      '★押し直しても 直りません★。管理者に「AIの残高を足してほしい」と伝えてね。');",
+      (s) => s.replace("      '押し直しても 直りません。管理者に「AIの残高を足してほしい」と伝えてね。');",
         "      'しばらくしてから もう一度 押してみてね。');")],
     ['lib/ai-reason.js', '★鍵の話で 中の言葉（Vercel）を 客に見せる★',
-      (s) => s.replace("      '★押し直しても 直りません★。管理者に「AIの鍵を見てほしい」と伝えてね。');",
+      (s) => s.replace("      '押し直しても 直りません。管理者に「AIの鍵を見てほしい」と伝えてね。');",
         "      'VercelのEnvironment VariablesにANTHROPIC_API_KEYを設定してください。');")],
+    ['book.html', '★繋がらなくても 深掘りを 見せる★',
+      (s) => s.replace("  if(deep) deep.style.display = (繋がったか === false) ? 'none' : '';", '')],
+    ['book.html', '★繋がった時まで 深掘りを 消す★',
+      (s) => s.replace("  if(deep) deep.style.display = (繋がったか === false) ? 'none' : '';",
+        "  if(deep) deep.style.display = 'none';")],
+    ['lib/ai-reason.js', '★客の字に ★ を書く★',
+      (s) => s.replace("'テスト環境には AIが在りません（練習用の倉庫だけ）。AIは 本番の画面で使ってね。'",
+        "'★テスト環境には AIが在りません（練習用の倉庫だけ）。AIは 本番の画面で使ってね。★'")],
     ['book.html', '★失敗した時に 合言葉を 読まない★',
       (s) => s.replace("      try{ var e2 = await res.json(); 理由 = (e2 && e2.error) || ''; }catch(e){ 理由 = ''; }", '')],
     ['lib/ai-reason.js', '★ネット切れを 読まない★',
@@ -427,7 +477,7 @@ if (SELF) {
       (s) => s.replace("        o.本番か ? '管理者に「/api/claude が配信されていない」と伝えてね。'",
         "        o.本番か ? 'もう一度 押してみてね。'")],
     ['lib/ai-reason.js', '★テスト線と本番で 同じ事しか言わない★',
-      (s) => s.replace("                 : '★テスト環境には AIが在りません（練習用の倉庫だけ）。AIは 本番の画面で使ってね。★');",
+      (s) => s.replace("                 : 'テスト環境には AIが在りません（練習用の倉庫だけ）。AIは 本番の画面で使ってね。');",
         "                 : '管理者に「/api/claude が配信されていない」と伝えてね。');")],
     ['lib/ai-reason.js', '★空でも 呼んでよい事にする★',
       (s) => s.replace('    if (何か在る) return { 呼ぶ: true, 言葉: \'\' };', '    return { 呼ぶ: true, 言葉: \'\' };')],

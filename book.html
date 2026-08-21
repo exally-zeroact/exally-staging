@@ -1197,31 +1197,31 @@ background:#FFE066 !important;
 }
 </style>
 
-<script src="hyperformula.full.min.js?v=a5f4689d"></script>
+<script src="hyperformula.full.min.js?v=ce61df33"></script>
 
-<script src="exally-formula.js?v=a5f4689d"></script>
+<script src="exally-formula.js?v=ce61df33"></script>
 <!-- グリッド→xlsx の変換と「落ちる物」の警告(純関数・軽い)。SheetJS本体(930KB)と lib/xlsx-io.js は
      初回の「Excelに書き出す」で初めて読み込む＝グリッドの表示を重くしない -->
-<script src="js/file-out.js?v=a5f4689d"></script>
+<script src="js/file-out.js?v=ce61df33"></script>
 <!-- ★打ち込んだ文字の解釈（1,234 を数にする）。★計算側も書き出し側も この1本を呼ぶ★
      grid-xlsx.js より先に読む（grid-xlsx.js が読み込み時に掴む） -->
-<script src="lib/typed-value.js?v=a5f4689d"></script>
-<script src="lib/grid-xlsx.js?v=a5f4689d"></script>
+<script src="lib/typed-value.js?v=ce61df33"></script>
+<script src="lib/grid-xlsx.js?v=ce61df33"></script>
   <!-- ★式の中の参照を「カーソルの位置で」直せるようにする★
        2026-08-06 司さんが実機で踏んだ: 「=B1+30」の B1 を直そうと A1 を触ると
        「=B1+30A1」になり ★B1 を直す手段が無かった★。テスト線では直っていたが
        ★本番には運ばれていなかった★（2026-08-18 差を数えて見つけた）。 -->
-  <script src="lib/grid-refedit.js?v=a5f4689d"></script>
-<script src="lib/autosum.js?v=a5f4689d"></script>
-<script src="lib/grid-sort.js?v=a5f4689d"></script>
-<script src="lib/grid-filter.js?v=a5f4689d"></script>
-<script src="lib/grid-find.js?v=a5f4689d"></script>
-<script src="lib/grid-print.js?v=a5f4689d"></script>
-<script src="lib/ai-reason.js?v=a5f4689d"></script>
-<script src="lib/menu-place.js?v=a5f4689d"></script>
-<script src="lib/grid-stats.js?v=a5f4689d"></script>
-<script src="lib/grid-valid.js?v=a5f4689d"></script>
-<script src="lib/excel-version.js?v=a5f4689d"></script>
+  <script src="lib/grid-refedit.js?v=ce61df33"></script>
+<script src="lib/autosum.js?v=ce61df33"></script>
+<script src="lib/grid-sort.js?v=ce61df33"></script>
+<script src="lib/grid-filter.js?v=ce61df33"></script>
+<script src="lib/grid-find.js?v=ce61df33"></script>
+<script src="lib/grid-print.js?v=ce61df33"></script>
+<script src="lib/ai-reason.js?v=ce61df33"></script>
+<script src="lib/menu-place.js?v=ce61df33"></script>
+<script src="lib/grid-stats.js?v=ce61df33"></script>
+<script src="lib/grid-valid.js?v=ce61df33"></script>
+<script src="lib/excel-version.js?v=ce61df33"></script>
 
 <script>
 /* ===== canvas-formula-engine.js (inlined) ===== */
@@ -3299,7 +3299,8 @@ function detectTimePattern(values){
   </div>
   <div class="explain-footer">
     <button onclick="copyExplain()">📋 コピー</button>
-    <button onclick="deepDiveExplain()">💬 深掘り</button>
+    <!-- ★繋がらなかった時は 出さない★＝押しても また同じ所で失敗する（出来ていない物のボタンを見せない） -->
+    <button id="explain-deep" onclick="deepDiveExplain()">💬 深掘り</button>
   </div>
 </div>
 
@@ -6777,14 +6778,18 @@ function explainCell(){
   var 送る字 = isRange ? cells : [ (getCell(selR1,selC1).v||''), (getCell(selR1,selC1).f||'') ];
   var 可否 = AiReason.呼んでよいか(送る字);
   if(!可否.呼ぶ){
-    showExplainPopup(addr, formula, 可否.言葉);
+    showExplainPopup(addr, formula, 可否.言葉, false);
     return;
   }
   showExplainPopup(addr,formula,null);
   _sendExplain(prompt);
 }
-function showExplainPopup(addr,formula,aiText){
+function showExplainPopup(addr,formula,aiText,繋がったか){
   var popup=document.getElementById('explain-popup');
+  /* ★繋がらなかった時に「深掘り」を見せない★（押しても また失敗するだけ）
+     2026-08-22：実配信を撮って見つけた。「コピー」は 管理者に貼って伝えられるので 残す。 */
+  var deep=document.getElementById('explain-deep');
+  if(deep) deep.style.display = (繋がったか === false) ? 'none' : '';
   document.getElementById('explain-title').textContent='🤖 '+addr+'の解説';
   var fEl=document.getElementById('explain-formula');
   if(formula&&formula[0]==='='){
@@ -6854,7 +6859,7 @@ async function _aiFetch(body){
 
 async function _sendExplain(prompt){
   var r = await _aiFetch({ message: prompt, history: [] });
-  showExplainPopup(_explainAddr, _explainFormula, r.言葉);
+  showExplainPopup(_explainAddr, _explainFormula, r.言葉, r.ok);
 }
 var aiHistory = [];
 
@@ -7653,6 +7658,6 @@ document.addEventListener('DOMContentLoaded', function(){ checkRequiredFns(); })
 <!-- ★テスト環境の帯★ 本番の倉庫では出ない。今どの倉庫かは js/supa-config.js が唯一の正。
      ホスト名では決めない（配り方は変わるが「本番のデータか」は変わらないため）。
      ★この2本だけが 本番の book.html との違い★（他は1バイトも同じにする）。 -->
-<script src="js/supa-config.js?v=a5f4689d"></script>
-<script src="js/env-badge.js?v=a5f4689d"></script>
+<script src="js/supa-config.js?v=ce61df33"></script>
+<script src="js/env-badge.js?v=ce61df33"></script>
 </html>
