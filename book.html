@@ -343,11 +343,34 @@ body {
   position:relative;
   overflow:hidden;
   background:#F0FAF4;
+}
+
+/* ★hidden と書いても class の display に打ち消される事があるので 1行 入れておく★ */
+[hidden]{display:none !important;}
+
+/* ★選んだ所の 合計・平均・個数の帯★
+   ★字が1文字ずつ縦に割れないよう flex の箱を 縮めさせない（flex:0 0 auto）★
+   ★字は割らずに 箱ごと 折り返す（flex-wrap:wrap）★
+     → 375px の実機で測ったら 帯が 679px になり、★注意が画面の外★だった。
+        注意を先頭に出し、箱ごと折り返すようにした（2026-08-21）。 */
+#status-bar{
+  flex:0 0 auto;
+  display:flex; align-items:center; gap:14px;
+  min-height:28px; padding:4px 10px;
+  background:#FFFFFF; border-top:1px solid #D4EDE1;
+  font-size:12px; color:#333333; line-height:1.5;
+  white-space:nowrap; overflow-x:auto; overflow-y:hidden;
+  flex-wrap:wrap; row-gap:2px;
   margin-bottom:calc(86px + env(safe-area-inset-bottom));
 }
 @media(min-width:769px){
-  #grid-wrap{margin-bottom:calc(32px + env(safe-area-inset-bottom));}
+  #status-bar{margin-bottom:calc(32px + env(safe-area-inset-bottom));}
 }
+#status-bar .sb-i{flex:0 0 auto; white-space:nowrap;}
+#status-bar .sb-n{color:#5A6B63; margin-right:5px;}
+#status-bar .sb-v{color:#333333; font-weight:700;}
+#status-bar .sb-i.sb-warn .sb-n,
+#status-bar .sb-i.sb-warn .sb-v{color:#B3261E;}
 
 #grid-canvas {
 position:absolute;
@@ -423,7 +446,7 @@ display:flex !important;
 #ai-float-btn {
 display:flex;
 position:fixed;
-bottom:calc(32px + 16px);
+bottom:calc(32px + 16px + var(--sb-h, 0px));
 right:20px;
 background:#3D9E72;
 color:#fff;
@@ -485,7 +508,7 @@ overflow-y:auto;
 #ai-float-btn {
 display:flex !important;
 position:fixed;
-bottom:96px;
+bottom:calc(96px + var(--sb-h, 0px));
 right:16px;
 background:#3D9E72;
 color:#fff;
@@ -809,7 +832,7 @@ gap:8px;
 #ai-float-btn {
 display:flex !important;
 position:fixed;
-bottom:96px;
+bottom:calc(96px + var(--sb-h, 0px));
 right:16px;
 background:#3D9E72;
 color:#fff;
@@ -1169,28 +1192,29 @@ background:#FFE066 !important;
 }
 </style>
 
-<script src="hyperformula.full.min.js?v=b9f2d616"></script>
+<script src="hyperformula.full.min.js?v=a161eafa"></script>
 
-<script src="exally-formula.js?v=b9f2d616"></script>
+<script src="exally-formula.js?v=a161eafa"></script>
 <!-- グリッド→xlsx の変換と「落ちる物」の警告(純関数・軽い)。SheetJS本体(930KB)と lib/xlsx-io.js は
      初回の「Excelに書き出す」で初めて読み込む＝グリッドの表示を重くしない -->
-<script src="js/file-out.js?v=b9f2d616"></script>
+<script src="js/file-out.js?v=a161eafa"></script>
 <!-- ★打ち込んだ文字の解釈（1,234 を数にする）。★計算側も書き出し側も この1本を呼ぶ★
      grid-xlsx.js より先に読む（grid-xlsx.js が読み込み時に掴む） -->
-<script src="lib/typed-value.js?v=b9f2d616"></script>
-<script src="lib/grid-xlsx.js?v=b9f2d616"></script>
+<script src="lib/typed-value.js?v=a161eafa"></script>
+<script src="lib/grid-xlsx.js?v=a161eafa"></script>
   <!-- ★式の中の参照を「カーソルの位置で」直せるようにする★
        2026-08-06 司さんが実機で踏んだ: 「=B1+30」の B1 を直そうと A1 を触ると
        「=B1+30A1」になり ★B1 を直す手段が無かった★。テスト線では直っていたが
        ★本番には運ばれていなかった★（2026-08-18 差を数えて見つけた）。 -->
-  <script src="lib/grid-refedit.js?v=b9f2d616"></script>
-<script src="lib/autosum.js?v=b9f2d616"></script>
-<script src="lib/grid-sort.js?v=b9f2d616"></script>
-<script src="lib/grid-filter.js?v=b9f2d616"></script>
-<script src="lib/grid-find.js?v=b9f2d616"></script>
-<script src="lib/grid-print.js?v=b9f2d616"></script>
-<script src="lib/grid-valid.js?v=b9f2d616"></script>
-<script src="lib/excel-version.js?v=b9f2d616"></script>
+  <script src="lib/grid-refedit.js?v=a161eafa"></script>
+<script src="lib/autosum.js?v=a161eafa"></script>
+<script src="lib/grid-sort.js?v=a161eafa"></script>
+<script src="lib/grid-filter.js?v=a161eafa"></script>
+<script src="lib/grid-find.js?v=a161eafa"></script>
+<script src="lib/grid-print.js?v=a161eafa"></script>
+<script src="lib/grid-stats.js?v=a161eafa"></script>
+<script src="lib/grid-valid.js?v=a161eafa"></script>
+<script src="lib/excel-version.js?v=a161eafa"></script>
 
 <script>
 /* ===== canvas-formula-engine.js (inlined) ===== */
@@ -1954,6 +1978,45 @@ function updateBar(){
   updateFormulaDisplay(cell.f||'');
   updateFormatBar(cell);
   updateActionBtn();
+  updateStatusBar();
+}
+
+/* ★選んだ所の 合計・平均・個数を 帯に出す★
+   数え方は lib/grid-stats.js（実Excel を COM で押して測った真値）。
+   ★黙って小さい合計を出さない★＝数の形の文字やエラーが在れば 理由を出す。 */
+function updateStatusBar(){
+  var el = document.getElementById('status-bar');
+  if(!el) return;
+  var data = sheets[activeSheet].data, cells = [];
+  var r1=Math.min(selR1,selR2), r2=Math.max(selR1,selR2);
+  var c1=Math.min(selC1,selC2), c2=Math.max(selC1,selC2);
+  for(var r=r1;r<=r2;r++) for(var c=c1;c<=c2;c++) cells.push(data[r+','+c] || null);
+  var 出す = GridStats.items(GridStats.summarize(cells));
+  if(!出す.length){
+    el.innerHTML = '<span class="sb-i" id="sb-ready">準備完了</span>';
+    return;
+  }
+  var h = '';
+  for(var i=0;i<出す.length;i++){
+    var it = 出す[i];
+    h += '<span class="sb-i' + (it.注意 ? ' sb-warn' : '')
+       + '" data-n="' + it.名 + '" data-v="' + it.値 + '">'
+       + '<span class="sb-n">' + it.名 　+ '</span>'
+       + '<span class="sb-v">' + it.値 + '</span></span>';
+  }
+  el.innerHTML = h;
+  _sbHeight(el);
+}
+
+/* ★帯の高さを 実測して AIボタンを その上に退かす★
+   375px の実機で測ったら ★AIボタンが 帯の「足していません」と合計を 隠していた★
+   （2026-08-21 実測）。★DOMに在る≠読める★ */
+function _sbHeight(el){
+  el = el || document.getElementById('status-bar');
+  if(!el) return 0;
+  var h = Math.round(el.getBoundingClientRect().height);
+  document.documentElement.style.setProperty('--sb-h', h + 'px');
+  return h;
 }
 var _canvasBCR=null, _canvasBCRDirty=true;
 function _getCanvasBCR(){ if(_canvasBCRDirty||!_canvasBCR){_canvasBCR=canvas.getBoundingClientRect();_canvasBCRDirty=false;} return _canvasBCR; }
@@ -3716,6 +3779,10 @@ window.addEventListener('load',updateBookVerBadge);
   <textarea id="cell-input" rows="1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
 
 </div>
+
+<!-- ★選んだ所の 合計・平均・個数★（Excel のステータスバーに当たる）
+     ★出せる物だけ 出す＝中身が空の枠を 出さない★ -->
+<div id="status-bar"><span class="sb-i" id="sb-ready">準備完了</span></div>
 
 <button id="ai-float-btn" onclick="handleAIBtn()">💬 AIに話しかける</button>
 
@@ -7557,6 +7624,6 @@ document.addEventListener('DOMContentLoaded', function(){ checkRequiredFns(); })
 <!-- ★テスト環境の帯★ 本番の倉庫では出ない。今どの倉庫かは js/supa-config.js が唯一の正。
      ホスト名では決めない（配り方は変わるが「本番のデータか」は変わらないため）。
      ★この2本だけが 本番の book.html との違い★（他は1バイトも同じにする）。 -->
-<script src="js/supa-config.js?v=b9f2d616"></script>
-<script src="js/env-badge.js?v=b9f2d616"></script>
+<script src="js/supa-config.js?v=a161eafa"></script>
+<script src="js/env-badge.js?v=a161eafa"></script>
 </html>
