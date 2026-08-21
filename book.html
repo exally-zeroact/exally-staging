@@ -1169,24 +1169,25 @@ background:#FFE066 !important;
 }
 </style>
 
-<script src="hyperformula.full.min.js?v=d0ed2ba5"></script>
+<script src="hyperformula.full.min.js?v=04dc0973"></script>
 
-<script src="exally-formula.js?v=d0ed2ba5"></script>
+<script src="exally-formula.js?v=04dc0973"></script>
 <!-- グリッド→xlsx の変換と「落ちる物」の警告(純関数・軽い)。SheetJS本体(930KB)と lib/xlsx-io.js は
      初回の「Excelに書き出す」で初めて読み込む＝グリッドの表示を重くしない -->
-<script src="js/file-out.js?v=d0ed2ba5"></script>
+<script src="js/file-out.js?v=04dc0973"></script>
 <!-- ★打ち込んだ文字の解釈（1,234 を数にする）。★計算側も書き出し側も この1本を呼ぶ★
      grid-xlsx.js より先に読む（grid-xlsx.js が読み込み時に掴む） -->
-<script src="lib/typed-value.js?v=d0ed2ba5"></script>
-<script src="lib/grid-xlsx.js?v=d0ed2ba5"></script>
+<script src="lib/typed-value.js?v=04dc0973"></script>
+<script src="lib/grid-xlsx.js?v=04dc0973"></script>
   <!-- ★式の中の参照を「カーソルの位置で」直せるようにする★
        2026-08-06 司さんが実機で踏んだ: 「=B1+30」の B1 を直そうと A1 を触ると
        「=B1+30A1」になり ★B1 を直す手段が無かった★。テスト線では直っていたが
        ★本番には運ばれていなかった★（2026-08-18 差を数えて見つけた）。 -->
-  <script src="lib/grid-refedit.js?v=d0ed2ba5"></script>
-<script src="lib/autosum.js?v=d0ed2ba5"></script>
-<script src="lib/grid-sort.js?v=d0ed2ba5"></script>
-<script src="lib/excel-version.js?v=d0ed2ba5"></script>
+  <script src="lib/grid-refedit.js?v=04dc0973"></script>
+<script src="lib/autosum.js?v=04dc0973"></script>
+<script src="lib/grid-sort.js?v=04dc0973"></script>
+<script src="lib/grid-filter.js?v=04dc0973"></script>
+<script src="lib/excel-version.js?v=04dc0973"></script>
 
 <script>
 /* ===== canvas-formula-engine.js (inlined) ===== */
@@ -1429,6 +1430,58 @@ function sortRange(dir){
   showToast(何行 + '行を' + (dir==='asc'?'昇順':'降順') + 'に並べ替えました'
     + (見出し ? '（先頭行は見出しとして動かしていません）' : '')
     + (ドル付き ? '／★$付きの参照が' + ドル付き + '本 在ります＝Excelと同じく 指す先が変わります★' : ''));
+}
+
+/* ══ 絞り込み（フィルター）══════════════════════════════════════════
+   ★Excel の右クリックにも 同じ物が在る★（実物から取った）:
+     フィルター > フィルターのクリア／再適用／★選択したセルの値でフィルター★／色／フォント色／アイコン
+   ★実Excelで測った通り★
+     ・行は ★消えない。隠れるだけ★／★見出し行は隠れない★
+     ・★合計は 絞っても変わらない★（SUM=15 のまま。隠れた行も足す）
+     ・★フィルターで隠れた行と 手で隠した行は 別物★（SUBTOTAL(9) の効き方が違う）
+       ⇒ うちも sheet.filterHidden と sheet.hiddenRows を ★分けて持つ★
+   ★作っていない物★ 色・フォント色・アイコンでの絞り込み／再適用／見出しの▼ボタン */
+function _表の範囲(){
+  var data = sheets[activeSheet].data;
+  if(selR1!==selR2 || selC1!==selC2) return { r1:selR1, c1:selC1, r2:selR2, c2:selC2 };
+  var 中身がある = function(r,c){
+    var x = data[r+','+c]; if(!x) return false;
+    var v = (x.d!==undefined && x.d!==null && x.d!=='') ? x.d : x.v;
+    return v!==undefined && v!==null && String(v)!=='';
+  };
+  return GridSort.region(中身がある, selR1, selC1, ROWS-1, COLS-1);
+}
+function _絞り込み中(){
+  var f = sheets[activeSheet].filterHidden;
+  if(!f) return false;
+  for(var k in f) if(f[k]) return true;
+  return false;
+}
+function filterByValue(){
+  hideCtxMenu();
+  var sh = sheets[activeSheet], data = sh.data;
+  var rng = _表の範囲();
+  var get = function(r,c){ return data[r+','+c]; };
+  var 見出し = GridSort.guessHeader(get, rng.r1, rng.c1, rng.r2, rng.c2);
+  var 値 = GridFilter.text(get(selR1, selC1));
+  if(見出し && selR1===rng.r1){ showToast('見出しの行では絞り込めません（下の行を選んでね）'); return; }
+  var res = GridFilter.byValue(get, rng, 見出し, selC1, 値);
+  if(!res.keep.length){ showToast('その値の行が見つかりません'); return; }
+  sh.filterHidden = {};
+  for(var i=0;i<res.hide.length;i++) sh.filterHidden[res.hide[i]] = true;
+  var ctl = document.getElementById('ctx-clear-filter'); if(ctl) ctl.style.display = '';
+  render();
+  showToast('「' + (res.value || '（空）') + '」の ' + res.keep.length + '行だけ見せています'
+    + '（' + res.hide.length + '行を隠しました。★消していません・合計も変わりません★）');
+}
+function clearFilter(){
+  hideCtxMenu();
+  var sh = sheets[activeSheet];
+  var 戻す = sh.filterHidden ? Object.keys(sh.filterHidden).length : 0;
+  sh.filterHidden = {};
+  var ctl = document.getElementById('ctx-clear-filter'); if(ctl) ctl.style.display = 'none';
+  render();
+  showToast(戻す ? (戻す + '行を戻しました') : '絞り込みはかかっていません');
 }
 
 /** F4 … カーソルの下の参照の $ を1つ進める（式を編集している時だけ）。
@@ -2885,6 +2938,8 @@ function detectTimePattern(values){
   <div class="ctx-divider"></div>
   <div class="ctx-item" onclick="sortRange('asc')">⬆️ 昇順で並べ替え</div>
   <div class="ctx-item" onclick="sortRange('desc')">⬇️ 降順で並べ替え</div>
+  <div class="ctx-item" onclick="filterByValue()">🔽 選んだセルの値で絞り込む</div>
+  <div class="ctx-item" id="ctx-clear-filter" style="display:none" onclick="clearFilter()">🔽 絞り込みを解除</div>
   <div class="ctx-divider"></div>
   <div class="ctx-item" onclick="ctxInsertRow()">➕ 行を挿入（上）</div>
   <div class="ctx-item" onclick="ctxInsertCol()">➕ 列を挿入（左）</div>
@@ -3926,7 +3981,12 @@ function evalFormula(formula, selfR, selfC){
   }
 }
 function cW(c){ if(sheets[activeSheet].hiddenCols&&sheets[activeSheet].hiddenCols[c]) return 0; return (sheets[activeSheet].colW[c] || COL_W) * scale; }
-function rH(r){ if(sheets[activeSheet].hiddenRows&&sheets[activeSheet].hiddenRows[r]) return 0; return (sheets[activeSheet].rowH[r] || ROW_H) * scale; }
+function rH(r){
+  var sh = sheets[activeSheet];
+  if(sh.hiddenRows && sh.hiddenRows[r]) return 0;                 /* 人が手で隠した行 */
+  if(sh.filterHidden && sh.filterHidden[r]) return 0;             /* ★絞り込みで隠れた行（別物として持つ）★ */
+  return (sh.rowH[r] || ROW_H) * scale;
+}
 
 // ===== 座標 =====
 function colX(c){
@@ -7027,6 +7087,6 @@ document.addEventListener('DOMContentLoaded', function(){ checkRequiredFns(); })
 <!-- ★テスト環境の帯★ 本番の倉庫では出ない。今どの倉庫かは js/supa-config.js が唯一の正。
      ホスト名では決めない（配り方は変わるが「本番のデータか」は変わらないため）。
      ★この2本だけが 本番の book.html との違い★（他は1バイトも同じにする）。 -->
-<script src="js/supa-config.js?v=d0ed2ba5"></script>
-<script src="js/env-badge.js?v=d0ed2ba5"></script>
+<script src="js/supa-config.js?v=04dc0973"></script>
+<script src="js/env-badge.js?v=04dc0973"></script>
 </html>
