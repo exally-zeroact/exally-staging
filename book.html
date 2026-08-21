@@ -1169,23 +1169,24 @@ background:#FFE066 !important;
 }
 </style>
 
-<script src="hyperformula.full.min.js?v=2324ff78"></script>
+<script src="hyperformula.full.min.js?v=d0ed2ba5"></script>
 
-<script src="exally-formula.js?v=2324ff78"></script>
+<script src="exally-formula.js?v=d0ed2ba5"></script>
 <!-- グリッド→xlsx の変換と「落ちる物」の警告(純関数・軽い)。SheetJS本体(930KB)と lib/xlsx-io.js は
      初回の「Excelに書き出す」で初めて読み込む＝グリッドの表示を重くしない -->
-<script src="js/file-out.js?v=2324ff78"></script>
+<script src="js/file-out.js?v=d0ed2ba5"></script>
 <!-- ★打ち込んだ文字の解釈（1,234 を数にする）。★計算側も書き出し側も この1本を呼ぶ★
      grid-xlsx.js より先に読む（grid-xlsx.js が読み込み時に掴む） -->
-<script src="lib/typed-value.js?v=2324ff78"></script>
-<script src="lib/grid-xlsx.js?v=2324ff78"></script>
+<script src="lib/typed-value.js?v=d0ed2ba5"></script>
+<script src="lib/grid-xlsx.js?v=d0ed2ba5"></script>
   <!-- ★式の中の参照を「カーソルの位置で」直せるようにする★
        2026-08-06 司さんが実機で踏んだ: 「=B1+30」の B1 を直そうと A1 を触ると
        「=B1+30A1」になり ★B1 を直す手段が無かった★。テスト線では直っていたが
        ★本番には運ばれていなかった★（2026-08-18 差を数えて見つけた）。 -->
-  <script src="lib/grid-refedit.js?v=2324ff78"></script>
-<script src="lib/autosum.js?v=2324ff78"></script>
-<script src="lib/excel-version.js?v=2324ff78"></script>
+  <script src="lib/grid-refedit.js?v=d0ed2ba5"></script>
+<script src="lib/autosum.js?v=d0ed2ba5"></script>
+<script src="lib/grid-sort.js?v=d0ed2ba5"></script>
+<script src="lib/excel-version.js?v=d0ed2ba5"></script>
 
 <script>
 /* ===== canvas-formula-engine.js (inlined) ===== */
@@ -1359,6 +1360,75 @@ function autoSum(){
   if(!got){ showToast('足す数が見つかりません（すぐ上か すぐ左に数を並べてね）'); return; }
   setCell(selR1, selC1, got.formula);
   updateBar(); render();
+}
+
+/** 並べ替え … ★どう並ぶかは lib/grid-sort.js（実Excelで測った真値）★
+ *  ・1セルだけ選んでいる時は ★その周りの表を丸ごと★（Excel の CurrentRegion と同じ）
+ *  ・範囲を選んでいる時は ★その範囲だけ★
+ *  ・見出し行が在るかは 実Excelと同じ判定（先頭が文字で 下に数）
+ *  ・★行はセットで動く★（名前と数がバラバラにならない）
+ *  ・★式は 移った先の行に読み替える★＝相対参照だけの式は各行で正しいまま。
+ *    $付きは動かない＝Excel と同じく ★指す先が変わる★ので その時だけ 一言 知らせる。 */
+function sortRange(dir){
+  hideCtxMenu();
+  var s = sheets[activeSheet], data = s.data;
+  var 一つだけ = (selR1===selR2 && selC1===selC2);
+  var rng;
+  if(一つだけ){
+    var 中身がある = function(r,c){
+      var x = data[r+','+c]; if(!x) return false;
+      var v = (x.d!==undefined && x.d!==null && x.d!=='') ? x.d : x.v;
+      return v!==undefined && v!==null && String(v)!=='';
+    };
+    rng = GridSort.region(中身がある, selR1, selC1, ROWS-1, COLS-1);
+  } else {
+    rng = { r1:selR1, c1:selC1, r2:selR2, c2:selC2 };
+  }
+  var get = function(r,c){ return data[r+','+c]; };
+  var 見出し = GridSort.guessHeader(get, rng.r1, rng.c1, rng.r2, rng.c2);
+  var 先頭 = rng.r1 + (見出し ? 1 : 0);
+  if(先頭 >= rng.r2){ showToast('並べ替える行が足りません'); return; }
+  var キー列 = Math.max(rng.c1, Math.min(selC1, rng.c2));
+  var 並び = [];
+  for(var r=先頭; r<=rng.r2; r++) 並び.push(data[r+','+キー列]);
+  var 順 = GridSort.order(並び, dir);
+  var 同じ = true;
+  for(var i=0;i<順.length;i++) if(順[i]!==i){ 同じ=false; break; }
+  if(同じ){ showToast('もう ' + (dir==='asc'?'昇順':'降順') + ' に並んでいます'); return; }
+
+  _pushRowColUndo();                       /* ★1回の取り消しで丸ごと戻せる★ */
+  var 元 = {};
+  for(var r2=先頭; r2<=rng.r2; r2++) for(var c2=rng.c1; c2<=rng.c2; c2++) 元[(r2-先頭)+','+c2] = data[r2+','+c2];
+  var ドル付き = 0;
+  for(var i2=0;i2<順.length;i2++){
+    var ずれ = i2 - 順[i2];
+    for(var c3=rng.c1; c3<=rng.c2; c3++){
+      var src = 元[順[i2]+','+c3];
+      var key = (先頭+i2)+','+c3;
+      if(src===undefined){ delete data[key]; continue; }
+      var next = Object.assign({}, src);
+      if(typeof src.f==='string' && src.f.charAt(0)==='='){
+        if(GridSort.hasAbsRef(src.f)) ドル付き++;
+        next.f = shiftFormula(src.f, ずれ, 0);   /* ★$ は動かない（Excelと同じ）★ */
+        next.v = next.f;
+      }
+      data[key] = next;
+    }
+  }
+  /* ★計算側にも 並べ替えた後の形を流し直して 答えを取り直す★（2026-08-21 実際に踏んだ）
+     ① セルを動かしただけでは、そのセルが持っている「前の答え(d)」が一緒に運ばれて
+        ★並べ替えたのに 値が古いまま出た★（黙って嘘をつく）。
+     ② loadSheetIntoEngine は ★一度 流したシートは何もしない★ ので、
+        呼んでも計算側は 前の形のままだった。⇒ _pushGrid で丸ごと流し直す。
+     ★控えの取り直し（rebaseSheet）はしない★＝並べ替えは「人が直した事」なので
+       書き出しの差分に出さないといけない。 */
+  _pushGrid(activeSheet, s);
+  recalcSheet(activeSheet, data);
+  updateBar(); render();
+  var 何行 = 順.length;
+  showToast(何行 + '行を' + (dir==='asc'?'昇順':'降順') + 'に並べ替えました'
+    + (見出し ? '（先頭行は見出しとして動かしていません）' : '')
+    + (ドル付き ? '／★$付きの参照が' + ドル付き + '本 在ります＝Excelと同じく 指す先が変わります★' : ''));
 }
 
 /** F4 … カーソルの下の参照の $ を1つ進める（式を編集している時だけ）。
@@ -2812,6 +2882,9 @@ function detectTimePattern(values){
   <div class="ctx-item" onclick="ctxDelete()">🗑️ 削除 <span style="color:#aaa;font-size:11px;margin-left:auto">Del</span></div>
   <div class="ctx-divider"></div>
   <div class="ctx-item" onclick="ctxFormat()">🎨 セルの書式設定</div>
+  <div class="ctx-divider"></div>
+  <div class="ctx-item" onclick="sortRange('asc')">⬆️ 昇順で並べ替え</div>
+  <div class="ctx-item" onclick="sortRange('desc')">⬇️ 降順で並べ替え</div>
   <div class="ctx-divider"></div>
   <div class="ctx-item" onclick="ctxInsertRow()">➕ 行を挿入（上）</div>
   <div class="ctx-item" onclick="ctxInsertCol()">➕ 列を挿入（左）</div>
@@ -6954,6 +7027,6 @@ document.addEventListener('DOMContentLoaded', function(){ checkRequiredFns(); })
 <!-- ★テスト環境の帯★ 本番の倉庫では出ない。今どの倉庫かは js/supa-config.js が唯一の正。
      ホスト名では決めない（配り方は変わるが「本番のデータか」は変わらないため）。
      ★この2本だけが 本番の book.html との違い★（他は1バイトも同じにする）。 -->
-<script src="js/supa-config.js?v=2324ff78"></script>
-<script src="js/env-badge.js?v=2324ff78"></script>
+<script src="js/supa-config.js?v=d0ed2ba5"></script>
+<script src="js/env-badge.js?v=d0ed2ba5"></script>
 </html>

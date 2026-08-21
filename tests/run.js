@@ -27,6 +27,8 @@ const FILES = [
   ['excel-shortcuts.test.mjs', '--self-test'],
   'mobile-labels.test.mjs',               // ★スマホの幅で 字を消して「絵だけ」にするのを禁じる(司さんのiPhoneで 📂💾📊 の絵だけになっていた)
   ['mobile-labels.test.mjs', '--self-test'],
+  'grid-sort.test.mjs',                   // ★並べ替え(実Excelを COM で動かして測った並び順・見出し判定・式の運ばれ方)
+  ['grid-sort.test.mjs', '--self-test'],
   'no-dead-ui.test.mjs',     // ★出来ていない物のボタン/画面を止める窓/中の言葉(STEP6・実装予定)を客に見せない
   ['no-dead-ui.test.mjs', '--self-test'],
   'word-export-import.test.mjs',   // ★言い方を「書き出す↔読み込む」に固定
