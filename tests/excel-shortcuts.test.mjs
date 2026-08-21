@@ -313,13 +313,46 @@ T('Ctrl+S … 書き出しが呼ばれる（ブラウザの保存は止める）
 });
 
 /* ── ⑨ ★測っていない物は作っていない★（作った事にしない） ── */
-T('★Alt+= は入れていない★（Excelが当てる範囲を測れていないので作らない）', () => {
-  eq(GOLD.autosum.measured, false, 'golden の言い分と食い違う');
+/* ── ⑨ Alt+=（オートSUM）★実Excelを押して測った3通りと一致するか★ ── */
+T('★Alt+= の真値が golden に入っている（人が実物を押して測った）★', () => {
+  eq(GOLD.autosum.measured, true, 'まだ測っていない事になっている');
+  eq(GOLD.autosum.cases.length, 3, '測った通りの数が違う');
+  ok(String(GOLD.autosum.how).length > 20, 'どう測ったかが書かれていない');
+  ok(Array.isArray(GOLD.autosum.not_measured) && GOLD.autosum.not_measured.length > 0,
+    '★測っていない所★ が書かれていない（全部 測った事にしない）');
+});
+for (const cs of GOLD.autosum.cases) {
+  T('Alt+= … ' + cs.label + '（' + cs.at + ' で押す → ' + cs.formula + '）＝実Excelで実測', () => {
+    reset();
+    /* golden の setup を そのまま置く（数の中身は式に出ないので 1 でよい） */
+    const put = (a1) => {
+      const m = /^([A-Za-z]+)(\d+)$/.exec(a1);
+      let c = 0; const L = m[1].toUpperCase();
+      for (let i = 0; i < L.length; i++) c = c * 26 + (L.charCodeAt(i) - 64);
+      return { r: +m[2] - 1, c: c - 1 };
+    };
+    /* ★置く場所は golden の fill を そのまま使う★
+       日本語の setup から読み取ろうとしたら ★「C4 は空」まで置いてしまった★（2026-08-21 実際に踏んだ） */
+    ok(Array.isArray(cs.fill) && cs.fill.length, 'golden に fill が無い＝どこに数を置くか決まっていない');
+    for (const 範囲 of cs.fill) {
+      const [a, b] = 範囲.split(':');
+      const p1 = put(a), p2 = b ? put(b) : p1;
+      for (let r = p1.r; r <= p2.r; r++) for (let c = p1.c; c <= p2.c; c++) win.setCell(r, c, '5');
+    }
+    const at = put(cs.at);
+    win.sel(at.r, at.c, at.r, at.c);
+    const ev = key('=', { alt: true });
+    ok(ev.defaultPrevented, '既定を止めていない');
+    const cell = A(at.r, at.c);
+    ok(cell, cs.at + ' に何も入っていない');
+    eq(cell.f, cs.formula, cs.at);
+  });
+}
+T('★足す数が無い所で押しても 何も入れない（勝手に広げない＝分かりません）★', () => {
   reset();
-  win.setCell(0, 0, '10'); win.setCell(1, 0, '20');
-  win.sel(2, 0, 2, 0);
+  win.sel(4, 4, 4, 4);
   key('=', { alt: true });
-  eq(A(2, 0), null, 'Alt+= で何か入っている＝測っていない物を作っている');
+  eq(A(4, 4), null, '足す数が無いのに何か入れた');
 });
 T('★F4 の「回る順番」は機械で測っていない と golden に書いてある★', () => {
   eq(GOLD.f4_order_measured, false);
@@ -351,15 +384,30 @@ if (SELF) {
     ['日付の書式を当てない', (s) => s.replace("fmt='yyyy/m/d'; }", "fmt=null; }")],
     ['時刻の書式を日付にする', (s) => s.replace("fmt='h:mm';", "fmt='yyyy/m/d';")],
     ['F4 の $ 切替を止める', (s) => s.replace('var res = GridRefEdit.toggleAbsAt(el.value, pos);', 'var res = {ok:false};')],
-    /* ★Ctrl の箱の中に足しても Alt+= は届かない（1回 素通りさせた）＝Ctrl を使わない側に足す★ */
-    ['★Alt+= を測らずに作る★', (s) => s.replace("if(e.key==='F2'){startEdit(selR1,selC1);moved=true;}", "if(e.key==='F2'){startEdit(selR1,selC1);moved=true;}\n  if(e.altKey && e.key==='='){ e.preventDefault(); setCell(selR1,selC1,'=SUM(A1:A2)'); moved=true; }")],
+    ['Alt+= の割り当てを消す', (s) => s.replace("  if(e.altKey && e.key==='='){ e.preventDefault(); autoSum(); moved=true; }   /* オートSUM */\n", '')],
+    ['Alt+= で 足す数が無くても勝手に入れる', (s) => s.replace(
+      "if(!got){ showToast('足す数が見つかりません（すぐ上か すぐ左に数を並べてね）'); return; }",
+      "if(!got){ setCell(selR1,selC1,'=SUM(A1:A2)'); return; }")],
     ['既定の動きを止めない（Ctrl+D の preventDefault を消す）', (s) => s.replace("if(ek==='d'){ e.preventDefault(); fillFromEdge('down'); return; }", "if(ek==='d'){ fillFromEdge('down'); return; }")],
   ];
 
   const LIB_BREAKS = [
     ['F4 の回る順番を変える（lib）', (s) => s.replace('var next = { 0: 3, 3: 1, 1: 2, 2: 0 }[state];', 'var next = { 0: 1, 1: 3, 3: 2, 2: 0 }[state];')],
   ];
-  let red = 0, total = BREAKS.length + LIB_BREAKS.length;
+  const SUM_BREAKS = [
+    ['Alt+= が ★空きで止まらない★（離れた数まで拾う）', (s) => s.replace(
+      'while (top > 0 && isNum(get(top - 1, c))) top--;',
+      'while (top > 0) top--;')],
+    ['Alt+= が 上と左の順番を逆にする', (s) => s.replace(
+      "if (r > 0 && isNum(get(r - 1, c))) {", "if (false) {")],
+    ['Alt+= が 見つからない時に 勝手に範囲を作る（分かりません を出さない）', (s) => s.replace(
+      '    /* ③ ★分かりません★（勝手に広げない） */\n    return null;',
+      "    return { formula: '=SUM(A1:A2)', dir: 'up', from: 'A1', to: 'A2' };")],
+    ['Alt+= が 1個だけの時に A1:A1 のような書き方をする', (s) => s.replace(
+      "return { formula: '=SUM(' + (a === b ? a : a + ':' + b) + ')', dir: 'up', from: a, to: b };",
+      "return { formula: '=SUM(' + a + ':' + b + ')', dir: 'up', from: a, to: b };")],
+  ];
+  let red = 0, total = BREAKS.length + LIB_BREAKS.length + SUM_BREAKS.length;
   const os = await import('node:os');
   const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'exally-shortcuts-'));
   /* ★repo は読むだけ。壊した中身は temp に置いて 子に env で渡す★ */
@@ -376,10 +424,12 @@ if (SELF) {
   };
   for (const [name, brk] of BREAKS) tryBreak('book.html', name, brk);
   for (const [name, brk] of LIB_BREAKS) tryBreak('lib/grid-refedit.js', name, brk);
+  for (const [name, brk] of SUM_BREAKS) tryBreak('lib/autosum.js', name, brk);
   /* ★repo を1バイトも触っていない事を その場で確かめる（前は壊した行が残った）★ */
-  for (const rel of ['book.html', 'lib/grid-refedit.js']) {
+  for (const rel of ['book.html', 'lib/grid-refedit.js', 'lib/autosum.js']) {
     const now = fs.readFileSync(path.join(ROOT, rel), 'utf8');
-    if (/altKey && e\.key==='='/.test(now) || now.includes('var res = {ok:false};')) {
+    if (now.includes('var res = {ok:false};') || now.includes("setCell(selR1,selC1,'=SUM(A1:A2)')")
+      || now.includes('while (top > 0) top--;') || now.includes('if (false) {')) {
       console.log('  ★NG★ ' + rel + ' に わざと壊した物が残っている');
       process.exit(1);
     }

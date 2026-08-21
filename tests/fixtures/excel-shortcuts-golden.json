@@ -15,19 +15,81 @@
     "bold_copied": true,
     "_meaning": "★式の中の参照はずれる（相対参照）★"
   },
-  "f4_forms": ["=$A$1+$B$2", "=A$1+B$2", "=$A1+$B2", "=A1+B2"],
+  "f4_forms": [
+    "=$A$1+$B$2",
+    "=A$1+B$2",
+    "=$A1+$B2",
+    "=A1+B2"
+  ],
   "f4_order_measured": false,
   "f4_order_note": "★4つの形は実測。回る順番だけは機械で測れていない★（F4 は COM から押せない・SendKeys も Excel に届かなかった）。Excel の説明どおり $A$1 → A$1 → $A1 → A1 で作ってある。",
   "typed_datetime": [
-    { "typed": "2026/8/18",       "numfmt": "yyyy/m/d",      "value2": 46252 },
-    { "typed": "2026-08-18",      "numfmt": "yyyy/m/d",      "value2": 46252 },
-    { "typed": "14:30",           "numfmt": "h:mm",          "value2": 0.6041666666666666 },
-    { "typed": "9:05",            "numfmt": "h:mm",          "value2": 0.3784722222222222 },
-    { "typed": "2026/8/18 14:30", "numfmt": "yyyy/m/d h:mm", "value2": 46252.604166666664 }
+    {
+      "typed": "2026/8/18",
+      "numfmt": "yyyy/m/d",
+      "value2": 46252
+    },
+    {
+      "typed": "2026-08-18",
+      "numfmt": "yyyy/m/d",
+      "value2": 46252
+    },
+    {
+      "typed": "14:30",
+      "numfmt": "h:mm",
+      "value2": 0.6041666666666666
+    },
+    {
+      "typed": "9:05",
+      "numfmt": "h:mm",
+      "value2": 0.3784722222222222
+    },
+    {
+      "typed": "2026/8/18 14:30",
+      "numfmt": "yyyy/m/d h:mm",
+      "value2": 46252.604166666664
+    }
   ],
   "autosum": {
-    "measured": false,
-    "why": "ExecuteMso(\"AutoSum\") が COM から拒否される（RPC_E_CALL_REJECTED・Excel を見える形にしても同じ）。SendKeys も 2 通り試して Excel に届かなかった（AppActivate は True を返すのにキーが入らない）。",
-    "decision": "★測っていないので Alt+= は作っていない★"
+    "measured": true,
+    "how": "指示役が実Excel 16.0 を実際に押して測った（2026-08-21）。COM の ExecuteMso も SendKeys も届かなかったので、人が押した。",
+    "cases": [
+      {
+        "label": "上に数が10個",
+        "setup": "A1〜A10 に数",
+        "at": "A11",
+        "formula": "=SUM(A1:A10)",
+        "fill": [
+          "A1:A10"
+        ]
+      },
+      {
+        "label": "途中に空きが在る",
+        "setup": "C1〜C3 に数・C4 は空・C5 に数",
+        "at": "C6",
+        "formula": "=SUM(C5)",
+        "meaning": "★空きで止まる（離れた C1〜C3 は拾わない）★",
+        "fill": [
+          "C1:C3",
+          "C5"
+        ]
+      },
+      {
+        "label": "縦にも横にも数が在る（縦は離れている）",
+        "setup": "F1〜F3 に数（縦）・C8〜E8 に数（横）",
+        "at": "F8",
+        "formula": "=SUM(C8:E8)",
+        "meaning": "★すぐ上(F7)が空なので 横が採られる★",
+        "fill": [
+          "F1:F3",
+          "C8:E8"
+        ]
+      }
+    ],
+    "not_measured": [
+      "★すぐ上 と すぐ左 の両方に数が在る時 どちらを採るか★（上の3通りでは起きない）。上の3通りと矛盾しない『上を先に見る』で作ってある＝実Excelで1回 押して確かめてもらう物",
+      "Excel は式を入れた後 編集中のまま待つ（Enterで確定）。うちは そのまま入れる＝測った物ではない"
+    ],
+    "fill_note": "★どこに数を置くかは この fill をそのまま使う★（setup の日本語から読み取ろうとして「C4 は空」まで置いてしまった＝2026-08-21 実際に踏んだ）"
   }
 }

@@ -566,7 +566,9 @@ box-shadow:0 -2px 10px rgba(30,60,40,0.06);
 }
 
 /* ★スマホの幅で頭が詰まるのを止める（2026-08-09 iPhone 390px で実際に詰まった）★
-   「Excelを開く」を足したら、ロゴが切れて 365 の切替が画面の外へ出た。
+   当時の言い方だった「Excelを開く」を足したら、ロゴが切れて 365 の切替が画面の外へ出た。
+   （★この1件だけ 昔の言い方をそのまま残す＝何が起きたかの記録。今の言い方は「Excelを読み込む」★
+     tests/word-export-import.test.mjs の 注記台帳に 理由つきで載せてある）
 
    ★2026-08-19 直し：狭い時に「絵だけ」にしていたのが間違いだった★
      司さんのiPhoneで 上の3つが 📂 / 💾 / 📊365 の ★絵だけ★ になっていて、
@@ -1167,22 +1169,23 @@ background:#FFE066 !important;
 }
 </style>
 
-<script src="hyperformula.full.min.js?v=d0750027"></script>
+<script src="hyperformula.full.min.js?v=2324ff78"></script>
 
-<script src="exally-formula.js?v=d0750027"></script>
+<script src="exally-formula.js?v=2324ff78"></script>
 <!-- グリッド→xlsx の変換と「落ちる物」の警告(純関数・軽い)。SheetJS本体(930KB)と lib/xlsx-io.js は
-     初回の「Excelに保存」で初めて読み込む＝グリッドの表示を重くしない -->
-<script src="js/file-out.js?v=d0750027"></script>
+     初回の「Excelに書き出す」で初めて読み込む＝グリッドの表示を重くしない -->
+<script src="js/file-out.js?v=2324ff78"></script>
 <!-- ★打ち込んだ文字の解釈（1,234 を数にする）。★計算側も書き出し側も この1本を呼ぶ★
      grid-xlsx.js より先に読む（grid-xlsx.js が読み込み時に掴む） -->
-<script src="lib/typed-value.js?v=d0750027"></script>
-<script src="lib/grid-xlsx.js?v=d0750027"></script>
+<script src="lib/typed-value.js?v=2324ff78"></script>
+<script src="lib/grid-xlsx.js?v=2324ff78"></script>
   <!-- ★式の中の参照を「カーソルの位置で」直せるようにする★
        2026-08-06 司さんが実機で踏んだ: 「=B1+30」の B1 を直そうと A1 を触ると
        「=B1+30A1」になり ★B1 を直す手段が無かった★。テスト線では直っていたが
        ★本番には運ばれていなかった★（2026-08-18 差を数えて見つけた）。 -->
-  <script src="lib/grid-refedit.js?v=d0750027"></script>
-<script src="lib/excel-version.js?v=d0750027"></script>
+  <script src="lib/grid-refedit.js?v=2324ff78"></script>
+<script src="lib/autosum.js?v=2324ff78"></script>
+<script src="lib/excel-version.js?v=2324ff78"></script>
 
 <script>
 /* ===== canvas-formula-engine.js (inlined) ===== */
@@ -1346,6 +1349,16 @@ function movePage(dir){
   var n = Math.max(1, bot - top);
   var r = Math.max(0, Math.min(ROWS-1, selR1 + dir*n));
   sel(r, selC1, r, selC1);   /* sel が scrollToCell と render を呼ぶ */
+}
+
+/** Alt+= … オートSUM。★当てる範囲の決め方は lib/autosum.js（実Excelで測った3通りが真値）★
+ *  見つからなければ ★何も入れず「分かりません」と知らせる★（勝手に広げない）。 */
+function autoSum(){
+  var data = sheets[activeSheet].data;
+  var got = AutoSum.suggest(function(r,c){ return data[r+','+c]; }, selR1, selC1);
+  if(!got){ showToast('足す数が見つかりません（すぐ上か すぐ左に数を並べてね）'); return; }
+  setCell(selR1, selC1, got.formula);
+  updateBar(); render();
 }
 
 /** F4 … カーソルの下の参照の $ を1つ進める（式を編集している時だけ）。
@@ -4847,6 +4860,7 @@ function onKD(e){
   if(e.key==='Home'){ sel(selR1,0,selR1,0); moved=true; }
   if(e.key==='End'){  sel(selR1,COLS-1,selR1,COLS-1); moved=true; }
   if(e.key==='F2'){startEdit(selR1,selC1);moved=true;}
+  if(e.altKey && e.key==='='){ e.preventDefault(); autoSum(); moved=true; }   /* オートSUM */
   /* ★Excel と同じ割り当て（2026-08-18 追加）★ */
   if(e.shiftKey && e.key===' '){ e.preventDefault(); sel(selR1,0,selR2,COLS-1); render(); moved=true; }   /* 行を選ぶ */
   if(e.key==='PageDown'){ e.preventDefault(); movePage(1);  moved=true; }
@@ -6256,7 +6270,7 @@ function doWrite(){
   }
 }
 
-/* ===== Excelに保存 =========================================================
+/* ===== Excelに書き出す ====================================================
  *  書き出しの中身は lib/xlsx-io.js（ハーネスと同じ1本＝_xlfn.の付与・JIS→DBCS・YEN→DOLLAR、
  *  壊れたファイルを作る式で止める仕組みが入っている）。グリッドの形への変換は lib/grid-xlsx.js。
  *  ★SheetJS(930KB)は重いので、初回の保存で初めて読み込む（グリッドの表示を遅くしない）。
@@ -6940,6 +6954,6 @@ document.addEventListener('DOMContentLoaded', function(){ checkRequiredFns(); })
 <!-- ★テスト環境の帯★ 本番の倉庫では出ない。今どの倉庫かは js/supa-config.js が唯一の正。
      ホスト名では決めない（配り方は変わるが「本番のデータか」は変わらないため）。
      ★この2本だけが 本番の book.html との違い★（他は1バイトも同じにする）。 -->
-<script src="js/supa-config.js?v=d0750027"></script>
-<script src="js/env-badge.js?v=d0750027"></script>
+<script src="js/supa-config.js?v=2324ff78"></script>
+<script src="js/env-badge.js?v=2324ff78"></script>
 </html>
