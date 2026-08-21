@@ -1169,25 +1169,25 @@ background:#FFE066 !important;
 }
 </style>
 
-<script src="hyperformula.full.min.js?v=04dc0973"></script>
+<script src="hyperformula.full.min.js?v=c7d95682"></script>
 
-<script src="exally-formula.js?v=04dc0973"></script>
+<script src="exally-formula.js?v=c7d95682"></script>
 <!-- グリッド→xlsx の変換と「落ちる物」の警告(純関数・軽い)。SheetJS本体(930KB)と lib/xlsx-io.js は
      初回の「Excelに書き出す」で初めて読み込む＝グリッドの表示を重くしない -->
-<script src="js/file-out.js?v=04dc0973"></script>
+<script src="js/file-out.js?v=c7d95682"></script>
 <!-- ★打ち込んだ文字の解釈（1,234 を数にする）。★計算側も書き出し側も この1本を呼ぶ★
      grid-xlsx.js より先に読む（grid-xlsx.js が読み込み時に掴む） -->
-<script src="lib/typed-value.js?v=04dc0973"></script>
-<script src="lib/grid-xlsx.js?v=04dc0973"></script>
+<script src="lib/typed-value.js?v=c7d95682"></script>
+<script src="lib/grid-xlsx.js?v=c7d95682"></script>
   <!-- ★式の中の参照を「カーソルの位置で」直せるようにする★
        2026-08-06 司さんが実機で踏んだ: 「=B1+30」の B1 を直そうと A1 を触ると
        「=B1+30A1」になり ★B1 を直す手段が無かった★。テスト線では直っていたが
        ★本番には運ばれていなかった★（2026-08-18 差を数えて見つけた）。 -->
-  <script src="lib/grid-refedit.js?v=04dc0973"></script>
-<script src="lib/autosum.js?v=04dc0973"></script>
-<script src="lib/grid-sort.js?v=04dc0973"></script>
-<script src="lib/grid-filter.js?v=04dc0973"></script>
-<script src="lib/excel-version.js?v=04dc0973"></script>
+  <script src="lib/grid-refedit.js?v=c7d95682"></script>
+<script src="lib/autosum.js?v=c7d95682"></script>
+<script src="lib/grid-sort.js?v=c7d95682"></script>
+<script src="lib/grid-filter.js?v=c7d95682"></script>
+<script src="lib/excel-version.js?v=c7d95682"></script>
 
 <script>
 /* ===== canvas-formula-engine.js (inlined) ===== */
@@ -1361,6 +1361,12 @@ function autoSum(){
   if(!got){ showToast('足す数が見つかりません（すぐ上か すぐ左に数を並べてね）'); return; }
   setCell(selR1, selC1, got.formula);
   updateBar(); render();
+  /* ★上と左の両方に数が並んでいる時は 未測定★（指示役が3回 試して測れなかった）。
+     ⇒ ★黙って選ばない★＝どちらを取ったかを出して、違ったら戻せると伝える。 */
+  if(got.ambiguous){
+    showToast((got.dir==='up' ? '上' : '左') + 'の ' + got.from + ':' + got.to + ' を足しました'
+      + '（' + (got.dir==='up' ? '左' : '上') + 'にも数が並んでいます。違ったら Ctrl+Z で戻してね）');
+  }
 }
 
 /** 並べ替え … ★どう並ぶかは lib/grid-sort.js（実Excelで測った真値）★
@@ -1482,6 +1488,43 @@ function clearFilter(){
   var ctl = document.getElementById('ctx-clear-filter'); if(ctl) ctl.style.display = 'none';
   render();
   showToast(戻す ? (戻す + '行を戻しました') : '絞り込みはかかっていません');
+}
+
+/* ══ ウィンドウ枠の固定 ══════════════════════════════════════════════
+   ★実Excel 16.0.20228 を COM で動かして測った（2026-08-21）★
+     B2→上1行/左1列 ／ A2→上1行/左0列 ／ B1→上0行/左1列 ／ ★C4→上3行/左2列★
+     ＝ ★選んだセルの「上の行」と「左の列」が固定される★
+     ★固定しても 合計は変わらない★（見た目だけ）
+   ★真似ない事★
+     A1 を選んで固定すると 実測は ★上9行/左10列★＝今 見えている範囲の真ん中で割る動き。
+     ★画面の大きさで数が変わる＝同じ数を焼き付けても 画面が違えば合わない★。
+     ⇒ うちは ★A1 では固定せず 理由を出す★。
+   ★作っていない物★ ウィンドウの分割／先頭行だけ・先頭列だけのボタン／色の付いた境目 */
+function freezePanes(){
+  hideCtxMenu();
+  var sh = sheets[activeSheet];
+  if(selR1 === 0 && selC1 === 0){
+    showToast('A1 では固定できません（固定したい行の1つ下・列の1つ右を選んでね）');
+    return;
+  }
+  _pushRowColUndo();                       /* ★取り消し1回で戻る★ */
+  sh.freezeRow = selR1;                    /* 選んだセルの ★上の行★ を固定 */
+  sh.freezeCol = selC1;                    /* 選んだセルの ★左の列★ を固定 */
+  scrollTop = 0; scrollLeft = 0;           /* 固定した所が隠れないように 先頭へ戻す */
+  var ctl = document.getElementById('ctx-unfreeze'); if(ctl) ctl.style.display = '';
+  render();
+  showToast('上の' + sh.freezeRow + '行 と 左の' + sh.freezeCol + '列 を固定しました'
+    + '（★計算は何も変わりません★）');
+}
+function unfreezePanes(){
+  hideCtxMenu();
+  var sh = sheets[activeSheet];
+  if(!sh.freezeRow && !sh.freezeCol){ showToast('固定はしていません'); return; }
+  _pushRowColUndo();
+  sh.freezeRow = 0; sh.freezeCol = 0;
+  var ctl = document.getElementById('ctx-unfreeze'); if(ctl) ctl.style.display = 'none';
+  render();
+  showToast('固定をやめました');
 }
 
 /** F4 … カーソルの下の参照の $ を1つ進める（式を編集している時だけ）。
@@ -1951,10 +1994,47 @@ function render(){
   _renderPending=true;
   requestAnimationFrame(function(){ _renderPending=false; _doRender(); });
 }
+/* ★固定した行・列の高さ／幅（画面の大きさに合わせた実寸）★ */
+function _freezeH(){ var n=sheets[activeSheet].freezeRow||0, h=0; for(var i=0;i<n;i++) h+=rH(i); return h; }
+function _freezeW(){ var n=sheets[activeSheet].freezeCol||0, w=0; for(var i=0;i<n;i++) w+=cW(i); return w; }
+
+/* ══ 画面を描く ══════════════════════════════════════════════════════
+   ★ウィンドウ枠の固定は「同じ絵を もう一度 スクロールなしで描いて 帯だけ切り抜く」★
+   （2026-08-21）。座標の計算（rowY/colX）は 1文字も変えていない＝
+   ★固定した帯は「スクロールしていない同じ画面」そのもの★ なので、
+   scrollTop / scrollLeft を 0 にして もう一度 描き、その帯だけ clip すれば合う。
+   ★描く順は 後ろほど 上に出る★ … ①流れる所 → ②上の帯 → ③左の帯 → ④左上の角 */
 function _doRender() {
   ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.clearRect(0,0,wrapW,wrapH);
+  var _fzR = sheets[activeSheet].freezeRow||0, _fzC = sheets[activeSheet].freezeCol||0;
+  _renderPass();                                       /* ① 流れる所（今までどおり） */
+  if(_fzR>0 || _fzC>0){
+    var _sT=scrollTop, _sL=scrollLeft, _wH=wrapH, _wW=wrapW;
+    var _fH=_freezeH(), _fW=_freezeW();
+    if(_fzR>0){                                        /* ② 上の帯（固定した行） */
+      ctx.save(); ctx.beginPath(); ctx.rect(0,0,_wW,HDR_H+_fH); ctx.clip();
+      scrollTop=0; wrapH=HDR_H+_fH; _renderPass(); scrollTop=_sT; wrapH=_wH; ctx.restore();
+    }
+    if(_fzC>0){                                        /* ③ 左の帯（固定した列） */
+      ctx.save(); ctx.beginPath(); ctx.rect(0,0,HDR_W+_fW,_wH); ctx.clip();
+      scrollLeft=0; wrapW=HDR_W+_fW; _renderPass(); scrollLeft=_sL; wrapW=_wW; ctx.restore();
+    }
+    if(_fzR>0 && _fzC>0){                              /* ④ 左上の角（両方 固定） */
+      ctx.save(); ctx.beginPath(); ctx.rect(0,0,HDR_W+_fW,HDR_H+_fH); ctx.clip();
+      scrollTop=0; scrollLeft=0; wrapH=HDR_H+_fH; wrapW=HDR_W+_fW;
+      _renderPass();
+      scrollTop=_sT; scrollLeft=_sL; wrapH=_wH; wrapW=_wW; ctx.restore();
+    }
+    /* ★固定した所の境目に線を1本★（どこで固定されているか 目で分かるように） */
+    ctx.strokeStyle='#3D9E72'; ctx.lineWidth=1.5; ctx.beginPath();
+    if(_fzR>0){ var _ly=Math.round(HDR_H+_fH)+0.5; ctx.moveTo(0,_ly); ctx.lineTo(_wW,_ly); }
+    if(_fzC>0){ var _lx=Math.round(HDR_W+_fW)+0.5; ctx.moveTo(_lx,0); ctx.lineTo(_lx,_wH); }
+    ctx.stroke();
+  }
+}
 
+function _renderPass() {
   var sC=xToC(HDR_W), sR=yToR(HDR_H), eC=sC, eR=sR;
   while(colX(eC)<wrapW && eC<COLS-1) eC++;
   while(rowY(eR)<wrapH && eR<ROWS-1) eR++;
@@ -2940,6 +3020,8 @@ function detectTimePattern(values){
   <div class="ctx-item" onclick="sortRange('desc')">⬇️ 降順で並べ替え</div>
   <div class="ctx-item" onclick="filterByValue()">🔽 選んだセルの値で絞り込む</div>
   <div class="ctx-item" id="ctx-clear-filter" style="display:none" onclick="clearFilter()">🔽 絞り込みを解除</div>
+  <div class="ctx-item" onclick="freezePanes()">🧊 ここで固定（選んだセルの 上と左）</div>
+  <div class="ctx-item" id="ctx-unfreeze" style="display:none" onclick="unfreezePanes()">🧊 固定をやめる</div>
   <div class="ctx-divider"></div>
   <div class="ctx-item" onclick="ctxInsertRow()">➕ 行を挿入（上）</div>
   <div class="ctx-item" onclick="ctxInsertCol()">➕ 列を挿入（左）</div>
@@ -4002,6 +4084,17 @@ function rowY(r){
   return Math.round(y);
 }
 function xToC(x){
+  /* ★固定した帯の中を押した時は 固定した列を返す★ */
+  var fzc = sheets[activeSheet].freezeCol||0;
+  if(fzc > 0){
+    var fx = HDR_W;
+    for(var fj = 0; fj < fzc; fj++){
+      var fw = cW(fj);
+      if(x < fx + fw) return fj;
+      fx += fw;
+    }
+    if(x < fx) return fzc - 1;
+  }
   var px = x - HDR_W + scrollLeft;
   if(px < 0) return 0;
   var cw = sheets[activeSheet].colW;
@@ -4017,6 +4110,17 @@ function xToC(x){
   return COLS - 1;
 }
 function yToR(y){
+  /* ★固定した帯の中を押した時は 固定した行を返す★（帯はスクロールしていない） */
+  var fz = sheets[activeSheet].freezeRow||0;
+  if(fz > 0){
+    var fy = HDR_H;
+    for(var fi = 0; fi < fz; fi++){
+      var fh = rH(fi);
+      if(y < fy + fh) return fi;
+      fy += fh;
+    }
+    if(y < fy) return fz - 1;
+  }
   var py = y - HDR_H + scrollTop;
   if(py < 0) return 0;
   var rh = sheets[activeSheet].rowH;
@@ -4073,11 +4177,18 @@ function selShift(ar,ac){
 
 // ===== スクロール =====
 function scrollToCell(r,c){
+  /* ★固定した行・列は いつも見えている＝動かさない★
+     動かすと「固定したのに 画面が飛ぶ」事になる。 */
+  var fzR = sheets[activeSheet].freezeRow||0, fzC = sheets[activeSheet].freezeCol||0;
   var x=colX(c),y=rowY(r),w=cW(c),h=rH(r);
-  if(x<HDR_W) scrollLeft=Math.max(0,scrollLeft-(HDR_W-x));
-  if(x+w>wrapW) scrollLeft+=(x+w-wrapW)+4;
-  if(y<HDR_H) scrollTop=Math.max(0,scrollTop-(HDR_H-y));
-  if(y+h>wrapH) scrollTop+=(y+h-wrapH)+4;
+  if(c >= fzC){
+    if(x<HDR_W+_freezeW()) scrollLeft=Math.max(0,scrollLeft-((HDR_W+_freezeW())-x));
+    if(x+w>wrapW) scrollLeft+=(x+w-wrapW)+4;
+  }
+  if(r >= fzR){
+    if(y<HDR_H+_freezeH()) scrollTop=Math.max(0,scrollTop-((HDR_H+_freezeH())-y));
+    if(y+h>wrapH) scrollTop+=(y+h-wrapH)+4;
+  }
 }
 
 // ===== イベント =====
@@ -7087,6 +7198,6 @@ document.addEventListener('DOMContentLoaded', function(){ checkRequiredFns(); })
 <!-- ★テスト環境の帯★ 本番の倉庫では出ない。今どの倉庫かは js/supa-config.js が唯一の正。
      ホスト名では決めない（配り方は変わるが「本番のデータか」は変わらないため）。
      ★この2本だけが 本番の book.html との違い★（他は1バイトも同じにする）。 -->
-<script src="js/supa-config.js?v=04dc0973"></script>
-<script src="js/env-badge.js?v=04dc0973"></script>
+<script src="js/supa-config.js?v=c7d95682"></script>
+<script src="js/env-badge.js?v=c7d95682"></script>
 </html>

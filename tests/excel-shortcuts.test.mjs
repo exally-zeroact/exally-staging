@@ -399,13 +399,13 @@ if (SELF) {
       'while (top > 0 && isNum(get(top - 1, c))) top--;',
       'while (top > 0) top--;')],
     ['Alt+= が 上と左の順番を逆にする', (s) => s.replace(
-      "if (r > 0 && isNum(get(r - 1, c))) {", "if (false) {")],
+      'if (上あり) {', 'if (false) {')],
     ['Alt+= が 見つからない時に 勝手に範囲を作る（分かりません を出さない）', (s) => s.replace(
       '    /* ③ ★分かりません★（勝手に広げない） */\n    return null;',
       "    return { formula: '=SUM(A1:A2)', dir: 'up', from: 'A1', to: 'A2' };")],
     ['Alt+= が 1個だけの時に A1:A1 のような書き方をする', (s) => s.replace(
-      "return { formula: '=SUM(' + (a === b ? a : a + ':' + b) + ')', dir: 'up', from: a, to: b };",
-      "return { formula: '=SUM(' + a + ':' + b + ')', dir: 'up', from: a, to: b };")],
+      "'=SUM(' + (a === b ? a : a + ':' + b) + ')', dir: 'up'",
+      "'=SUM(' + a + ':' + b + ')', dir: 'up'")],
   ];
   let red = 0, total = BREAKS.length + LIB_BREAKS.length + SUM_BREAKS.length;
   const os = await import('node:os');

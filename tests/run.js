@@ -31,6 +31,8 @@ const FILES = [
   ['grid-sort.test.mjs', '--self-test'],
   'grid-filter.test.mjs',                 // ★絞り込み(実Excelで実測: 行は消えず隠れるだけ・★合計は変わらない★)
   ['grid-filter.test.mjs', '--self-test'],
+  'grid-freeze.test.mjs',                 // ★ウィンドウ枠の固定(実Excelで実測)＋描き方を触った後に 前からある物が壊れていないか
+  ['grid-freeze.test.mjs', '--self-test'],
   'no-dead-ui.test.mjs',     // ★出来ていない物のボタン/画面を止める窓/中の言葉(STEP6・実装予定)を客に見せない
   ['no-dead-ui.test.mjs', '--self-test'],
   'word-export-import.test.mjs',   // ★言い方を「書き出す↔読み込む」に固定
