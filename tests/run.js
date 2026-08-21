@@ -37,6 +37,8 @@ const FILES = [
   ['grid-find.test.mjs', '--self-test'],
   'grid-print.test.mjs',                  // ★印刷(実Excelの既定＝A4縦・余白・枠線なし)＋★白紙の印刷ダイアログを出さない★
   ['grid-print.test.mjs', '--self-test'],
+  'grid-valid.test.mjs',                  // ★入力の決まり(一覧から選ぶ/整数の範囲)＝打った時だけ止める・合っていない値を数える
+  ['grid-valid.test.mjs', '--self-test'],
   'no-dead-ui.test.mjs',     // ★出来ていない物のボタン/画面を止める窓/中の言葉(STEP6・実装予定)を客に見せない
   ['no-dead-ui.test.mjs', '--self-test'],
   'word-export-import.test.mjs',   // ★言い方を「書き出す↔読み込む」に固定

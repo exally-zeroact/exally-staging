@@ -1169,27 +1169,28 @@ background:#FFE066 !important;
 }
 </style>
 
-<script src="hyperformula.full.min.js?v=171c8216"></script>
+<script src="hyperformula.full.min.js?v=b9f2d616"></script>
 
-<script src="exally-formula.js?v=171c8216"></script>
+<script src="exally-formula.js?v=b9f2d616"></script>
 <!-- グリッド→xlsx の変換と「落ちる物」の警告(純関数・軽い)。SheetJS本体(930KB)と lib/xlsx-io.js は
      初回の「Excelに書き出す」で初めて読み込む＝グリッドの表示を重くしない -->
-<script src="js/file-out.js?v=171c8216"></script>
+<script src="js/file-out.js?v=b9f2d616"></script>
 <!-- ★打ち込んだ文字の解釈（1,234 を数にする）。★計算側も書き出し側も この1本を呼ぶ★
      grid-xlsx.js より先に読む（grid-xlsx.js が読み込み時に掴む） -->
-<script src="lib/typed-value.js?v=171c8216"></script>
-<script src="lib/grid-xlsx.js?v=171c8216"></script>
+<script src="lib/typed-value.js?v=b9f2d616"></script>
+<script src="lib/grid-xlsx.js?v=b9f2d616"></script>
   <!-- ★式の中の参照を「カーソルの位置で」直せるようにする★
        2026-08-06 司さんが実機で踏んだ: 「=B1+30」の B1 を直そうと A1 を触ると
        「=B1+30A1」になり ★B1 を直す手段が無かった★。テスト線では直っていたが
        ★本番には運ばれていなかった★（2026-08-18 差を数えて見つけた）。 -->
-  <script src="lib/grid-refedit.js?v=171c8216"></script>
-<script src="lib/autosum.js?v=171c8216"></script>
-<script src="lib/grid-sort.js?v=171c8216"></script>
-<script src="lib/grid-filter.js?v=171c8216"></script>
-<script src="lib/grid-find.js?v=171c8216"></script>
-<script src="lib/grid-print.js?v=171c8216"></script>
-<script src="lib/excel-version.js?v=171c8216"></script>
+  <script src="lib/grid-refedit.js?v=b9f2d616"></script>
+<script src="lib/autosum.js?v=b9f2d616"></script>
+<script src="lib/grid-sort.js?v=b9f2d616"></script>
+<script src="lib/grid-filter.js?v=b9f2d616"></script>
+<script src="lib/grid-find.js?v=b9f2d616"></script>
+<script src="lib/grid-print.js?v=b9f2d616"></script>
+<script src="lib/grid-valid.js?v=b9f2d616"></script>
+<script src="lib/excel-version.js?v=b9f2d616"></script>
 
 <script>
 /* ===== canvas-formula-engine.js (inlined) ===== */
@@ -1520,6 +1521,110 @@ function printSheet(){
   /* 中身が出来てから刷る（★下絵0枚のまま印刷ダイアログを出さない★） */
   setTimeout(function(){ try{ w.focus(); w.print(); }catch(e){ /* 窓が閉じられたら何もしない */ } }, 200);
   showToast('紙の窓を開きました（そのまま印刷を押してね）');
+}
+
+/* ══ 入力の決まり（データの入力規則）══════════════════
+   ★実Excel 16.0.20228 を COM で押して測った通り★（2026-08-21）
+     ・一覧から選ぶ／整数の範囲 の2つ（測った物だけ作る）
+     ・★空は「合っている」扱い★（IgnoreBlank=True）
+     ・★止めるのは「打った時」だけ★＝貼り付け・読み込み・並べ替え・置換では 止めない。
+       （Excel も COM で入れると そのまま入った＝実測）
+     ・★先に入っていた合わない値は 消さない★（Excel も消えない＝実測）
+   ★うちの上乗せ★＝合っていないセルを ★数えて出す★（Excel は黙って抱える）
+   決まりは sheets[i].validations に { 'r,c': {kind,items|min,max} } で持つ。 */
+
+function _validRules(){
+  var sh = sheets[activeSheet];
+  if(!sh.validations) sh.validations = {};
+  return sh.validations;
+}
+function validRuleAt(r,c){ return _validRules()[r+','+c] || null; }
+
+/** 打った字が 決まりに合っているか（合わなければ 理由を出して false） */
+function validGate(r,c,text){
+  var rule = validRuleAt(r,c);
+  if(!rule) return true;
+  var res = GridValid.check(rule, text);
+  if(res.ok) return true;
+  showToast('入りません：' + res.why);
+  return false;
+}
+
+function openValid(){
+  hideCtxMenu();
+  var rule = validRuleAt(selR1,selC1);
+  var el = document.getElementById('validOverlay');
+  var 一マス = (selR1===selR2 && selC1===selC2);
+  document.getElementById('validWhere').textContent =
+    colLetter(selC1)+(selR1+1) + (一マス ? '' : '〜'+colLetter(selC2)+(selR2+1));
+  document.getElementById('validKind').value = rule ? (rule.kind==='list'?'list':'int') : 'list';
+  document.getElementById('validItems').value = (rule && rule.kind==='list') ? (rule.items||[]).join(',') : '';
+  document.getElementById('validMin').value = (rule && rule.kind!=='list' && rule.min!==null && rule.min!==undefined) ? rule.min : '';
+  document.getElementById('validMax').value = (rule && rule.kind!=='list' && rule.max!==null && rule.max!==undefined) ? rule.max : '';
+  document.getElementById('validNow').textContent = rule ? ('今の決まり … ' + GridValid.describe(rule)) : '今は 決まりが在りません';
+  document.getElementById('validClearBtn').style.display = rule ? '' : 'none';
+  document.getElementById('validMsg').textContent = '';
+  validKindChange();
+  el.style.display='flex';
+  setTimeout(function(){ var i=document.getElementById('validItems'); if(i && i.offsetParent) i.focus(); },0);
+}
+function closeValid(){ document.getElementById('validOverlay').style.display='none'; }
+function validKindChange(){
+  var list = document.getElementById('validKind').value === 'list';
+  document.getElementById('validListRow').style.display = list ? '' : 'none';
+  document.getElementById('validNumRow').style.display  = list ? 'none' : '';
+}
+
+function applyValid(){
+  var kind = document.getElementById('validKind').value;
+  var rule;
+  if(kind === 'list'){
+    var items = GridValid.parseList(document.getElementById('validItems').value);
+    if(!items.length){ document.getElementById('validMsg').textContent = '選ぶ物を カンマで区切って書いてね（例：りんご,みかん）'; return; }
+    rule = { kind:'list', items:items };
+  }else{
+    var mn = document.getElementById('validMin').value.trim();
+    var mx = document.getElementById('validMax').value.trim();
+    if(mn === '' && mx === ''){ document.getElementById('validMsg').textContent = '下か上か どちらかは 書いてね'; return; }
+    if((mn!=='' && isNaN(Number(mn))) || (mx!=='' && isNaN(Number(mx)))){
+      document.getElementById('validMsg').textContent = '下と上は 数で書いてね'; return; }
+    if(mn!=='' && mx!=='' && Number(mn) > Number(mx)){
+      document.getElementById('validMsg').textContent = '下が 上より大きくなっています'; return; }
+    rule = { kind:'int', min: mn==='' ? null : Number(mn), max: mx==='' ? null : Number(mx) };
+  }
+  var sh = sheets[activeSheet];
+  sh.validations = GridValid.setRange(_validRules(), selR1, selC1, selR2, selC2, rule);
+  closeValid();
+  /* ★先に入っていた値は 消さない（Excelと同じ実測）。だが 黙らない＝数えて出す★ */
+  var bad = GridValid.countBad(sh.data, sh.validations, GridPrint.shown);
+  var 何個 = (Math.abs(selR2-selR1)+1) * (Math.abs(selC2-selC1)+1);
+  showToast(何個 + 'マスに 決まりを付けました（' + GridValid.describe(rule) + '）'
+    + (bad.count ? '／★合っていない値が ' + bad.count + '個 在ります（消していません）★' : ''));
+  render();
+}
+
+function clearValid(){
+  var sh = sheets[activeSheet];
+  sh.validations = GridValid.setRange(_validRules(), selR1, selC1, selR2, selC2, null);
+  closeValid();
+  showToast('決まりを外しました');
+  render();
+}
+
+/** ★合っていないセルを 数えて 最初の1つへ飛ぶ★（Excel には無い） */
+function showBadCells(){
+  hideCtxMenu();
+  var sh = sheets[activeSheet];
+  var rules = sh.validations || {};
+  var 決まり数 = Object.keys(rules).length;
+  if(!決まり数){ showToast('このシートには まだ 決まりが在りません'); return; }
+  var bad = GridValid.countBad(sh.data, rules, GridPrint.shown);
+  if(!bad.count){ showToast(決まり数 + 'マスの決まりを見て、合っていない値は 0個でした'); return; }
+  var f = bad.cells[0];
+  selR1=selR2=f.r; selC1=selC2=f.c;
+  scrollToCell(f.r,f.c); updateBar(); render();
+  showToast('★合っていない値が ' + bad.count + '個★（' + 決まり数 + 'マス中）／'
+    + colLetter(f.c)+(f.r+1) + '「' + f.text + '」' + f.why);
 }
 
 /* ══ 検索と置換 ══════════════════════════════════════════════════════
@@ -3131,6 +3236,7 @@ function detectTimePattern(values){
 <div id="ctx-menu" ontouchstart="event.stopPropagation()">
   <div class="ctx-item" onclick="explainCell()" style="color:#3D9E72;font-weight:700;">🤖 AIに解説させる</div>
   <div class="ctx-divider"></div>
+  <div id="ctx-valid-list"></div>
   <div class="ctx-item" onclick="ctxCut()">✂️ 切り取り <span style="color:#aaa;font-size:11px;margin-left:auto">Ctrl+X</span></div>
   <div class="ctx-item" onclick="ctxCopy()">📋 コピー <span style="color:#aaa;font-size:11px;margin-left:auto">Ctrl+C</span></div>
   <div class="ctx-item" onclick="ctxPaste()">📌 貼り付け <span style="color:#aaa;font-size:11px;margin-left:auto">Ctrl+V</span></div>
@@ -3146,6 +3252,8 @@ function detectTimePattern(values){
   <div class="ctx-item" onclick="freezePanes()">🧊 ここで固定（選んだセルの 上と左）</div>
   <div class="ctx-item" id="ctx-unfreeze" style="display:none" onclick="unfreezePanes()">🧊 固定をやめる</div>
   <div class="ctx-item" onclick="printSheet()">🖨️ 印刷（Ctrl+P）</div>
+  <div class="ctx-item" onclick="openValid()">✅ 入力の決まり（一覧から選ぶ／数の範囲）</div>
+  <div class="ctx-item" id="ctx-bad-cells" style="display:none" onclick="showBadCells()">⚠️ 決まりに合っていない値を数える</div>
   <div class="ctx-divider"></div>
   <div class="ctx-item" onclick="ctxInsertRow()">➕ 行を挿入（上）</div>
   <div class="ctx-item" onclick="ctxInsertCol()">➕ 列を挿入（左）</div>
@@ -3297,6 +3405,48 @@ function detectTimePattern(values){
   </div>
 </div>
 
+
+<!-- ★入力の決まり★ Excel の「データの入力規則」に当たる窓。
+     ★出す物は 全部 動く物だけ★／★測った2つ（一覧から選ぶ・整数の範囲）だけ出す★ -->
+<div id="validOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:10000;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#ffffff;border-radius:20px;width:100%;max-width:460px;overflow:hidden;display:flex;flex-direction:column;">
+    <div style="padding:16px 18px 10px;border-bottom:1px solid #D4EDE1;">
+      <div style="font-size:16px;font-weight:700;color:#2E7D54;">入力の決まり</div>
+      <div style="font-size:12px;color:#333333;margin-top:4px;">場所 … <span id="validWhere">A1</span></div>
+    </div>
+    <div style="padding:14px 18px;font-size:13px;color:#333333;line-height:1.8;">
+      <div id="validNow" style="font-size:12px;color:#333333;margin-bottom:10px;line-height:1.6;"></div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+        <span style="min-width:5.5em;">決まりの形</span>
+        <select id="validKind" onchange="validKindChange()" style="flex:1;min-width:150px;font-size:16px;padding:6px 8px;border:1px solid #C8ECD8;border-radius:8px;font-family:inherit;color:#333333;background:#ffffff;">
+          <option value="list">一覧から選ぶ</option>
+          <option value="int">整数の範囲</option>
+        </select>
+      </div>
+      <div id="validListRow" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+        <span style="min-width:5.5em;">選ぶ物</span>
+        <input id="validItems" type="text" placeholder="りんご,みかん,ぶどう" style="flex:1;min-width:150px;font-size:16px;padding:6px 8px;border:1px solid #C8ECD8;border-radius:8px;font-family:inherit;color:#333333;">
+      </div>
+      <div id="validNumRow" style="display:none;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+        <span style="min-width:5.5em;">下と上</span>
+        <input id="validMin" type="text" inputmode="numeric" placeholder="1" style="width:5.5em;font-size:16px;padding:6px 8px;border:1px solid #C8ECD8;border-radius:8px;font-family:inherit;color:#333333;">
+        <span>〜</span>
+        <input id="validMax" type="text" inputmode="numeric" placeholder="10" style="width:5.5em;font-size:16px;padding:6px 8px;border:1px solid #C8ECD8;border-radius:8px;font-family:inherit;color:#333333;">
+      </div>
+      <div style="font-size:12px;color:#333333;margin-top:8px;line-height:1.6;">
+        ★止めるのは「打った時」だけ★です。貼り付けや ファイルの読み込みでは 止まりません（実物のExcelも同じ）。
+        空のマスは 決まりに合っている扱いです。
+        ★先に入っていた 合わない値は 消しません★（消さずに 何個 在るかを 数えて出します）。
+      </div>
+      <div id="validMsg" style="font-size:12px;color:#B3261E;margin-top:8px;min-height:1.6em;line-height:1.6;"></div>
+    </div>
+    <div style="padding:10px 18px 14px;border-top:1px solid #D4EDE1;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+      <button onclick="closeValid()" style="background:#F0FAF4;border:1px solid #C8ECD8;color:#3D9E72;border-radius:20px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">閉じる</button>
+      <button id="validClearBtn" onclick="clearValid()" style="display:none;background:#F0FAF4;border:1px solid #C8ECD8;color:#3D9E72;border-radius:20px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">決まりを外す</button>
+      <button onclick="applyValid()" style="background:#52B788;border:1px solid #52B788;color:#fff;border-radius:20px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">この決まりにする</button>
+    </div>
+  </div>
+</div>
 <div id="diffOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:10000;align-items:center;justify-content:center;padding:16px;">
   <div style="background:#ffffff;border-radius:20px;width:100%;max-width:520px;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;">
     <div style="padding:18px 20px 12px;border-bottom:1px solid #D4EDE1;">
@@ -5293,12 +5443,36 @@ function showCtxMenu(x,y){
   for(var c=Math.max(0,selC1-1);c<=Math.min(COLS-1,selC2+1);c++) if(hc[c]){hasHC=true;break;}
   document.getElementById('ctx-unhide-row').style.display=hasHR?'block':'none';
   document.getElementById('ctx-unhide-col').style.display=hasHC?'block':'none';
+  /* ★一覧から選ぶ決まりが在るセルは その場で選べるように出す★（Excel の セル内▼ に当たる） */
+  var vl=document.getElementById('ctx-valid-list');
+  vl.innerHTML='';
+  var vr=validRuleAt(selR1,selC1);
+  if(vr && vr.kind==='list'){
+    for(var vi=0; vi<vr.items.length; vi++){
+      var d=document.createElement('div');
+      d.className='ctx-item';
+      d.textContent='✅ '+vr.items[vi];
+      d.setAttribute('data-valid-pick', vr.items[vi]);
+      d.onclick=(function(t){ return function(){ pickValidValue(t); }; })(vr.items[vi]);
+      vl.appendChild(d);
+    }
+    var dv=document.createElement('div'); dv.className='ctx-divider'; vl.appendChild(dv);
+  }
+  var 決まり数=Object.keys(sheets[activeSheet].validations||{}).length;
+  document.getElementById('ctx-bad-cells').style.display = 決まり数 ? 'block' : 'none';
   m.classList.add('show');
   var rect=m.getBoundingClientRect();
   if(rect.right>window.innerWidth) m.style.left=(x-rect.width)+'px';
   if(rect.bottom>window.innerHeight) m.style.top=(y-rect.height)+'px';
 }
 function hideCtxMenu(){ document.getElementById('ctx-menu').classList.remove('show'); }
+
+/** ★一覧から選んだ物を そのまま入れる★（選んだ物は必ず決まりに合う） */
+function pickValidValue(t){
+  hideCtxMenu();
+  setCell(selR1,selC1,t);
+  updateBar(); render();
+}
 
 function ctxCopy(){
   // 選択範囲の値（f=数式含む）と表示値をコピー
@@ -5393,6 +5567,23 @@ function _pushRowColUndo(){
   undoStack.push({type:'rowcol', snap:_snapRowCol()});
   redoStack=[];
 }
+/* ★行や列を 入れたり消したりした時、入力の決まりも 一緒に動かす★
+   動かさないと 決まりが 別の行に付いたまま残る＝★黙って嘘をつく★ */
+function _moveValidations(s, 縦, 入れる){
+  var v = s.validations; if(!v) return;
+  var 上 　= 縦 ? selR1 : selC1;
+  var 下 　= 縦 ? selR2 : selC2;
+  var 幅 　= 下 - 上 + 1;
+  var out = {};
+  Object.keys(v).forEach(function(k){
+    var p = k.split(','), r = parseInt(p[0]), c = parseInt(p[1]);
+    var n = 縦 ? r : c;
+    if(入れる){ if(n >= 上) n += 1; }
+    else { if(n >= 上 && n <= 下) return; if(n > 下) n -= 幅; }
+    out[(縦 ? n : r) + ',' + (縦 ? c : n)] = v[k];
+  });
+  s.validations = out;
+}
 function ctxInsertRow(){
   _pushRowColUndo();
   var s=sheets[activeSheet], nd={}, nrh={};
@@ -5408,6 +5599,7 @@ function ctxInsertRow(){
     var r=parseInt(k); nhr[r>=selR1?r+1:r]=true;
   });
   s.data=nd; s.rowH=nrh; s.hiddenRows=nhr;
+  _moveValidations(s, true, true);
   render(); hideCtxMenu();
 }
 function ctxInsertCol(){
@@ -5425,6 +5617,7 @@ function ctxInsertCol(){
     var c=parseInt(k); nhc[c>=selC1?c+1:c]=true;
   });
   s.data=nd; s.colW=ncw; s.hiddenCols=nhc;
+  _moveValidations(s, false, true);
   render(); hideCtxMenu();
 }
 function ctxDeleteRow(){
@@ -5447,6 +5640,7 @@ function ctxDeleteRow(){
     nhr[r>selR2?r-(selR2-selR1+1):r]=true;
   });
   s.data=nd; s.rowH=nrh; s.hiddenRows=nhr;
+  _moveValidations(s, true, false);
   sel(Math.max(0,selR1),selC1,Math.max(0,selR1),selC2);
   render(); hideCtxMenu();
 }
@@ -5470,6 +5664,7 @@ function ctxDeleteCol(){
     nhc[c>selC2?c-(selC2-selC1+1):c]=true;
   });
   s.data=nd; s.colW=ncw; s.hiddenCols=nhc;
+  _moveValidations(s, false, false);
   sel(selR1,Math.max(0,selC1),selR2,Math.max(0,selC1));
   render(); hideCtxMenu();
 }
@@ -5604,6 +5799,7 @@ function fkbDelete(){
   render();
 }
 function fkbCommit(){
+  if(!validGate(selR1,selC1,document.getElementById('formula-input').value)) return;
   setCell(selR1,selC1,document.getElementById('formula-input').value);
   fkbHide();
   updateBar(); render();
@@ -5621,6 +5817,9 @@ function fkbCancel(){
 function commitEdit(){
   if(!editingCell) return;
   var el=document.getElementById('cell-input');
+  /* ★入力の決まりは「打った時」だけ止める（実Excelで測った通り）★
+     貼り付け・読み込み・並べ替え・置換は 止めない＝setCell 側には入れない */
+  if(!validGate(editingCell.r,editingCell.c,el.value)) return;
   setCell(editingCell.r,editingCell.c,el.value);
   el.classList.remove('editing');
   el.value='';
@@ -7358,6 +7557,6 @@ document.addEventListener('DOMContentLoaded', function(){ checkRequiredFns(); })
 <!-- ★テスト環境の帯★ 本番の倉庫では出ない。今どの倉庫かは js/supa-config.js が唯一の正。
      ホスト名では決めない（配り方は変わるが「本番のデータか」は変わらないため）。
      ★この2本だけが 本番の book.html との違い★（他は1バイトも同じにする）。 -->
-<script src="js/supa-config.js?v=171c8216"></script>
-<script src="js/env-badge.js?v=171c8216"></script>
+<script src="js/supa-config.js?v=b9f2d616"></script>
+<script src="js/env-badge.js?v=b9f2d616"></script>
 </html>
