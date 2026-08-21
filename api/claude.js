@@ -219,9 +219,42 @@ ${EXALLY_UNSUPPORTED.pending.join(', ')}
   return SYSTEM_PROMPT_BASE + buildStatutoryPrompt() + groupRule + commonRule;
 }
 
+/* ★うちの画面から来た物だけ受ける（2026-08-22 指示役）★
+   前は Access-Control-Allow-Origin: '*' ＝★誰の画面からでも叩けた★。
+   ★正直に：これだけでは止まりません★＝道具(curl等)で直接叩く相手には効かない（名乗りは詐称できる）。
+   連打を止めるのは Vercel の入口（指示役の担当）。ここは「よその画面から使われる」のを断るだけ。
+   ★うちの画面は 同じ入れ物(same-origin)なので、名乗りが無くても 今までどおり動く★ */
+const 許す入口 = [
+  'https://exally.vercel.app',
+  'https://exally-zeroact.github.io',
+  'http://localhost:8080',
+  'http://127.0.0.1:8080',
+];
+
+/* ★使った量を1行 残す（★上限ではない。「見えない」を「見える」にするだけ★）★
+   これが無いと ★何が起きても 原因も 止め方も 分からない★（2026-08 に残高が尽きて 本番が止まった）。
+   ★人が書いた文そのものは残さない★（客の中身なので 長さだけ）。 */
+function 記録(o) {
+  try {
+    console.log('[ai] ' + JSON.stringify({
+      結果: o.結果,
+      入力トークン: o.入力 || 0,
+      出力トークン: o.出力 || 0,
+      送った字数: o.字数 || 0,
+      会話の数: o.会話 || 0,
+      かかった秒: o.秒,
+      入口: o.入口 || '(名乗りなし)',
+    }));
+  } catch (e) { /* 記録で本体を落とさない */ }
+}
+
 module.exports = async (req, res) => {
-  // CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // CORS … ★うちの画面から来た物だけ★
+  const 入口 = (req.headers && (req.headers.origin || req.headers.Origin)) || '';
+  if (許す入口.indexOf(入口) >= 0) {
+    res.setHeader('Access-Control-Allow-Origin', 入口);
+    res.setHeader('Vary', 'Origin');
+  }
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
 
@@ -254,11 +287,22 @@ module.exports = async (req, res) => {
     const versionInfo = getVersionInfo(excelVersion);
     const dynamicPrompt = buildDynamicPrompt(versionInfo);
 
+    const 始めた = Date.now();
     const response = await client.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 2000,
       system: dynamicPrompt,
       messages: [...sanitizedHistory, { role: 'user', content: message }],
+    });
+
+    記録({
+      結果: 'ok',
+      入力: (response.usage && response.usage.input_tokens) || 0,
+      出力: (response.usage && response.usage.output_tokens) || 0,
+      字数: message.length,
+      会話: sanitizedHistory.length,
+      秒: Math.round((Date.now() - 始めた) / 100) / 10,
+      入口: 入口,
     });
 
     const fullText = response.content
@@ -284,6 +328,14 @@ module.exports = async (req, res) => {
          ★この言い訳が AIの答えとして 吹き出しに出ていた★。
        ⇒★理由は 番号と合言葉で返す。客に見せる言葉は 画面が1か所で作る★ */
     const k = 失敗を分ける(err);
+    記録({
+      結果: k.合言葉,
+      入力: 0,
+      出力: 0,
+      字数: (req.body && typeof req.body.message === 'string') ? req.body.message.length : 0,
+      会話: 0,
+      入口: 入口,
+    });
     return res.status(k.status).json({ error: k.合言葉, text: '', tsv: '' });
   }
 };
@@ -317,4 +369,5 @@ module.exports.__buildStatutoryPrompt = buildStatutoryPrompt;
 /* ★失敗した時に 本当に何を返すかを 機械が押すための窓★
    （本番は module.exports を 関数として呼ぶだけなので 挙動は変わらない） */
 module.exports.__失敗を分ける = 失敗を分ける;
+module.exports.__許す入口 = 許す入口;
 module.exports.__setClient = (c) => { client = c; };

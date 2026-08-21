@@ -117,6 +117,84 @@ for (const [名, err, 待つ番号, 待つ合言葉] of 表) {
 
 const AT = async (n, fn) => { try { await fn(); pass++; console.log('  ✓ ' + n); } catch (e) { fail++; console.log('  ✗ ' + n + ' — ' + (e && e.message)); } };
 
+/* ── ★誰でも叩ける口だったのを 絞る（2026-08-22 指示役）★ ──
+ *  前は Access-Control-Allow-Origin: '*' ＝ よその画面からでも使えた。
+ *  ★これだけでは 道具で直接叩く相手は止まらない★（それは Vercel の入口＝指示役の担当）。 */
+const 押す入口 = async (origin, opts) => {
+  const o = opts || {};
+  handler.__setClient({ messages: { create: async () => ({ content: [{ type: 'text', text: 'はい' }], usage: { input_tokens: 12, output_tokens: 3 } }) } });
+  const 出た = { headers: {}, status: null, body: null };
+  const res = {
+    setHeader(k, v) { 出た.headers[k] = v; },
+    status(c) { 出た.status = c; return this; },
+    json(b) { 出た.body = b; return this; },
+    end() { return this; },
+  };
+  await handler({ method: o.method || 'POST', headers: origin ? { origin } : {}, body: { message: 'これ何？', history: [] } }, res);
+  return 出た;
+};
+
+await AT('★うちの画面(本番)からは 今までどおり通る★', async () => {
+  const r = await 押す入口('https://exally.vercel.app');
+  if (r.headers['Access-Control-Allow-Origin'] !== 'https://exally.vercel.app') throw new Error('うちの画面を断っている：' + r.headers['Access-Control-Allow-Origin']);
+  if (r.status !== 200) throw new Error('答えが返っていない：' + r.status);
+});
+await AT('★よその画面には 許しを出さない（前は * で 誰にでも出していた）★', async () => {
+  const r = await 押す入口('https://example.com');
+  if (r.headers['Access-Control-Allow-Origin']) throw new Error('★よその画面に 許しを出している★：' + r.headers['Access-Control-Allow-Origin']);
+  if (r.headers['Access-Control-Allow-Origin'] === '*') throw new Error('★* のまま★');
+});
+await AT('★名乗りが無くても うちの画面は動く（same-origin は Origin を送らない）★', async () => {
+  const r = await 押す入口('');
+  if (r.status !== 200) throw new Error('名乗りなしを断っている：' + r.status);
+});
+await AT('★どの入口でも * は 二度と出さない★', async () => {
+  for (const o of ['https://exally.vercel.app', 'https://example.com', '']) {
+    const r = await 押す入口(o);
+    if (r.headers['Access-Control-Allow-Origin'] === '*') throw new Error('★* を出している★：' + o);
+  }
+});
+await AT('★許す入口に うちの画面が2つとも入っている（本番とテスト線）★', async () => {
+  const a = handler.__許す入口 || [];
+  for (const 要る of ['https://exally.vercel.app', 'https://exally-zeroact.github.io']) {
+    if (a.indexOf(要る) < 0) throw new Error('★' + 要る + ' が 一覧に無い＝客の画面が止まる★');
+  }
+});
+
+/* ── ★使った量を1行 残す（上限ではない）★ ── */
+const 記録を拾う = async (fn) => {
+  const 元 = console.log; const 行 = [];
+  console.log = (...a) => { 行.push(a.join(' ')); };
+  try { await fn(); } finally { console.log = 元; }
+  return 行.filter((l) => l.indexOf('[ai] ') === 0).map((l) => JSON.parse(l.slice(5)));
+};
+await AT('★答えられた時に 使った量が1行 残る（入力/出力トークン）★', async () => {
+  const 行 = await 記録を拾う(() => 押す入口('https://exally.vercel.app'));
+  if (行.length !== 1) throw new Error('★記録が ' + 行.length + '行（1行でない）★');
+  const r = 行[0];
+  if (r.結果 !== 'ok') throw new Error('結果が ' + r.結果);
+  if (r.入力トークン !== 12 || r.出力トークン !== 3) throw new Error('★使った量が 残っていない★：' + JSON.stringify(r));
+  if (typeof r.かかった秒 !== 'number') throw new Error('かかった秒が無い');
+});
+await AT('★失敗した時も 何で失敗したかが1行 残る★', async () => {
+  const 行 = await 記録を拾う(() => 呼ぶ(失敗({ status: 400, message: 'Your credit balance is too low' })));
+  if (行.length !== 1) throw new Error('記録が ' + 行.length + '行');
+  if (行[0].結果 !== 'zandaka') throw new Error('★何で失敗したか 残っていない★：' + JSON.stringify(行[0]));
+});
+await AT('★客が書いた文そのものは 残さない（長さだけ）★', async () => {
+  const 行 = await 記録を拾う(() => 押す入口('https://exally.vercel.app'));
+  const 字 = JSON.stringify(行[0]);
+  if (字.indexOf('これ何？') >= 0) throw new Error('★客の中身を そのまま記録している★：' + 字);
+  if (行[0].送った字数 !== 4) throw new Error('長さが違う：' + 行[0].送った字数);
+});
+await AT('★上限も 既定オフも 足していない（勝手に決めない）★', async () => {
+  const fs2 = await import('node:fs');
+  const src = fs2.readFileSync(path.join(ROOT, 'api/claude.js'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  for (const 語 of ['RATE_LIMIT', 'MAX_PER_DAY', '1日', '回まで', 'MAX_MESSAGE_LEN']) {
+    if (src.indexOf(語) >= 0) throw new Error('★上限らしき物を足している（数字は司さんと決める）★：' + 語);
+  }
+});
+
 await AT('★ハンドラを 本当に呼ぶ：失敗したら 200 を返さない★', async () => {
   const r = await 呼ぶ(失敗({ status: 401, message: 'invalid x-api-key' }));
   if (!r) throw new Error('返事が無い');
@@ -157,7 +235,7 @@ if (process.argv.includes('--self-test')) {
   const 積む = (src) => {
     const m = { exports: {} };
     const req = (id) => (id === '@anthropic-ai/sdk' ? 偽AI : require_(path.resolve(ROOT, 'api', id)));
-    vm.runInNewContext(src, { module: m, exports: m.exports, require: req, console: { error() {}, log() {} }, process, Date, JSON, Math, RegExp, Object, Array, String, Number, Boolean, Error });
+    vm.runInNewContext(src, { module: m, exports: m.exports, require: req, console: { error() {}, log: (...a) => console.log(...a) }, process, Date, JSON, Math, RegExp, Object, Array, String, Number, Boolean, Error });
     return m.exports;
   };
   const 押す = async (h, err) => {
@@ -179,11 +257,42 @@ if (process.argv.includes('--self-test')) {
     ['★鍵の見分けを 外す★',
       (t) => t.replace("  if (st === 401 || st === 403 || /api[ _-]?key/i.test(msg)) return { status: 401, 合言葉: 'kagi' };", ''),
       async (h) => (await 押す(h, 鍵err)).body.error === 'kagi'],
+    ['★誰の画面からでも叩ける（* に戻す）★',
+      (t) => t.replace("  if (許す入口.indexOf(入口) >= 0) {", "  if (true) { 入口 = '*';").replace("const 入口 = (req.headers", "let 入口 = (req.headers"),
+      async (h) => { const r = await 押す入口2(h, 'https://example.com'); return !r.headers['Access-Control-Allow-Origin']; }],
+    ['★うちの画面(テスト線)を 一覧から落とす★',
+      (t) => t.replace("  'https://exally-zeroact.github.io',", ''),
+      async (h) => (h.__許す入口 || []).indexOf('https://exally-zeroact.github.io') >= 0],
+    ['★使った量を 記録しない★',
+      (t) => t.replace(/    記録\(\{[\s\S]{0,30}結果: 'ok',/, "    if (false) 記録({ 結果: 'ok',"),
+      async (h) => { const 行 = await 記録2(h); return 行.length === 1 && 行[0].入力トークン === 12; }],
+    ['★客が書いた文を そのまま記録に残す★',
+      (t) => t.replace('      送った字数: o.字数 || 0,', '      送った字数: o.字数 || 0, 中身: o.中身,')
+              .replace('      字数: message.length,', '      字数: message.length, 中身: message,'),
+      async (h) => { const 行 = await 記録2(h); return JSON.stringify(行[0]).indexOf('これ何？') < 0; }],
     ['★中の言葉を text に入れて返す★',
       (t) => t.replace("    return res.status(k.status).json({ error: k.合言葉, text: '', tsv: '' });",
         "    return res.status(k.status).json({ error: k.合言葉, text: 'VercelのEnvironment VariablesにANTHROPIC_API_KEYを設定してください。', tsv: '' });"),
       async (h) => (await 押す(h, 鍵err)).body.text === ''],
   ];
+  /* ★壊した版の記録は 検査の画面に出さない★（毎回そこで受け取って捨てる） */
+  let 拾った = [];
+  const 押す入口2 = async (h, origin) => {
+    if (h.__setClient) h.__setClient({ messages: { create: async () => ({ content: [{ type: 'text', text: 'はい' }], usage: { input_tokens: 12, output_tokens: 3 } }) } });
+    const 出た = { headers: {}, status: null, body: null };
+    const res = { setHeader(k, v) { 出た.headers[k] = v; }, status(c) { 出た.status = c; return this; }, json(b) { 出た.body = b; return this; }, end() { return this; } };
+    const 元 = console.log; 拾った = [];
+    console.log = (...a) => { 拾った.push(a.join(' ')); };
+    try {
+      await h({ method: 'POST', headers: origin ? { origin } : {}, body: { message: 'これ何？', history: [] } }, res);
+    } finally { console.log = 元; }
+    return 出た;
+  };
+  const 記録2 = async (h) => {
+    await 押す入口2(h, 'https://exally.vercel.app');
+    return 拾った.filter((l) => l.indexOf('[ai] ') === 0).map((l) => JSON.parse(l.slice(5)));
+  };
+
   console.log('');
   console.log('[self-test] わざと壊して 赤くなるかを数える（★ファイルには書かない★）');
   let red = 0;
