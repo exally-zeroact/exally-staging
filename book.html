@@ -1169,25 +1169,26 @@ background:#FFE066 !important;
 }
 </style>
 
-<script src="hyperformula.full.min.js?v=c7d95682"></script>
+<script src="hyperformula.full.min.js?v=2700a75f"></script>
 
-<script src="exally-formula.js?v=c7d95682"></script>
+<script src="exally-formula.js?v=2700a75f"></script>
 <!-- グリッド→xlsx の変換と「落ちる物」の警告(純関数・軽い)。SheetJS本体(930KB)と lib/xlsx-io.js は
      初回の「Excelに書き出す」で初めて読み込む＝グリッドの表示を重くしない -->
-<script src="js/file-out.js?v=c7d95682"></script>
+<script src="js/file-out.js?v=2700a75f"></script>
 <!-- ★打ち込んだ文字の解釈（1,234 を数にする）。★計算側も書き出し側も この1本を呼ぶ★
      grid-xlsx.js より先に読む（grid-xlsx.js が読み込み時に掴む） -->
-<script src="lib/typed-value.js?v=c7d95682"></script>
-<script src="lib/grid-xlsx.js?v=c7d95682"></script>
+<script src="lib/typed-value.js?v=2700a75f"></script>
+<script src="lib/grid-xlsx.js?v=2700a75f"></script>
   <!-- ★式の中の参照を「カーソルの位置で」直せるようにする★
        2026-08-06 司さんが実機で踏んだ: 「=B1+30」の B1 を直そうと A1 を触ると
        「=B1+30A1」になり ★B1 を直す手段が無かった★。テスト線では直っていたが
        ★本番には運ばれていなかった★（2026-08-18 差を数えて見つけた）。 -->
-  <script src="lib/grid-refedit.js?v=c7d95682"></script>
-<script src="lib/autosum.js?v=c7d95682"></script>
-<script src="lib/grid-sort.js?v=c7d95682"></script>
-<script src="lib/grid-filter.js?v=c7d95682"></script>
-<script src="lib/excel-version.js?v=c7d95682"></script>
+  <script src="lib/grid-refedit.js?v=2700a75f"></script>
+<script src="lib/autosum.js?v=2700a75f"></script>
+<script src="lib/grid-sort.js?v=2700a75f"></script>
+<script src="lib/grid-filter.js?v=2700a75f"></script>
+<script src="lib/grid-find.js?v=2700a75f"></script>
+<script src="lib/excel-version.js?v=2700a75f"></script>
 
 <script>
 /* ===== canvas-formula-engine.js (inlined) ===== */
@@ -1488,6 +1489,97 @@ function clearFilter(){
   var ctl = document.getElementById('ctx-clear-filter'); if(ctl) ctl.style.display = 'none';
   render();
   showToast(戻す ? (戻す + '行を戻しました') : '絞り込みはかかっていません');
+}
+
+/* ══ 検索と置換 ══════════════════════════════════════════════════════
+   ★実Excel 16.0.20228 を COM で動かして測った通り★（2026-08-21）
+     ・★置換は「式」を見る★（=A1*2 に 2→9 で ★=A1*9★・答えが 4→81）
+     ・大文字と小文字は ★既定で区別しない★／一部でも置き換える（既定）
+     ・★全角と半角は 別物★／★* ? はワイルドカード・~* で * そのもの★
+     ・次を探すのは ★選んだセルの次から★
+   ★一番 危ない所（実測⑦）★
+     A1=10 ／ A2==A1+100 に 「10」→「20」で ★=A1+200★（答え 110→220）
+     ＝ ★Excel 自身が こうなる★。うちも同じにするが、
+       ★式を何本 書き換えたかを 必ず知らせる★（黙って値が変えない）。
+   ★作っていない物★ 書式で探す／シート全部を横断／「すべて検索」の一覧 */
+var _findReplaceMode = false;
+function _findOpts(){
+  return {
+    matchCase: !!document.getElementById('findCase').checked,
+    whole: !!document.getElementById('findWhole').checked,
+  };
+}
+function _findMsg(t){ var el=document.getElementById('findMsg'); if(el) el.textContent = t || ''; }
+function openFind(置換する){
+  _findReplaceMode = !!置換する;
+  document.getElementById('findTitle').textContent = 置換する ? '検索と置換' : '検索';
+  document.getElementById('findReplaceRow').style.display = 置換する ? 'flex' : 'none';
+  document.getElementById('findReplaceBtn').style.display = 置換する ? '' : 'none';
+  document.getElementById('findReplaceAllBtn').style.display = 置換する ? '' : 'none';
+  document.getElementById('findOverlay').style.display = 'flex';
+  _findMsg('');
+  var w = document.getElementById('findWhat');
+  setTimeout(function(){ w.focus(); w.select(); }, 30);
+}
+function closeFind(){ document.getElementById('findOverlay').style.display = 'none'; }
+/** 今 見ている広さ（空の所まで全部は見ない＝中身が在る一番外まで） */
+function _findRange(){
+  var data = sheets[activeSheet].data, maxR = 0, maxC = 0;
+  for(var k in data){ var p=k.split(','); var r=+p[0], c=+p[1]; if(r>maxR) maxR=r; if(c>maxC) maxC=c; }
+  return { rows: maxR+1, cols: maxC+1 };
+}
+function findNextCell(){
+  var what = document.getElementById('findWhat').value;
+  if(!what){ _findMsg('探す言葉を入れてね'); return null; }
+  var data = sheets[activeSheet].data, rc = _findRange();
+  var 見つけた = GridFind.findNext(function(r,c){ return data[r+','+c]; },
+    rc.rows, rc.cols, { r: selR1, c: selC1 }, what, _findOpts());
+  if(!見つけた){ _findMsg('見つかりません'); return null; }
+  sel(見つけた.r, 見つけた.c, 見つけた.r, 見つけた.c);
+  _findMsg(colLetter(見つけた.c) + (見つけた.r+1) + ' が見つかりました');
+  return 見つけた;
+}
+function replaceOne(){
+  var what = document.getElementById('findWhat').value;
+  var to = document.getElementById('findTo').value;
+  if(!what){ _findMsg('探す言葉を入れてね'); return; }
+  var data = sheets[activeSheet].data;
+  var cell = data[selR1+','+selC1];
+  var opts = _findOpts();
+  /* 今いる所が あたっていれば まず そこを置き換える */
+  if(GridFind.match(cell, what, opts)){
+    var 次の字 = GridFind.replacedText(cell, what, to, opts);
+    var 式だった = GridFind.isFormula(cell);
+    setCell(selR1, selC1, 次の字);
+    updateBar(); render();
+    _findMsg(colLetter(selC1) + (selR1+1) + ' を置き換えました'
+      + (式だった ? '（★式でした＝答えが変わります★）' : ''));
+  }
+  findNextCell();
+}
+function replaceAll(){
+  var what = document.getElementById('findWhat').value;
+  var to = document.getElementById('findTo').value;
+  if(!what){ _findMsg('探す言葉を入れてね'); return; }
+  var opts = _findOpts();
+  var data = sheets[activeSheet].data, rc = _findRange();
+  var 直す = [];
+  for(var r=0;r<rc.rows;r++) for(var c=0;c<rc.cols;c++){
+    var cell = data[r+','+c];
+    var 次の字 = GridFind.replacedText(cell, what, to, opts);
+    if(次の字!==null) 直す.push({ r:r, c:c, s:次の字, f:GridFind.isFormula(cell) });
+  }
+  if(!直す.length){ _findMsg('見つかりません'); return; }
+  _pushRowColUndo();                       /* ★取り消し1回で丸ごと戻る★ */
+  var 式の数 = 0;
+  for(var i=0;i<直す.length;i++){ if(直す[i].f) 式の数++; setCell(直す[i].r, 直す[i].c, 直す[i].s, true); }
+  updateBar(); render();
+  /* ★式を何本 書き換えたかを 必ず出す★（Excelと同じ動きだが 黙って値を変えない） */
+  _findMsg(直す.length + 'か所 置き換えました'
+    + (式の数 ? '／★うち 式が ' + 式の数 + '本＝答えが変わります★' : '')
+    + '（違ったら Ctrl+Z で戻せます）');
+  showToast(直す.length + 'か所 置き換えました'
+    + (式の数 ? '（★式が ' + 式の数 + '本 含まれます＝答えが変わります★）' : ''));
 }
 
 /* ══ ウィンドウ枠の固定 ══════════════════════════════════════════════
@@ -3140,6 +3232,39 @@ function detectTimePattern(values){
 </div>
 
 <!-- ★直す前に必ず見せる窓（方針ver.6「絶対に守る3つ」の②）。alert/confirm は使わない★ -->
+<!-- ★検索と置換★ Excel の Ctrl+F / Ctrl+H に当たる窓。
+     ★出す物は 全部 動く物だけ★（出来ていない物のボタンを出さない）。 -->
+<div id="findOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:10000;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#ffffff;border-radius:20px;width:100%;max-width:440px;overflow:hidden;display:flex;flex-direction:column;">
+    <div style="padding:16px 18px 10px;border-bottom:1px solid #D4EDE1;">
+      <div id="findTitle" style="font-size:16px;font-weight:700;color:#2E7D54;">検索</div>
+    </div>
+    <div style="padding:14px 18px;font-size:13px;color:#333333;line-height:1.8;">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+        <span style="min-width:5.5em;">探す言葉</span>
+        <input id="findWhat" type="text" style="flex:1;min-width:150px;font-size:16px;padding:6px 8px;border:1px solid #C8ECD8;border-radius:8px;font-family:inherit;color:#333333;">
+      </div>
+      <div id="findReplaceRow" style="display:none;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+        <span style="min-width:5.5em;">置き換える</span>
+        <input id="findTo" type="text" style="flex:1;min-width:150px;font-size:16px;padding:6px 8px;border:1px solid #C8ECD8;border-radius:8px;font-family:inherit;color:#333333;">
+      </div>
+      <label style="display:block;font-size:12px;color:#333333;"><input id="findCase" type="checkbox"> 大文字と小文字を区別する</label>
+      <label style="display:block;font-size:12px;color:#333333;"><input id="findWhole" type="checkbox"> セル全体が同じ物だけ</label>
+      <div style="font-size:12px;color:#333333;margin-top:8px;line-height:1.6;">
+        ★式のセルは 式の字を探します★（Excelと同じ）。<code>*</code> はいくつでも・<code>?</code> は1文字。
+        <code>~*</code> と書くと <code>*</code> そのものを探します。
+      </div>
+      <div id="findMsg" style="font-size:12px;color:#333333;margin-top:8px;min-height:1.6em;line-height:1.6;"></div>
+    </div>
+    <div style="padding:10px 18px 14px;border-top:1px solid #D4EDE1;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+      <button onclick="closeFind()" style="background:#F0FAF4;border:1px solid #C8ECD8;color:#3D9E72;border-radius:20px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">閉じる</button>
+      <button onclick="findNextCell()" style="background:#F0FAF4;border:1px solid #C8ECD8;color:#3D9E72;border-radius:20px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">次を探す</button>
+      <button id="findReplaceBtn" style="display:none;background:#F0FAF4;border:1px solid #C8ECD8;color:#3D9E72;border-radius:20px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;" onclick="replaceOne()">置き換えて次へ</button>
+      <button id="findReplaceAllBtn" style="display:none;background:#52B788;border:1px solid #52B788;color:#fff;border-radius:20px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;" onclick="replaceAll()">すべて置き換える</button>
+    </div>
+  </div>
+</div>
+
 <div id="diffOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:10000;align-items:center;justify-content:center;padding:16px;">
   <div style="background:#ffffff;border-radius:20px;width:100%;max-width:520px;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;">
     <div style="padding:18px 20px 12px;border-bottom:1px solid #D4EDE1;">
@@ -5061,6 +5186,8 @@ function onKD(e){
     if(ek==='i'){ e.preventDefault(); toggleFormat('italic'); return; }
     if(ek==='u'){ e.preventDefault(); toggleFormat('underline'); return; }
     if(e.key==='1'){ e.preventDefault(); openFmtModal(); return; }
+    if(ek==='f'){ e.preventDefault(); openFind(false); return; }
+    if(ek==='h'){ e.preventDefault(); openFind(true); return; }
     if(ek==='d'){ e.preventDefault(); fillFromEdge('down'); return; }
     if(ek==='r'){ e.preventDefault(); fillFromEdge('right'); return; }
     if(e.key===';'){ e.preventDefault(); putNowValue('date'); return; }
@@ -7198,6 +7325,6 @@ document.addEventListener('DOMContentLoaded', function(){ checkRequiredFns(); })
 <!-- ★テスト環境の帯★ 本番の倉庫では出ない。今どの倉庫かは js/supa-config.js が唯一の正。
      ホスト名では決めない（配り方は変わるが「本番のデータか」は変わらないため）。
      ★この2本だけが 本番の book.html との違い★（他は1バイトも同じにする）。 -->
-<script src="js/supa-config.js?v=c7d95682"></script>
-<script src="js/env-badge.js?v=c7d95682"></script>
+<script src="js/supa-config.js?v=2700a75f"></script>
+<script src="js/env-badge.js?v=2700a75f"></script>
 </html>
