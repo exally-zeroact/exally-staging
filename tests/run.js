@@ -41,6 +41,8 @@ const FILES = [
   ['grid-valid.test.mjs', '--self-test'],
   'grid-stats.test.mjs',                  // ★選んだ所の合計・平均・個数(帯)＝黙って小さい合計を出さない
   ['grid-stats.test.mjs', '--self-test'],
+  'ctx-menu.test.mjs',                    // ★右クリックが画面の中に収まる(743pxが619pxの画面で 上へ470px はみ出した事故)
+  ['ctx-menu.test.mjs', '--self-test'],
   'no-dead-ui.test.mjs',     // ★出来ていない物のボタン/画面を止める窓/中の言葉(STEP6・実装予定)を客に見せない
   ['no-dead-ui.test.mjs', '--self-test'],
   'word-export-import.test.mjs',   // ★言い方を「書き出す↔読み込む」に固定

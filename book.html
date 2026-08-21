@@ -812,6 +812,11 @@ padding:4px 0;
 z-index:1000;
 min-width:160px;
 display:none;
+/* ★画面に入り切らない時は 中で動かせる★
+   （2026-08-21 実測：高さ743px、画面619px で 上へ470px はみ出していた） */
+overflow-y:auto;
+-webkit-overflow-scrolling:touch;
+overscroll-behavior:contain;
 }
 #ctx-menu.show { display:block; }
 .ctx-item {
@@ -1192,29 +1197,30 @@ background:#FFE066 !important;
 }
 </style>
 
-<script src="hyperformula.full.min.js?v=a161eafa"></script>
+<script src="hyperformula.full.min.js?v=a506ac9e"></script>
 
-<script src="exally-formula.js?v=a161eafa"></script>
+<script src="exally-formula.js?v=a506ac9e"></script>
 <!-- グリッド→xlsx の変換と「落ちる物」の警告(純関数・軽い)。SheetJS本体(930KB)と lib/xlsx-io.js は
      初回の「Excelに書き出す」で初めて読み込む＝グリッドの表示を重くしない -->
-<script src="js/file-out.js?v=a161eafa"></script>
+<script src="js/file-out.js?v=a506ac9e"></script>
 <!-- ★打ち込んだ文字の解釈（1,234 を数にする）。★計算側も書き出し側も この1本を呼ぶ★
      grid-xlsx.js より先に読む（grid-xlsx.js が読み込み時に掴む） -->
-<script src="lib/typed-value.js?v=a161eafa"></script>
-<script src="lib/grid-xlsx.js?v=a161eafa"></script>
+<script src="lib/typed-value.js?v=a506ac9e"></script>
+<script src="lib/grid-xlsx.js?v=a506ac9e"></script>
   <!-- ★式の中の参照を「カーソルの位置で」直せるようにする★
        2026-08-06 司さんが実機で踏んだ: 「=B1+30」の B1 を直そうと A1 を触ると
        「=B1+30A1」になり ★B1 を直す手段が無かった★。テスト線では直っていたが
        ★本番には運ばれていなかった★（2026-08-18 差を数えて見つけた）。 -->
-  <script src="lib/grid-refedit.js?v=a161eafa"></script>
-<script src="lib/autosum.js?v=a161eafa"></script>
-<script src="lib/grid-sort.js?v=a161eafa"></script>
-<script src="lib/grid-filter.js?v=a161eafa"></script>
-<script src="lib/grid-find.js?v=a161eafa"></script>
-<script src="lib/grid-print.js?v=a161eafa"></script>
-<script src="lib/grid-stats.js?v=a161eafa"></script>
-<script src="lib/grid-valid.js?v=a161eafa"></script>
-<script src="lib/excel-version.js?v=a161eafa"></script>
+  <script src="lib/grid-refedit.js?v=a506ac9e"></script>
+<script src="lib/autosum.js?v=a506ac9e"></script>
+<script src="lib/grid-sort.js?v=a506ac9e"></script>
+<script src="lib/grid-filter.js?v=a506ac9e"></script>
+<script src="lib/grid-find.js?v=a506ac9e"></script>
+<script src="lib/grid-print.js?v=a506ac9e"></script>
+<script src="lib/menu-place.js?v=a506ac9e"></script>
+<script src="lib/grid-stats.js?v=a506ac9e"></script>
+<script src="lib/grid-valid.js?v=a506ac9e"></script>
+<script src="lib/excel-version.js?v=a506ac9e"></script>
 
 <script>
 /* ===== canvas-formula-engine.js (inlined) ===== */
@@ -3297,17 +3303,10 @@ function detectTimePattern(values){
 </div>
 
 <div id="ctx-menu" ontouchstart="event.stopPropagation()">
-  <div class="ctx-item" onclick="explainCell()" style="color:#3D9E72;font-weight:700;">🤖 AIに解説させる</div>
-  <div class="ctx-divider"></div>
+  <!-- ★大事な物を 上に★（2026-08-21 指示役）
+       並べ替え・絞り込み・固定・印刷・入力の決まりが 真ん中に在ったため
+       メニューがはみ出した時に ★客の手に届いていなかった★。 -->
   <div id="ctx-valid-list"></div>
-  <div class="ctx-item" onclick="ctxCut()">✂️ 切り取り <span style="color:#aaa;font-size:11px;margin-left:auto">Ctrl+X</span></div>
-  <div class="ctx-item" onclick="ctxCopy()">📋 コピー <span style="color:#aaa;font-size:11px;margin-left:auto">Ctrl+C</span></div>
-  <div class="ctx-item" onclick="ctxPaste()">📌 貼り付け <span style="color:#aaa;font-size:11px;margin-left:auto">Ctrl+V</span></div>
-  <div class="ctx-item" onclick="ctxPasteValue()">🔢 値のみ貼り付け</div>
-  <div class="ctx-item" onclick="ctxDelete()">🗑️ 削除 <span style="color:#aaa;font-size:11px;margin-left:auto">Del</span></div>
-  <div class="ctx-divider"></div>
-  <div class="ctx-item" onclick="ctxFormat()">🎨 セルの書式設定</div>
-  <div class="ctx-divider"></div>
   <div class="ctx-item" onclick="sortRange('asc')">⬆️ 昇順で並べ替え</div>
   <div class="ctx-item" onclick="sortRange('desc')">⬇️ 降順で並べ替え</div>
   <div class="ctx-item" onclick="filterByValue()">🔽 選んだセルの値で絞り込む</div>
@@ -3317,6 +3316,16 @@ function detectTimePattern(values){
   <div class="ctx-item" onclick="printSheet()">🖨️ 印刷（Ctrl+P）</div>
   <div class="ctx-item" onclick="openValid()">✅ 入力の決まり（一覧から選ぶ／数の範囲）</div>
   <div class="ctx-item" id="ctx-bad-cells" style="display:none" onclick="showBadCells()">⚠️ 決まりに合っていない値を数える</div>
+  <div class="ctx-divider"></div>
+  <div class="ctx-item" onclick="explainCell()" style="color:#3D9E72;font-weight:700;">🤖 AIに解説させる</div>
+  <div class="ctx-divider"></div>
+  <div class="ctx-item" onclick="ctxCut()">✂️ 切り取り <span style="color:#aaa;font-size:11px;margin-left:auto">Ctrl+X</span></div>
+  <div class="ctx-item" onclick="ctxCopy()">📋 コピー <span style="color:#aaa;font-size:11px;margin-left:auto">Ctrl+C</span></div>
+  <div class="ctx-item" onclick="ctxPaste()">📌 貼り付け <span style="color:#aaa;font-size:11px;margin-left:auto">Ctrl+V</span></div>
+  <div class="ctx-item" onclick="ctxPasteValue()">🔢 値のみ貼り付け</div>
+  <div class="ctx-item" onclick="ctxDelete()">🗑️ 削除 <span style="color:#aaa;font-size:11px;margin-left:auto">Del</span></div>
+  <div class="ctx-divider"></div>
+  <div class="ctx-item" onclick="ctxFormat()">🎨 セルの書式設定</div>
   <div class="ctx-divider"></div>
   <div class="ctx-item" onclick="ctxInsertRow()">➕ 行を挿入（上）</div>
   <div class="ctx-item" onclick="ctxInsertCol()">➕ 列を挿入（左）</div>
@@ -5502,7 +5511,8 @@ var copyBuffer = null;
 // 右クリックメニュー
 function showCtxMenu(x,y){
   var m=document.getElementById('ctx-menu');
-  m.style.left=x+'px'; m.style.top=y+'px';
+  /* ★大きさを測る前に 上限を外して 中身そのままの高さを取る★ */
+  m.style.maxHeight=''; m.style.left='0px'; m.style.top='0px';
   // 再表示ボタン: 選択範囲内/近辺に非表示行列があれば表示
   var hr=sheets[activeSheet].hiddenRows||{}, hc=sheets[activeSheet].hiddenCols||{};
   var hasHR=false, hasHC=false;
@@ -5528,9 +5538,15 @@ function showCtxMenu(x,y){
   var 決まり数=Object.keys(sheets[activeSheet].validations||{}).length;
   document.getElementById('ctx-bad-cells').style.display = 決まり数 ? 'block' : 'none';
   m.classList.add('show');
-  var rect=m.getBoundingClientRect();
-  if(rect.right>window.innerWidth) m.style.left=(x-rect.width)+'px';
-  if(rect.bottom>window.innerHeight) m.style.top=(y-rect.height)+'px';
+  /* ★画面の中に収める★…数え方は lib/menu-place.js（どの画面の高さでも 数え切れるように外に出してある） */
+  var 置く = MenuPlace.place({
+    x:x, y:y, w:m.offsetWidth, h:m.scrollHeight,
+    winW:window.innerWidth, winH:window.innerHeight, 余白:8
+  });
+  m.style.left = 置く.left+'px';
+  m.style.top  = 置く.top+'px';
+  m.style.maxHeight = 置く.maxHeight ? (置く.maxHeight+'px') : '';
+  m.scrollTop = 0;
 }
 function hideCtxMenu(){ document.getElementById('ctx-menu').classList.remove('show'); }
 
@@ -7624,6 +7640,6 @@ document.addEventListener('DOMContentLoaded', function(){ checkRequiredFns(); })
 <!-- ★テスト環境の帯★ 本番の倉庫では出ない。今どの倉庫かは js/supa-config.js が唯一の正。
      ホスト名では決めない（配り方は変わるが「本番のデータか」は変わらないため）。
      ★この2本だけが 本番の book.html との違い★（他は1バイトも同じにする）。 -->
-<script src="js/supa-config.js?v=a161eafa"></script>
-<script src="js/env-badge.js?v=a161eafa"></script>
+<script src="js/supa-config.js?v=a506ac9e"></script>
+<script src="js/env-badge.js?v=a506ac9e"></script>
 </html>
