@@ -221,6 +221,31 @@ await AT('★共通の所だけ 1時間もつ置き方／版ごとは 5分のま
   if (!a || a.ttl !== '1h') throw new Error('★共通が 1時間になっていない（単発で押す人が ずっと+25%）★：' + JSON.stringify(a));
   if (!b || b.ttl) throw new Error('★版ごとまで 1時間にしている（人ごとに変わる物に 2倍の置き賃を払う）★：' + JSON.stringify(b));
 });
+await AT('★①（1時間もつ物）は 何回押しても 1バイトも違わない★', async () => {
+  /* ★指示役の指摘（2026-08-22 5通目）★＝①に 毎回変わる物が1つでも混ざったら
+     ★毎回 置き直し＝2倍の置き賃を 毎回 払う★＝今の作りで いちばん高くつく壊し方。 */
+  const a = await 送った物を捕まえる({ 文: 'A1は？', 履歴: [{ role: 'user', content: 'あ' }, { role: 'assistant', content: 'い' }], 版: 'excel_365' });
+  const b = await 送った物を捕まえる({ 文: '合計は？', 履歴: [{ role: 'user', content: 'う' }, { role: 'assistant', content: 'え' }], 版: 'excel_2016' });
+  const c = await 送った物を捕まえる({ 文: '別の人の質問', 履歴: [], 版: 'excel_none' });
+  if (a.system[0].text !== b.system[0].text) throw new Error('★打った文・会話・版で ①が変わっている（毎回 置き直し）★');
+  if (a.system[0].text !== c.system[0].text) throw new Error('★人が違うと ①が変わっている（誰とも 使い回せない）★');
+});
+await AT('★①に 毎回変わる物（日付・時刻・番号）が 1つも混ざっていない★', async () => {
+  const t = (await 送った物を捕まえる({})).system[0].text;
+  const 禁止 = [
+    ['日付(2026-08-22 の形)', /\d{4}-\d{2}-\d{2}/],
+    ['時刻(12:34 の形)', /\d{1,2}:\d{2}/],
+    ['西暦の年月(2026-08 の形)', /\d{4}-\d{2}(?!-)/],
+    ['undefined', /undefined/],
+    ['NaN', /NaN/],
+  ];
+  for (const [名, r] of 禁止) {
+    if (r.test(t)) throw new Error('★①に「' + 名 + '」が混ざっている＝毎回 置き直しになる★');
+  }
+  /* ★年度（令和8年度）は 月に1度しか変わらないので 許す★＝法定の切替に付いていく必要が在るため */
+  if (t.indexOf('年度') < 0) throw new Error('①から 法定の基準数値が 消えている（別の物を切り出している）');
+});
+
 await AT('★長くもつ物を 先に置く（混ぜる時の決まり）★', async () => {
   const p = await 送った物を捕まえる({ 履歴: [{ role: 'user', content: 'a' }, { role: 'assistant', content: 'b' }] });
   const 印 = [];
@@ -386,6 +411,12 @@ if (process.argv.includes('--self-test')) {
     ['★版ごとまで 1時間にする（人ごとに変わる物に 2倍の置き賃）★',
       (t) => t.replace("      { type: 'text', text: 部品.版ごと, cache_control: { type: 'ephemeral' } },", "      { type: 'text', text: 部品.版ごと, cache_control: { type: 'ephemeral', ttl: '1h' } },"),
       async (h) => { const p = await 捕まえる2(h); return !p.system[1].cache_control.ttl; }],
+    ['★①に 今の日時を混ぜる（毎回 置き直し＝2倍を毎回 払う）★',
+      (t) => t.replace('  const 共通 = SYSTEM_PROMPT_BASE + buildStatutoryPrompt();',
+        '  const 共通 = SYSTEM_PROMPT_BASE + buildStatutoryPrompt() + new Date().toISOString();'),
+      /* ★2回 呼んで比べる形だと 同じミリ秒に入って 素通りする（実際に素通りした）★
+         ⇒ ★日付の形が混ざっていないか★ を見る（いつ走らせても 同じ答えになる） */
+      async (h) => { const a = await 捕まえる2(h); return !/\d{4}-\d{2}-\d{2}/.test(a.system[0].text); }],
     ['★使い回した量を 記録しない★',
       (t) => t.replace('      置いた: (response.usage && response.usage.cache_creation_input_tokens) || 0,', '      置いた: 0,'),
       async (h) => { const 行 = await 記録3(h); return 行.length === 1 && 行[0].置いたトークン === 1200; }],
