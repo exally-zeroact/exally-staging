@@ -100,11 +100,21 @@ const FILES = [
 ];
 
 let ng = 0;
+const 失敗一覧 = [];
 for (const f of FILES) {
   const [file, ...args] = Array.isArray(f) ? f : [f];
   console.log('\n=== ' + file + (args.length ? ' ' + args.join(' ') : '') + ' ===');
   try { execFileSync(process.execPath, [path.join(__dirname, file), ...args], { stdio: 'inherit' }); }
-  catch (e) { ng++; }
+  catch (e) {
+    ng++;
+    /* ★落ちた理由を必ず出す（2026-08-23）★ CIで1回 赤→同じコミットを回し直したら緑＝★ムラ★だった。
+       「N ファイルで失敗」だけでは ★中で殺されたのか／自分で1を返したのか★ が分からない。 */
+    const 印 = e && e.signal ? ('★中で殺された(signal=' + e.signal + ')★＝新しい壊れではない可能性')
+      : ('自分で ' + (e && e.status !== undefined && e.status !== null ? e.status : '?') + ' を返した');
+    console.log('  ★落ちた★ ' + file + (args.length ? ' ' + args.join(' ') : '') + ' … ' + 印);
+    失敗一覧.push(file + (args.length ? ' ' + args.join(' ') : '') + '（' + 印 + '）');
+  }
 }
 console.log('\n' + (ng ? '★ ' + ng + ' ファイルで失敗' : '全テストファイル 緑'));
+for (const 名 of 失敗一覧) console.log('   ・' + 名);
 process.exit(ng ? 1 : 0);

@@ -46,6 +46,10 @@ jobs:
         run: node tests/pages-hosting.test.mjs
       - name: ★Pages配信ガード (わざと壊して赤になるかの自己確認・7通り)
         run: node tests/pages-hosting.test.mjs --self-test
+      - name: ★試験は登録するまで1本も走らない (在る試験と 走る試験を突き合わせる)
+        run: node scripts/tests-registered.mjs
+      - name: ★その見張り自身の自己確認 (わざと壊して赤になるか)
+        run: node scripts/tests-registered.mjs --self-test
       - name: Exally tests (共有データ/集計/台帳→実績値/横断集計/ハブUI/xlsxハーネス/Pages配信ガード)
         run: node tests/run.js
       - name: ★重複ガード (同じ物が2箇所に無いか・法定データは例外なし)

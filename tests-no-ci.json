@@ -1,0 +1,39 @@
+{
+  "kyuyo/tests/exally-login.test.mjs": {
+    "why": "★このツリーでは対象の機能が無い★（メール確認ONのsignup分岐は payslip-app のテスト線だけに在り、本番の js/exally-login.js には意図的に未展開）＝走らせても成立しない",
+    "back": "本番のログインに その分岐を入れた日"
+  },
+  "tests/live-roundtrip.mjs": {
+    "why": "★本物のSupabaseへ実接続する（鍵が要る・CIには鍵も網も無い）★",
+    "back": "CI に テスト用の鍵を置いた日"
+  },
+  "tests/live-seed.mjs": {
+    "kind": "tool",
+    "why": "試験ではなく ★種を撒く／片付ける道具★（手で走らせる・実DBに書く）",
+    "back": "入れた物を確かめる試験に作り替えた日"
+  },
+  "tests/dbtest-seed.mjs": {
+    "kind": "tool",
+    "why": "試験ではなく ★種を撒く／片付ける道具★（手で走らせる・実DBに書く）",
+    "back": "入れた物を確かめる試験に作り替えた日"
+  },
+  "tests/repo-supa.mjs": {
+    "kind": "tool",
+    "why": "試験ではなく ★このrepoが向いている倉庫を返すだけの部品★",
+    "back": "向き先を確かめる試験に作り替えた日"
+  },
+  "tests/xlsx-harness/build-libre-input.mjs": {
+    "kind": "tool",
+    "why": "試験ではなく ★LibreOffice に食わせる .xlsx を作る道具★（LibreOffice が要る）",
+    "back": "CI に LibreOffice を置いた日"
+  },
+  "tests/xlsx-harness/collect-libre.mjs": {
+    "kind": "tool",
+    "why": "試験ではなく ★LibreOffice が吐いた csv を真値に直す道具★（LibreOffice が要る）",
+    "back": "CI に LibreOffice を置いた日"
+  },
+  "seikyu/tests/live-seikyu.mjs": {
+    "why": "★本物のSupabase(DB-test)へ実接続する（鍵が要る・CIには鍵も網も無い）★",
+    "back": "CI に テスト用の鍵を置いた日"
+  }
+}

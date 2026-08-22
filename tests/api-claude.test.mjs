@@ -344,6 +344,34 @@ await AT('★ちゃんと答えられた時は 今までどおり 200 で text �
   if (!box.出た || box.出た.status !== 200) throw new Error('200 を返していない：' + JSON.stringify(box.出た));
   if (box.出た.body.text !== 'これは合計だよ。') throw new Error('答えを 書き換えている：' + JSON.stringify(box.出た.body));
 });
+await AT('★1回に送れるのは 20,000文字まで（司さんが決めた数字）★', async () => {
+  const box = 受け皿();
+  handler.__setClient({ messages: { create: async () => { throw new Error('★ここへ来てはいけない（AIを呼んでいる）★'); } } });
+  await handler({ method: 'POST', headers: {}, body: { message: 'あ'.repeat(20001), history: [] } }, box.res);
+  if (box.出た.status !== 413) throw new Error('大きすぎを 断っていない：' + box.出た.status);
+  if (box.出た.body.error !== 'ookisugi') throw new Error('合言葉が ' + box.出た.body.error);
+  if (box.出た.body.text !== '') throw new Error('★中の言葉を返している★');
+});
+await AT('★ちょうど 20,000文字は 通る（境界）★', async () => {
+  handler.__setClient({ messages: { create: async () => ({ content: [{ type: 'text', text: 'はい' }], usage: { input_tokens: 1, output_tokens: 1 } }) } });
+  const box = 受け皿();
+  await handler({ method: 'POST', headers: {}, body: { message: 'あ'.repeat(20000), history: [] } }, box.res);
+  if (box.出た.status !== 200) throw new Error('★ちょうどの所で 断っている★：' + box.出た.status);
+});
+await AT('★数字は 1か所だけ（20,000 が あちこちに書かれていない）★', async () => {
+  const fs2 = await import('node:fs');
+  const src = fs2.readFileSync(path.join(ROOT, 'api/claude.js'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  const n = (src.match(/20000/g) || []).length;
+  if (n !== 1) throw new Error('★20000 が ' + n + 'か所（1か所だけにする）★');
+  if (handler.__一度に送れる字数 !== 20000) throw new Error('上限が ' + handler.__一度に送れる字数);
+});
+await AT('★大きすぎた時 画面は「短く分けて」と言う（もう一度 と言わない）★', async () => {
+  const fs2 = await import('node:fs');
+  const src = fs2.readFileSync(path.join(ROOT, 'lib/ai-reason.js'), 'utf8');
+  if (src.indexOf('ookisugi') < 0) throw new Error('★画面が この合言葉を 知らない★');
+  if (src.indexOf('短く分けて') < 0) throw new Error('次の一手が 無い');
+});
+
 await AT('★中身なしの POST は 今までどおり 400（画面が「聞きたい事を書いてね」と言う）★', async () => {
   const box = 受け皿();
   await handler({ method: 'POST', body: {}, headers: {} }, box.res);
@@ -428,6 +456,12 @@ if (process.argv.includes('--self-test')) {
     ['★使い回した量を 記録しない★',
       (t) => t.replace('      置いた: (response.usage && response.usage.cache_creation_input_tokens) || 0,', '      置いた: 0,'),
       async (h) => { const 行 = await 記録3(h); return 行.length === 1 && 行[0].置いたトークン === 1200; }],
+    ['★大きすぎるのに 通してしまう★',
+      (t) => t.replace('    if (message.length > 一度に送れる字数) {', '    if (false) {'),
+      async (h) => { const box = 受け皿(); if (h.__setClient) h.__setClient({ messages: { create: async () => ({ content: [{ type: 'text', text: 'x' }], usage: {} }) } });
+        const 元 = console.log; console.log = () => {};
+        try { await h({ method: 'POST', headers: {}, body: { message: 'あ'.repeat(20001), history: [] } }, box.res); } finally { console.log = 元; }
+        return box.出た && box.出た.status === 413; }],
     ['★中の言葉を text に入れて返す★',
       (t) => t.replace("    return res.status(k.status).json({ error: k.合言葉, text: '', tsv: '' });",
         "    return res.status(k.status).json({ error: k.合言葉, text: 'VercelのEnvironment VariablesにANTHROPIC_API_KEYを設定してください。', tsv: '' });"),

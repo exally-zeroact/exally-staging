@@ -235,6 +235,9 @@ function buildPromptParts(versionInfo) {
    ★正直に：これだけでは止まりません★＝道具(curl等)で直接叩く相手には効かない（名乗りは詐称できる）。
    連打を止めるのは Vercel の入口（指示役の担当）。ここは「よその画面から使われる」のを断るだけ。
    ★うちの画面は 同じ入れ物(same-origin)なので、名乗りが無くても 今までどおり動く★ */
+/* ★1回に送れる大きさ（司さん承認 2026-08-22）★ 数字は ここ1か所だけ */
+const 一度に送れる字数 = 20000;
+
 const 許す入口 = [
   'https://exally.vercel.app',
   'https://exally-zeroact.github.io',
@@ -288,6 +291,13 @@ module.exports = async (req, res) => {
 
     if (!message || typeof message !== 'string') {
       return res.status(400).json({ error: 'message is required', text: '', tsv: '' });
+    }
+    /* ★1回に送れる大きさ＝20,000文字（司さん承認 2026-08-22）★
+       ★これは 司さんが決めた数字★＝私が思い付きで置いた物ではない。
+       ★回数の上限は まだ入れない★（1分◯回・1時間◯回は 数字が決まっていない）。 */
+    if (message.length > 一度に送れる字数) {
+      記録({ 結果: 'ookisugi', 字数: message.length, 入口: 入口 });
+      return res.status(413).json({ error: 'ookisugi', text: '', tsv: '' });
     }
 
     // 会話履歴のサニタイズ（不正エントリ除去・最大40メッセージ=20ターンに制限）
@@ -428,5 +438,6 @@ module.exports.__buildStatutoryPrompt = buildStatutoryPrompt;
    （本番は module.exports を 関数として呼ぶだけなので 挙動は変わらない） */
 module.exports.__失敗を分ける = 失敗を分ける;
 module.exports.__許す入口 = 許す入口;
+module.exports.__一度に送れる字数 = 一度に送れる字数;
 module.exports.__buildPromptParts = buildPromptParts;
 module.exports.__setClient = (c) => { client = c; };
