@@ -254,6 +254,8 @@ function 記録(o) {
       /* ★置いたまま使い回した量★（置いた＝1.25倍／読み直した＝0.1倍・一次情報）
          ★値段はここに書かない★＝値段が変わったら嘘になる。数だけ残して 外で計算する。 */
       置いたトークン: o.置いた || 0,
+      置いた1時間: o.置いた1時間 || 0,
+      置いた5分: o.置いた5分 || 0,
       読み直したトークン: o.読み直した || 0,
       送った字数: o.字数 || 0,
       会話の数: o.会話 || 0,
@@ -310,8 +312,15 @@ module.exports = async (req, res) => {
               ★Sonnet 4.6 は 1,024トークン未満だと 黙って置かれない★ので 前置きは1つに束ねる。
        ★客の画面は 1文字も変えていない（我慢も 上限も していない）★ */
     const 部品 = buildPromptParts(versionInfo);
+    /* ★①の共通の所だけ 1時間もつ置き方にする（2026-08-22 指示役の 1-b）★
+       なぜ … 5分の置き方は ★2回目から★ 安くなる仕掛け。
+              ★5分 空けて 1回だけ押して終わる人★は 毎回が「1回目」＝★ずっと +25%★。
+              今の Exally は 押す間隔が5分より長いので ★このままでは 損★。
+       ①は ★誰が押しても 同じ字★なので、1時間 置いておけば 別の人の1回目でも 読み直せる。
+       ★置く時 2倍／読み直し 0.1倍＝元が取れるのは 3回 読み直してから★（一次情報）
+       ★長くもつ物を 先に置く★（混ぜる時の決まり）＝①が先・②と会話は 5分のまま */
     const システム = [
-      { type: 'text', text: 部品.共通, cache_control: { type: 'ephemeral' } },
+      { type: 'text', text: 部品.共通, cache_control: { type: 'ephemeral', ttl: '1h' } },
       { type: 'text', text: 部品.版ごと, cache_control: { type: 'ephemeral' } },
     ];
     /* ★前の会話は「変わらない所の終わり」に印を付ける★
@@ -339,6 +348,11 @@ module.exports = async (req, res) => {
       出力: (response.usage && response.usage.output_tokens) || 0,
       置いた: (response.usage && response.usage.cache_creation_input_tokens) || 0,
       読み直した: (response.usage && response.usage.cache_read_input_tokens) || 0,
+      /* ★1時間の分と 5分の分は 置き賃が違う（2倍 と 1.25倍）ので 分けて残す★ */
+      置いた1時間: (response.usage && response.usage.cache_creation
+        && response.usage.cache_creation.ephemeral_1h_input_tokens) || 0,
+      置いた5分: (response.usage && response.usage.cache_creation
+        && response.usage.cache_creation.ephemeral_5m_input_tokens) || 0,
       字数: message.length,
       会話: sanitizedHistory.length,
       秒: Math.round((Date.now() - 始めた) / 100) / 10,

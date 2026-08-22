@@ -215,6 +215,35 @@ await AT('★前置きは2つに分かれ、どちらにも「置いたまま」
     if (!b.cache_control || b.cache_control.type !== 'ephemeral') throw new Error('★印が付いていない★：' + JSON.stringify(b).slice(0, 80));
   }
 });
+await AT('★共通の所だけ 1時間もつ置き方／版ごとは 5分のまま★', async () => {
+  const p = await 送った物を捕まえる({});
+  const a = p.system[0].cache_control, b = p.system[1].cache_control;
+  if (!a || a.ttl !== '1h') throw new Error('★共通が 1時間になっていない（単発で押す人が ずっと+25%）★：' + JSON.stringify(a));
+  if (!b || b.ttl) throw new Error('★版ごとまで 1時間にしている（人ごとに変わる物に 2倍の置き賃を払う）★：' + JSON.stringify(b));
+});
+await AT('★長くもつ物を 先に置く（混ぜる時の決まり）★', async () => {
+  const p = await 送った物を捕まえる({ 履歴: [{ role: 'user', content: 'a' }, { role: 'assistant', content: 'b' }] });
+  const 印 = [];
+  for (const b of p.system) if (b.cache_control) 印.push(b.cache_control.ttl || '5m');
+  for (const m of p.messages) if (Array.isArray(m.content)) for (const b of m.content) if (b.cache_control) 印.push(b.cache_control.ttl || '5m');
+  const 順 = 印.map((t) => (t === '1h' ? 1 : 0));
+  for (let i = 1; i < 順.length; i++) {
+    if (順[i] > 順[i - 1]) throw new Error('★短い物の後ろに 長い物が在る（APIに断られる）★：' + 印.join(','));
+  }
+  if (印[0] !== '1h') throw new Error('先頭が 1時間ではない：' + 印.join(','));
+});
+await AT('★1時間の分と 5分の分を 分けて記録する（置き賃が違う）★', async () => {
+  const 元 = console.log; const 行 = [];
+  console.log = (...a) => { 行.push(a.join(' ')); };
+  try {
+    handler.__setClient({ messages: { create: async () => ({ content: [{ type: 'text', text: 'はい' }], usage: { input_tokens: 21, output_tokens: 3, cache_creation_input_tokens: 1996, cache_read_input_tokens: 0, cache_creation: { ephemeral_1h_input_tokens: 1100, ephemeral_5m_input_tokens: 896 } } }) } });
+    const box = 受け皿();
+    await handler({ method: 'POST', headers: {}, body: { message: 'これ何？', history: [] } }, box.res);
+  } finally { console.log = 元; }
+  const r = JSON.parse(行.filter((l) => l.indexOf('[ai] ') === 0)[0].slice(5));
+  if (r.置いた1時間 !== 1100 || r.置いた5分 !== 896) throw new Error('★分けて残していない（どちらの置き賃か 分からない）★：' + JSON.stringify(r));
+});
+
 await AT('★変わる物（版ごとの説明）は 共通の後ろに置く（前に置くと毎回 置き直し）★', async () => {
   const p365 = await 送った物を捕まえる({ 版: 'excel_365' });
   const p2016 = await 送った物を捕まえる({ 版: 'excel_2016' });
@@ -351,6 +380,12 @@ if (process.argv.includes('--self-test')) {
     ['★前の会話に 印を付けない（使い回さない）★',
       (t) => t.replace('    if (会話.length) {', '    if (false) {'),
       async (h) => { const p = await 捕まえる2(h, [{ role: 'user', content: 'a' }]); const m = p.messages[0]; return Array.isArray(m.content) && m.content.some((b) => b.cache_control); }],
+    ['★共通まで 5分に戻す（単発の人が ずっと+25%）★',
+      (t) => t.replace("{ type: 'ephemeral', ttl: '1h' }", "{ type: 'ephemeral' }"),
+      async (h) => { const p = await 捕まえる2(h); return p.system[0].cache_control.ttl === '1h'; }],
+    ['★版ごとまで 1時間にする（人ごとに変わる物に 2倍の置き賃）★',
+      (t) => t.replace("      { type: 'text', text: 部品.版ごと, cache_control: { type: 'ephemeral' } },", "      { type: 'text', text: 部品.版ごと, cache_control: { type: 'ephemeral', ttl: '1h' } },"),
+      async (h) => { const p = await 捕まえる2(h); return !p.system[1].cache_control.ttl; }],
     ['★使い回した量を 記録しない★',
       (t) => t.replace('      置いた: (response.usage && response.usage.cache_creation_input_tokens) || 0,', '      置いた: 0,'),
       async (h) => { const 行 = await 記録3(h); return 行.length === 1 && 行[0].置いたトークン === 1200; }],
