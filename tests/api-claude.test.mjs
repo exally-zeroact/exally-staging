@@ -215,11 +215,16 @@ await AT('★前置きは2つに分かれ、どちらにも「置いたまま」
     if (!b.cache_control || b.cache_control.type !== 'ephemeral') throw new Error('★印が付いていない★：' + JSON.stringify(b).slice(0, 80));
   }
 });
-await AT('★共通の所だけ 1時間もつ置き方／版ごとは 5分のまま★', async () => {
+await AT('★①共通も ②版ごとも 1時間（③前の会話だけ 5分）★', async () => {
   const p = await 送った物を捕まえる({});
   const a = p.system[0].cache_control, b = p.system[1].cache_control;
   if (!a || a.ttl !== '1h') throw new Error('★共通が 1時間になっていない（単発で押す人が ずっと+25%）★：' + JSON.stringify(a));
-  if (!b || b.ttl) throw new Error('★版ごとまで 1時間にしている（人ごとに変わる物に 2倍の置き賃を払う）★：' + JSON.stringify(b));
+  if (!b || b.ttl !== '1h') throw new Error('★版ごとが 1時間になっていない（間隔が空く人に 置き賃が毎回かかる）★：' + JSON.stringify(b));
+  /* ★③前の会話は 5分のまま★＝人ごと・会話ごとに変わるので 2倍の置き賃を払わない */
+  const p2 = await 送った物を捕まえる({ 履歴: [{ role: 'user', content: 'あ' }, { role: 'assistant', content: 'い' }] });
+  const 会話の印 = p2.messages.filter((m) => Array.isArray(m.content)).map((m) => m.content.find((x) => x.cache_control).cache_control);
+  if (!会話の印.length) throw new Error('前の会話に 印が付いていない');
+  for (const c of 会話の印) if (c.ttl) throw new Error('★前の会話まで 1時間にしている（会話ごとに変わる物に 2倍）★：' + JSON.stringify(c));
 });
 await AT('★①（1時間もつ物）は 何回押しても 1バイトも違わない★', async () => {
   /* ★指示役の指摘（2026-08-22 5通目）★＝①に 毎回変わる物が1つでも混ざったら
@@ -408,9 +413,12 @@ if (process.argv.includes('--self-test')) {
     ['★共通まで 5分に戻す（単発の人が ずっと+25%）★',
       (t) => t.replace("{ type: 'ephemeral', ttl: '1h' }", "{ type: 'ephemeral' }"),
       async (h) => { const p = await 捕まえる2(h); return p.system[0].cache_control.ttl === '1h'; }],
-    ['★版ごとまで 1時間にする（人ごとに変わる物に 2倍の置き賃）★',
-      (t) => t.replace("      { type: 'text', text: 部品.版ごと, cache_control: { type: 'ephemeral' } },", "      { type: 'text', text: 部品.版ごと, cache_control: { type: 'ephemeral', ttl: '1h' } },"),
-      async (h) => { const p = await 捕まえる2(h); return !p.system[1].cache_control.ttl; }],
+    ['★版ごとを 5分に戻す（間隔が空く人に 置き賃が毎回かかる）★',
+      (t) => t.replace("      { type: 'text', text: 部品.版ごと, cache_control: { type: 'ephemeral', ttl: '1h' } },", "      { type: 'text', text: 部品.版ごと, cache_control: { type: 'ephemeral' } },"),
+      async (h) => { const p = await 捕まえる2(h); return p.system[1].cache_control.ttl === '1h'; }],
+    ['★前の会話まで 1時間にする（会話ごとに変わる物に 2倍）★',
+      (t) => t.replace("        content: [{ type: 'text', text: 最後.content, cache_control: { type: 'ephemeral' } }],", "        content: [{ type: 'text', text: 最後.content, cache_control: { type: 'ephemeral', ttl: '1h' } }],"),
+      async (h) => { const p = await 捕まえる2(h, [{ role: 'user', content: 'a' }]); const m = p.messages.find((x) => Array.isArray(x.content)); return !m.content[0].cache_control.ttl; }],
     ['★①に 今の日時を混ぜる（毎回 置き直し＝2倍を毎回 払う）★',
       (t) => t.replace('  const 共通 = SYSTEM_PROMPT_BASE + buildStatutoryPrompt();',
         '  const 共通 = SYSTEM_PROMPT_BASE + buildStatutoryPrompt() + new Date().toISOString();'),
