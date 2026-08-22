@@ -195,6 +195,74 @@ await AT('★上限も 既定オフも 足していない（勝手に決めな�
   }
 });
 
+/* ── ★置いたまま使い回す（prompt caching）★ 2026-08-22 ──
+ *  ★毎回まるごと送り直していた★のを直した。ここでは ★本当に送っている形★ を捕まえて数える。
+ *  一次情報の決まり … 印は最大4か所／読み直し0.1倍・置く時1.25倍／Sonnet 4.6 は1,024トークン未満だと置かれない */
+const 送った物を捕まえる = async (opt) => {
+  const o = opt || {};
+  let 送った = null;
+  handler.__setClient({ messages: { create: async (p) => { 送った = p; return { content: [{ type: 'text', text: 'はい' }], usage: { input_tokens: 5, output_tokens: 3, cache_creation_input_tokens: o.置いた || 0, cache_read_input_tokens: o.読み直した || 0 } }; } } });
+  const box = 受け皿();
+  await handler({ method: 'POST', headers: {}, body: { message: o.文 || 'これ何？', history: o.履歴 || [], excelVersion: o.版 } }, box.res);
+  return 送った;
+};
+
+await AT('★前置きは2つに分かれ、どちらにも「置いたまま」の印が付く★', async () => {
+  const p = await 送った物を捕まえる({});
+  if (!Array.isArray(p.system)) throw new Error('★前置きが 1本のまま（分けていない）★');
+  if (p.system.length !== 2) throw new Error('前置きの数が ' + p.system.length);
+  for (const b of p.system) {
+    if (!b.cache_control || b.cache_control.type !== 'ephemeral') throw new Error('★印が付いていない★：' + JSON.stringify(b).slice(0, 80));
+  }
+});
+await AT('★変わる物（版ごとの説明）は 共通の後ろに置く（前に置くと毎回 置き直し）★', async () => {
+  const p365 = await 送った物を捕まえる({ 版: 'excel_365' });
+  const p2016 = await 送った物を捕まえる({ 版: 'excel_2016' });
+  if (p365.system[0].text !== p2016.system[0].text) throw new Error('★共通の所が 版で変わっている＝置いたまま使えない★');
+  if (p365.system[1].text === p2016.system[1].text) throw new Error('版ごとの所が 変わっていない（分け方が違う）');
+  if (p365.system[0].text.indexOf('Excel 365') >= 0) throw new Error('★共通の中に 版の名前が混ざっている★');
+});
+await AT('★前の会話の終わりに印を付ける／今 打った文には付けない★', async () => {
+  const 履歴 = [
+    { role: 'user', content: 'A1は？' }, { role: 'assistant', content: '合計だよ' },
+    { role: 'user', content: 'B1は？' }, { role: 'assistant', content: '単価だよ' },
+  ];
+  const p = await 送った物を捕まえる({ 履歴, 文: 'C1は？' });
+  const 最後の履歴 = p.messages[p.messages.length - 2];
+  const 今の文 = p.messages[p.messages.length - 1];
+  const 印 = (m) => Array.isArray(m.content) && m.content.some((b) => b.cache_control);
+  if (!印(最後の履歴)) throw new Error('★前の会話に 印が付いていない（使い回せない）★');
+  if (印(今の文)) throw new Error('★毎回変わる文に 印を付けている＝毎回 置き直しになる★');
+  if (typeof 今の文.content !== 'string' || 今の文.content !== 'C1は？') throw new Error('打った文を 変えている');
+});
+await AT('★会話が無くても 落ちない（初めての1回目）★', async () => {
+  const p = await 送った物を捕まえる({ 履歴: [] });
+  if (p.messages.length !== 1) throw new Error('メッセージの数が ' + p.messages.length);
+  if (Array.isArray(p.messages[0].content)) throw new Error('1回目に 印を付けている');
+});
+await AT('★印は 4か所を超えない（一次情報の上限）★', async () => {
+  const 履歴 = [];
+  for (let i = 0; i < 20; i++) 履歴.push({ role: i % 2 ? 'assistant' : 'user', content: 'x' + i });
+  const p = await 送った物を捕まえる({ 履歴 });
+  const n = p.system.filter((b) => b.cache_control).length
+    + p.messages.filter((m) => Array.isArray(m.content) && m.content.some((b) => b.cache_control)).length;
+  if (n > 4) throw new Error('★印が ' + n + 'か所＝APIに断られる★');
+});
+await AT('★置いた量・読み直した量を 記録に残す（後で値段を数えられる）★', async () => {
+  const 元 = console.log; const 行 = [];
+  console.log = (...a) => { 行.push(a.join(' ')); };
+  try { await 送った物を捕まえる({ 置いた: 1200, 読み直した: 3400 }); } finally { console.log = 元; }
+  const r = JSON.parse(行.filter((l) => l.indexOf('[ai] ') === 0)[0].slice(5));
+  if (r.置いたトークン !== 1200 || r.読み直したトークン !== 3400) throw new Error('★使い回した量が 残っていない★：' + JSON.stringify(r));
+});
+await AT('★記録に 値段(円)を書き込んでいない（値段が変わったら嘘になる）★', async () => {
+  const fs2 = await import('node:fs');
+  const src = fs2.readFileSync(path.join(ROOT, 'api/claude.js'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  for (const 語 of ['円', 'JPY', '0.1倍', '1.25倍']) {
+    if (src.indexOf(語) >= 0) throw new Error('★値段を コードに書いている★：' + 語);
+  }
+});
+
 await AT('★ハンドラを 本当に呼ぶ：失敗したら 200 を返さない★', async () => {
   const r = await 呼ぶ(失敗({ status: 401, message: 'invalid x-api-key' }));
   if (!r) throw new Error('返事が無い');
@@ -270,6 +338,22 @@ if (process.argv.includes('--self-test')) {
       (t) => t.replace('      送った字数: o.字数 || 0,', '      送った字数: o.字数 || 0, 中身: o.中身,')
               .replace('      字数: message.length,', '      字数: message.length, 中身: message,'),
       async (h) => { const 行 = await 記録2(h); return JSON.stringify(行[0]).indexOf('これ何？') < 0; }],
+    ['★前置きを1本のまま送る（置いたまま使い回せない）★',
+      (t) => t.replace('      system: システム,', '      system: 部品.共通 + 部品.版ごと,'),
+      async (h) => { const p = await 捕まえる2(h); return Array.isArray(p.system); }],
+    ['★変わる物を 前に置く（毎回 置き直しになる）★',
+      (t) => t.replace('text: 部品.共通,', 'text: __入替__,').replace('text: 部品.版ごと,', 'text: 部品.共通,').replace('text: __入替__,', 'text: 部品.版ごと,'),
+      async (h) => { const p = await 捕まえる2(h); return p.system[0].text.indexOf('Excel') < 0; }],
+    ['★今 打った文にも 印を付ける（毎回 置き直し）★',
+      (t) => t.replace("      messages: [...会話, { role: 'user', content: message }],",
+        "      messages: [...会話, { role: 'user', content: [{ type: 'text', text: message, cache_control: { type: 'ephemeral' } }] }],"),
+      async (h) => { const p = await 捕まえる2(h, [{ role: 'user', content: 'a' }]); const m = p.messages[p.messages.length - 1]; return !(Array.isArray(m.content) && m.content.some((b) => b.cache_control)); }],
+    ['★前の会話に 印を付けない（使い回さない）★',
+      (t) => t.replace('    if (会話.length) {', '    if (false) {'),
+      async (h) => { const p = await 捕まえる2(h, [{ role: 'user', content: 'a' }]); const m = p.messages[0]; return Array.isArray(m.content) && m.content.some((b) => b.cache_control); }],
+    ['★使い回した量を 記録しない★',
+      (t) => t.replace('      置いた: (response.usage && response.usage.cache_creation_input_tokens) || 0,', '      置いた: 0,'),
+      async (h) => { const 行 = await 記録3(h); return 行.length === 1 && 行[0].置いたトークン === 1200; }],
     ['★中の言葉を text に入れて返す★',
       (t) => t.replace("    return res.status(k.status).json({ error: k.合言葉, text: '', tsv: '' });",
         "    return res.status(k.status).json({ error: k.合言葉, text: 'VercelのEnvironment VariablesにANTHROPIC_API_KEYを設定してください。', tsv: '' });"),
@@ -287,6 +371,20 @@ if (process.argv.includes('--self-test')) {
       await h({ method: 'POST', headers: origin ? { origin } : {}, body: { message: 'これ何？', history: [] } }, res);
     } finally { console.log = 元; }
     return 出た;
+  };
+  const 捕まえる2 = async (h, 履歴) => {
+    let 送った = null;
+    if (h.__setClient) h.__setClient({ messages: { create: async (p) => { 送った = p; return { content: [{ type: 'text', text: 'はい' }], usage: { input_tokens: 5, output_tokens: 3, cache_creation_input_tokens: 1200, cache_read_input_tokens: 0 } }; } } });
+    const res = { setHeader() {}, status() { return this; }, json() { return this; }, end() { return this; } };
+    const 元 = console.log; console.log = () => {};
+    try { await h({ method: 'POST', headers: {}, body: { message: 'これ何？', history: 履歴 || [] } }, res); } finally { console.log = 元; }
+    return 送った;
+  };
+  const 記録3 = async (h) => {
+    const 元 = console.log; const 行 = [];
+    console.log = (...a) => { 行.push(a.join(' ')); };
+    try { await 捕まえる2(h); } finally { console.log = 元; }
+    return 行.filter((l) => l.indexOf('[ai] ') === 0).map((l) => JSON.parse(l.slice(5)));
   };
   const 記録2 = async (h) => {
     await 押す入口2(h, 'https://exally.vercel.app');

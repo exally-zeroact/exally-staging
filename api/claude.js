@@ -219,6 +219,17 @@ ${EXALLY_UNSUPPORTED.pending.join(', ')}
   return SYSTEM_PROMPT_BASE + buildStatutoryPrompt() + groupRule + commonRule;
 }
 
+/* ★前置きを「置いたまま使い回す」ために 2つに分ける（2026-08-22）★
+   ・前半＝★どの版の人にも同じ★（作りの説明＋法定の基準数値）＝ここを置いたままにする
+   ・後半＝★版ごとに変わる★（Excel 365 / 2016 / 持っていない …）＝置き場所の後ろに回す
+   ★変わる物を前に置くと 毎回 置き直しになって 逆に高くなる★（一次情報の決まり） */
+function buildPromptParts(versionInfo) {
+  const 共通 = SYSTEM_PROMPT_BASE + buildStatutoryPrompt();
+  const 全部 = buildDynamicPrompt(versionInfo);
+  const 版ごと = 全部.slice(共通.length);
+  return { 共通, 版ごと };
+}
+
 /* ★うちの画面から来た物だけ受ける（2026-08-22 指示役）★
    前は Access-Control-Allow-Origin: '*' ＝★誰の画面からでも叩けた★。
    ★正直に：これだけでは止まりません★＝道具(curl等)で直接叩く相手には効かない（名乗りは詐称できる）。
@@ -240,6 +251,10 @@ function 記録(o) {
       結果: o.結果,
       入力トークン: o.入力 || 0,
       出力トークン: o.出力 || 0,
+      /* ★置いたまま使い回した量★（置いた＝1.25倍／読み直した＝0.1倍・一次情報）
+         ★値段はここに書かない★＝値段が変わったら嘘になる。数だけ残して 外で計算する。 */
+      置いたトークン: o.置いた || 0,
+      読み直したトークン: o.読み直した || 0,
       送った字数: o.字数 || 0,
       会話の数: o.会話 || 0,
       かかった秒: o.秒,
@@ -287,18 +302,43 @@ module.exports = async (req, res) => {
     const versionInfo = getVersionInfo(excelVersion);
     const dynamicPrompt = buildDynamicPrompt(versionInfo);
 
+    /* ★置いたまま使い回す（prompt caching）★ 2026-08-22
+       なぜ … 会話40件(20往復)を ★毎回まるごと送り直していた★＝1回 平均 約4円。
+              個人1,280円/月500回 なら 原価2,000円＝★1人目から赤字★（指示役の実測）。
+       やり方 … ①前置きの共通部分 ②版ごとの部分 ③★前の会話まで★ の3か所に印を付ける。
+              ★印は最大4か所★／★読み直し 0.1倍・置く時 1.25倍（5分もつ）★＝一次情報。
+              ★Sonnet 4.6 は 1,024トークン未満だと 黙って置かれない★ので 前置きは1つに束ねる。
+       ★客の画面は 1文字も変えていない（我慢も 上限も していない）★ */
+    const 部品 = buildPromptParts(versionInfo);
+    const システム = [
+      { type: 'text', text: 部品.共通, cache_control: { type: 'ephemeral' } },
+      { type: 'text', text: 部品.版ごと, cache_control: { type: 'ephemeral' } },
+    ];
+    /* ★前の会話は「変わらない所の終わり」に印を付ける★
+       （今回 打った文は 毎回変わるので ★印を付けない★＝付けると毎回 置き直しになる） */
+    const 会話 = sanitizedHistory.map((m) => ({ role: m.role, content: m.content }));
+    if (会話.length) {
+      const 最後 = 会話[会話.length - 1];
+      会話[会話.length - 1] = {
+        role: 最後.role,
+        content: [{ type: 'text', text: 最後.content, cache_control: { type: 'ephemeral' } }],
+      };
+    }
+
     const 始めた = Date.now();
     const response = await client.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 2000,
-      system: dynamicPrompt,
-      messages: [...sanitizedHistory, { role: 'user', content: message }],
+      system: システム,
+      messages: [...会話, { role: 'user', content: message }],
     });
 
     記録({
       結果: 'ok',
       入力: (response.usage && response.usage.input_tokens) || 0,
       出力: (response.usage && response.usage.output_tokens) || 0,
+      置いた: (response.usage && response.usage.cache_creation_input_tokens) || 0,
+      読み直した: (response.usage && response.usage.cache_read_input_tokens) || 0,
       字数: message.length,
       会話: sanitizedHistory.length,
       秒: Math.round((Date.now() - 始めた) / 100) / 10,
@@ -370,4 +410,5 @@ module.exports.__buildStatutoryPrompt = buildStatutoryPrompt;
    （本番は module.exports を 関数として呼ぶだけなので 挙動は変わらない） */
 module.exports.__失敗を分ける = 失敗を分ける;
 module.exports.__許す入口 = 許す入口;
+module.exports.__buildPromptParts = buildPromptParts;
 module.exports.__setClient = (c) => { client = c; };
