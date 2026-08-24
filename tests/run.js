@@ -106,7 +106,11 @@ const 失敗一覧 = [];
 for (const f of FILES) {
   const [file, ...args] = Array.isArray(f) ? f : [f];
   console.log('\n=== ' + file + (args.length ? ' ' + args.join(' ') : '') + ' ===');
-  try { execFileSync(process.execPath, [path.join(__dirname, file), ...args], { stdio: 'inherit' }); }
+  /* ★中で殺される(SIGTRAP)のを止める（2026-08-24）★
+     CIで excel-parity が ★signal=SIGTRAP★ で死んだ＝V8 が力尽きた（本物の壊れではない）。
+     本物の画面(book.html)を jsdom に丸ごと載せる検査は 重い。★積める量を増やす★。
+     ⇒ 落ちた理由を出す1行が無ければ ★「新しい壊れ」と区別できなかった★ */
+  try { execFileSync(process.execPath, ['--max-old-space-size=4096', path.join(__dirname, file), ...args], { stdio: 'inherit' }); }
   catch (e) {
     ng++;
     /* ★落ちた理由を必ず出す（2026-08-23）★ CIで1回 赤→同じコミットを回し直したら緑＝★ムラ★だった。
