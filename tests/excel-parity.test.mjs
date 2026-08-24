@@ -159,7 +159,11 @@ for (const s of SHORTCUTS) {
 const have = results.filter(r => r.works).length;
 const missing = results.length - have;
 
-const controls = [...doc.querySelectorAll('button, select, input, [onclick]')];
+/* ★ログインの窓は 数から外す（2026-08-23）★
+   この表は ★Excel との差★を数える物。ログイン（メール・パスワード・ログイン・新規登録・忘れた）は
+   ★Excel には無い物＝表計算の操作ではない★ので、混ぜると「Excelに近づいた」に見えて 嘘になる。 */
+const controls = [...doc.querySelectorAll('button, select, input, [onclick]')]
+  .filter((el) => !el.closest('#loginOv'));
 const uniq = new Set(controls.map(el =>
   ((el.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 30) || el.getAttribute('title') || el.id)
   + '|' + (el.getAttribute('onclick') || '')));

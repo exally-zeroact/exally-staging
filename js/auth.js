@@ -24,8 +24,15 @@
 
   function $(id) { return document.getElementById(id); }
   // ★中身(.app)はログインが済むまで hidden のまま＝未ログインで画面を見せない
-  function show() { if (LOGIN) LOGIN.show(); var a = $('app'); if (a) a.hidden = true; }
-  function hide() { if (LOGIN) LOGIN.hide(); var a = $('app'); if (a) a.hidden = false; }
+  /* ★#app を持たない画面（book.html＝表そのもの）でも 中身を見せない★（2026-08-23）
+     book.html は body の直下に25個の箱が並ぶ作りで、★丸ごと1つに包み直すと 表の高さの計算が崩れる★。
+     だから ★body に印を付けて CSS で隠す★（包み直さない）。
+     隠す1行は その画面の <style> に置く（[hidden] は class の display に負けるため）。 */
+  function lockBody(on) {
+    try { document.body.classList[on ? 'add' : 'remove']('exally-locked'); } catch (e) { /* 画面が無い時は何もしない */ }
+  }
+  function show() { if (LOGIN) LOGIN.show(); var a = $('app'); if (a) a.hidden = true; lockBody(true); }
+  function hide() { if (LOGIN) LOGIN.hide(); var a = $('app'); if (a) a.hidden = false; lockBody(false); }
   function msg(t, err) { if (err && LOGIN) LOGIN.error(t || ''); }
   function jpErr(s) {
     if (global.ExallyLogin) return global.ExallyLogin.friendly({ message: s });

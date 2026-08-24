@@ -76,23 +76,32 @@ const MIGRATION_DAY = '2026-08-06';
 /* ⑤ 配信されている Edge Function（本番・テストとも同じ4本のはず） */
 const EDGE_FUNCS = ['dk-issue-license', 'dk-register-company', 'dk-sync-jobs', 'dk-customers'];
 
-/* ④ 戻り先を確かめる住所（許可リストに載っているべき物） */
+/* ④ 戻り先を確かめる住所
+   ★2026-08-24 に決まりを変えた（指示役）★
+     前 … 「★全アプリのURLが 両方の倉庫に入っている事★」＝混ざりを永久に見逃す形だった。
+           環境の混ざりを外した日に ★9件が赤★になり、しかも ★客への害は0★ だった。
+     今 … ①★そのアプリが向いている倉庫に 自分のURLが在るか★（無ければ 忘れた人が入れない）
+           ②★向いていない倉庫に 自分のURLが居ないか★（居たら ★混ざり★＝別の環境へ飛べてしまう）
+   ★向き先は 実物のコードから読む（cfg）。表に手で書かない★ */
 const REDIRECT_HOSTS = [
-  { app: 'Exally',         url: 'https://exally.vercel.app/hub.html' },
-  { app: '給与 kyuyo',     url: 'https://exally.vercel.app/kyuyo/admin.html' },
-  { app: 'Exally テスト',  url: 'https://exally-zeroact.github.io/exally-staging/hub.html' },
-  // ★畳んだ住所（2026-08-07）。それでも許可リストには★残す★★
-  //   理由: 許可リストから行を消す作業そのものが事故のもと（消し間違えると他アプリのログインが壊れる）。
-  //   　　  余分な行が1つ残っても害は無い（そこへ戻る物がもう無い）。
-  //   ここで毎週「許可されたまま」を確かめておくと、
-  //   もし将来この住所を作り直しても、いきなり穴が開いた状態にならない。
-  { app: 'Exally テストV(畳んだ住所)', url: 'https://exally-staging.vercel.app/hub.html' },
-  { app: '代行請求',       url: 'https://daikou-seikyu.vercel.app/daikou-seikyu.html' },
-  { app: 'ダイコメ',       url: 'https://daikou-app.vercel.app/' },
-  { app: 'ダイコメ事務所', url: 'https://daikome-jimusho.vercel.app/login.html' },
-  { app: 'アマかせ',       url: 'https://amazon-ads-automation-lyart.vercel.app/' },
-  { app: 'アマかせ テスト', url: 'https://amazon-ads-automation-test.vercel.app/' },
+  { app: 'Exally',         url: 'https://exally.vercel.app/hub.html',
+    cfg: 'https://exally.vercel.app/js/supa-config.js' },
+  { app: '給与 kyuyo',     url: 'https://exally.vercel.app/kyuyo/admin.html',
+    cfg: 'https://exally.vercel.app/js/supa-config.js' },
+  { app: 'Exally テスト',  url: 'https://exally-zeroact.github.io/exally-staging/hub.html',
+    cfg: 'https://exally-zeroact.github.io/exally-staging/js/supa-config.js' },
+  { app: '代行請求',       url: 'https://daikou-seikyu.vercel.app/daikou-seikyu.html',
+    cfg: 'https://daikou-seikyu.vercel.app/daikou-seikyu.html' },   /* ★向き先は この画面に直書き★ */
+  { app: 'ダイコメ',       url: 'https://daikou-app.vercel.app/',
+    cfg: 'https://daikou-app.vercel.app/js/dk-config.js' },
+  { app: 'ダイコメ事務所', url: 'https://daikome-jimusho.vercel.app/login.html',
+    cfg: 'https://daikome-jimusho.vercel.app/js/dk-config.js' },
+  { app: 'アマかせ',       url: 'https://amazon-ads-automation-lyart.vercel.app/',
+    cfg: 'https://amazon-ads-automation-lyart.vercel.app/api/config' },   /* ★配信側の環境変数を返す口★ */
+  { app: 'アマかせ テスト', url: 'https://amazon-ads-automation-test.vercel.app/',
+    cfg: 'https://amazon-ads-automation-test.vercel.app/api/config' },
 ];
+
 
 /* ══════════ 判定の中身（純関数・self-testで作り物を通せる） ══════════ */
 
@@ -128,6 +137,17 @@ export function bareRefsIn(text) {
 }
 
 /** 見つかったrefと「向くべきref」から、〇×を決める。★見つからない=🟡（緑にしない）★ */
+/** ④の判定（★純関数★＝倉庫を触らずに 自己確認できる）
+ *  自分に … 自分が向いている倉庫の許可リストに 自分のURLが在るか（true/false/null=読めない）
+ *  よそに … 向いていない倉庫の許可リストに 自分のURLが居るか（true=混ざり）
+ *  ★2026-08-24 の決まり★：自分に在る＝当たり前／よそに居る＝★混ざり（赤）★ */
+export function judgeRedirect(自分に, よそに) {
+  if (自分に === null || よそに === null) return { mark: '🟡', text: '未測定（許可リストを読めない）' };
+  if (自分に === false) return { mark: '🔴', text: '★自分の倉庫に無い＝忘れた人が戻って来られない' };
+  if (よそに === true) return { mark: '🔴', text: '★混ざり＝別の環境の倉庫からも 戻れてしまう' };
+  return { mark: '🟢', text: '自分の倉庫だけに在る（混ざり無し）' };
+}
+
 export function judge(found, want) {
   if (!found || found.length === 0) return { mark: '🟡', text: '未測定（向き先を読み取れない）' };
   const wrong = found.filter((r) => r !== want);
@@ -268,14 +288,28 @@ async function ghGet(url, token, timeout = 25000) {
 
 /* ── ④ 認証の戻り先（★鍵が要らない★） ── */
 async function measureRedirects() {
-  for (const ref of [PROD_REF, TEST_REF]) {
-    for (const h of REDIRECT_HOSTS) {
-      const ok = await redirectAllowed(ref, h.url);
-      const mark = ok === null ? '🟡' : ok ? '🟢' : '🔴';
-      bump(mark);
-      rows.c4.push({ ref: ref === PROD_REF ? '本番' : 'テスト', app: h.app, url: h.url, mark,
-        text: ok === null ? '未測定（戻り先を読めない）' : ok ? '許可済み' : '★未許可＝忘れた時に別アプリへ飛ぶ' });
+  /* ★向き先は 実物のコードから読む（表に手で書かない）★ */
+  const 向き先 = new Map();
+  for (const h of REDIRECT_HOSTS) {
+    if (向き先.has(h.cfg)) continue;
+    const r = await get(h.cfg);
+    const found = r.ok ? refsIn(r.text) : [];
+    向き先.set(h.cfg, found.includes(PROD_REF) ? PROD_REF : found.includes(TEST_REF) ? TEST_REF : null);
+  }
+  for (const h of REDIRECT_HOSTS) {
+    const 自分 = 向き先.get(h.cfg);
+    if (!自分) {
+      bump('🟡');
+      rows.c4.push({ ref: '—', app: h.app, url: h.url, mark: '🟡',
+        text: '未測定（向き先を読めない＝どちらの倉庫の物か 決めない）' });
+      continue;
     }
+    const よそ = 自分 === PROD_REF ? TEST_REF : PROD_REF;
+    const 自分に = await redirectAllowed(自分, h.url);
+    const よそに = await redirectAllowed(よそ, h.url);
+    const j = judgeRedirect(自分に, よそに);
+    bump(j.mark);
+    rows.c4.push({ ref: 自分 === PROD_REF ? '本番' : 'テスト', app: h.app, url: h.url, mark: j.mark, text: j.text });
   }
   // ★見張りが空振りしていないこと★: 許していない住所は必ず弾かれる
   for (const ref of [PROD_REF, TEST_REF]) {
@@ -433,6 +467,19 @@ if (argv.includes('--self-test')) {
   T('★読み取れない時は 🟢 にしない（🟡にする）', () => eq(judge([], PROD_REF).mark, '🟡', '空'));
   T('★違う倉庫を見ていたら 🔴', () => eq(judge([TEST_REF], PROD_REF).mark, '🔴', '誤接続'));
   T('正しければ 🟢', () => eq(judge([PROD_REF], PROD_REF).mark, '🟢', '正常'));
+  T('★④ 自分の倉庫から1本 外すと 赤', () => eq(judgeRedirect(false, false).mark, '🔴', '自分に無い'));
+  T('★④ 別の倉庫に1本 居たら 赤（混ざり）', () => eq(judgeRedirect(true, true).mark, '🔴', '混ざり'));
+  T('★④ 自分だけに在れば 緑', () => eq(judgeRedirect(true, false).mark, '🟢', '正常'));
+  T('★④ 読めない時は 🟢 にしない（🟡）', () => {
+    eq(judgeRedirect(null, false).mark, '🟡', '自分側が読めない');
+    eq(judgeRedirect(true, null).mark, '🟡', 'よそ側が読めない');
+  });
+  T('★④ 表に 向き先を手で書いていない（実物から読む）', () => {
+    for (const h of REDIRECT_HOSTS) {
+      if (!h.cfg) throw new Error(h.app + ': 向き先を読む場所が無い');
+      if (h.want) throw new Error(h.app + ': ★表に手で書いている★');
+    }
+  });
   T('★引っ越しの日より前の鍵は「古い」と判定する', () => eq(isStale('2026-08-05T10:00:00Z'), true, '古い'));
   T('引っ越しの日以降の鍵は古くない', () => eq(isStale('2026-08-07T03:32:00Z'), false, '新しい'));
   T('★日付が分からない時は true/false を返さない（=🟡へ倒す）', () => eq(isStale(null), null, '不明'));
