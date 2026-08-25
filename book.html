@@ -1132,7 +1132,10 @@ white-space:pre-line;
    紙のように白地・濃い文字にして、行頭を揃える(中央寄せをやめる)。左の橙帯で警告と分かる。 */
 #toast.warn {
 background:#fff;
-color:#2E7D54;
+/* ★読ませる字は 薄い黒★（色は 押せる物と 選ばれている物だけ）。
+   ★2026-08-25 自分で押して気づいた★＝ここだけ 本文が緑のままだった。
+   題と 太字は 琥珀（#8A5A00）で 目立たせる＝そちらが「見てほしい所」。 */
+color:#333333;
 border:1px solid #E6D9A8;
 border-left:5px solid #E5A100;
 text-align:left;
@@ -1197,39 +1200,40 @@ background:#FFE066 !important;
 }
 </style>
 
-<script src="hyperformula.full.min.js?v=948ae4bf"></script>
+<script src="hyperformula.full.min.js?v=a619949e"></script>
 
-<script src="exally-formula.js?v=948ae4bf"></script>
+<script src="exally-formula.js?v=a619949e"></script>
 <!-- グリッド→xlsx の変換と「落ちる物」の警告(純関数・軽い)。SheetJS本体(930KB)と lib/xlsx-io.js は
      初回の「Excelに書き出す」で初めて読み込む＝グリッドの表示を重くしない -->
-<script src="js/file-out.js?v=948ae4bf"></script>
+<script src="js/file-out.js?v=a619949e"></script>
 <!-- ★打ち込んだ文字の解釈（1,234 を数にする）。★計算側も書き出し側も この1本を呼ぶ★
      grid-xlsx.js より先に読む（grid-xlsx.js が読み込み時に掴む） -->
-<script src="lib/typed-value.js?v=948ae4bf"></script>
-<script src="lib/grid-xlsx.js?v=948ae4bf"></script>
+<script src="lib/typed-value.js?v=a619949e"></script>
+<script src="lib/grid-xlsx.js?v=a619949e"></script>
   <!-- ★式の中の参照を「カーソルの位置で」直せるようにする★
        2026-08-06 司さんが実機で踏んだ: 「=B1+30」の B1 を直そうと A1 を触ると
        「=B1+30A1」になり ★B1 を直す手段が無かった★。テスト線では直っていたが
        ★本番には運ばれていなかった★（2026-08-18 差を数えて見つけた）。 -->
-  <script src="lib/grid-refedit.js?v=948ae4bf"></script>
-<script src="lib/autosum.js?v=948ae4bf"></script>
-<script src="lib/grid-sort.js?v=948ae4bf"></script>
-<script src="lib/grid-filter.js?v=948ae4bf"></script>
-<script src="lib/grid-find.js?v=948ae4bf"></script>
-<script src="lib/grid-print.js?v=948ae4bf"></script>
-<script src="lib/ai-reason.js?v=948ae4bf"></script>
-<script src="lib/menu-place.js?v=948ae4bf"></script>
-<script src="lib/grid-stats.js?v=948ae4bf"></script>
-<script src="lib/grid-valid.js?v=948ae4bf"></script>
-<script src="lib/cond-format.js?v=948ae4bf"></script>
-<script src="lib/ref-graph.js?v=948ae4bf"></script>
-<script src="lib/excel-version.js?v=948ae4bf"></script>
+  <script src="lib/grid-refedit.js?v=a619949e"></script>
+<script src="lib/autosum.js?v=a619949e"></script>
+<script src="lib/grid-sort.js?v=a619949e"></script>
+<script src="lib/grid-filter.js?v=a619949e"></script>
+<script src="lib/grid-find.js?v=a619949e"></script>
+<script src="lib/grid-print.js?v=a619949e"></script>
+<script src="lib/ai-reason.js?v=a619949e"></script>
+<script src="lib/menu-place.js?v=a619949e"></script>
+<script src="lib/grid-stats.js?v=a619949e"></script>
+<script src="lib/grid-valid.js?v=a619949e"></script>
+<script src="lib/cond-format.js?v=a619949e"></script>
+<script src="lib/ref-graph.js?v=a619949e"></script>
+<script src="lib/shindan.js?v=a619949e"></script>
+<script src="lib/excel-version.js?v=a619949e"></script>
 <!-- ★ログイン（hub.html と同じ4本・新しく作った物は0）★ 2026-08-23
      ここを掛けるまで ★誰の回数か 数えられない＝上限が掛けられない★（指示役 2026-08-23） -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supa-config.js?v=948ae4bf"></script>
-<script src="js/exally-login.js?v=948ae4bf"></script>
-<script src="js/auth.js?v=948ae4bf"></script>
+<script src="js/supa-config.js?v=a619949e"></script>
+<script src="js/exally-login.js?v=a619949e"></script>
+<script src="js/auth.js?v=a619949e"></script>
 
 <script>
 /* ===== canvas-formula-engine.js (inlined) ===== */
@@ -3404,6 +3408,7 @@ body.exally-locked > *:not(#loginOv){display:none!important;}
    ★人は 画面が変わらないと「固まった」と思う★。300ミリ秒を超えたら出す（それ未満は出さない＝チカチカする）。
    ★[hidden] は class の display に負ける★ので この1行を必ず置く（他アプリで2回 事故） */
 #bookScan[hidden]{display:none!important;}
+#shindanBtn[hidden]{display:none!important;}
 #bookScan{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:9998;
  background:#ffffff;border:1px solid #C8ECD8;border-radius:14px;box-shadow:0 4px 16px rgba(0,0,0,.14);
  padding:10px 16px;display:flex;align-items:center;gap:10px;max-width:92vw;}
@@ -3585,6 +3590,9 @@ body.exally-locked > *:not(#loginOv){display:none!important;}
     <button id="openBookBtn" onclick="document.getElementById('bookFileInput').click()" style="background:#F0FAF4;border:1px solid #C8ECD8;color:#3D9E72;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;" title="Excelファイルを読み込む（.xlsx / .xlsm / .xlsb）"><span class="hdr-ic">📂</span> <span class="hdr-lb"><span class="hdr-lb-long">Excelを</span>読み込む</span></button>
     <span id="openedFileLabel" style="font-size:11px;color:#3D9E72;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
     <button id="saveBookBtn" onclick="saveXlsx()" style="background:#52B788;border:1px solid #52B788;color:#fff;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;" title="Excelファイルとして書き出す（.xlsx / .xlsm / .xlsb）"><span class="hdr-ic">💾</span> <span class="hdr-lb"><span class="hdr-lb-long">Excelに</span>書き出す</span></button>
+    <!-- ★5 E2診断★ ★見つかった時だけ 出す★（出来ていない物のボタンを見せない）。
+         色は「押せる物」に使う＝琥珀（赤ではない＝止まってはいない） -->
+    <button id="shindanBtn" hidden onclick="openShindan()" style="background:#FFF6E0;border:1px solid #F0D9A0;color:#8A5A00;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;white-space:nowrap;" title="開いた時に うちが見つけた「気づけない所」"></button>
     <button id="bookVerBtn" onclick="openBookVerModal()" style="background:#F0FAF4;border:1px solid #C8ECD8;color:#3D9E72;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;" title="相手が使っているExcelの版を選ぶ"><span class="hdr-ic">📊</span> <span class="hdr-lb"><span class="hdr-lb-long">Excel</span>版 <span id="bookVerLabel">365</span></span> ▼</button>
   </div>
 </div>
@@ -3704,6 +3712,26 @@ body.exally-locked > *:not(#loginOv){display:none!important;}
   </div>
 </div>
 
+
+<!-- ★5 E2診断★ うちから「ここが危ない」と言う窓。
+     ★聞かれてから答える★のではなく ★開いた時に こちらから出す★（客は 気づけないから）。
+     ★見つけて 場所を出すだけ★＝直しは まだ出さない（順番8＝提案機能）。 -->
+<div id="dgOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:10000;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#ffffff;border-radius:20px;width:100%;max-width:640px;max-height:88vh;overflow:auto;display:flex;flex-direction:column;">
+    <div style="padding:16px 18px 10px;border-bottom:1px solid #D4EDE1;">
+      <div style="font-size:16px;font-weight:700;color:#2E7D54;" id="dgTitle">見えない所で 空になっています</div>
+      <div style="font-size:13px;color:#333333;margin-top:6px;line-height:1.8;" id="dgBody"></div>
+    </div>
+    <div style="padding:10px 18px;font-size:13px;color:#333333;line-height:1.8;">
+      <div style="font-size:12px;color:#333333;margin-bottom:6px;" id="dgNext"></div>
+      <div id="dgList" style="border:1px solid #D4EDE1;border-radius:12px;overflow:auto;max-height:46vh;"></div>
+      <div id="dgMore" style="font-size:12px;color:#333333;margin-top:8px;"></div>
+    </div>
+    <div style="padding:12px 18px 16px;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid #D4EDE1;">
+      <button onclick="closeShindan()" style="font-size:15px;padding:10px 18px;border-radius:12px;border:1px solid #C8ECD8;background:#ffffff;color:#333333;font-family:inherit;cursor:pointer;">閉じる</button>
+    </div>
+  </div>
+</div>
 
 <!-- ★条件付き書式★ Excel の「ホーム→条件付き書式」に当たる窓。
      ★1画面で終わらせる★（Excelの二段構えは真似ない＝迷わせない）。
@@ -7353,6 +7381,28 @@ function _ensureXlsx(){
 var _engineLoaded = {};
 /* ★人が直したセル（差分プレビュー用）。ファイルを開いた時と 保存し終えた時に空にする★ */
 var _editedCells = {};
+/* ══ ★直した所の控え（2026-08-25 指示役）★ ══════════════════
+   ★今まで 書き出した瞬間に 捨てていた★＝★待つほど 記録できたはずの物が 消え続ける★。
+   ⇒ ★捨てる前に 控えへ写す★。
+   ★ここは まだ「画面の中」だけ★＝倉庫へ残すのは 順番6（履歴ページ）と同じ回。
+   ★客のブックにタブを1つも足さない★（競合は 客のブックに記録タブを作る。真似しない）。 */
+var 直した控え = [];
+var 控えの上限 = 200;              /* ★際限なく溜めない（画面が重くなる）★ */
+function 控えへ写す(何を, 直した所, 何か所){
+  try{
+    var 中身 = [];
+    for(var k in 直した所){
+      if(!Object.prototype.hasOwnProperty.call(直した所, k)) continue;
+      中身.push({ 場所: k, 前の式: 直した所[k] && 直した所[k].beforeF });
+      if(中身.length >= 500) break;   /* 1回ぶんも 大きくしすぎない */
+    }
+    if(!中身.length) return null;
+    var 一件 = { いつ: Date.now(), 何を: 何を, 何か所: 何か所 || 中身.length, 中身: 中身 };
+    直した控え.push(一件);
+    while(直した控え.length > 控えの上限) 直した控え.shift();   /* ★古い方から捨てる★ */
+    return 一件;
+  }catch(e){ return null; }        /* ★控えで 本体を落とさない★ */
+}
 /* ★全シートの控えを取ったか（最初の1直しの前に1回だけ取る）★ */
 var _baselineTaken = false;
 /* ★日本語や数字で始まるシート名は、式の中で ' ' で囲まないと計算する側が読めない★
@@ -7384,6 +7434,87 @@ function quoteSheetRefs(f){
    ⇒ ★開いた直後に 網だけ先に作る★。計算は 今までどおり 見るシートから。 */
 var _refGraph = null, _refGraphBusy = false;
 function 参照の網(){ return _refGraph; }
+/* ══ ★5 E2診断（2026-08-25）★ ══════════════════════════════
+   ★競合は「聞かれた事」に答える★＝人が「どこが変か」を知っている前提。
+   ★人が気づけない物は 一生 聞かれない★ので ★開いた時に うちから出す★。
+   ★機械が全セルを見るのは 0円★（AIを1回も呼ばない）。 */
+var _shindanResult = null;
+var _shindanBusy = false;
+function 診断を始める(){
+  if(typeof Shindan === 'undefined') return;
+  if(_shindanBusy) return;
+  _shindanBusy = true;
+  var it = Shindan.調べる途中(sheets, { 一度に: 3000 });
+  function 続き(){
+    var r;
+    try { r = it.next(); }
+    catch(e){ _shindanBusy = false; return; }   /* ★調べられなくても 表は そのまま使える★ */
+    if(r.done){
+      _shindanBusy = false;
+      _shindanResult = r.value;
+      if(_shindanResult.式の本数 > 0) 診断の知らせを出す(_shindanResult);
+      return;
+    }
+    (window.requestAnimationFrame || window.setTimeout)(続き, 0);
+  }
+  続き();
+}
+function 診断の知らせを出す(r){
+  var w = Shindan.言葉('kakureta_ref', r.式の本数);
+  if(!w) return;
+  /* ★出るまでの時間ではなく「調べるのにかかった時間」を言う★
+     （実測：仕事は0.01秒／出るまで5.6秒＝★開いた直後は 画面が別の仕事で忙しい★） */
+  showToast('<span class="toast-h">' + w.題 + '</span>' + w.本文
+    + '<br><b>場所を出せます</b>（ブック全体を ' + r.かかった秒 + '秒で見ました。AIは使っていません）', 9000, 'warn');
+  var b = document.getElementById('shindanBtn');
+  if(b){ b.hidden = false; b.textContent = '危ない所 ' + r.式の本数 + 'か所'; }
+}
+function openShindan(){
+  var r = _shindanResult;
+  if(!r || !r.式の本数) return;              /* ★出来ていない物のボタンは 見せない★ */
+  var w = Shindan.言葉('kakureta_ref', r.式の本数);
+  document.getElementById('dgTitle').textContent = w.題;
+  document.getElementById('dgBody').textContent = w.本文;
+  document.getElementById('dgNext').textContent = w.つぎ;
+  var box = document.getElementById('dgList');
+  box.innerHTML = '';
+  var 出す = Math.min(r.見つけた.length, 200);   /* ★多い時は 先頭200件（何件 出していないかも 書く）★ */
+  for(var i=0;i<出す;i++){
+    var x = r.見つけた[i];
+    var row = document.createElement('div');
+    row.style.cssText = 'padding:10px 12px;border-bottom:1px solid #EAF6F0;cursor:pointer;';
+    row.onclick = (function(y){ return function(){ 診断の場所へ行く(y); }; })(x);
+    var 頭 = document.createElement('div');
+    頭.style.cssText = 'font-weight:700;color:#2E7D54;font-size:13px;';
+    頭.textContent = x.シート + ' の ' + x.セル + '　いま出ている物：' + x.いま出ている物;
+    var 式 = document.createElement('div');
+    式.style.cssText = 'font-size:12px;color:#333333;margin-top:2px;word-break:break-all;';
+    式.textContent = x.式.length > 120 ? (x.式.slice(0,120) + '…') : x.式;
+    row.appendChild(頭); row.appendChild(式);
+    box.appendChild(row);
+  }
+  document.getElementById('dgMore').textContent =
+    (r.見つけた.length > 出す) ? ('ほか ' + (r.見つけた.length - 出す) + 'か所は 出していません（多いので 先頭' + 出す + 'か所）。') : '';
+  var ov = document.getElementById('dgOverlay');
+  ov.style.display = 'flex';
+}
+function closeShindan(){ var ov = document.getElementById('dgOverlay'); if(ov) ov.style.display = 'none'; }
+function 診断の場所へ行く(x){
+  closeShindan();
+  var i = -1;
+  for(var k=0;k<sheets.length;k++) if(sheets[k].name === x.シート){ i = k; break; }
+  if(i < 0) return;
+  if(i !== activeSheet) switchSheet(i);
+  selR1 = selR2 = x.r; selC1 = selC2 = x.c;
+  /* ★自分で押して見つけた（2026-08-25）★
+     そのまま動かすと ★行き先が 画面のいちばん下の端★に来て、
+     浮いている「AIに話しかける」に ★半分 隠れて 見えなかった★。
+     ⇒ ★6行 下まで動かしてから 戻す★＝行き先が 下から6行の所に来る（端に貼り付かない）。 */
+  var 最終行 = Math.max(0, (sheets[activeSheet].rows || 0) - 1);
+  scrollToCell(Math.min(x.r + 6, 最終行 || (x.r + 6)), x.c);
+  scrollToCell(x.r, x.c); updateBar(); render();
+}
+
 function 参照の網を作り始める(done){
   if(typeof RefGraph === 'undefined'){ if(done) done(null); return; }
   if(_refGraphBusy) return;
@@ -7545,6 +7676,8 @@ function openBookFile(file){
   }).then(function(res){
     sheets = res.sheets;
     activeSheet = 0;
+    /* ★別のファイルを開く時も 捨てる前に写す★（書き出さずに開き直した分が 消えていた） */
+    控えへ写す((BookOpen.current() || {}).name || '（名前なし）', _editedCells, 0);
     _editedCells = {};   // ★別のファイルを開いたら 前のファイルの「直した所」を持ち越さない★
     _baselineTaken = false;
     selR1=selC1=selR2=selC2=0;
@@ -7563,6 +7696,9 @@ function openBookFile(file){
         + g.シート数 + 'シート・式' + g.式の数 + '本／別のシートを見ている式 ' + 式 + '本'
         + (g.別ファイル参照.length ? '／別のファイルを見ている式 ' + g.別ファイル参照.length + '本' : '')
         + '（' + g.かかった秒 + '秒）', 5000);
+      /* ★5 E2診断★ 網の次に 診断も走らせる（★0円・AIを1回も呼ばない★）。
+         ★開いた時に こちらから言う★＝客は「見えない空」に 一生 気づけない。 */
+      診断を始める();
     });
     render(); updateBar();
     var lbl = document.getElementById('openedFileLabel');
@@ -7724,7 +7860,9 @@ function saveOpenedBook(){
     var buf = res && res.bytes ? res.bytes : res;      // xlsb は素の Uint8Array を返す
     var log = res && res.log;
     return FileOut.deliver(buf, outName).then(function(){
-      _editedCells = {};                     // ★書き終えたら「直した所」を空にする★
+      /* ★捨てる前に 控えへ写す（2026-08-25 指示役）★＝ここで捨てていたので 何も残らなかった */
+      控えへ写す(outName, _editedCells, plan.total);
+      _editedCells = {};                     // ★写してから「直した所」を空にする★
       showToast('<span class="toast-h">' + plan.total + 'か所 直して 書き出しました</span>'
         + '<b>元のファイルは変わっていません</b>。同じ名前で1本 書き出しました。'
         + '罫線・判子・グラフ・結合・列幅は触っていません。値だけ書き換えました。'
@@ -8041,6 +8179,6 @@ document.addEventListener('DOMContentLoaded', function(){ checkRequiredFns(); })
 <!-- ★テスト環境の帯★ 本番の倉庫では出ない。今どの倉庫かは js/supa-config.js が唯一の正。
      ホスト名では決めない（配り方は変わるが「本番のデータか」は変わらないため）。
      ★この2本だけが 本番の book.html との違い★（他は1バイトも同じにする）。 -->
-<script src="js/supa-config.js?v=948ae4bf"></script>
-<script src="js/env-badge.js?v=948ae4bf"></script>
+<script src="js/supa-config.js?v=a619949e"></script>
+<script src="js/env-badge.js?v=a619949e"></script>
 </html>

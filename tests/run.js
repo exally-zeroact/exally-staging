@@ -47,6 +47,10 @@ const FILES = [
   ['cond-format.test.mjs', '--self-test'],
   'cond-format-ui.test.mjs',              // ★本物の画面で 実際に押す(部品が緑=画面で使える ではない)
   ['cond-format-ui.test.mjs', '--self-test'],
+  'shindan.test.mjs',                     // ★5 E2診断1本目＝消えた参照が IFERROR で隠れている（実物122本）
+  ['shindan.test.mjs', '--self-test'],
+  'shindan-ui.test.mjs',                  // ★本物の画面で 知らせ・一覧・場所へ行く＋直した所の控え
+  ['shindan-ui.test.mjs', '--self-test'],
   'ai-jiko-dome.test.mjs',                // ★4 事故止め（1分10回・1日100回・40,000字・2万トークン・429の言い方・記録）
   ['ai-jiko-dome.test.mjs', '--self-test'],
   'ref-graph-forms.test.mjs',             // ★Excelの仕様の側から形を1つずつ（41形＋重い形3つ）
