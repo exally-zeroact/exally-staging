@@ -50,6 +50,8 @@ jobs:
         run: node scripts/tests-registered.mjs
       - name: ★その見張り自身の自己確認 (わざと壊して赤になるか)
         run: node scripts/tests-registered.mjs --self-test
+      - name: ★倉庫へ当てる門番 (消す系・別の部屋・本番の倉庫を 本当に止めるか)
+        run: node scripts/apply-sql.mjs --self-test
       - name: Exally tests (共有データ/集計/台帳→実績値/横断集計/ハブUI/xlsxハーネス/Pages配信ガード)
         run: node tests/run.js
       - name: ★重複ガード (同じ物が2箇所に無いか・法定データは例外なし)

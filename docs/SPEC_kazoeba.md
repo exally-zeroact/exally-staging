@@ -1,7 +1,7 @@
 # ★数え場（AIの回数を数える所）の設計 1枚★ — 2026-08-25
 
-> ★まだ 1文字も倉庫に当てていません★。★指示役が見てから 当てます★。
-> 入れるのは ★DB-test だけ★。★本番の倉庫は 声をかけてから★。
+> ★2026-08-26：指示役のOKを受けて ★DB-test に当てました★（7章に実測）。
+> ★本番の倉庫は まだ 1文字も触っていません★＝声をかけてから。
 
 ---
 
@@ -86,10 +86,72 @@ select count(*) from exally.ai_tsukatta
 
 ---
 
-## 5. 入れる順番
+## 5. ★関数（指示役 2026-08-25 の指摘）★
 
-1. ★DB-test に当てる★ → 上の①②③を実測 → 数字を報告
-2. 指示役の確認
-3. ★本番は 声をかけてから★
+★Postgres は 関数の実行権を 既定で PUBLIC に渡す★＝表を締めても、後から関数を足した日に
+★anon に残る★。
 
-★それまでは 今の「機械の中だけ」で動かす★（1台への連打は 止まっている）。
+⇒ ★この部屋に 関数を1つも作らない★（2026-08-26 の決定）。
+　★実測★＝`select count(*) from pg_proc where pronamespace='exally'::regnamespace` → ★0★
+⇒ 作る日が来たら ★`revoke execute on function … from public, anon, authenticated` を書いてから
+　proacl を実測する★（この行を消さずに 足す）。
+
+---
+
+## 6. ★掃除（90日）＝誰が いつ 回すか★
+
+| | |
+|---|---|
+| 誰が | ★サーバ（AIの窓口）★ |
+| いつ | ★その日の最初の書き込みの時に 1回だけ★ |
+| 何を | `delete from exally.ai_tsukatta where oshita < now() - interval '90 days'` |
+| なぜ この形か | ★見張りは 登録するまで1本も回らない★（7本中2本しか回っていなかった前例）。<br>外の見張り（GitHub Actions）は ★鍵(SUPABASE_ACCESS_TOKEN)が この repo に1本も無い★＝<br>作っても ★黙って何もしないまま緑★になる。pg_cron は ★本番にもDB-testにも 入っていない★（実測）。<br>⇒ ★書く物と 消す物を 同じ所（サーバ）で回す★＝書き始めた日から 必ず回る |
+| 手で回す口 | `node scripts/apply-sql.mjs --souji`（★消せるのは この1文だけ★・場所と日数は焼き付け） |
+
+★初回を 実際に回した（2026-08-26・DB-test）★
+```
+ 100日前の行を1本 入れてから 回した
+ 掃除 … 前 4行 → ★消した 1行★ → 後 3行   （★90日より新しい3行は 残った★）
+```
+
+---
+
+## 7. ★当てた後の実測（2026-08-26・DB-test khawdrnvssdenumbiwfg）★
+
+★「書いた」ではなく「効いた」を 数で★
+
+| 見た物 | 実測 |
+|---|---|
+| 表と列 | ★13列 在る★（id/hito/hito_kind/oshita/kekka/…/credit） |
+| RLS | ★有効（relrowsecurity = true）★ |
+| relacl | `postgres=arwdDxtm/postgres \| service_role=arwdDxtm/postgres` |
+| ★anon の権限の数★ | ★0★（値に直して数えた・文字列で探していない） |
+| ★authenticated の権限の数★ | ★0★ |
+| ★public の権限の数★ | ★0★ |
+| service_role | 8（★もともと部屋ごと持っている＝うちが足したのではない★。正直に書く） |
+| ★この部屋の関数の数★ | ★0★ |
+
+★中身が3行 在る状態で 押した★（★空だから0行 ではない★）
+
+| 押し方 | 返ってきた物 |
+|---|---|
+| `begin; set local role anon; select count(*) …; rollback;` | ★42501 permission denied for table ai_tsukatta★（0行 ですらなく ★表に触れない★） |
+| `begin; set local role authenticated; select …; rollback;` | ★42501 permission denied★ |
+| `begin; set local role anon; insert …; rollback;` | ★42501 permission denied★（★書けない★） |
+| ★本物の入口（PostgREST・anon鍵・`Accept-Profile: exally`）★ | ★401 / 42501 permission denied★ |
+
+★最後の1行が いちばん大事★＝客が実際に叩ける口（HTTP）で 弾かれている事を 確かめた。
+
+---
+
+## 8. 入れる順番
+
+1. ★DB-test に当てる★ … ★済（2026-08-26）★
+2. 指示役の確認 … ★済★
+3. ★本番は 声をかけてから★ … ★まだ★
+
+★サーバが この表を使い始めるには あと1つ要ります★
+- ★`SUPABASE_SERVICE_ROLE_KEY`（と `SUPABASE_URL`）を 配信の環境変数に置く事★
+  （PostgREST の側は ★`exally` を 公開スキーマとして受け付ける事を 実測済★）
+- ★鍵が入るまでは 今の「機械の中だけ」で数える★（1台への連打は 止まっている）。
+  ★書き始めた日から 掃除も 一緒に回り始める★（6のとおり）。
