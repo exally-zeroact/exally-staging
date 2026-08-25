@@ -235,8 +235,118 @@ function buildPromptParts(versionInfo) {
    ★正直に：これだけでは止まりません★＝道具(curl等)で直接叩く相手には効かない（名乗りは詐称できる）。
    連打を止めるのは Vercel の入口（指示役の担当）。ここは「よその画面から使われる」のを断るだけ。
    ★うちの画面は 同じ入れ物(same-origin)なので、名乗りが無くても 今までどおり動く★ */
-/* ★1回に送れる大きさ（司さん承認 2026-08-22）★ 数字は ここ1か所だけ */
-const 一度に送れる字数 = 20000;
+/* ★1回に送れる大きさ（司さん承認 2026-08-22）★
+   ★2026-08-25：数字は 下の 事故止め に集めた★（20,000 が2か所に在ると 片方が古くなる） */
+
+/* ══ ★4 事故止め（2026-08-25 司さんの数字・指示役の指示）★ ══════════════════
+   ★なぜ在るか（私が 偽のAIで 0円で押して 実測した穴）★
+     message 20,000字 ＋ history 40件×50,000字 → ★202万字が そのまま AIへ渡り 200 が返った★
+     ＝ ★1回で 会社が傾く額を 出せる作り★だった（1回の上限は 字数しか見ていなかった）。
+   ★数字は ここ1か所だけ★（散らすと 直す時に 必ず 片方が残る）
+   ★止めた時も 必ず 記録を残す★（止まった事が 見えないと 誰も気づけない） */
+const 事故止め = {
+  分の回数: 10,          // ★1分に10回（人ごと）★
+  分の窓ミリ秒: 60 * 1000,
+  日の回数: 100,         // ★1日に100回（人ごと）★
+  日の窓ミリ秒: 24 * 60 * 60 * 1000,
+  会話の合計字数: 40000, // ★history 合計40,000字＝古い方から捨てる★
+  渡せるトークン: 20000, // ★1回にAIへ渡すのは2万トークンまで（2026-08-09 司さんの決定）★
+  /* ★1回に送れる字数（司さん承認 2026-08-22）★＝たまたま同じ数だが 別の物なので 別々に持つ */
+  一度に送れる字数: 20000,
+};
+const 一度に送れる字数 = 事故止め.一度に送れる字数;
+
+/* ★数え場＝この機械の中だけ★
+   ★正直に書く★＝Vercel は 機械が増える。増えた分は 別勘定になるので ★すり抜けが在る★。
+   ★共有の数え場（Supabaseに表を1つ／Vercel KV）は 倉庫を触るので 指示待ち★。
+   それでも ★1台に集中する連打（実際の事故の形）は ここで止まる★。 */
+const 数え場 = new Map();
+const __数え場を空にする = () => 数え場.clear();
+
+/** ★誰の分か★＝ログインの人ID（あれば）と 入口のIP（必ず）の2本で数える。
+ *  ★人IDだけだと 名乗りを書き換えれば すり抜ける★ので IP も必ず数える。 */
+function 誰か(req) {
+  const h = (req && req.headers) || {};
+  const 生 = String(h.authorization || h.Authorization || '');
+  let 人 = '';
+  const m = 生.match(/^Bearer\s+([\w-]+)\.([\w-]+)\./);
+  if (m) {
+    try {
+      const 中 = JSON.parse(Buffer.from(m[2].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8'));
+      if (中 && 中.sub) 人 = 'u:' + String(中.sub);
+    } catch (e) { /* 読めない名乗りは 無い物として扱う（IPで数える） */ }
+  }
+  const ip = String(h['x-forwarded-for'] || h['x-real-ip'] || (req.socket && req.socket.remoteAddress) || '')
+    .split(',')[0].trim();
+  const 鍵 = [];
+  if (人) 鍵.push(人);
+  鍵.push('ip:' + (ip || 'unknown'));
+  return 鍵;
+}
+
+/** ★押した回数を見る（数えるのは 通した分だけ）★
+ *  止めた分まで数えると ★窓がいつまでも空かない★＝待っても直らなくなる。
+ *  @returns {{止める:boolean, あと秒:number, どれ:string}}
+ */
+function 押した回数を見る(鍵たち, いま) {
+  for (const k of 鍵たち) {
+    const 山 = 数え場.get(k) || [];
+    const 分内 = 山.filter((t) => いま - t < 事故止め.分の窓ミリ秒);
+    if (分内.length >= 事故止め.分の回数) {
+      const あと = 事故止め.分の窓ミリ秒 - (いま - 分内[0]);
+      return { 止める: true, あと秒: Math.max(1, Math.ceil(あと / 1000)), どれ: '分' };
+    }
+    const 日内 = 山.filter((t) => いま - t < 事故止め.日の窓ミリ秒);
+    if (日内.length >= 事故止め.日の回数) {
+      const あと = 事故止め.日の窓ミリ秒 - (いま - 日内[0]);
+      return { 止める: true, あと秒: Math.max(1, Math.ceil(あと / 1000)), どれ: '日' };
+    }
+  }
+  return { 止める: false, あと秒: 0, どれ: '' };
+}
+
+/** ★通した分を 1回 数える（★捨てるのは 1日より古い物だけ★＝溜め続けない）★ */
+function 数えておく(鍵たち, いま) {
+  for (const k of 鍵たち) {
+    const 山 = (数え場.get(k) || []).filter((t) => いま - t < 事故止め.日の窓ミリ秒);
+    山.push(いま);
+    数え場.set(k, 山);
+  }
+}
+
+/** ★トークンの見積もり（多めに見る＝安全側）★
+ *  ・日本語などは 1文字＝1トークンとして数える
+ *  ・英数字・記号は 4文字＝1トークン（一次情報の目安）
+ *  ★これは 見積もり★＝本物の数はAIが返してから分かる。だから ★多めに見る★。 */
+function 見積もりトークン(s) {
+  s = String(s == null ? '' : s);
+  let 和 = 0, 英 = 0;
+  for (const ch of s) {
+    if (ch.charCodeAt(0) < 128) 英++; else 和++;
+  }
+  return 和 + Math.ceil(英 / 4);
+}
+
+/** ★会話を 合計40,000字までに削る（古い方から捨てる）★
+ *  ★最後の1往復（最後の2件）は 必ず残す★＝直前の話が消えると 会話にならない。 */
+function 会話を字数で削る(会話, 上限) {
+  const out = 会話.slice();
+  const 合計 = () => out.reduce((a, m) => a + String(m.content || '').length, 0);
+  while (out.length > 2 && 合計() > 上限) out.shift();
+  return out;
+}
+
+/** ★渡す物 全部（前置き＋会話＋今の文）を 2万トークン以内に削る★
+ *  ★決まりの強さ★＝お金の上限（2万トークン）が 先。
+ *    最後の1往復も 残せない時だけ ★会話を全部 捨てる★（そして 記録に残す）。 */
+function 会話をトークンで削る(会話, 前置き字, 今の文, 上限) {
+  const 土台 = 見積もりトークン(前置き字) + 見積もりトークン(今の文);
+  const out = 会話.slice();
+  const 合計 = () => 土台 + out.reduce((a, m) => a + 見積もりトークン(m.content || ''), 0);
+  while (out.length > 2 && 合計() > 上限) out.shift();
+  if (合計() > 上限) return { 会話: [], 全部捨てた: true };
+  return { 会話: out, 全部捨てた: false };
+}
 
 const 許す入口 = [
   'https://exally.vercel.app',
@@ -264,6 +374,14 @@ function 記録(o) {
       読み直したトークン: o.読み直した || 0,
       送った字数: o.字数 || 0,
       会話の数: o.会話 || 0,
+      /* ★4 事故止め：何を捨てたか／なぜ止めたか（黙って小さくしない・黙って止めない）★ */
+      会話を削った: o.会話を削った || 0,
+      会話の字数: o.会話の字数 || 0,
+      会話の元の字数: o.会話の元の字数 || 0,
+      会話を全部捨てた: o.会話を全部捨てた || false,
+      渡した見積もりトークン: o.渡した見積もりトークン || 0,
+      待ち秒: o.待ち秒 || 0,
+      どれ: o.どれ || '',
       かかった秒: o.秒,
       入口: o.入口 || '(名乗りなし)',
     }));
@@ -302,8 +420,23 @@ module.exports = async (req, res) => {
       return res.status(413).json({ error: 'ookisugi', text: '', tsv: '' });
     }
 
+    /* ★4 事故止め＝回数（2026-08-25 司さんの数字）★
+       ★数えるのは 通した分だけ★／★止めた時も 必ず 記録に残す★
+       ★「混み合っています」とは言わない★＝待てば直ると分かる言い方にする（合言葉 tsukaisugi） */
+    const 誰 = 誰か(req);
+    const いま = Date.now();
+    const 見張り = 押した回数を見る(誰, いま);
+    if (見張り.止める) {
+      記録({ 結果: 'tsukaisugi', 字数: message.length, 待ち秒: 見張り.あと秒, どれ: 見張り.どれ, 入口: 入口 });
+      res.setHeader('Retry-After', String(見張り.あと秒));
+      return res.status(429).json({
+        error: 'tsukaisugi', どれ: 見張り.どれ, 待ち秒: 見張り.あと秒, text: '', tsv: '',
+      });
+    }
+    数えておく(誰, いま);
+
     // 会話履歴のサニタイズ（不正エントリ除去・最大40メッセージ=20ターンに制限）
-    const sanitizedHistory = (Array.isArray(history) ? history : [])
+    const 生の会話 = (Array.isArray(history) ? history : [])
       .filter(m =>
         m &&
         (m.role === 'user' || m.role === 'assistant') &&
@@ -311,6 +444,12 @@ module.exports = async (req, res) => {
         m.content.trim().length > 0
       )
       .slice(-40);
+    /* ★4 事故止め＝大きさ（2026-08-25）★
+       ★件数だけ見ていたのが 穴だった★＝40件でも 1件が50,000字なら 200万字が そのまま渡る。
+       ①★合計40,000字まで（古い方から捨てる・最後の1往復は必ず残す）★
+       ②★前置きも足して 2万トークンまで★（お金の上限が 先） */
+    const 字で削った = 会話を字数で削る(生の会話, 事故止め.会話の合計字数);
+    const 削る前の字数 = 生の会話.reduce((a, m) => a + m.content.length, 0);
 
     // バージョンに応じた動的プロンプトを構築
     const versionInfo = getVersionInfo(excelVersion);
@@ -341,6 +480,9 @@ module.exports = async (req, res) => {
     ];
     /* ★前の会話は「変わらない所の終わり」に印を付ける★
        （今回 打った文は 毎回変わるので ★印を付けない★＝付けると毎回 置き直しになる） */
+    const 前置き字 = 部品.共通 + 部品.版ごと;
+    const トークンで削った = 会話をトークンで削る(字で削った, 前置き字, message, 事故止め.渡せるトークン);
+    const sanitizedHistory = トークンで削った.会話;
     const 会話 = sanitizedHistory.map((m) => ({ role: m.role, content: m.content }));
     if (会話.length) {
       const 最後 = 会話[会話.length - 1];
@@ -386,6 +528,13 @@ module.exports = async (req, res) => {
         && response.usage.cache_creation.ephemeral_5m_input_tokens) || 0,
       字数: message.length,
       会話: sanitizedHistory.length,
+      /* ★何を捨てたかを 必ず残す（黙って小さくしない）★ */
+      会話を削った: 生の会話.length - sanitizedHistory.length,
+      会話の字数: sanitizedHistory.reduce((a, m) => a + m.content.length, 0),
+      会話の元の字数: 削る前の字数,
+      会話を全部捨てた: トークンで削った.全部捨てた || false,
+      渡した見積もりトークン: 見積もりトークン(前置き字) + 見積もりトークン(message)
+        + sanitizedHistory.reduce((a, m) => a + 見積もりトークン(m.content), 0),
       秒: Math.round((Date.now() - 始めた) / 100) / 10,
       入口: 入口,
     });
@@ -482,3 +631,12 @@ module.exports.__一度に送れる字数 = 一度に送れる字数;
 module.exports.__見出しを読む = 見出しを読む;
 module.exports.__buildPromptParts = buildPromptParts;
 module.exports.__setClient = (c) => { client = c; };
+/* ★4 事故止め の窓（試験が 実物を直接 押すため。本番の挙動は 1ミリも変わらない）★ */
+module.exports.__事故止め = 事故止め;
+module.exports.__誰か = 誰か;
+module.exports.__押した回数を見る = 押した回数を見る;
+module.exports.__数えておく = 数えておく;
+module.exports.__数え場を空にする = __数え場を空にする;
+module.exports.__見積もりトークン = 見積もりトークン;
+module.exports.__会話を字数で削る = 会話を字数で削る;
+module.exports.__会話をトークンで削る = 会話をトークンで削る;

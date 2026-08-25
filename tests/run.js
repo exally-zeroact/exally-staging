@@ -47,6 +47,8 @@ const FILES = [
   ['cond-format.test.mjs', '--self-test'],
   'cond-format-ui.test.mjs',              // ★本物の画面で 実際に押す(部品が緑=画面で使える ではない)
   ['cond-format-ui.test.mjs', '--self-test'],
+  'ai-jiko-dome.test.mjs',                // ★4 事故止め（1分10回・1日100回・40,000字・2万トークン・429の言い方・記録）
+  ['ai-jiko-dome.test.mjs', '--self-test'],
   'ref-graph-forms.test.mjs',             // ★Excelの仕様の側から形を1つずつ（41形＋重い形3つ）
   ['ref-graph-forms.test.mjs', '--self-test'],
   'ref-graph.test.mjs',                   // ★ブック全体の参照の網（別シートを落とさない・固まらない）

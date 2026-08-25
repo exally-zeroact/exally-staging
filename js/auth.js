@@ -56,6 +56,11 @@
   }
 
   var sb = global.supabase.createClient(global.SUPA.url, global.SUPA.key);
+  /* ★4 事故止め（2026-08-25）★ AIの回数は ★人ごと★に数える。
+     ★誰かを AIの窓口へ伝えるのに 入口が1本 要る★（同じ回線の人を まとめて1人にしないため）。
+     ★出すのは この入れ物だけ★＝鍵や メールを 画面に置かない。 */
+  global.Auth = global.Auth || {};
+  global.Auth.sb = sb;
   mountLogin(sb);
   var APP = 'suite';
   var curEmail = '';

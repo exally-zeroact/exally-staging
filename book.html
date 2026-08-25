@@ -1197,39 +1197,39 @@ background:#FFE066 !important;
 }
 </style>
 
-<script src="hyperformula.full.min.js?v=8aa0641d"></script>
+<script src="hyperformula.full.min.js?v=948ae4bf"></script>
 
-<script src="exally-formula.js?v=8aa0641d"></script>
+<script src="exally-formula.js?v=948ae4bf"></script>
 <!-- グリッド→xlsx の変換と「落ちる物」の警告(純関数・軽い)。SheetJS本体(930KB)と lib/xlsx-io.js は
      初回の「Excelに書き出す」で初めて読み込む＝グリッドの表示を重くしない -->
-<script src="js/file-out.js?v=8aa0641d"></script>
+<script src="js/file-out.js?v=948ae4bf"></script>
 <!-- ★打ち込んだ文字の解釈（1,234 を数にする）。★計算側も書き出し側も この1本を呼ぶ★
      grid-xlsx.js より先に読む（grid-xlsx.js が読み込み時に掴む） -->
-<script src="lib/typed-value.js?v=8aa0641d"></script>
-<script src="lib/grid-xlsx.js?v=8aa0641d"></script>
+<script src="lib/typed-value.js?v=948ae4bf"></script>
+<script src="lib/grid-xlsx.js?v=948ae4bf"></script>
   <!-- ★式の中の参照を「カーソルの位置で」直せるようにする★
        2026-08-06 司さんが実機で踏んだ: 「=B1+30」の B1 を直そうと A1 を触ると
        「=B1+30A1」になり ★B1 を直す手段が無かった★。テスト線では直っていたが
        ★本番には運ばれていなかった★（2026-08-18 差を数えて見つけた）。 -->
-  <script src="lib/grid-refedit.js?v=8aa0641d"></script>
-<script src="lib/autosum.js?v=8aa0641d"></script>
-<script src="lib/grid-sort.js?v=8aa0641d"></script>
-<script src="lib/grid-filter.js?v=8aa0641d"></script>
-<script src="lib/grid-find.js?v=8aa0641d"></script>
-<script src="lib/grid-print.js?v=8aa0641d"></script>
-<script src="lib/ai-reason.js?v=8aa0641d"></script>
-<script src="lib/menu-place.js?v=8aa0641d"></script>
-<script src="lib/grid-stats.js?v=8aa0641d"></script>
-<script src="lib/grid-valid.js?v=8aa0641d"></script>
-<script src="lib/cond-format.js?v=8aa0641d"></script>
-<script src="lib/ref-graph.js?v=8aa0641d"></script>
-<script src="lib/excel-version.js?v=8aa0641d"></script>
+  <script src="lib/grid-refedit.js?v=948ae4bf"></script>
+<script src="lib/autosum.js?v=948ae4bf"></script>
+<script src="lib/grid-sort.js?v=948ae4bf"></script>
+<script src="lib/grid-filter.js?v=948ae4bf"></script>
+<script src="lib/grid-find.js?v=948ae4bf"></script>
+<script src="lib/grid-print.js?v=948ae4bf"></script>
+<script src="lib/ai-reason.js?v=948ae4bf"></script>
+<script src="lib/menu-place.js?v=948ae4bf"></script>
+<script src="lib/grid-stats.js?v=948ae4bf"></script>
+<script src="lib/grid-valid.js?v=948ae4bf"></script>
+<script src="lib/cond-format.js?v=948ae4bf"></script>
+<script src="lib/ref-graph.js?v=948ae4bf"></script>
+<script src="lib/excel-version.js?v=948ae4bf"></script>
 <!-- ★ログイン（hub.html と同じ4本・新しく作った物は0）★ 2026-08-23
      ここを掛けるまで ★誰の回数か 数えられない＝上限が掛けられない★（指示役 2026-08-23） -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supa-config.js?v=8aa0641d"></script>
-<script src="js/exally-login.js?v=8aa0641d"></script>
-<script src="js/auth.js?v=8aa0641d"></script>
+<script src="js/supa-config.js?v=948ae4bf"></script>
+<script src="js/exally-login.js?v=948ae4bf"></script>
+<script src="js/auth.js?v=948ae4bf"></script>
 
 <script>
 /* ===== canvas-formula-engine.js (inlined) ===== */
@@ -7124,18 +7124,36 @@ function deepDiveExplain(){
 async function _aiFetch(body){
   var 本番か = /vercel\.app$/.test(location.hostname) || !/github\.io$/.test(location.hostname);
   try{
+    /* ★4 事故止め（2026-08-25）★ 回数は ★人ごと★に数える。
+       ★誰かを サーバへ伝えないと、同じ入口(IP)の人が まとめて1人に数えられる★
+       （会社で1本の回線を使っていると 隣の人の分で 自分が止まる）。
+       ★名乗りが無くても 動く★＝その時は 入口(IP)だけで数える。 */
+    var 名乗り = null;
+    try{
+      var sb = (window.Auth && Auth.sb) || window._sb || null;
+      if(sb && sb.auth && sb.auth.getSession){
+        var sd = await sb.auth.getSession();
+        var tk = sd && sd.data && sd.data.session && sd.data.session.access_token;
+        if(tk) 名乗り = 'Bearer ' + tk;
+      }
+    }catch(e){ /* 名乗れなくても AIは使える（入口で数える） */ }
+    var 見出し = {'Content-Type':'application/json'};
+    if(名乗り) 見出し['Authorization'] = 名乗り;
     var res = await fetch('/api/claude', {
-      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
+      method:'POST', headers: 見出し, body: JSON.stringify(body)
     });
-    var 中身 = '', 理由 = '';
+    var 中身 = '', 理由 = '', 待ち秒 = 0, どれ = '';
     if(res.ok){
       try{ var d = await res.json(); 中身 = (d && d.text) || ''; }catch(e){ 中身 = ''; }
     } else {
       /* ★失敗した時は サーバが「なぜ」を 合言葉で返す（zandaka / kagi / komiai …）★
          テスト線(GitHub Pages)の 404/405 は HTML なので ここは空のまま＝番号で読む */
-      try{ var e2 = await res.json(); 理由 = (e2 && e2.error) || ''; }catch(e){ 理由 = ''; }
+      /* ★4 事故止め：止めた時は「あと何秒で また使えるか」も 一緒に返る★
+         ＝これが無いと「しばらく待って」しか言えない（何回 押せばよいか 分からない） */
+      try{ var e2 = await res.json(); 理由 = (e2 && e2.error) || ''; 待ち秒 = (e2 && e2.待ち秒) || 0; どれ = (e2 && e2.どれ) || ''; }catch(e){ 理由 = ''; }
     }
-    return AiReason.読む({ status: res.status, ネット切れ: false, 中身: 中身, 理由: 理由, 本番か: 本番か });
+    return AiReason.読む({ status: res.status, ネット切れ: false, 中身: 中身, 理由: 理由,
+      待ち秒: 待ち秒, どれ: どれ, 本番か: 本番か });
   }catch(e){
     return AiReason.読む({ status: null, ネット切れ: true, 中身: '', 本番か: 本番か });
   }
@@ -8023,6 +8041,6 @@ document.addEventListener('DOMContentLoaded', function(){ checkRequiredFns(); })
 <!-- ★テスト環境の帯★ 本番の倉庫では出ない。今どの倉庫かは js/supa-config.js が唯一の正。
      ホスト名では決めない（配り方は変わるが「本番のデータか」は変わらないため）。
      ★この2本だけが 本番の book.html との違い★（他は1バイトも同じにする）。 -->
-<script src="js/supa-config.js?v=8aa0641d"></script>
-<script src="js/env-badge.js?v=8aa0641d"></script>
+<script src="js/supa-config.js?v=948ae4bf"></script>
+<script src="js/env-badge.js?v=948ae4bf"></script>
 </html>

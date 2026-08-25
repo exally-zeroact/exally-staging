@@ -94,3 +94,41 @@ for (const k of 残り) {
 /* ★IFERROR に隠れている物を数える（E2診断の材料）★ */
 const 隠れ = g.取りこぼし.filter(x => /IFERROR|IFNA/i.test(String(x.f)));
 console.log('★#REF! が IFERROR で隠れている式 … ' + 隠れ.length + '本★（画面には空が出るだけ＝気づけない）');
+
+/* ★指示役 2026-08-25「その式のうち 生きた別シート参照も持つ物で、1本も落としていない事を数で示せ」★
+   ★数え方は2通り。混ぜない★
+     ①「その式が 生きた★別シート★参照も持つ」…★指示役の44本は こちら★
+     ②「その式が 生きた参照（同じシートも含む）も持つ」…私が先に出した66本は こちら
+   ⇒ ★どちらでも「網が落とした本数」は 0本でなければならない★ */
+const 隠れkey = new Set(隠れ.map(x => x.from + ':' + x.fromCell));
+const 別シートkey = new Set(g.別シート参照.map(x => x.from + ':' + x.fromCell));
+const 別を持つ = [...隠れkey].filter(k => 別シートkey.has(k));
+/* ②＝式の字に #REF! 以外の参照が残っている物（同じシートの A1 なども数える） */
+const 何かを持つ = [...隠れkey].filter((k) => {
+  const [si, rc] = [Number(k.split(':')[0]), k.split(':').slice(1).join(':')];
+  const f = String((sheets[si].data[rc] || {}).f || '');
+  const 字 = f.replace(/#REF!/g, '');                    /* 壊れた所を消してから見る */
+  return /(^|[^A-Za-z0-9_])\$?[A-Z]{1,3}\$?[0-9]{1,7}([^0-9]|$)/.test(字) || /!/.test(字);
+});
+console.log('★①その式が 生きた別シート参照も持つ … ' + 別を持つ.length + '本★（指示役の数え方）');
+console.log('★②その式が 生きた参照を何か持つ … ' + 何かを持つ.length + '本★（私が先に出した数え方）');
+
+/* ★網が その式の 生きた別シート参照を 何本 拾っているか★ */
+let 拾った = 0;
+for (const x of g.別シート参照) if (隠れkey.has(x.from + ':' + x.fromCell)) 拾った++;
+/* ★突き合わせの相手＝式の字を 自分で読み直して数える（網の答えで閉じない）★ */
+let 字から = 0;
+const シート名 = new Set(sheets.map(s => s.name.toLowerCase()));
+for (const k of 別を持つ) {
+  const si = Number(k.split(':')[0]);
+  const rc = k.split(':').slice(1).join(':');
+  const f = String((sheets[si].data[rc] || {}).f || '').replace(/#REF!/g, '');
+  const re = /(?:'((?:[^']|'')+)'|([^\s!'"(),;:+\-*\/^&=<>%]+))!/g;
+  let m;
+  while ((m = re.exec(f))) {
+    const nm = (m[1] !== undefined ? m[1].replace(/''/g, "'") : m[2]);
+    if (シート名.has(String(nm).toLowerCase())) 字から++;
+  }
+}
+console.log('★その式の中の 生きた別シート参照 … 式の字から ' + 字から + '本 ／ 網が拾った ' + 拾った + '本★');
+console.log('★網が落とした … ' + (字から - 拾った) + '本★' + (字から === 拾った ? '（1本も落としていない）' : '  ←★穴★'));

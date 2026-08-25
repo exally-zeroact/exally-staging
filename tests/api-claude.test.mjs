@@ -187,12 +187,21 @@ await AT('★客が書いた文そのものは 残さない（長さだけ）★
   if (字.indexOf('これ何？') >= 0) throw new Error('★客の中身を そのまま記録している★：' + 字);
   if (行[0].送った字数 !== 4) throw new Error('長さが違う：' + 行[0].送った字数);
 });
-await AT('★上限も 既定オフも 足していない（勝手に決めない）★', async () => {
+/* ★2026-08-25 ここは 決まりが変わった★
+   前 … ★数字が決まっていないので 上限を1つも足さない★（勝手に決めない）
+   今 … ★司さんが数字を決めた（1分10回・1日100回・40,000字・2万トークン）★
+   ⇒ 見るのは「上限が在るか」ではなく ★数字が 1か所に集まっているか★。
+      （散らすと 直す時に 必ず 片方が残る＝古い数字が生き続ける） */
+await AT('★上限の数字は 事故止め 1か所だけ（散らさない・勝手に増やさない）★', async () => {
   const fs2 = await import('node:fs');
   const src = fs2.readFileSync(path.join(ROOT, 'api/claude.js'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
-  for (const 語 of ['RATE_LIMIT', 'MAX_PER_DAY', '1日', '回まで', 'MAX_MESSAGE_LEN']) {
-    if (src.indexOf(語) >= 0) throw new Error('★上限らしき物を足している（数字は司さんと決める）★：' + 語);
+  for (const 語 of ['RATE_LIMIT', 'MAX_PER_DAY', 'MAX_MESSAGE_LEN']) {
+    if (src.indexOf(語) >= 0) throw new Error('★数字の置き場が 増えている★：' + 語);
   }
+  const 止 = handler.__事故止め;
+  if (!止) throw new Error('★事故止めが 無い（202万字が そのまま渡る）★');
+  if (止.分の回数 !== 10 || 止.日の回数 !== 100) throw new Error('★司さんが決めた数字と違う★');
+  if (止.会話の合計字数 !== 40000 || 止.渡せるトークン !== 20000) throw new Error('★大きさの数字が違う★');
 });
 
 /* ── ★置いたまま使い回す（prompt caching）★ 2026-08-22 ──
@@ -200,6 +209,9 @@ await AT('★上限も 既定オフも 足していない（勝手に決めな�
  *  一次情報の決まり … 印は最大4か所／読み直し0.1倍・置く時1.25倍／Sonnet 4.6 は1,024トークン未満だと置かれない */
 const 送った物を捕まえる = async (opt) => {
   const o = opt || {};
+  /* ★4 事故止め（1分10回）が入ったので、続けて押す検査は ★数え場を空にしてから★押す★
+     （そうしないと 11回目から この検査自身が 429 で止まる） */
+  if (handler.__数え場を空にする) handler.__数え場を空にする();
   let 送った = null;
   handler.__setClient({ messages: { create: async (p) => { 送った = p; return { content: [{ type: 'text', text: 'はい' }], usage: { input_tokens: 5, output_tokens: 3, cache_creation_input_tokens: o.置いた || 0, cache_read_input_tokens: o.読み直した || 0 } }; } } });
   const box = 受け皿();
@@ -398,11 +410,18 @@ await AT('★ちょうど 20,000文字は 通る（境界）★', async () => {
   await handler({ method: 'POST', headers: {}, body: { message: 'あ'.repeat(20000), history: [] } }, box.res);
   if (box.出た.status !== 200) throw new Error('★ちょうどの所で 断っている★：' + box.出た.status);
 });
-await AT('★数字は 1か所だけ（20,000 が あちこちに書かれていない）★', async () => {
+/* ★2026-08-25：20,000 は ★2か所★になった★
+   ①★1回に送れる字数 20,000字★（司さん 2026-08-22）
+   ②★1回にAIへ渡すトークン 20,000★（司さん 2026-08-09）
+   ★たまたま同じ数だが 別の物★＝片方だけ変える日が来るので 別々に持つ。
+   ⇒ 見るのは「1か所か」ではなく ★事故止め の中に 全部 集まっているか★。 */
+await AT('★上限の数字は 事故止めの中に集まっている（散らばっていない）★', async () => {
   const fs2 = await import('node:fs');
   const src = fs2.readFileSync(path.join(ROOT, 'api/claude.js'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
   const n = (src.match(/20000/g) || []).length;
-  if (n !== 1) throw new Error('★20000 が ' + n + 'か所（1か所だけにする）★');
+  if (n !== 2) throw new Error('★20000 が ' + n + 'か所（字数とトークンの2つだけ）★');
+  const 中 = src.slice(src.indexOf('const 事故止め = {'), src.indexOf('const 一度に送れる字数'));
+  if ((中.match(/20000/g) || []).length !== 2) throw new Error('★事故止めの外に 数字が出ている★');
   if (handler.__一度に送れる字数 !== 20000) throw new Error('上限が ' + handler.__一度に送れる字数);
 });
 await AT('★大きすぎた時 画面は「短く分けて」と言う（もう一度 と言わない）★', async () => {
