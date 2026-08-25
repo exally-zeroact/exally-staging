@@ -47,6 +47,14 @@ const FILES = [
   ['cond-format.test.mjs', '--self-test'],
   'cond-format-ui.test.mjs',              // ★本物の画面で 実際に押す(部品が緑=画面で使える ではない)
   ['cond-format-ui.test.mjs', '--self-test'],
+  'ref-graph-forms.test.mjs',             // ★Excelの仕様の側から形を1つずつ（41形＋重い形3つ）
+  ['ref-graph-forms.test.mjs', '--self-test'],
+  'ref-graph.test.mjs',                   // ★ブック全体の参照の網（別シートを落とさない・固まらない）
+  ['ref-graph.test.mjs', '--self-test'],
+  'book-scan-ui.test.mjs',                // ★調べている間の知らせ（300ms・何枚目・％・必ず消す・客の字に★を書かない）
+  ['book-scan-ui.test.mjs', '--self-test'],
+  'xlsm-vba.test.mjs',                    // ★VBA入り(.xlsm)＝開ける・VBAは1バイトも触らない・動かさない・言葉で先に言う
+  ['xlsm-vba.test.mjs', '--self-test'],
   'login-gate.test.mjs',                  // ★表の画面にもログイン／忘れた人の逃げ道（無いと二度と入れない）
   ['login-gate.test.mjs', '--self-test'],
   'ai-reason.test.mjs',                   // ★AIに繋がらない時の理由と次の一手／★空のセルでAIを呼ばない(お金)★

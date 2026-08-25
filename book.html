@@ -1197,38 +1197,39 @@ background:#FFE066 !important;
 }
 </style>
 
-<script src="hyperformula.full.min.js?v=6b27e57b"></script>
+<script src="hyperformula.full.min.js?v=8aa0641d"></script>
 
-<script src="exally-formula.js?v=6b27e57b"></script>
+<script src="exally-formula.js?v=8aa0641d"></script>
 <!-- グリッド→xlsx の変換と「落ちる物」の警告(純関数・軽い)。SheetJS本体(930KB)と lib/xlsx-io.js は
      初回の「Excelに書き出す」で初めて読み込む＝グリッドの表示を重くしない -->
-<script src="js/file-out.js?v=6b27e57b"></script>
+<script src="js/file-out.js?v=8aa0641d"></script>
 <!-- ★打ち込んだ文字の解釈（1,234 を数にする）。★計算側も書き出し側も この1本を呼ぶ★
      grid-xlsx.js より先に読む（grid-xlsx.js が読み込み時に掴む） -->
-<script src="lib/typed-value.js?v=6b27e57b"></script>
-<script src="lib/grid-xlsx.js?v=6b27e57b"></script>
+<script src="lib/typed-value.js?v=8aa0641d"></script>
+<script src="lib/grid-xlsx.js?v=8aa0641d"></script>
   <!-- ★式の中の参照を「カーソルの位置で」直せるようにする★
        2026-08-06 司さんが実機で踏んだ: 「=B1+30」の B1 を直そうと A1 を触ると
        「=B1+30A1」になり ★B1 を直す手段が無かった★。テスト線では直っていたが
        ★本番には運ばれていなかった★（2026-08-18 差を数えて見つけた）。 -->
-  <script src="lib/grid-refedit.js?v=6b27e57b"></script>
-<script src="lib/autosum.js?v=6b27e57b"></script>
-<script src="lib/grid-sort.js?v=6b27e57b"></script>
-<script src="lib/grid-filter.js?v=6b27e57b"></script>
-<script src="lib/grid-find.js?v=6b27e57b"></script>
-<script src="lib/grid-print.js?v=6b27e57b"></script>
-<script src="lib/ai-reason.js?v=6b27e57b"></script>
-<script src="lib/menu-place.js?v=6b27e57b"></script>
-<script src="lib/grid-stats.js?v=6b27e57b"></script>
-<script src="lib/grid-valid.js?v=6b27e57b"></script>
-<script src="lib/cond-format.js?v=6b27e57b"></script>
-<script src="lib/excel-version.js?v=6b27e57b"></script>
+  <script src="lib/grid-refedit.js?v=8aa0641d"></script>
+<script src="lib/autosum.js?v=8aa0641d"></script>
+<script src="lib/grid-sort.js?v=8aa0641d"></script>
+<script src="lib/grid-filter.js?v=8aa0641d"></script>
+<script src="lib/grid-find.js?v=8aa0641d"></script>
+<script src="lib/grid-print.js?v=8aa0641d"></script>
+<script src="lib/ai-reason.js?v=8aa0641d"></script>
+<script src="lib/menu-place.js?v=8aa0641d"></script>
+<script src="lib/grid-stats.js?v=8aa0641d"></script>
+<script src="lib/grid-valid.js?v=8aa0641d"></script>
+<script src="lib/cond-format.js?v=8aa0641d"></script>
+<script src="lib/ref-graph.js?v=8aa0641d"></script>
+<script src="lib/excel-version.js?v=8aa0641d"></script>
 <!-- ★ログイン（hub.html と同じ4本・新しく作った物は0）★ 2026-08-23
      ここを掛けるまで ★誰の回数か 数えられない＝上限が掛けられない★（指示役 2026-08-23） -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supa-config.js?v=6b27e57b"></script>
-<script src="js/exally-login.js?v=6b27e57b"></script>
-<script src="js/auth.js?v=6b27e57b"></script>
+<script src="js/supa-config.js?v=8aa0641d"></script>
+<script src="js/exally-login.js?v=8aa0641d"></script>
+<script src="js/auth.js?v=8aa0641d"></script>
 
 <script>
 /* ===== canvas-formula-engine.js (inlined) ===== */
@@ -1476,7 +1477,7 @@ function sortRange(dir){
   var 何行 = 順.length;
   showToast(何行 + '行を' + (dir==='asc'?'昇順':'降順') + 'に並べ替えました'
     + (見出し ? '（先頭行は見出しとして動かしていません）' : '')
-    + (ドル付き ? '／★$付きの参照が' + ドル付き + '本 在ります＝Excelと同じく 指す先が変わります★' : ''));
+    + (ドル付き ? '／<b>$付きの参照が' + ドル付き + '本 在ります＝Excelと同じく 指す先が変わります</b>' : ''));
 }
 
 /* ══ 絞り込み（フィルター）══════════════════════════════════════════
@@ -1519,7 +1520,7 @@ function filterByValue(){
   var ctl = document.getElementById('ctx-clear-filter'); if(ctl) ctl.style.display = '';
   render();
   showToast('「' + (res.value || '（空）') + '」の ' + res.keep.length + '行だけ見せています'
-    + '（' + res.hide.length + '行を隠しました。★消していません・合計も変わりません★）');
+    + '（' + res.hide.length + '行を隠しました。<b>消していません・合計も変わりません</b>）');
 }
 function clearFilter(){
   hideCtxMenu();
@@ -1827,7 +1828,7 @@ function applyValid(){
   var bad = GridValid.countBad(sh.data, sh.validations, GridPrint.shown);
   var 何個 = (Math.abs(selR2-selR1)+1) * (Math.abs(selC2-selC1)+1);
   showToast(何個 + 'マスに 決まりを付けました（' + GridValid.describe(rule) + '）'
-    + (bad.count ? '／★合っていない値が ' + bad.count + '個 在ります（消していません）★' : ''));
+    + (bad.count ? '／<b>合っていない値が ' + bad.count + '個 在ります（消していません）</b>' : ''));
   render();
 }
 
@@ -1851,7 +1852,7 @@ function showBadCells(){
   var f = bad.cells[0];
   selR1=selR2=f.r; selC1=selC2=f.c;
   scrollToCell(f.r,f.c); updateBar(); render();
-  showToast('★合っていない値が ' + bad.count + '個★（' + 決まり数 + 'マス中）／'
+  showToast('合っていない値が ' + bad.count + '個（' + 決まり数 + 'マス中）／'
     + colLetter(f.c)+(f.r+1) + '「' + f.text + '」' + f.why);
 }
 
@@ -1940,10 +1941,10 @@ function replaceAll(){
   updateBar(); render();
   /* ★式を何本 書き換えたかを 必ず出す★（Excelと同じ動きだが 黙って値を変えない） */
   _findMsg(直す.length + 'か所 置き換えました'
-    + (式の数 ? '／★うち 式が ' + 式の数 + '本＝答えが変わります★' : '')
+    + (式の数 ? '／うち 式が ' + 式の数 + '本＝答えが変わります' : '')
     + '（違ったら Ctrl+Z で戻せます）');
   showToast(直す.length + 'か所 置き換えました'
-    + (式の数 ? '（★式が ' + 式の数 + '本 含まれます＝答えが変わります★）' : ''));
+    + (式の数 ? '（<b>式が ' + 式の数 + '本 含まれます＝答えが変わります</b>）' : ''));
 }
 
 /* ══ ウィンドウ枠の固定 ══════════════════════════════════════════════
@@ -1970,7 +1971,7 @@ function freezePanes(){
   var ctl = document.getElementById('ctx-unfreeze'); if(ctl) ctl.style.display = '';
   render();
   showToast('上の' + sh.freezeRow + '行 と 左の' + sh.freezeCol + '列 を固定しました'
-    + '（★計算は何も変わりません★）');
+    + '（<b>計算は何も変わりません</b>）');
 }
 function unfreezePanes(){
   hideCtxMenu();
@@ -3398,6 +3399,20 @@ function detectTimePattern(values){
    ログインの窓(#loginOv)だけ 残す。★[hidden] は class の display に負けるので !important を付ける★。 */
 body.exally-locked > *:not(#loginOv){display:none!important;}
 </style>
+<style>
+/* ★調べている間の知らせ（2026-08-25 司さん「ぐるぐり／何%を出せ」）★
+   ★人は 画面が変わらないと「固まった」と思う★。300ミリ秒を超えたら出す（それ未満は出さない＝チカチカする）。
+   ★[hidden] は class の display に負ける★ので この1行を必ず置く（他アプリで2回 事故） */
+#bookScan[hidden]{display:none!important;}
+#bookScan{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:9998;
+ background:#ffffff;border:1px solid #C8ECD8;border-radius:14px;box-shadow:0 4px 16px rgba(0,0,0,.14);
+ padding:10px 16px;display:flex;align-items:center;gap:10px;max-width:92vw;}
+/* ★字は 箱に押し込めない（flex/grid の中で1文字ずつ縦に割れる事故が在る）★ */
+#bookScan .bs-t{font-size:13px;color:#333333;line-height:1.6;white-space:nowrap;}
+#bookScan .bs-s{width:16px;height:16px;flex:0 0 16px;border:2px solid #D4EDE1;border-top-color:#52B788;
+ border-radius:50%;animation:bs-spin .8s linear infinite;}
+@keyframes bs-spin{to{transform:rotate(360deg);}}
+</style>
 </head>
 <body>
 
@@ -3582,6 +3597,8 @@ body.exally-locked > *:not(#loginOv){display:none!important;}
 
 <!-- トースト通知 -->
 
+<!-- ★調べている間だけ出す（終わったら必ず消す）★ -->
+<div id="bookScan" hidden><span class="bs-s"></span><span class="bs-t" id="bookScanTxt">ブック全体を調べています…</span></div>
 <div id="toast"></div>
 
 <!-- 関数パレット -->
@@ -7340,7 +7357,72 @@ function quoteSheetRefs(f){
    ここを見ずに「見ているシートだけ」流すと、まとめの ='5月'!E14 が
    ★空のシートを参照して 空を返す★。#ERROR が出ないので、
    ★合計が黙って小さくなる★（2026-08-11 指示役が実機で発見：527,000 が 186,000 になった）。 */
+/* ══ ブック全体の参照の網（2026-08-25）══════════════════
+   ★「全部やると固まる」の正体は 参照を数える事ではない★＝
+   重いのは ★計算する側へ全シートを流す事★。網は ★式の字を読むだけ★で作れる。
+   実測（司さんの実物 代行計算表2026・14シート・式15,126本）
+     ★網を作る 0.037秒／小分けにすると 1回の最長 12ミリ秒★＝画面は固まらない
+     別シートを見ている式 ★401本★（のべ 1,508本）
+   ⇒ ★開いた直後に 網だけ先に作る★。計算は 今までどおり 見るシートから。 */
+var _refGraph = null, _refGraphBusy = false;
+function 参照の網(){ return _refGraph; }
+function 参照の網を作り始める(done){
+  if(typeof RefGraph === 'undefined'){ if(done) done(null); return; }
+  if(_refGraphBusy) return;
+  _refGraphBusy = true;
+  var t0 = (typeof performance!=='undefined' && performance.now) ? performance.now() : Date.now();
+  var 全部 = 0;
+  for (var _i = 0; _i < sheets.length; _i++) 全部 += Object.keys((sheets[_i] && sheets[_i].data) || {}).length;
+  var 知らせ = document.getElementById('bookScan');
+  var 知らせ字 = document.getElementById('bookScanTxt');
+  var 出した = false;
+  /* ★300ミリ秒を超えてから出す★（それ未満で出すと チカチカして かえって不安になる） */
+  var 出すtimer = setTimeout(function(){
+    出した = true;
+    if(知らせ) 知らせ.hidden = false;
+  }, 300);
+  function 消す(){
+    clearTimeout(出すtimer);
+    if(知らせ) 知らせ.hidden = true;      /* ★終わったら 必ず消す（失敗した時も）★ */
+  }
+  var it = RefGraph.作る途中(sheets, { 一度に: 3000 });
+  function 続き(){
+    var r;
+    try { r = it.next(); }
+    catch(e){
+      消す(); _refGraphBusy = false;
+      /* ★失敗しても 何が起きたか1行 出す（黙って消えない）★ */
+      showToast('<span class="toast-h">ブック全体は調べられませんでした</span>'
+        + '見ているシートの計算は そのまま使えます。' + ((e && e.message) ? '（' + e.message + '）' : ''), 5000, 'warn');
+      if(done) done(null); return;
+    }
+    if(r.done){
+      消す();
+      _refGraph = r.value;
+      _refGraph.かかった秒 = Math.round(((typeof performance!=='undefined'&&performance.now?performance.now():Date.now()) - t0)) / 1000;
+      _refGraphBusy = false;
+      if(done) done(_refGraph);
+      return;
+    }
+    /* ★止めない★＝1回ぶん読んだら 画面に順番を返す */
+    if(出した && 知らせ字 && r.value && 全部){
+      var 済 = r.value.進み || 0;
+      var 割 = Math.min(99, Math.round(済 * 100 / 全部));
+      var 枚 = 0, 数 = 0;
+      for(var q=0;q<sheets.length;q++){ 数 += Object.keys((sheets[q]&&sheets[q].data)||{}).length; if(数 <= 済) 枚 = q+1; }
+      知らせ字.textContent = 'ブック全体を調べています… ' + Math.min(sheets.length, 枚+1) + ' / ' + sheets.length + ' 枚目（' + 割 + '%）';
+    }
+    setTimeout(続き, 0);
+  }
+  setTimeout(続き, 0);
+}
+
 function _sheetsReferencedBy(idx){
+  /* ★網が出来ていれば そこから答える（間接の参照も辿れる＝今までは直接だけだった）★ */
+  if(_refGraph && _refGraph.シートの網 && _refGraph.シートの網[idx]) return _refGraph.シートの網[idx].slice();
+  return _sheetsReferencedBySlow(idx);
+}
+function _sheetsReferencedBySlow(idx){
   var sh = sheets[idx];
   if(!sh || !sh.data) return [];
   var alts = [], byName = {}, i;
@@ -7452,16 +7534,32 @@ function openBookFile(file){
     // ★計算する側を作り直す（シートの名前と数が変わるため）★
     if (typeof initFormulaEngine === 'function') initFormulaEngine(sheets.map(function(s){ return s.name; }));
     rebuildSheetTabs();          // ★14枚あってもタブを出す（出さないと1枚目しか触れない）★
-    loadSheetIntoEngine(0);      // ★開いたシートだけ流す（全部やると固まる）★
+    loadSheetIntoEngine(0);      // ★計算に流すのは 見るシートから（全部流すと固まる）★
+    /* ★参照の網だけは ブック全体ぶん 先に作る（0.04秒・小分けなので固まらない）★
+       これが在るから「別のシートも見て答えます」が言える（2026-08-25 司さん） */
+    参照の網を作り始める(function(g){
+      if(!g) return;
+      var 式 = 0, 見た = {};
+      for(var i=0;i<g.別シート参照.length;i++){ var k=g.別シート参照[i].from+':'+g.別シート参照[i].fromCell; if(!見た[k]){見た[k]=1;式++;} }
+      showToast('<span class="toast-h">ブック全体を調べました</span>'
+        + g.シート数 + 'シート・式' + g.式の数 + '本／別のシートを見ている式 ' + 式 + '本'
+        + (g.別ファイル参照.length ? '／別のファイルを見ている式 ' + g.別ファイル参照.length + '本' : '')
+        + '（' + g.かかった秒 + '秒）', 5000);
+    });
     render(); updateBar();
     var lbl = document.getElementById('openedFileLabel');
     if (lbl) lbl.textContent = file.name + '（' + res.sheets.length + 'シート）';
+    /* ★マクロ(VBA)が入っていた時は 先に「どうなるか」を言う（2026-08-25）★
+       ★「まだ出来ません」ではなく「そのまま残す・ここでは動かない・代わりにこう出来る」★ */
+    if (res.hasVba && typeof BookOpen !== 'undefined' && BookOpen.MSG_VBA) {
+      showToast('<span class="toast-h">マクロ（VBA）が入っています</span>' + BookOpen.MSG_VBA, 7000);
+    }
     if (res.kind === 'xls') {
       // ★「対応していません」ではなく「まだ直せません」★（後で作る）
       showToast('<span class="toast-h">開きました（見るだけ）</span>' + BookOpen.MSG_XLS, 6000, 'warn');
     } else {
       showToast('開きました：' + file.name + '（' + res.sheets.length + 'シート）'
-        + '<br>保存すると★元の書式・判子・グラフはそのまま★で、値だけ書き換えます。', 5000);
+        + '<br>保存すると<b>元の書式・判子・グラフはそのまま</b>で、値だけ書き換えます。', 5000);
     }
   }).catch(function(err){
     showToast('開けませんでした：' + ((err && err.message) || err), 5000, 'warn');
@@ -7610,7 +7708,7 @@ function saveOpenedBook(){
     return FileOut.deliver(buf, outName).then(function(){
       _editedCells = {};                     // ★書き終えたら「直した所」を空にする★
       showToast('<span class="toast-h">' + plan.total + 'か所 直して 書き出しました</span>'
-        + '★元のファイルは変わっていません★。同じ名前で1本 書き出しました。'
+        + '<b>元のファイルは変わっていません</b>。同じ名前で1本 書き出しました。'
         + '罫線・判子・グラフ・結合・列幅は触っていません。値だけ書き換えました。'
         + (log ? '<span class="toast-n">詰め方: 圧縮' + log.compressed + ' / 無圧縮' + log.stored
                  + (log.why ? '（' + log.why + '）' : '') + '</span>' : ''), 5000);
@@ -7925,6 +8023,6 @@ document.addEventListener('DOMContentLoaded', function(){ checkRequiredFns(); })
 <!-- ★テスト環境の帯★ 本番の倉庫では出ない。今どの倉庫かは js/supa-config.js が唯一の正。
      ホスト名では決めない（配り方は変わるが「本番のデータか」は変わらないため）。
      ★この2本だけが 本番の book.html との違い★（他は1バイトも同じにする）。 -->
-<script src="js/supa-config.js?v=6b27e57b"></script>
-<script src="js/env-badge.js?v=6b27e57b"></script>
+<script src="js/supa-config.js?v=8aa0641d"></script>
+<script src="js/env-badge.js?v=8aa0641d"></script>
 </html>

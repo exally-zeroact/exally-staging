@@ -283,7 +283,7 @@ if (SELF) {
   const BREAKS = [
     ['book.html', 'Ctrl+F の割り当てを消す', (s) => s.replace("    if(ek==='f'){ e.preventDefault(); openFind(false); return; }\n", '')],
     ['book.html', 'Ctrl+H の割り当てを消す', (s) => s.replace("    if(ek==='h'){ e.preventDefault(); openFind(true); return; }\n", '')],
-    ['book.html', '★式を何本 書き換えたかを 出さない★', (s) => s.replace("    + (式の数 ? '／★うち 式が ' + 式の数 + '本＝答えが変わります★' : '')", '')],
+    ['book.html', '★式を何本 書き換えたかを 出さない★', (s) => s.replace("    + (式の数 ? '／うち 式が ' + 式の数 + '本＝答えが変わります' : '')", '')],
     ['book.html', '★取り消しの控えを取らない★', (s) => s.replace('  _pushRowColUndo();                       /* ★取り消し1回で丸ごと戻る★ */', '')],
     ['book.html', '見つからない時に 黙る', (s) => s.replace("  if(!直す.length){ _findMsg('見つかりません'); return; }", '  if(!直す.length){ return; }')],
     ['book.html', '探す言葉が空でも やってしまう', (s) => s.replace("  if(!what){ _findMsg('探す言葉を入れてね'); return; }\n  var opts = _findOpts();", '  var opts = _findOpts();')],

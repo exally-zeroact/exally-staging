@@ -28,6 +28,10 @@
   }
 
   var MSG_XLS = 'この形式（.xls）は まだ直せません。今は開いて見るだけです。';
+  /* ★VBAが入っていた時に 客へ出す言葉（★どうなるかを 先に言う★）★ */
+  var MSG_VBA = 'このファイルには マクロ（VBA）が入っています。'
+    + 'マクロは そのまま残しますが、ここでは 動きません。'
+    + '毎月の繰り返しは、このあと「手順を覚えさせる」で 代わりに出来ます。';
 
   /** ファイルを開く。★元のバイト列をそのまま持つ★ */
   function openFile(file) {
@@ -37,11 +41,17 @@
       if (kind === 'unknown') throw new Error('Excelのファイルとして読めませんでした');
 
       // 中身で確定させる（zip の時だけ）
+      /* ★VBA入り(.xlsm)の扱い＝決めた（2026-08-25 司さん方針・指示役の指示）★
+         ①★開ける★（読むだけ ではない。直して書き出せる）
+         ②★VBAには 触らない。そのまま残す★（実測：書き出しても xl/vbaProject.bin は1バイトも変わらない）
+         ③★VBAは 動かさない★（うちはブラウザ。Windows＋マクロ有効化が要る物は 勧めない）
+         ④★VBAが要る仕事は うちの側（レシピ）で済ませる★＝画面でも そう言う */
+      var hasVba = false;
       if (kind !== 'xls' && root.ZipSurgeon) {
         try {
           var z = root.ZipSurgeon.read(bytes);
           if (z.has('xl/workbook.bin')) kind = 'xlsb';
-          else if (z.has('xl/vbaProject.bin')) kind = 'xlsm';
+          else if (z.has('xl/vbaProject.bin')) { kind = 'xlsm'; hasVba = true; }
           else if (z.has('xl/workbook.xml')) kind = 'xlsx';
         } catch (e) { /* 読めなければ名前のままにする */ }
       }
@@ -68,12 +78,12 @@
           if (root.console) root.console.warn('[Exally] 表の参照を直せませんでした', e);
         });
       }
-      return pre.then(function () { return finish(bytes, kind, wb, file, trFixes, trStats); });
+      return pre.then(function () { return finish(bytes, kind, wb, file, trFixes, trStats, hasVba); });
     });
   }
 
   /** 読み終わった物をグリッドの形にして、控え(base)を作る */
-  function finish(bytes, kind, wb, file, trFixes, trStats) {
+  function finish(bytes, kind, wb, file, trFixes, trStats, hasVba) {
       var out = wb.SheetNames.map(function (nm) { return sheetToGrid(wb.Sheets[nm], nm, trFixes); });
       /* ★控えは「見せている文字」ではなく「元の生の値」から作る★（2026-08-09）
          画面用に 46043 を "1/21(水)" にして見せているので、その文字を控えにすると
@@ -101,7 +111,7 @@
         base: base,
         tableRefs: trStats,        // ★何本 直したか（見張りと報告が読む。画面には出さない）
       };
-      return { kind: kind, sheets: out, opened: opened };
+      return { kind: kind, sheets: out, opened: opened, hasVba: !!hasVba };
   }
 
   /* ★日本語の曜日（aaa / aaaa）を先に本物の文字へ置き換える★
@@ -317,5 +327,6 @@
     baselineOf: baselineOf, changedCells: changedCells, valueOf: valueOf, withWeekday: withWeekday,
     anyChanged: anyChanged, normForCompare: normForCompare, rebaseSheet: rebaseSheet,
     MSG_XLS: MSG_XLS,
+    MSG_VBA: MSG_VBA,
   };
 })(typeof self !== 'undefined' ? self : this);

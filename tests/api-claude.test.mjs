@@ -322,6 +322,46 @@ await AT('★記録に 値段(円)を書き込んでいない（値段が変わ�
   }
 });
 
+/* ── ★うちの段位と残量を 記録に残す（2026-08-25 指示役）★ ── */
+await AT('★返事の見出しから 段位と残量を読んで 記録に残す★', async () => {
+  const 見出し = new Map([
+    ['anthropic-ratelimit-requests-limit', '50'],
+    ['anthropic-ratelimit-requests-remaining', '49'],
+    ['anthropic-ratelimit-requests-reset', '2026-08-25T10:00:00Z'],
+    ['anthropic-ratelimit-input-tokens-limit', '30000'],
+    ['anthropic-ratelimit-input-tokens-remaining', '28000'],
+  ]);
+  const 送り = {
+    withResponse: async () => ({
+      data: { content: [{ type: 'text', text: 'はい' }], usage: { input_tokens: 5, output_tokens: 3 } },
+      response: { headers: 見出し },
+    }),
+  };
+  handler.__setClient({ messages: { create: () => 送り } });
+  const 元 = console.log; const 行 = [];
+  console.log = (...a) => { 行.push(a.join(' ')); };
+  try {
+    const box = 受け皿();
+    await handler({ method: 'POST', headers: {}, body: { message: 'これ何？', history: [] } }, box.res);
+  } finally { console.log = 元; }
+  const r = JSON.parse(行.filter((l) => l.indexOf('[ai] ') === 0)[0].slice(5));
+  if (!r.段位) throw new Error('★段位を 捨てている（次に呼ぶまで 残量が分からない）★');
+  if (r.段位['1分の残り'] !== '49') throw new Error('残量が違う：' + JSON.stringify(r.段位));
+  if (r.段位['入力の上限'] !== '30000') throw new Error('入力の上限が無い');
+});
+await AT('★見出しが無い版でも 落ちない（段位は 未測定＝null。0にしない）★', async () => {
+  handler.__setClient({ messages: { create: async () => ({ content: [{ type: 'text', text: 'はい' }], usage: {} }) } });
+  const 元 = console.log; const 行 = [];
+  console.log = (...a) => { 行.push(a.join(' ')); };
+  try {
+    const box = 受け皿();
+    await handler({ method: 'POST', headers: {}, body: { message: 'これ何？', history: [] } }, box.res);
+    if (box.出た.status !== 200) throw new Error('落ちている：' + box.出た.status);
+  } finally { console.log = 元; }
+  const r = JSON.parse(行.filter((l) => l.indexOf('[ai] ') === 0)[0].slice(5));
+  if (r.段位 !== undefined && r.段位 !== null) throw new Error('★無いのに 0 や {} を入れている★：' + JSON.stringify(r.段位));
+});
+
 await AT('★ハンドラを 本当に呼ぶ：失敗したら 200 を返さない★', async () => {
   const r = await 呼ぶ(失敗({ status: 401, message: 'invalid x-api-key' }));
   if (!r) throw new Error('返事が無い');
@@ -462,6 +502,9 @@ if (process.argv.includes('--self-test')) {
         const 元 = console.log; console.log = () => {};
         try { await h({ method: 'POST', headers: {}, body: { message: 'あ'.repeat(20001), history: [] } }, box.res); } finally { console.log = 元; }
         return box.出た && box.出た.status === 413; }],
+    ['★段位と残量を 捨てる★',
+      (t) => t.replace('      段位: 見出しを読む(見出し),', ''),
+      async (h) => { const 行 = await 記録3(h); return 行.length === 1 && 行[0].段位 !== undefined; }],
     ['★中の言葉を text に入れて返す★',
       (t) => t.replace("    return res.status(k.status).json({ error: k.合言葉, text: '', tsv: '' });",
         "    return res.status(k.status).json({ error: k.合言葉, text: 'VercelのEnvironment VariablesにANTHROPIC_API_KEYを設定してください。', tsv: '' });"),

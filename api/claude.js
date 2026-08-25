@@ -259,6 +259,8 @@ function 記録(o) {
       置いたトークン: o.置いた || 0,
       置いた1時間: o.置いた1時間 || 0,
       置いた5分: o.置いた5分 || 0,
+      /* ★うちの段位と残量（Anthropic が返事に付けてくる物・お金は増えない）★ */
+      段位: o.段位,
       読み直したトークン: o.読み直した || 0,
       送った字数: o.字数 || 0,
       会話の数: o.会話 || 0,
@@ -349,12 +351,26 @@ module.exports = async (req, res) => {
     }
 
     const 始めた = Date.now();
-    const response = await client.messages.create({
+    /* ★返事の見出し(ヘッダ)から うちの段位と残量を読む（2026-08-25 指示役）★
+       Anthropic は 返事のたびに anthropic-ratelimit-*-limit / -remaining / -reset を返している。
+       ★今まで 捨てていた★＝★次に1回 AIを呼ぶだけで 段位と残量が分かる★（人に聞かなくて済む）。
+       ★お金は1円も余分にかからない（同じ1回の返事に付いてくる物）★
+       ★withResponse が無い版でも 落ちない★（その時は 段位は「未測定」になるだけ） */
+    let 見出し = null;
+    const 送り = client.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 2000,
       system: システム,
       messages: [...会話, { role: 'user', content: message }],
     });
+    let response;
+    if (送り && typeof 送り.withResponse === 'function') {
+      const 包み = await 送り.withResponse();
+      response = 包み.data;
+      見出し = 包み.response && 包み.response.headers;
+    } else {
+      response = await 送り;
+    }
 
     記録({
       結果: 'ok',
@@ -363,6 +379,7 @@ module.exports = async (req, res) => {
       置いた: (response.usage && response.usage.cache_creation_input_tokens) || 0,
       読み直した: (response.usage && response.usage.cache_read_input_tokens) || 0,
       /* ★1時間の分と 5分の分は 置き賃が違う（2倍 と 1.25倍）ので 分けて残す★ */
+      段位: 見出しを読む(見出し),
       置いた1時間: (response.usage && response.usage.cache_creation
         && response.usage.cache_creation.ephemeral_1h_input_tokens) || 0,
       置いた5分: (response.usage && response.usage.cache_creation
@@ -416,6 +433,29 @@ module.exports = async (req, res) => {
      混み合い … status 429
    ★400 を そのまま返すと 画面は「送る中身が 足りません」と言う＝嘘になる★ので
    ★残高切れは 402（お金が要る）に 分けてから返す★。 */
+/** ★返事の見出しから 段位と残量を読む（無ければ null＝未測定。0にしない）★ */
+function 見出しを読む(h) {
+  if (!h) return null;
+  const 取る = (k) => {
+    try { return typeof h.get === 'function' ? h.get(k) : (h[k] !== undefined ? h[k] : null); }
+    catch (e) { return null; }
+  };
+  const 出 = {};
+  for (const [名, 鍵] of [
+    ['1分の上限', 'anthropic-ratelimit-requests-limit'],
+    ['1分の残り', 'anthropic-ratelimit-requests-remaining'],
+    ['戻る時刻', 'anthropic-ratelimit-requests-reset'],
+    ['入力の上限', 'anthropic-ratelimit-input-tokens-limit'],
+    ['入力の残り', 'anthropic-ratelimit-input-tokens-remaining'],
+    ['出力の上限', 'anthropic-ratelimit-output-tokens-limit'],
+    ['出力の残り', 'anthropic-ratelimit-output-tokens-remaining'],
+  ]) {
+    const v = 取る(鍵);
+    if (v !== null && v !== undefined && v !== '') 出[名] = v;
+  }
+  return Object.keys(出).length ? 出 : null;
+}
+
 function 失敗を分ける(err) {
   const msg = (err && err.message) || '';
   const st = err && err.status;
@@ -439,5 +479,6 @@ module.exports.__buildStatutoryPrompt = buildStatutoryPrompt;
 module.exports.__失敗を分ける = 失敗を分ける;
 module.exports.__許す入口 = 許す入口;
 module.exports.__一度に送れる字数 = 一度に送れる字数;
+module.exports.__見出しを読む = 見出しを読む;
 module.exports.__buildPromptParts = buildPromptParts;
 module.exports.__setClient = (c) => { client = c; };
