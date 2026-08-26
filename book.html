@@ -1200,43 +1200,43 @@ background:#FFE066 !important;
 }
 </style>
 
-<script src="hyperformula.full.min.js?v=43db9911"></script>
+<script src="hyperformula.full.min.js?v=64ef62e9"></script>
 
-<script src="exally-formula.js?v=43db9911"></script>
+<script src="exally-formula.js?v=64ef62e9"></script>
 <!-- グリッド→xlsx の変換と「落ちる物」の警告(純関数・軽い)。SheetJS本体(930KB)と lib/xlsx-io.js は
      初回の「Excelに書き出す」で初めて読み込む＝グリッドの表示を重くしない -->
-<script src="js/file-out.js?v=43db9911"></script>
+<script src="js/file-out.js?v=64ef62e9"></script>
 <!-- ★打ち込んだ文字の解釈（1,234 を数にする）。★計算側も書き出し側も この1本を呼ぶ★
      grid-xlsx.js より先に読む（grid-xlsx.js が読み込み時に掴む） -->
-<script src="lib/typed-value.js?v=43db9911"></script>
-<script src="lib/grid-xlsx.js?v=43db9911"></script>
+<script src="lib/typed-value.js?v=64ef62e9"></script>
+<script src="lib/grid-xlsx.js?v=64ef62e9"></script>
   <!-- ★式の中の参照を「カーソルの位置で」直せるようにする★
        2026-08-06 司さんが実機で踏んだ: 「=B1+30」の B1 を直そうと A1 を触ると
        「=B1+30A1」になり ★B1 を直す手段が無かった★。テスト線では直っていたが
        ★本番には運ばれていなかった★（2026-08-18 差を数えて見つけた）。 -->
-  <script src="lib/grid-refedit.js?v=43db9911"></script>
-<script src="lib/autosum.js?v=43db9911"></script>
-<script src="lib/grid-sort.js?v=43db9911"></script>
-<script src="lib/grid-filter.js?v=43db9911"></script>
-<script src="lib/grid-find.js?v=43db9911"></script>
-<script src="lib/grid-print.js?v=43db9911"></script>
-<script src="lib/ai-reason.js?v=43db9911"></script>
-<script src="lib/menu-place.js?v=43db9911"></script>
-<script src="lib/grid-stats.js?v=43db9911"></script>
-<script src="lib/grid-valid.js?v=43db9911"></script>
-<script src="lib/cond-format.js?v=43db9911"></script>
-<script src="lib/ref-graph.js?v=43db9911"></script>
-<script src="lib/shindan.js?v=43db9911"></script>
-<script src="lib/rireki.js?v=43db9911"></script>
-<script src="lib/recipe.js?v=43db9911"></script>
-<script src="js/rireki-store.js?v=43db9911"></script>
-<script src="lib/excel-version.js?v=43db9911"></script>
+  <script src="lib/grid-refedit.js?v=64ef62e9"></script>
+<script src="lib/autosum.js?v=64ef62e9"></script>
+<script src="lib/grid-sort.js?v=64ef62e9"></script>
+<script src="lib/grid-filter.js?v=64ef62e9"></script>
+<script src="lib/grid-find.js?v=64ef62e9"></script>
+<script src="lib/grid-print.js?v=64ef62e9"></script>
+<script src="lib/ai-reason.js?v=64ef62e9"></script>
+<script src="lib/menu-place.js?v=64ef62e9"></script>
+<script src="lib/grid-stats.js?v=64ef62e9"></script>
+<script src="lib/grid-valid.js?v=64ef62e9"></script>
+<script src="lib/cond-format.js?v=64ef62e9"></script>
+<script src="lib/ref-graph.js?v=64ef62e9"></script>
+<script src="lib/shindan.js?v=64ef62e9"></script>
+<script src="lib/rireki.js?v=64ef62e9"></script>
+<script src="lib/recipe.js?v=64ef62e9"></script>
+<script src="js/rireki-store.js?v=64ef62e9"></script>
+<script src="lib/excel-version.js?v=64ef62e9"></script>
 <!-- ★ログイン（hub.html と同じ4本・新しく作った物は0）★ 2026-08-23
      ここを掛けるまで ★誰の回数か 数えられない＝上限が掛けられない★（指示役 2026-08-23） -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supa-config.js?v=43db9911"></script>
-<script src="js/exally-login.js?v=43db9911"></script>
-<script src="js/auth.js?v=43db9911"></script>
+<script src="js/supa-config.js?v=64ef62e9"></script>
+<script src="js/exally-login.js?v=64ef62e9"></script>
+<script src="js/auth.js?v=64ef62e9"></script>
 
 <script>
 /* ===== canvas-formula-engine.js (inlined) ===== */
@@ -3727,7 +3727,8 @@ body.exally-locked > *:not(#loginOv){display:none!important;}
     <div style="padding:16px 18px 10px;border-bottom:1px solid #D4EDE1;">
       <div style="font-size:16px;font-weight:700;color:#2E7D54;">これまでにやった事</div>
       <div style="font-size:12px;color:#333333;margin-top:4px;" id="rkNote"></div>
-      <div id="rkTabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;"></div>
+      <div id="rkFiles" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;"></div>
+      <div id="rkTabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;"></div>
     </div>
     <div style="padding:10px 18px;font-size:13px;color:#333333;line-height:1.8;">
       <div id="rkList" style="border:1px solid #D4EDE1;border-radius:12px;overflow:auto;max-height:52vh;"></div>
@@ -7471,13 +7472,19 @@ function 参照の網(){ return _refGraph; }
    ★ここから 何かを始めさせない★（見る場所であって 探す入口ではない）。
    ★ファイル名は 長押しでコピー★＝携帯・PCの ふつうの仕組みのまま（自作の選択を作らない）。 */
 var _rirekiIma = null;      /* 今 出している一覧（絞り込みの為だけに持つ） */
-var _rirekiShurui = '';     /* 今の絞り */
+var _rirekiShurui = '';     /* 今の絞り（種類） */
+/* ★既定は「今 開いているファイルの分だけ」★（司さん 2026-08-26
+   「これはこのファイルに限ったことよな？別ファイルでやったことをごちゃごちゃにしてないよな？」）
+   ＝★他のファイルの分と 混ぜて出さない★。全部 見たい時だけ 客が「ぜんぶのファイル」を押す。 */
+var _rirekiFile = '';
 
 function openRireki(どこから){
   var ov = document.getElementById('rkOverlay');
   if(!ov) return;
   ov.style.display = 'flex';
   _rirekiShurui = '';
+  /* ★開いた時は いつも「今のファイル」から★（前に「ぜんぶ」を押していても 持ち越さない） */
+  _rirekiFile = ((BookOpen.current() || {}).name) || '';
   履歴を読み直す(どこから);
 }
 function closeRireki(){ var ov = document.getElementById('rkOverlay'); if(ov) ov.style.display='none'; }
@@ -7498,13 +7505,44 @@ function 履歴を読み直す(どこから){
 /* ★組み立てる所は ここ1つだけ★（AIタブからでも 履歴ページからでも 同じ物が出る） */
 function 履歴を描く(行たち, opt){
   opt = opt || {};
-  var r = Rireki.一覧にする(行たち, { 今: new Date(), 種類: _rirekiShurui, 上限: 200 });
+  var r = Rireki.一覧にする(行たち, { 今: new Date(), 種類: _rirekiShurui, ファイル: _rirekiFile, 上限: 200 });
   _rirekiIma = 行たち;
   var note = document.getElementById('rkNote');
   if(note){
-    note.textContent = r.件数 + '件'
-      + (opt.倉庫 === false ? '（この画面の中だけです。ログインすると 残ります）' : '')
-      + (opt.どこから ? '' : '');
+    /* ★どのファイルの分を 出しているかを 必ず言う★（黙って混ぜない・黙って絞らない） */
+    note.textContent = (_rirekiFile ? ('「' + _rirekiFile + '」の分 ') : 'ぜんぶのファイル ')
+      + r.件数 + '件'
+      + (_rirekiFile && r.ぜんぶの件数 > r.このファイルの件数
+          ? '（ほかのファイルの分は 出していません）' : '')
+      + (opt.倉庫 === false ? '（この画面の中だけです。ログインすると 残ります）' : '');
+  }
+  /* ★どのファイルの分か を 切り替える所★（今のファイル ／ ぜんぶ） */
+  var 場所 = document.getElementById('rkFiles');
+  if(場所){
+    場所.innerHTML = '';
+    var 今の名 = ((BookOpen.current() || {}).name) || '';
+    var 作るF = function(名, 字, 数, 選ばれている){
+      var b = document.createElement('button');
+      b.textContent = 字 + '（' + 数 + '）';
+      b.style.cssText = 'font-size:12px;padding:4px 10px;border-radius:14px;font-family:inherit;cursor:pointer;max-width:22em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'
+        + (選ばれている ? 'background:#2E7D54;border:1px solid #2E7D54;color:#ffffff;'
+                        : 'background:#F0FAF4;border:1px solid #C8ECD8;color:#333333;');
+      b.onclick = function(){ _rirekiFile = 名; _rirekiShurui = ''; 履歴を描く(_rirekiIma, opt); };
+      場所.appendChild(b);
+    };
+    if(今の名){
+      var この数 = 0;
+      for(var fi=0; fi<行たち.length; fi++) if((行たち[fi].ファイル名 || '') === 今の名) この数++;
+      作るF(今の名, '今のファイル', この数, _rirekiFile === 今の名);
+    }
+    作るF('', 'ぜんぶのファイル', 行たち.length, _rirekiFile === '');
+    /* ★同じ名前で 中身が違う物が 混ざっていたら 隠さずに 言う★ */
+    if(r.同じ名前で違う物 > 0){
+      var 注 = document.createElement('div');
+      注.style.cssText = 'font-size:12px;color:#8A5A00;margin-top:6px;white-space:normal;';
+      注.textContent = '同じ名前で 中身が違うファイルが ' + (r.同じ名前で違う物 + 1) + '本 混ざっています（名前だけでは 見分けられません）。';
+      場所.appendChild(注);
+    }
   }
   /* 種類の帯（絞り込みは 見る為だけ） */
   var tabs = document.getElementById('rkTabs');
@@ -7519,7 +7557,10 @@ function 履歴を描く(行たち, opt){
       b.onclick = function(){ _rirekiShurui = (名 === 'ぜんぶ') ? '' : 名; 履歴を描く(_rirekiIma, opt); };
       tabs.appendChild(b);
     };
-    作る('ぜんぶ', 行たち.length, _rirekiShurui === '');
+    /* ★「ぜんぶ」の数も 今のファイルの中で数える★
+       （前は ほかのファイルの分まで 数えていて「1件なのに ぜんぶ3」と食い違った・
+         自分で押して見つけた 2026-08-26） */
+    作る('ぜんぶ', r.このファイルの件数, _rirekiShurui === '');
     for(var i=0;i<Rireki.種類の順.length;i++){
       var 名 = Rireki.種類の順[i];
       作る(名, r.種類ごと[名] || 0, _rirekiShurui === 名);
@@ -7569,8 +7610,13 @@ function 履歴を描く(行たち, opt){
 function 履歴に残す(種類, 見出し, 中身, ファイル名, クレジット){
   if(typeof RirekiStore === 'undefined') return;
   try{
+    var 今の = BookOpen.current() || {};
     RirekiStore.残す({ 種類: 種類, 見出し: 見出し, 中身: 中身 || {},
-      ファイル名: ファイル名 || ((BookOpen.current()||{}).name || ''), クレジット: クレジット || 0 });
+      ファイル名: ファイル名 || (今の.name || ''),
+      /* ★バイト数も 一緒に残す★＝名前が同じでも 中身が違う物を 見分ける
+         （★ファイル名で同じ物だと思うな★＝同じ名前が5本 在って踏んだ） */
+      バイト: (今の.bytes && 今の.bytes.length) ? 今の.bytes.length : null,
+      クレジット: クレジット || 0 });
   }catch(e){ /* ★履歴で 本体を落とさない★ */ }
 }
 
@@ -8330,6 +8376,6 @@ document.addEventListener('DOMContentLoaded', function(){ checkRequiredFns(); })
 <!-- ★テスト環境の帯★ 本番の倉庫では出ない。今どの倉庫かは js/supa-config.js が唯一の正。
      ホスト名では決めない（配り方は変わるが「本番のデータか」は変わらないため）。
      ★この2本だけが 本番の book.html との違い★（他は1バイトも同じにする）。 -->
-<script src="js/supa-config.js?v=43db9911"></script>
-<script src="js/env-badge.js?v=43db9911"></script>
+<script src="js/supa-config.js?v=64ef62e9"></script>
+<script src="js/env-badge.js?v=64ef62e9"></script>
 </html>

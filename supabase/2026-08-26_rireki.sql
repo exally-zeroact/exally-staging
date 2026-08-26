@@ -54,3 +54,10 @@ end $$;
 --   ★RLS で 行は守られている（Aさんは自分の1行しか見えない）★が、
 --   ★要らない権限は 明示的に外す★＝「書いた≠効いた」を 両側から締める。
 revoke update, delete, truncate, references, trigger on exally.rireki from authenticated;
+
+-- ★2026-08-26 司さんの指摘で 足した★
+--   「これはこのファイルに限ったことよな？別ファイルでやったことをごちゃごちゃにしてないよな？」
+--   ⇒ 画面は ★今 開いているファイルの分だけ★を既定にした。
+--   ⇒ ★名前だけでは 同じ物と決められない★（同じ名前のファイルが5本 在って踏んだ）ので
+--      ★バイト数も 一緒に残す★。名前が同じでも 中身が違う物が 混ざっていたら 画面に出す。
+alter table exally.rireki add column if not exists file_bytes bigint;

@@ -50,6 +50,9 @@
       midashi: String(件.見出し || ''),
       nakami: 件.中身 || {},
       file_name: 件.ファイル名 ? String(件.ファイル名) : null,
+      /* ★バイト数も 残す★＝★ファイル名で同じ物だと思うな★（同じ名前が5本 在って踏んだ）。
+         「このファイルの分だけ」を出す時に、名前が同じでも 中身が違う物が 混ざっていたら 出す。 */
+      file_bytes: (件.バイト === undefined || 件.バイト === null) ? null : Number(件.バイト),
       credit: Number(件.クレジット || 0),
     };
     var つ = つなぎ();
@@ -95,6 +98,7 @@
       見出し: r.midashi,
       中身: r.nakami,
       ファイル名: r.file_name || '',
+      バイト: (r.file_bytes === undefined || r.file_bytes === null) ? null : Number(r.file_bytes),
       クレジット: r.credit || 0,
     };
   }

@@ -388,7 +388,9 @@ if (SELF) {
   /* ★repo を書き換えていない事を 押した後に 数える★ */
   for (const rel of ['book.html', 'lib/grid-stats.js']) {
     const now = fs.readFileSync(path.join(ROOT, rel), 'utf8');
-    if (now.includes(禁止色) || now.includes('if (true) return false;') || now.includes('white-space:normal;')) {
+    /* ★見るのは「壊した跡そのもの」だけ★＝'white-space:normal' は 別の所（履歴の注意書き）でも
+       正しく使う。★行の頭の2つの空白まで含めて★ 見る（2026-08-26 嘘の赤が出た） */
+    if (now.includes(禁止色) || now.includes('if (true) return false;') || now.includes('  white-space:normal;')) {
       console.log('  ★NG★ ' + rel + ' に わざと壊した物が残っている');
       process.exit(1);
     }
