@@ -15,6 +15,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { 注記を外す } from '../scripts/lib/chuki.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
@@ -46,7 +47,7 @@ T('★book.html が ログインの部品を 4本とも読んでいる★', () =
   }
 });
 T('★ログインが済むまで 中身を隠す1行が 実在する★', () => {
-  const 動く所 = book.replace(/\/\*[\s\S]*?\*\//g, '');
+  const 動く所 = 注記を外す(book, { html: true });
   ok(/body\.exally-locked\s*>\s*\*:not\(#loginOv\)\s*\{[^}]*display\s*:\s*none\s*!important/.test(動く所),
     '★隠す1行が無い（ログイン前に 表が見えてしまう）★');
 });

@@ -17,6 +17,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { 注記を外す } from '../scripts/lib/chuki.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
@@ -116,7 +117,7 @@ T('★AIを呼ぶ口は 1本だけ（言い方がばらけない）★', () => {
 });
 T('★古い言い方が コードに残っていない★', () => {
   /* 注記（コメント）の中は 残っていてよい。★動く所★に残っていないかを見る */
-  const 動く所 = html.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const 動く所 = 注記を外す(html, { html: true });   /* ★共通部品（2026-08-26 指示役）★ */
   const n = (動く所.match(/AIに接続できなかったよ/g) || []).length;
   eq(n, 0, '★「もう一度試してみてね」だけの言い方が ' + n + '件 残っている★');
 });
@@ -503,8 +504,7 @@ if (SELF) {
   for (const rel of ['book.html', 'lib/ai-reason.js']) {
     /* ★注記(コメント)の中は 見ない★＝「昔こう出していた」と書き残す事は 正しい。
        見るのは ★動く所★だけ（2026-08-22：頭の注記に引っかかって 嘘の赤が出た） */
-    const now = fs.readFileSync(path.join(ROOT, rel), 'utf8')
-      .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+    const now = 注記を外す(fs.readFileSync(path.join(ROOT, rel), 'utf8'), { html: rel.endsWith('.html') });
     if (now.includes('AI_LIMIT') || now.includes('_sendExplainOld') || now.includes('if (false) {')
         || now.includes('VercelのEnvironment Variables')) {
       console.log('  ★NG★ ' + rel + ' に わざと壊した物が残っている');

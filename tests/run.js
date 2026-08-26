@@ -47,6 +47,8 @@ const FILES = [
   ['cond-format.test.mjs', '--self-test'],
   'cond-format-ui.test.mjs',              // ★本物の画面で 実際に押す(部品が緑=画面で使える ではない)
   ['cond-format-ui.test.mjs', '--self-test'],
+  'chuki.test.mjs',                       // ★注記を外してから読む（見張りの共通部品）
+  ['chuki.test.mjs', '--self-test'],
   'shindan.test.mjs',                     // ★5 E2診断1本目＝消えた参照が IFERROR で隠れている（実物122本）
   ['shindan.test.mjs', '--self-test'],
   'shindan-ui.test.mjs',                  // ★本物の画面で 知らせ・一覧・場所へ行く＋直した所の控え

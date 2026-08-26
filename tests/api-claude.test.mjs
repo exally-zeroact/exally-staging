@@ -17,6 +17,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
+import { 注記を外す } from '../scripts/lib/chuki.mjs';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const require_ = createRequire(import.meta.url);
@@ -194,7 +195,7 @@ await AT('★客が書いた文そのものは 残さない（長さだけ）★
       （散らすと 直す時に 必ず 片方が残る＝古い数字が生き続ける） */
 await AT('★上限の数字は 事故止め 1か所だけ（散らさない・勝手に増やさない）★', async () => {
   const fs2 = await import('node:fs');
-  const src = fs2.readFileSync(path.join(ROOT, 'api/claude.js'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  const src = 注記を外す(fs2.readFileSync(path.join(ROOT, 'api/claude.js'), 'utf8'));
   for (const 語 of ['RATE_LIMIT', 'MAX_PER_DAY', 'MAX_MESSAGE_LEN']) {
     if (src.indexOf(語) >= 0) throw new Error('★数字の置き場が 増えている★：' + 語);
   }
@@ -328,7 +329,7 @@ await AT('★置いた量・読み直した量を 記録に残す（後で値段
 });
 await AT('★記録に 値段(円)を書き込んでいない（値段が変わったら嘘になる）★', async () => {
   const fs2 = await import('node:fs');
-  const src = fs2.readFileSync(path.join(ROOT, 'api/claude.js'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  const src = 注記を外す(fs2.readFileSync(path.join(ROOT, 'api/claude.js'), 'utf8'));
   for (const 語 of ['円', 'JPY', '0.1倍', '1.25倍']) {
     if (src.indexOf(語) >= 0) throw new Error('★値段を コードに書いている★：' + 語);
   }
@@ -417,7 +418,7 @@ await AT('★ちょうど 20,000文字は 通る（境界）★', async () => {
    ⇒ 見るのは「1か所か」ではなく ★事故止め の中に 全部 集まっているか★。 */
 await AT('★上限の数字は 事故止めの中に集まっている（散らばっていない）★', async () => {
   const fs2 = await import('node:fs');
-  const src = fs2.readFileSync(path.join(ROOT, 'api/claude.js'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  const src = 注記を外す(fs2.readFileSync(path.join(ROOT, 'api/claude.js'), 'utf8'));
   const n = (src.match(/20000/g) || []).length;
   if (n !== 2) throw new Error('★20000 が ' + n + 'か所（字数とトークンの2つだけ）★');
   const 中 = src.slice(src.indexOf('const 事故止め = {'), src.indexOf('const 一度に送れる字数'));

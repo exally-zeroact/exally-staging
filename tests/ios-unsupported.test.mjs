@@ -21,6 +21,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { 注記を外す } from '../scripts/lib/chuki.mjs';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -56,10 +57,10 @@ const EXCEPTIONS = {
    落とさないと、この作りを説明したコメント（「type="month" は使わない」等）まで拾って
    ★空振りの赤★になる。赤が空振りすると、人は赤を見なくなる。 */
 export function stripComments(src) {
-  return String(src)
-    .replace(/<!--[\s\S]*?-->/g, ' ')          // HTMLのコメント
-    .replace(/\/\*[\s\S]*?\*\//g, ' ')          // /* … */
-    .replace(/(^|[^:])\/\/[^\n]*/g, '$1');       // // …（http:// は残す）
+  /* ★注記外しは 共通部品へ（2026-08-26 指示役：同じ型を3回 踏んだら 決まりにする）★
+     ★HTMLの時は 字を追わない★＝本文の「don't」のような ひとつだけの ' で
+     字の中に入ったままになるため（その決まりは 共通部品の側に 在る）。 */
+  return 注記を外す(String(src), { html: true });
 }
 
 /* ★純関数: ファイル(path→中身)から違反を返す。self-test で作り物を通せる。 */

@@ -19,6 +19,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { 注記を外す } from '../scripts/lib/chuki.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
@@ -63,7 +64,7 @@ for (const b of TOP) {
 
 /* ── ② ★字を消す CSS を禁じる★ ── */
 /* コメントを外してから見る（コメントの中の例文で赤にしない） */
-const css = html.replace(/\/\*[\s\S]*?\*\//g, '');
+const css = 注記を外す(html, { html: true });
 /* 「〜.hdr-lb { ... display:none ... }」の形を全部さらう。.hdr-lb-long は「長い方の言い足し」なので別物 */
 function ルールを集める(セレクタの中の語) {
   const out = [];

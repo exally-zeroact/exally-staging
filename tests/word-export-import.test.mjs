@@ -21,6 +21,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { 注記を外す } from '../scripts/lib/chuki.mjs';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -36,17 +37,8 @@ const T = (n, fn) => { try { fn(); pass++; console.log('  ✓ ' + n); } catch (e
  *    ・行の注記は ★その行の手前の引用符が偶数の時だけ★ 落とす
  *      （'https://…' のスラッシュ2つを注記と間違えないため） */
 export function stripJsComments(src) {
-  const noBlock = String(src).replace(/\/\*[\s\S]*?\*\//g, ' ');
-  return noBlock.split('\n').map((line) => {
-    let i = line.indexOf('//');
-    while (i >= 0) {
-      const head = line.slice(0, i);
-      const quotes = (head.match(/['"`]/g) || []).length;
-      if (quotes % 2 === 0) return head;        // 引用符が閉じている＝ここからは注記
-      i = line.indexOf('//', i + 2);            // 文字列の中の // は注記ではない
-    }
-    return line;
-  }).join('\n');
+  /* ★注記外しは 共通部品へ（2026-08-26 指示役）★ */
+  return 注記を外す(String(src));
 }
 
 /** 注記を落として「客に出る字」だけにする。
@@ -54,15 +46,11 @@ export function stripJsComments(src) {
  *    一緒に走査すると、HTMLの文の中の ' や " で文字列の追跡がズレて
  *    ★JSの注記を落とし損ねる★（2026-08-18 実際にそうなった）。 */
 export function stripComments(src) {
-  let s = String(src).replace(/<!--[\s\S]*?-->/g, ' ');           // ①HTMLの注記は形がはっきりしている
-  if (s.indexOf('<script') < 0 && s.indexOf('<style') < 0) return stripJsComments(s);  // .js / .css はそのまま
-  /* ②<style> の中の注記（CSSの注記）も落とす。ここに経緯を書いてある。
-        ★2026-08-18 実際に踏んだ: style を見ていなくて 直す所が1件 残り続けた★ */
-  s = s.replace(/(<style[^>]*>)([\s\S]*?)(<\/style>)/gi,
-    (m, a, body, b) => a + body.replace(/\/\*[\s\S]*?\*\//g, ' ') + b);
-  /* ③<script> の中は JS として見る */
-  return s.replace(/(<script[^>]*>)([\s\S]*?)(<\/script>)/gi,
-    (m, a, body, b) => a + stripJsComments(body) + b);
+  /* ★ここに在った「HTMLの中とJSの中を分ける」決まりが 一番よく出来ていたので
+     ★それを 共通部品(html:true)の正にして 全部の見張りへ 配った★（2026-08-26 指示役）。
+     ・<!-- --> を先に外す ・<style> は ブロック注記だけ ・<script> は JS として見る
+     ・<script も <style も無い字（.js/.css）は JS として見る */
+  return 注記を外す(String(src), { html: true });
 }
 
 /* ★禁じる言い方（Excel と組み合わせた時だけ）★ */

@@ -11,6 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { fileURLToPath } from 'node:url';
+import { 注記を外す } from '../scripts/lib/chuki.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
@@ -55,7 +56,7 @@ T('★AIを使っていない事を 客に言う（0円の道だと伝える）�
 T('★客に見せる字に ★ を書かない（診断の知らせ）★', () => {
   const i = book.indexOf('function 診断の知らせを出す');
   const 所 = book.slice(i, book.indexOf('function openShindan'));
-  const 字 = (所.replace(/\/\*[\s\S]*?\*\//g, '').match(/'[^']*'/g) || []).join('');
+  const 字 = (注記を外す(所, { html: true }).match(/'[^']*'/g) || []).join('');
   ok(字.indexOf('★') < 0, '★客の字に ★ が出ている★：' + 字.slice(0, 80));
 });
 T('★多い時は 何件 出していないかを 書く（黙って切らない）★', () => {

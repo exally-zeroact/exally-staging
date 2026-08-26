@@ -20,17 +20,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { 注記を外す } from '../scripts/lib/chuki.mjs';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8');
 
 /** コメントを外す（★コメントの中の例文は「守り」ではない★）。文字列の中は狙わない */
 export function stripComments(src) {
-  return String(src)
-    .replace(/\/\*[\s\S]*?\*\//g, ' ')
-    .split('\n')
-    .map((line) => line.replace(/(^|[^:'"\\])\/\/.*$/, '$1'))
-    .join('\n');
+  /* ★注記外しは 共通部品へ（2026-08-26 指示役：同じ型を3回 踏んだら 決まりにする）★ */
+  return 注記を外す(String(src), { html: true });
 }
 
 /** `typeof X === 'function'` / `!==` で守っている名前を全部拾う */

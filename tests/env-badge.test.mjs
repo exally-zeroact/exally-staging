@@ -18,6 +18,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
+import { 注記を外す } from '../scripts/lib/chuki.mjs';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const require_ = createRequire(path.join(ROOT, 'package.json'));
@@ -103,7 +104,7 @@ T('★テストの倉庫だと分かった時だけ出す', () => {
 
 T('★本番とテストの見分けは「今どの倉庫か」だけで決める（ホスト名を見ていない）', () => {
   const src = fs.readFileSync(path.join(ROOT, 'js/env-badge.js'), 'utf8');
-  const code = src.replace(/\/\*[\s\S]*?\*\//g, ' ');
+  const code = 注記を外す(src);   /* ★注記外しは 共通部品（2026-08-26 指示役）★ */
   ok(!/location\s*\.\s*(host|hostname|href)/.test(code), 'ホスト名で決めている');
   ok(!/github\.io|vercel\.app/.test(code), '配り先の名前で決めている');
   ok(code.indexOf('SUPA') >= 0, '接続設定を見ていない');

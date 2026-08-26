@@ -14,6 +14,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
+import { 注記を外す } from '../scripts/lib/chuki.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
@@ -57,7 +58,7 @@ T('★画面が その言葉を 実際に出す（持っているだけにしな
 T('★客に見せる字に ★ を書かない★', () => {
   /* ★注記(コメント)には ★ が在ってよい。客に出る字だけを見る★（検査の側の間違いを直した） */
   const i = bookOpen.indexOf('var MSG_VBA');
-  const 言葉 = bookOpen.slice(i, bookOpen.indexOf(';', i + 200)).replace(/\/\*[\s\S]*?\*\//g, '');
+  const 言葉 = 注記を外す(bookOpen.slice(i, bookOpen.indexOf(';', i + 200)));
   const 中身 = (言葉.match(/'[^']*'/g) || []).join('');
   ok(中身.length > 20, '言葉が取れていない');
   ok(中身.indexOf('★') < 0, '★客の字に ★ が出ている★：' + 中身.slice(0, 60));
