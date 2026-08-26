@@ -1200,40 +1200,43 @@ background:#FFE066 !important;
 }
 </style>
 
-<script src="hyperformula.full.min.js?v=a619949e"></script>
+<script src="hyperformula.full.min.js?v=43db9911"></script>
 
-<script src="exally-formula.js?v=a619949e"></script>
+<script src="exally-formula.js?v=43db9911"></script>
 <!-- グリッド→xlsx の変換と「落ちる物」の警告(純関数・軽い)。SheetJS本体(930KB)と lib/xlsx-io.js は
      初回の「Excelに書き出す」で初めて読み込む＝グリッドの表示を重くしない -->
-<script src="js/file-out.js?v=a619949e"></script>
+<script src="js/file-out.js?v=43db9911"></script>
 <!-- ★打ち込んだ文字の解釈（1,234 を数にする）。★計算側も書き出し側も この1本を呼ぶ★
      grid-xlsx.js より先に読む（grid-xlsx.js が読み込み時に掴む） -->
-<script src="lib/typed-value.js?v=a619949e"></script>
-<script src="lib/grid-xlsx.js?v=a619949e"></script>
+<script src="lib/typed-value.js?v=43db9911"></script>
+<script src="lib/grid-xlsx.js?v=43db9911"></script>
   <!-- ★式の中の参照を「カーソルの位置で」直せるようにする★
        2026-08-06 司さんが実機で踏んだ: 「=B1+30」の B1 を直そうと A1 を触ると
        「=B1+30A1」になり ★B1 を直す手段が無かった★。テスト線では直っていたが
        ★本番には運ばれていなかった★（2026-08-18 差を数えて見つけた）。 -->
-  <script src="lib/grid-refedit.js?v=a619949e"></script>
-<script src="lib/autosum.js?v=a619949e"></script>
-<script src="lib/grid-sort.js?v=a619949e"></script>
-<script src="lib/grid-filter.js?v=a619949e"></script>
-<script src="lib/grid-find.js?v=a619949e"></script>
-<script src="lib/grid-print.js?v=a619949e"></script>
-<script src="lib/ai-reason.js?v=a619949e"></script>
-<script src="lib/menu-place.js?v=a619949e"></script>
-<script src="lib/grid-stats.js?v=a619949e"></script>
-<script src="lib/grid-valid.js?v=a619949e"></script>
-<script src="lib/cond-format.js?v=a619949e"></script>
-<script src="lib/ref-graph.js?v=a619949e"></script>
-<script src="lib/shindan.js?v=a619949e"></script>
-<script src="lib/excel-version.js?v=a619949e"></script>
+  <script src="lib/grid-refedit.js?v=43db9911"></script>
+<script src="lib/autosum.js?v=43db9911"></script>
+<script src="lib/grid-sort.js?v=43db9911"></script>
+<script src="lib/grid-filter.js?v=43db9911"></script>
+<script src="lib/grid-find.js?v=43db9911"></script>
+<script src="lib/grid-print.js?v=43db9911"></script>
+<script src="lib/ai-reason.js?v=43db9911"></script>
+<script src="lib/menu-place.js?v=43db9911"></script>
+<script src="lib/grid-stats.js?v=43db9911"></script>
+<script src="lib/grid-valid.js?v=43db9911"></script>
+<script src="lib/cond-format.js?v=43db9911"></script>
+<script src="lib/ref-graph.js?v=43db9911"></script>
+<script src="lib/shindan.js?v=43db9911"></script>
+<script src="lib/rireki.js?v=43db9911"></script>
+<script src="lib/recipe.js?v=43db9911"></script>
+<script src="js/rireki-store.js?v=43db9911"></script>
+<script src="lib/excel-version.js?v=43db9911"></script>
 <!-- ★ログイン（hub.html と同じ4本・新しく作った物は0）★ 2026-08-23
      ここを掛けるまで ★誰の回数か 数えられない＝上限が掛けられない★（指示役 2026-08-23） -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supa-config.js?v=a619949e"></script>
-<script src="js/exally-login.js?v=a619949e"></script>
-<script src="js/auth.js?v=a619949e"></script>
+<script src="js/supa-config.js?v=43db9911"></script>
+<script src="js/exally-login.js?v=43db9911"></script>
+<script src="js/auth.js?v=43db9911"></script>
 
 <script>
 /* ===== canvas-formula-engine.js (inlined) ===== */
@@ -3592,6 +3595,8 @@ body.exally-locked > *:not(#loginOv){display:none!important;}
     <button id="saveBookBtn" onclick="saveXlsx()" style="background:#52B788;border:1px solid #52B788;color:#fff;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;" title="Excelファイルとして書き出す（.xlsx / .xlsm / .xlsb）"><span class="hdr-ic">💾</span> <span class="hdr-lb"><span class="hdr-lb-long">Excelに</span>書き出す</span></button>
     <!-- ★5 E2診断★ ★見つかった時だけ 出す★（出来ていない物のボタンを見せない）。
          色は「押せる物」に使う＝琥珀（赤ではない＝止まってはいない） -->
+    <!-- ★入り口②＝履歴ページ★（見る場所。ここから 何かを始めさせない） -->
+    <button id="rirekiBtn" onclick="openRireki('page')" style="background:#F0FAF4;border:1px solid #C8ECD8;color:#3D9E72;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;white-space:nowrap;" title="これまでにやった事（見る場所）"><span class="hdr-ic">🕘</span> <span class="hdr-lb">これまで</span></button>
     <button id="shindanBtn" hidden onclick="openShindan()" style="background:#FFF6E0;border:1px solid #F0D9A0;color:#8A5A00;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;white-space:nowrap;" title="開いた時に うちが見つけた「気づけない所」"></button>
     <button id="bookVerBtn" onclick="openBookVerModal()" style="background:#F0FAF4;border:1px solid #C8ECD8;color:#3D9E72;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;" title="相手が使っているExcelの版を選ぶ"><span class="hdr-ic">📊</span> <span class="hdr-lb"><span class="hdr-lb-long">Excel</span>版 <span id="bookVerLabel">365</span></span> ▼</button>
   </div>
@@ -3712,6 +3717,27 @@ body.exally-locked > *:not(#loginOv){display:none!important;}
   </div>
 </div>
 
+
+<!-- ★6 履歴＝見る場所★（司さん 2026-08-25）
+     ★探す入口にしない★＝ここから 何かを始めさせない。
+     ★置き場は 倉庫（会社の物）★／★客のブックに タブを1つも足さない★
+     （競合は 客のブックに「Claude Log」タブを作る。★真似しない★） -->
+<div id="rkOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:10000;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#ffffff;border-radius:20px;width:100%;max-width:680px;max-height:88vh;overflow:auto;display:flex;flex-direction:column;">
+    <div style="padding:16px 18px 10px;border-bottom:1px solid #D4EDE1;">
+      <div style="font-size:16px;font-weight:700;color:#2E7D54;">これまでにやった事</div>
+      <div style="font-size:12px;color:#333333;margin-top:4px;" id="rkNote"></div>
+      <div id="rkTabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;"></div>
+    </div>
+    <div style="padding:10px 18px;font-size:13px;color:#333333;line-height:1.8;">
+      <div id="rkList" style="border:1px solid #D4EDE1;border-radius:12px;overflow:auto;max-height:52vh;"></div>
+      <div id="rkMore" style="font-size:12px;color:#333333;margin-top:8px;"></div>
+    </div>
+    <div style="padding:12px 18px 16px;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid #D4EDE1;">
+      <button onclick="closeRireki()" style="font-size:15px;padding:10px 18px;border-radius:12px;border:1px solid #C8ECD8;background:#ffffff;color:#333333;font-family:inherit;cursor:pointer;">閉じる</button>
+    </div>
+  </div>
+</div>
 
 <!-- ★5 E2診断★ うちから「ここが危ない」と言う窓。
      ★聞かれてから答える★のではなく ★開いた時に こちらから出す★（客は 気づけないから）。
@@ -4115,6 +4141,11 @@ window.addEventListener('load',updateBookVerBadge);
     <div class="ai-arrow">▲</div>
   </div>
   <div id="ai-panel-body">
+    <!-- ★入り口①＝AIタブの中★（★入口は AIタブ1つだけ★＝0円の別画面を作らない・司さんの決定）
+         ★組み立てる所は 履歴を描く() 1つ★なので、履歴ページと 同じ物が出る -->
+    <div style="padding:6px 10px 0;">
+      <button onclick="openRireki('ai')" style="font-size:12px;padding:4px 10px;border-radius:14px;border:1px solid #C8ECD8;background:#F0FAF4;color:#333333;font-family:inherit;cursor:pointer;">これまでにやった事</button>
+    </div>
     <div id="ai-response-area"></div>
     <div id="ai-input-row">
       <textarea id="ai-input" rows="1" placeholder="「売上の合計出して」「この表どういう意味？」"></textarea>
@@ -7434,6 +7465,115 @@ function quoteSheetRefs(f){
    ⇒ ★開いた直後に 網だけ先に作る★。計算は 今までどおり 見るシートから。 */
 var _refGraph = null, _refGraphBusy = false;
 function 参照の網(){ return _refGraph; }
+/* ══ ★6 履歴＝見る場所（2026-08-25 司さん／08-26 指示役）★ ═══════════
+   ★入り口は2つ（AIタブ／履歴ページのボタン）だが、★組み立てる所は 1つだけ★★
+     ＝別の入り口から 同じに見える（2か所で作ると 必ず ずれる）。
+   ★ここから 何かを始めさせない★（見る場所であって 探す入口ではない）。
+   ★ファイル名は 長押しでコピー★＝携帯・PCの ふつうの仕組みのまま（自作の選択を作らない）。 */
+var _rirekiIma = null;      /* 今 出している一覧（絞り込みの為だけに持つ） */
+var _rirekiShurui = '';     /* 今の絞り */
+
+function openRireki(どこから){
+  var ov = document.getElementById('rkOverlay');
+  if(!ov) return;
+  ov.style.display = 'flex';
+  _rirekiShurui = '';
+  履歴を読み直す(どこから);
+}
+function closeRireki(){ var ov = document.getElementById('rkOverlay'); if(ov) ov.style.display='none'; }
+
+function 履歴を読み直す(どこから){
+  var note = document.getElementById('rkNote');
+  if(note) note.textContent = '読み込んでいます…';
+  var 読む = (typeof RirekiStore !== 'undefined')
+    ? RirekiStore.読む({ 上限: 200 })
+    : Promise.resolve({ 行たち: [], 倉庫: false });
+  読む.then(function(r){
+    履歴を描く(r.行たち, { 倉庫: r.倉庫, どこから: どこから || '' });
+  }).catch(function(){
+    履歴を描く([], { 倉庫: false, どこから: どこから || '' });
+  });
+}
+
+/* ★組み立てる所は ここ1つだけ★（AIタブからでも 履歴ページからでも 同じ物が出る） */
+function 履歴を描く(行たち, opt){
+  opt = opt || {};
+  var r = Rireki.一覧にする(行たち, { 今: new Date(), 種類: _rirekiShurui, 上限: 200 });
+  _rirekiIma = 行たち;
+  var note = document.getElementById('rkNote');
+  if(note){
+    note.textContent = r.件数 + '件'
+      + (opt.倉庫 === false ? '（この画面の中だけです。ログインすると 残ります）' : '')
+      + (opt.どこから ? '' : '');
+  }
+  /* 種類の帯（絞り込みは 見る為だけ） */
+  var tabs = document.getElementById('rkTabs');
+  if(tabs){
+    tabs.innerHTML = '';
+    var 作る = function(名, 数, 選ばれている){
+      var b = document.createElement('button');
+      b.textContent = 名 + '（' + 数 + '）';
+      b.style.cssText = 'font-size:12px;padding:4px 10px;border-radius:14px;font-family:inherit;cursor:pointer;'
+        + (選ばれている ? 'background:#2E7D54;border:1px solid #2E7D54;color:#ffffff;'
+                        : 'background:#F0FAF4;border:1px solid #C8ECD8;color:#333333;');
+      b.onclick = function(){ _rirekiShurui = (名 === 'ぜんぶ') ? '' : 名; 履歴を描く(_rirekiIma, opt); };
+      tabs.appendChild(b);
+    };
+    作る('ぜんぶ', 行たち.length, _rirekiShurui === '');
+    for(var i=0;i<Rireki.種類の順.length;i++){
+      var 名 = Rireki.種類の順[i];
+      作る(名, r.種類ごと[名] || 0, _rirekiShurui === 名);
+    }
+  }
+  var box = document.getElementById('rkList');
+  box.innerHTML = '';
+  if(!r.出す.length){
+    var 空 = document.createElement('div');
+    空.style.cssText = 'padding:14px 12px;color:#333333;';
+    空.textContent = 'まだ ありません。表を直したり、AIに聞いたりすると ここに残ります。';
+    box.appendChild(空);
+  }
+  for(var j=0;j<r.出す.length;j++){
+    var x = r.出す[j];
+    var row = document.createElement('div');
+    row.style.cssText = 'padding:10px 12px;border-bottom:1px solid #EAF6F0;';
+    var 頭 = document.createElement('div');
+    頭.style.cssText = 'font-size:13px;color:#333333;';
+    var 日 = document.createElement('span');
+    日.style.cssText = 'color:#2E7D54;font-weight:700;';
+    日.textContent = x.日付;
+    頭.appendChild(日);
+    頭.appendChild(document.createTextNode('　' + x.種類 + '　' + x.見出し));
+    row.appendChild(頭);
+    if(x.ファイル名){
+      var f = document.createElement('div');
+      /* ★長押しでコピー＝ふつうの仕組みのまま（user-select を切らない・自作の選択を作らない）★ */
+      f.style.cssText = 'font-size:12px;color:#333333;margin-top:2px;user-select:text;-webkit-user-select:text;';
+      f.textContent = x.ファイル名;
+      row.appendChild(f);
+    }
+    var 中 = Rireki.中身の字(x);
+    if(中){
+      var d = document.createElement('div');
+      d.style.cssText = 'font-size:12px;color:#333333;margin-top:4px;white-space:pre-wrap;';
+      d.textContent = 中;
+      row.appendChild(d);
+    }
+    box.appendChild(row);
+  }
+  document.getElementById('rkMore').textContent =
+    r.出していない ? ('ほか ' + r.出していない + '件は 出していません（多いので 新しい200件）。') : '';
+}
+
+/* ★残す口は 1つ★（画面のどこから残しても 同じ形で入る） */
+function 履歴に残す(種類, 見出し, 中身, ファイル名, クレジット){
+  if(typeof RirekiStore === 'undefined') return;
+  try{
+    RirekiStore.残す({ 種類: 種類, 見出し: 見出し, 中身: 中身 || {},
+      ファイル名: ファイル名 || ((BookOpen.current()||{}).name || ''), クレジット: クレジット || 0 });
+  }catch(e){ /* ★履歴で 本体を落とさない★ */ }
+}
+
 /* ══ ★5 E2診断（2026-08-25）★ ══════════════════════════════
    ★競合は「聞かれた事」に答える★＝人が「どこが変か」を知っている前提。
    ★人が気づけない物は 一生 聞かれない★ので ★開いた時に うちから出す★。
@@ -7452,7 +7592,13 @@ function 診断を始める(){
     if(r.done){
       _shindanBusy = false;
       _shindanResult = r.value;
-      if(_shindanResult.式の本数 > 0) 診断の知らせを出す(_shindanResult);
+      if(_shindanResult.式の本数 > 0){
+        診断の知らせを出す(_shindanResult);
+        /* ★履歴に残す（0円の道＝AIは使っていない）★ */
+        履歴に残す('診断', '危ない所 ' + _shindanResult.式の本数 + 'か所',
+          { やった: 'ブック全体を調べた（AIは呼んでいない）', 何か所: _shindanResult.式の本数,
+            どこ: _shindanResult.見つけた.slice(0, 5).map(function(x){ return { 場所: x.シート + '!' + x.セル, 前: x.いま出ている物, 後: x.いま出ている物 }; }) }, null, 0);
+      }
       return;
     }
     (window.requestAnimationFrame || window.setTimeout)(続き, 0);
@@ -7862,6 +8008,11 @@ function saveOpenedBook(){
     return FileOut.deliver(buf, outName).then(function(){
       /* ★捨てる前に 控えへ写す（2026-08-25 指示役）★＝ここで捨てていたので 何も残らなかった */
       控えへ写す(outName, _editedCells, plan.total);
+      /* ★履歴に残す（どのセルが どう変わったか まで）★ */
+      履歴に残す('直した所', plan.total + 'か所 直して 書き出した',
+        { やった: '値だけ書き換えて 書き出した（元のファイルは変えていない）', 何か所: plan.total,
+          どこ: (plan.rows || []).slice(0, 5).map(function(x){ return { 場所: x.where || x.場所 || '', 前: x.before, 後: x.after }; }) },
+        outName, 0);
       _editedCells = {};                     // ★写してから「直した所」を空にする★
       showToast('<span class="toast-h">' + plan.total + 'か所 直して 書き出しました</span>'
         + '<b>元のファイルは変わっていません</b>。同じ名前で1本 書き出しました。'
@@ -8179,6 +8330,6 @@ document.addEventListener('DOMContentLoaded', function(){ checkRequiredFns(); })
 <!-- ★テスト環境の帯★ 本番の倉庫では出ない。今どの倉庫かは js/supa-config.js が唯一の正。
      ホスト名では決めない（配り方は変わるが「本番のデータか」は変わらないため）。
      ★この2本だけが 本番の book.html との違い★（他は1バイトも同じにする）。 -->
-<script src="js/supa-config.js?v=a619949e"></script>
-<script src="js/env-badge.js?v=a619949e"></script>
+<script src="js/supa-config.js?v=43db9911"></script>
+<script src="js/env-badge.js?v=43db9911"></script>
 </html>

@@ -38,7 +38,7 @@ T('★[hidden] を class の display に負けさせない1行★', () => {
     '★この1行が無いと「中身が空の枠だけ」が残る（他アプリで2回 事故）★');
 });
 T('★見つからなかった時は 何も出さない（0件で騒がない）★', () => {
-  ok(/if\(_shindanResult\.式の本数 > 0\) 診断の知らせを出す/.test(book), '★0件でも 知らせている★');
+  ok(book.indexOf('if(_shindanResult.式の本数 > 0)') >= 0, '★0件でも 知らせている★');
   ok(/if\(!r \|\| !r\.式の本数\) return;/.test(book), '★中身が無くても 窓が開く★');
 });
 T('★調べられなくても 表は そのまま使える（落ちない）★', () => {
@@ -68,7 +68,10 @@ T('★書き出した後に 捨てる前に 控えへ写す★', () => {
   const i = book.indexOf('控えへ写す(outName, _editedCells, plan.total);');
   ok(i > 0, '★写していない（捨てているだけ）★');
   const j = book.indexOf('_editedCells = {};', i);
-  ok(j > i && j - i < 300, '★写す前に 捨てている（順番が逆）★');
+  /* ★見るのは「順番」★＝間に 何行 足しても よい（履歴に残す等）。
+     字数で見ていたので、間に1つ足しただけで 嘘の赤が出た（2026-08-26 自分で踏んだ） */
+  ok(j > i, '★写す前に 捨てている（順番が逆）★');
+  ok(book.slice(i, j).indexOf('控えへ写す') >= 0, '★写す所が 間に無い★');
 });
 T('★別のファイルを開く時も 捨てる前に写す★', () => {
   ok(/控えへ写す\(\(BookOpen\.current\(\) \|\| \{\}\)\.name/.test(book), '★開き直しで 消えている★');
@@ -105,6 +108,8 @@ const 画面を作る = () => {
     + 'var 行った先 = null, 動かした回数 = 0;'
     + 'function scrollToCell(r,c){ 行った先 = r + "," + c; 動かした回数++; }'
     + 'function updateBar(){} function render(){}'
+    /* ★6 履歴に残す所が 足された（診断も 履歴に残る）★＝ここでは 呼ばれた事だけ数える */
+    + 'var 残した = []; function 履歴に残す(a,b,c,d,e){ 残した.push({種類:a, 見出し:b, 中身:c, クレジット:e}); }'
     + src);
   return w;
 };
@@ -127,6 +132,10 @@ T('★見つかった時だけ ボタンが出て、押すと 一覧が開く（
   ok(w.出た知らせ.length === 1, '★知らせが 出ていない／2回 出ている★');
   ok(w.出た知らせ[0].indexOf('2か所') > 0, '★何か所かを 言っていない★');
   ok(w.出た知らせ[0].indexOf('★') < 0, '★客の字に ★ が出ている★');
+  /* ★6 診断も 履歴に残る（0円の道なので クレジットは0）★ */
+  eq(w.残した.length, 1, '★診断が 履歴に残っていない★');
+  eq(w.残した[0].種類, '診断');
+  eq(w.残した[0].クレジット, 0, '★AIを呼んでいないのに クレジットを使った事にしている★');
 
   w.openShindan();
   eq(w.document.getElementById('dgOverlay').style.display, 'flex', '★窓が 開かない★');
@@ -153,6 +162,19 @@ T('★一覧を押すと その場所へ行く（見に行けないと 意味が
   eq(w.動かした回数, 2, '★端に貼り付く（下のボタンに隠れる）★');
   eq(w.document.getElementById('dgOverlay').style.display, 'none', '★窓が 開いたまま★');
 });
+T('★200か所を超えたら 何件 出していないかを 実際に出す（黙って切らない）★', () => {
+  /* ★字が在るか だけ見ていたので、わざと壊しても 素通りした（2026-08-26 自分で踏んだ）★
+     ⇒ ★本物の画面に 250件 入れて、出た字を読む★ */
+  const w = 画面を作る();
+  const data = {};
+  for (let i = 0; i < 250; i++) data[i + ',0'] = { f: '=IFERROR(#REF!,"")', v: '' };
+  w.sheets = [{ name: '計算', data }];
+  w.診断を始める();
+  w.openShindan();
+  eq(w.document.getElementById('dgList').children.length, 200, '★200件で 止めていない★');
+  const 字 = w.document.getElementById('dgMore').textContent;
+  ok(字.indexOf('ほか 50') >= 0, '★何件 出していないかを 出していない★：' + JSON.stringify(字));
+});
 T('★見つからなければ ボタンも 知らせも 出ない★', () => {
   const w = 画面を作る();
   w.sheets = [{ name: '計算', data: { '0,0': { f: '=A1+1', v: 2 }, '1,0': { f: '=IFERROR(A1,"")', v: 2 } } }];
@@ -174,7 +196,7 @@ if (SELF) {
   const BREAKS = [
     ['book.html', '★最初から ボタンを出す★', (s) => s.replace('<button id="shindanBtn" hidden', '<button id="shindanBtn"')],
     ['book.html', '★[hidden] の1行を 消す★', (s) => s.replace('#shindanBtn[hidden]{display:none!important;}', '')],
-    ['book.html', '★0件でも 知らせる★', (s) => s.replace('if(_shindanResult.式の本数 > 0) 診断の知らせを出す(_shindanResult);', '診断の知らせを出す(_shindanResult);')],
+    ['book.html', '★0件でも 知らせる★', (s) => s.replace('if(_shindanResult.式の本数 > 0)', 'if(true)')],
     ['book.html', '★中身が無くても 窓を開く★', (s) => s.replace('if(!r || !r.式の本数) return;', 'r = r || { 見つけた: [], 式の本数: 0 };')],
     ['book.html', '★調べられない時に 画面ごと止まる★', (s) => s.replace('catch(e){ _shindanBusy = false; return; }', 'catch(e){ throw e; }')],
     ['book.html', '★一度に全部 やる（画面が固まる）★', (s) => s.replace('Shindan.調べる途中(sheets, { 一度に: 3000 })', 'Shindan.調べる途中(sheets, { 一度に: 1e9 })')],
@@ -188,7 +210,8 @@ if (SELF) {
     ['book.html', '★開き直しで 消す★', (s) => s.replace("    控えへ写す((BookOpen.current() || {}).name || '（名前なし）', _editedCells, 0);", '')],
     ['book.html', '★控えに 上限を付けない★', (s) => s.replace('while(直した控え.length > 控えの上限) 直した控え.shift();', '')],
     ['book.html', '★控えの失敗で 書き出しごと止まる★', (s) => s.replace('  }catch(e){ return null; }        /* ★控えで 本体を落とさない★ */', '  }catch(e){ throw e; }')],
-    ['book.html', '★黙って 先頭だけ出す★', (s) => s.replace("('ほか ' + (r.見つけた.length - 出す) + 'か所は 出していません（多いので 先頭' + 出す + 'か所）。')", "''")],
+    ['book.html', '★黙って 先頭だけ出す★',
+      (s) => s.replace("(r.見つけた.length > 出す) ? ('ほか '", "false ? ('ほか '")],
   ];
   let red = 0;
   for (const [rel, name, brk] of BREAKS) {

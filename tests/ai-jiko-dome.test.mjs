@@ -21,6 +21,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
+import { 注記を外す } from '../scripts/lib/chuki.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
@@ -297,11 +298,131 @@ T('★数字は 1か所だけ（散らさない）★', () => {
   eq(handler.__事故止め.日の回数, 100);
   eq(handler.__事故止め.会話の合計字数, 40000);
   eq(handler.__事故止め.渡せるトークン, 20000);
-  /* ★数字を 直に書いた所が 他に無いか★（コメントの中は 数えない） */
-  const 中身 = src.split('\n').filter((l) => !/^\s*(\*|\/\*|\/\/)/.test(l)).join('\n');
+  const 中身 = 注記を外す(src);   /* ★注記外しは 共通部品（2026-08-26 指示役）★ */
   eq((中身.match(/40000/g) || []).length, 1, '★40000 が 2か所以上に書いてある★');
   eq((中身.match(/20000/g) || []).length, 2, '★20000 の置き場（トークンの上限と 字数の上限）が 増えている★');
   eq(handler.__事故止め.一度に送れる字数, 20000, '★1回に送れる字数が 事故止めの外に出た★');
+});
+
+/* ══ ★⑨数え場＝倉庫（2026-08-26 指示役が 鍵と 本番の表を 入れた）★ ══
+   ★本物の HTTP は 呼ばない★＝fetch を差し替えて「何を どこへ 送ったか」を数える。
+   ★お金も 倉庫も 1バイトも触らない★ */
+const 元fetch = globalThis.fetch;
+function 倉庫を偽物にする(o) {
+  o = o || {};
+  const 出た = { 数えた: [], 書いた: [], 消した: [] };
+  globalThis.fetch = async (u, init) => {
+    const url = String(u);
+    const m = (init && init.method) || 'GET';
+    if (url.indexOf('/rest/v1/ai_tsukatta') < 0) return 元fetch(u, init);
+    if (m === 'GET') {
+      出た.数えた.push({ url: url, 頭: (init && init.headers) || {} });
+      if (o.数えられない) return { ok: false, headers: { get: () => null } };
+      return { ok: true, headers: { get: (k) => (k.toLowerCase() === 'content-range' ? '0-0/' + (o.回数 || 0) : null) } };
+    }
+    if (m === 'POST') {
+      出た.書いた.push({ 頭: (init && init.headers) || {}, 中身: JSON.parse(init.body) });
+      if (o.書けない) throw new Error('倉庫が落ちた');
+      return { ok: true, headers: { get: () => null } };
+    }
+    if (m === 'DELETE') { 出た.消した.push(url); return { ok: true, headers: { get: () => null } }; }
+    return { ok: true, headers: { get: () => null } };
+  };
+  return 出た;
+}
+const 倉庫を戻す = () => { globalThis.fetch = 元fetch; };
+const 環境 = (url, key) => {
+  if (url) process.env.SUPABASE_URL = url; else delete process.env.SUPABASE_URL;
+  if (key) process.env.SUPABASE_SERVICE_ROLE_KEY = key; else delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+};
+/* この repo の js/supa-config.js が指す倉庫（＝書いてよい先） */
+const 正しい倉庫 = (() => {
+  const src = 注記を外す(fs.readFileSync(path.join(ROOT, 'js/supa-config.js'), 'utf8'));
+  return (/https:\/\/([a-z0-9]+)\.supabase\.co/.exec(src) || [])[1];
+})();
+
+await AT('★倉庫へ 1行 書く（人ごと・結果つき・人が書いた文は入れない）★', async () => {
+  handler.__数え場を空にする();
+  環境('https://' + 正しい倉庫 + '.supabase.co', 'service-key');
+  const 箱 = 倉庫を偽物にする({ 回数: 0 });
+  try {
+    await 押す({ 人: 'w1', ip: '20.0.0.1' });
+  } finally { 倉庫を戻す(); 環境(null, null); }
+  ok(箱.書いた.length >= 1, '★1行も書いていない★');
+  const 中 = 箱.書いた[0].中身;
+  eq(中.hito, 'u:w1');
+  eq(中.hito_kind, 'user');
+  eq(中.kekka, 'ok');
+  ok(!('message' in 中) && !('text' in 中), '★人が書いた文を 入れている★');
+  eq(箱.書いた[0].頭['Content-Profile'], 'exally', '★部屋を 指していない★');
+  /* ★IPの分も 書く（名乗りを書き換えても すり抜けない）★ */
+  eq(箱.書いた.length, 2, '★人とIPの2本 書いていない★');
+  eq(箱.書いた[1].中身.hito_kind, 'ip');
+});
+await AT('★止めた時も 倉庫に残る（黙って止めない）★', async () => {
+  handler.__数え場を空にする();
+  環境('https://' + 正しい倉庫 + '.supabase.co', 'service-key');
+  const 箱 = 倉庫を偽物にする({ 回数: 0 });
+  try {
+    for (let i = 0; i < 10; i++) await 押す({ 人: 'w2', ip: '20.0.0.2' });
+    箱.書いた.length = 0;
+    const r = await 押す({ 人: 'w2', ip: '20.0.0.2' });
+    eq(r.status, 429);
+  } finally { 倉庫を戻す(); 環境(null, null); }
+  eq(箱.書いた.length >= 1, true, '★止めた事が 倉庫に残っていない★');
+  eq(箱.書いた[0].中身.kekka, 'tsukaisugi');
+});
+await AT('★倉庫の数でも 止まる（機械が増えても すり抜けない）★', async () => {
+  handler.__数え場を空にする();
+  環境('https://' + 正しい倉庫 + '.supabase.co', 'service-key');
+  const 箱 = 倉庫を偽物にする({ 回数: 10 });   /* ★別の機械で もう10回 押されている★ */
+  let r;
+  try { r = await 押す({ 人: 'w3', ip: '20.0.0.3' }); }
+  finally { 倉庫を戻す(); 環境(null, null); }
+  eq(r.status, 429, '★この機械では初回なので 通してしまった★');
+  eq(r.body.error, 'tsukaisugi');
+  ok(箱.数えた.length >= 1, '★倉庫に 数えに行っていない★');
+  ok(箱.数えた[0].url.indexOf('kekka=eq.ok') > 0, '★通した分だけを 数えていない★');
+});
+await AT('★倉庫が落ちても AIは止めない★', async () => {
+  handler.__数え場を空にする();
+  環境('https://' + 正しい倉庫 + '.supabase.co', 'service-key');
+  倉庫を偽物にする({ 数えられない: true, 書けない: true });
+  let r;
+  try { r = await 押す({ 人: 'w4', ip: '20.0.0.4' }); }
+  finally { 倉庫を戻す(); 環境(null, null); }
+  eq(r.status, 200, '★倉庫が落ちたら 客が使えなくなる★');
+});
+await AT('★repo の向き先と違う倉庫には 1行も書かない（環境の混ざりを止める）★', async () => {
+  handler.__数え場を空にする();
+  環境('https://yosonokurako.supabase.co', 'service-key');
+  const 箱 = 倉庫を偽物にする({ 回数: 0 });
+  try { await 押す({ 人: 'w5', ip: '20.0.0.5' }); }
+  finally { 倉庫を戻す(); 環境(null, null); }
+  eq(箱.書いた.length, 0, '★別の倉庫へ 書いてしまった★');
+  eq(箱.数えた.length, 0, '★別の倉庫を 数えに行った★');
+});
+await AT('★鍵が無ければ 今までどおり（機械の中だけ）★', async () => {
+  handler.__数え場を空にする();
+  環境(null, null);
+  const 箱 = 倉庫を偽物にする({ 回数: 0 });
+  let r;
+  try { r = await 押す({ 人: 'w6', ip: '20.0.0.6' }); }
+  finally { 倉庫を戻す(); }
+  eq(r.status, 200);
+  eq(箱.書いた.length, 0, '★鍵が無いのに 書きに行った★');
+});
+await AT('★90日の掃除は その日の最初の1回だけ★', async () => {
+  handler.__数え場を空にする();
+  環境('https://' + 正しい倉庫 + '.supabase.co', 'service-key');
+  const 箱 = 倉庫を偽物にする({ 回数: 0 });
+  try {
+    await 押す({ 人: 'w7', ip: '20.0.0.7' });
+    await 押す({ 人: 'w7', ip: '20.0.0.7' });
+    await 押す({ 人: 'w7', ip: '20.0.0.7' });
+  } finally { 倉庫を戻す(); 環境(null, null); }
+  eq(箱.消した.length, 1, '★毎回 消しに行っている／1回も行っていない★');
+  ok(箱.消した[0].indexOf('oshita=lt.') > 0, '★古い物だけを 消していない★');
 });
 
 /* ══ ⑧画面の側（人ごとに数えるには 誰かを伝える口が要る）══ */
@@ -341,7 +462,7 @@ if (SELF) {
     ['api/claude.js', '★2万トークンを 見ない★', (s) => s.replace('渡せるトークン: 20000,', '渡せるトークン: 99999999,')],
     ['api/claude.js', '★止めた分まで数える（待っても直らない）★', (s) => s.replace('    数えておく(誰, いま);', '')],
     ['api/claude.js', '★止める前に AIを呼ぶ（お金が出る）★',
-      (s) => s.replace('    const 見張り = 押した回数を見る(誰, いま);', '    const 見張り = { 止める: false, あと秒: 0, どれ: \'\' };')],
+      (s) => s.replace('    const 見張り = await 倉庫も見て数える(誰, いま);', "    const 見張り = { 止める: false, あと秒: 0, どれ: '', どこで: '' };")],
     ['api/claude.js', '★IPを数えない（名乗りを変えれば すり抜ける）★',
       (s) => s.replace("  鍵.push('ip:' + (ip || 'unknown'));", '  if (!人) 鍵.push(\'ip:\' + (ip || \'unknown\'));')],
     /* ★改行(CRLF/LF)の違いで 置換できず 素通りしていた（2026-08-25）★＝1行だけを置き換える */
@@ -350,8 +471,20 @@ if (SELF) {
     ['api/claude.js', '★最後の1往復も 捨てる★',
       (s) => s.replace('while (out.length > 2 && 合計() > 上限) out.shift();', 'while (out.length > 0 && 合計() > 上限) out.shift();')],
     ['api/claude.js', '★止めた事を 記録に残さない★',
-      (s) => s.replace("      記録({ 結果: 'tsukaisugi', 字数: message.length, 待ち秒: 見張り.あと秒, どれ: 見張り.どれ, 入口: 入口 });", '')],
+      (s) => s.replace("      記録({ 結果: 'tsukaisugi', 字数: message.length, 待ち秒: 見張り.あと秒, どれ: 見張り.どれ,", "      ({")],
     ['api/claude.js', '★削った事を 記録に残さない★', (s) => s.replace('      会話を削った: 生の会話.length - sanitizedHistory.length,', '      会話を削った: 0,')],
+    /* ★倉庫（数え場）の壊し方★ */
+    ['api/claude.js', '★倉庫へ 書かない★', (s) => s.replace('        倉庫へ書く({', '        false && 倉庫へ書く({')],
+    ['api/claude.js', '★倉庫の数を 見ない（機械が増えると すり抜ける）★',
+      (s) => s.replace('    const 見張り = await 倉庫も見て数える(誰, いま);', '    const 見張り = 押した回数を見る(誰, いま);')],
+    ['api/claude.js', '★別の倉庫にも 書いてしまう（環境の混ざり）★',
+      (s) => s.replace('  if (!先 || (正 && 先 !== 正)) return null;', '')],
+    ['api/claude.js', '★倉庫が落ちたら AIも止める★',
+      (s) => s.replace("    return Object.assign({ どこで: '機械の中（倉庫は未測定）' }, 中);", "    throw e;")],
+    ['api/claude.js', '★掃除を 毎回 走らせる★', (s) => s.replace("  if (掃除した日 === 今日) return null;", '')],
+    ['api/claude.js', '★掃除を 1回も走らせない★', (s) => s.replace('    掃除する(いま).catch(() => {});', '')],
+    ['api/claude.js', '★人が書いた文を 倉庫に入れる★',
+      (s) => s.replace("          iriguchi: o.入口 || null,", "          iriguchi: o.入口 || null," + String.fromCharCode(10) + "          message: String(o.文 || \"\"),")],
     ['api/claude.js', '★max_tokens を 勝手に増やす★', (s) => s.replace('max_tokens: 2000,', 'max_tokens: 8000,')],
     ['api/claude.js', '★見積もりを 少なく見る（お金が出る側）★', (s) => s.replace('  return 和 + Math.ceil(英 / 4);', '  return Math.ceil((和 + 英) / 4);')],
     ['lib/ai-reason.js', '★「混み合っています」と言う★',

@@ -256,12 +256,100 @@ const 事故止め = {
 };
 const 一度に送れる字数 = 事故止め.一度に送れる字数;
 
-/* ★数え場＝この機械の中だけ★
-   ★正直に書く★＝Vercel は 機械が増える。増えた分は 別勘定になるので ★すり抜けが在る★。
-   ★共有の数え場（Supabaseに表を1つ／Vercel KV）は 倉庫を触るので 指示待ち★。
-   それでも ★1台に集中する連打（実際の事故の形）は ここで止まる★。 */
+/* ══ ★数え場（2026-08-26 指示役が 鍵と 本番の表を 入れた）★ ══════════════
+   ★倉庫（exally.ai_tsukatta）に 1回ぶん 1行 書く★＝機械が増えても すり抜けない。
+   ★決まり★
+     ①★書けなくても AIは止めない★（数え場が落ちて 客が使えなくなる形にしない）
+     ②★向き先は この repo の js/supa-config.js から読む★
+        ＝本番の repo なら 本番の倉庫、テスト線なら DB-test。
+        ★環境変数の URL が repo の向き先と違ったら 1行も書かない★（混ざりを止める）
+     ③★書けない時は 今までどおり「この機械の中だけ」で数える★（0件・異常なしにしない）
+     ④★90日の掃除は 書き込む所と同じ所で回す★＝その日の最初の書き込みで 1回だけ */
 const 数え場 = new Map();
-const __数え場を空にする = () => 数え場.clear();
+const __数え場を空にする = () => { 数え場.clear(); 掃除した日 = ''; };
+
+/** ★倉庫の向き先（この repo の js/supa-config.js が 唯一の正）★ */
+let _repoの倉庫 = undefined;
+function repoの倉庫() {
+  if (_repoの倉庫 !== undefined) return _repoの倉庫;
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const src = fs.readFileSync(path.join(__dirname, '..', 'js', 'supa-config.js'), 'utf8')
+      /* ★注記を外してから読む★（注記の中の URL を 本物と読まない） */
+      .replace(/\/\*[\s\S]*?\*\//g, ' ');
+    const m = /https:\/\/([a-z0-9]+)\.supabase\.co/.exec(src);
+    _repoの倉庫 = m ? m[1] : null;
+  } catch (e) { _repoの倉庫 = null; }
+  return _repoの倉庫;
+}
+
+/** ★倉庫が使えるか★（鍵が無い・向き先が違う なら 使わない） */
+function 倉庫の口() {
+  const url = process.env.SUPABASE_URL || '';
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  if (!url || !key) return null;
+  const m = /https:\/\/([a-z0-9]+)\.supabase\.co/.exec(url);
+  const 先 = m ? m[1] : null;
+  const 正 = repoの倉庫();
+  /* ★repo の向き先と違う倉庫には 1行も書かない★（環境の混ざりを止める） */
+  if (!先 || (正 && 先 !== 正)) return null;
+  return { url: url.replace(/\/+$/, ''), key: key };
+}
+
+const 倉庫の頭 = (口, 足す) => Object.assign({
+  apikey: 口.key,
+  Authorization: 'Bearer ' + 口.key,
+  'Accept-Profile': 'exally',
+  'Content-Profile': 'exally',
+  'Content-Type': 'application/json',
+}, 足す || {});
+
+/** ★倉庫で 直近◯ミリ秒の「通した回数」を数える★（数えられなければ null＝未測定） */
+async function 倉庫で数える(鍵, 窓ミリ秒, いま) {
+  const 口 = 倉庫の口();
+  if (!口) return null;
+  const から = new Date(いま - 窓ミリ秒).toISOString();
+  const u = 口.url + '/rest/v1/ai_tsukatta?select=id&hito=eq.' + encodeURIComponent(鍵)
+    + '&kekka=eq.ok&oshita=gte.' + encodeURIComponent(から);
+  const res = await fetch(u, { headers: 倉庫の頭(口, { Prefer: 'count=exact', Range: '0-0' }) });
+  if (!res.ok) return null;
+  const cr = res.headers.get('content-range') || '';
+  const m = /\/(\d+)$/.exec(cr);
+  return m ? Number(m[1]) : null;
+}
+
+/** ★倉庫へ 1行 書く★（書けなくても AIは止めない） */
+async function 倉庫へ書く(行) {
+  const 口 = 倉庫の口();
+  if (!口) return false;
+  try {
+    const res = await fetch(口.url + '/rest/v1/ai_tsukatta', {
+      method: 'POST',
+      headers: 倉庫の頭(口, { Prefer: 'return=minimal' }),
+      body: JSON.stringify(行),
+    });
+    return res.ok;
+  } catch (e) { return false; }
+}
+
+/* ★90日の掃除★＝★その日の最初の書き込みで 1回だけ★（外の見張りは この repo に鍵が無く 回らない） */
+let 掃除した日 = '';
+async function 掃除する(いま) {
+  const 口 = 倉庫の口();
+  if (!口) return null;
+  const 今日 = new Date(いま).toISOString().slice(0, 10);
+  if (掃除した日 === 今日) return null;
+  掃除した日 = 今日;
+  try {
+    const より前 = new Date(いま - 90 * 24 * 60 * 60 * 1000).toISOString();
+    const res = await fetch(口.url + '/rest/v1/ai_tsukatta?oshita=lt.' + encodeURIComponent(より前), {
+      method: 'DELETE',
+      headers: 倉庫の頭(口, { Prefer: 'return=minimal' }),
+    });
+    return res.ok;
+  } catch (e) { return false; }
+}
 
 /** ★誰の分か★＝ログインの人ID（あれば）と 入口のIP（必ず）の2本で数える。
  *  ★人IDだけだと 名乗りを書き換えれば すり抜ける★ので IP も必ず数える。 */
@@ -303,6 +391,32 @@ function 押した回数を見る(鍵たち, いま) {
     }
   }
   return { 止める: false, あと秒: 0, どれ: '' };
+}
+
+/** ★倉庫でも数える（在れば そちらが 正）★
+ *  ★倉庫が答えられない時は 機械の中の数で決める★（0件・異常なしにしない）
+ *  @returns {{止める:boolean, あと秒:number, どれ:string, どこで:string}}
+ */
+async function 倉庫も見て数える(鍵たち, いま) {
+  const 中 = 押した回数を見る(鍵たち, いま);
+  if (中.止める) return Object.assign({ どこで: '機械の中' }, 中);
+  if (!倉庫の口()) return Object.assign({ どこで: '機械の中' }, 中);
+  try {
+    for (const k of 鍵たち) {
+      const 分 = await 倉庫で数える(k, 事故止め.分の窓ミリ秒, いま);
+      if (分 !== null && 分 >= 事故止め.分の回数) {
+        return { 止める: true, あと秒: 60, どれ: '分', どこで: '倉庫' };
+      }
+      const 日 = await 倉庫で数える(k, 事故止め.日の窓ミリ秒, いま);
+      if (日 !== null && 日 >= 事故止め.日の回数) {
+        return { 止める: true, あと秒: 3600, どれ: '日', どこで: '倉庫' };
+      }
+    }
+  } catch (e) {
+    /* ★倉庫が落ちても AIは止めない★（数えるのは 機械の中の分で続ける） */
+    return Object.assign({ どこで: '機械の中（倉庫は未測定）' }, 中);
+  }
+  return Object.assign({ どこで: '倉庫' }, 中);
 }
 
 /** ★通した分を 1回 数える（★捨てるのは 1日より古い物だけ★＝溜め続けない）★ */
@@ -382,10 +496,34 @@ function 記録(o) {
       渡した見積もりトークン: o.渡した見積もりトークン || 0,
       待ち秒: o.待ち秒 || 0,
       どれ: o.どれ || '',
+      /* ★どこで数えたか（倉庫／機械の中）★＝すり抜けているのか 効いているのかが 見える */
+      どこで: o.どこで || '',
       かかった秒: o.秒,
       入口: o.入口 || '(名乗りなし)',
     }));
   } catch (e) { /* 記録で本体を落とさない */ }
+  /* ★倉庫にも 1行 残す★（機械が増えても すり抜けない・9のクレジットも 同じ表に乗る）
+     ★書けなくても AIは止めない★＝待たないし、失敗しても 何も起きない。
+     ★人が書いた文そのものは 1文字も入れない★（長さと数だけ） */
+  try {
+    if (o.誰 && o.誰.length) {
+      for (const k of o.誰) {
+        倉庫へ書く({
+          hito: k,
+          hito_kind: k.slice(0, 2) === 'u:' ? 'user' : 'ip',
+          kekka: o.結果,
+          nyuryoku_token: o.入力 || 0,
+          shutsuryoku_token: o.出力 || 0,
+          oita_token: o.置いた || 0,
+          yominaoshita_token: o.読み直した || 0,
+          watashita_mitsumori: o.渡した見積もりトークン || 0,
+          kaiwa_kezutta: o.会話を削った || 0,
+          iriguchi: o.入口 || null,
+          credit: 0,
+        }).catch(() => {});
+      }
+    }
+  } catch (e) { /* 倉庫で本体を落とさない */ }
 }
 
 module.exports = async (req, res) => {
@@ -425,15 +563,18 @@ module.exports = async (req, res) => {
        ★「混み合っています」とは言わない★＝待てば直ると分かる言い方にする（合言葉 tsukaisugi） */
     const 誰 = 誰か(req);
     const いま = Date.now();
-    const 見張り = 押した回数を見る(誰, いま);
+    const 見張り = await 倉庫も見て数える(誰, いま);
     if (見張り.止める) {
-      記録({ 結果: 'tsukaisugi', 字数: message.length, 待ち秒: 見張り.あと秒, どれ: 見張り.どれ, 入口: 入口 });
+      記録({ 結果: 'tsukaisugi', 字数: message.length, 待ち秒: 見張り.あと秒, どれ: 見張り.どれ,
+              どこで: 見張り.どこで, 誰: 誰, 入口: 入口 });
       res.setHeader('Retry-After', String(見張り.あと秒));
       return res.status(429).json({
         error: 'tsukaisugi', どれ: 見張り.どれ, 待ち秒: 見張り.あと秒, text: '', tsv: '',
       });
     }
     数えておく(誰, いま);
+    /* ★90日の掃除は 書き込む所と同じ所で回す★（その日の最初の1回だけ） */
+    掃除する(いま).catch(() => {});
 
     // 会話履歴のサニタイズ（不正エントリ除去・最大40メッセージ=20ターンに制限）
     const 生の会話 = (Array.isArray(history) ? history : [])
@@ -536,6 +677,7 @@ module.exports = async (req, res) => {
       渡した見積もりトークン: 見積もりトークン(前置き字) + 見積もりトークン(message)
         + sanitizedHistory.reduce((a, m) => a + 見積もりトークン(m.content), 0),
       秒: Math.round((Date.now() - 始めた) / 100) / 10,
+      誰: 誰,
       入口: 入口,
     });
 
@@ -568,6 +710,7 @@ module.exports = async (req, res) => {
       出力: 0,
       字数: (req.body && typeof req.body.message === 'string') ? req.body.message.length : 0,
       会話: 0,
+      誰: (typeof 誰 !== 'undefined') ? 誰 : null,
       入口: 入口,
     });
     return res.status(k.status).json({ error: k.合言葉, text: '', tsv: '' });

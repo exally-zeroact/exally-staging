@@ -33,6 +33,14 @@ export function 門番(sql, opt) {
   /* 注記(コメント)は 見ない＝注記に書いた言葉で 止まらないように */
   const 本文 = 中.replace(/--[^\n]*/g, ' ').replace(/\/\*[\s\S]*?\*\//g, ' ');
   if (!本文.trim()) 悪い.push('中身が空');
+  /* ★revoke（権限を外す）は 安全の側★＝「truncate を revoke する」は 消す事ではない。
+     ⇒ ★revoke の1文は 消す系の見張りから 外して数える★（2026-08-26 実際に止められた）
+        revoke の1文の中に delete from は書けないので、外しても 穴にならない。 */
+  /* ★1文ずつに分けて、revoke で始まる文だけ 外す★（正規表現の逃がし方で 2回 間違えたので、
+     ★分けて数える★形にした。revoke の1文の中に delete from は書けないので 穴にならない） */
+  const 見る本文 = 本文.split(';')
+    .filter((文) => String(文).trim().slice(0, 6).toLowerCase() !== 'revoke')
+    .join(';');
   const 消す系 = [
     [/\bdrop\s+(table|schema|database|index|view|function)\b/i, 'drop'],
     [/\btruncate\b/i, 'truncate'],
@@ -40,7 +48,7 @@ export function 門番(sql, opt) {
     [/\bupdate\s+[a-z_."]+\s+set\b/i, 'update'],
     [/\balter\s+table\s+[a-z_."]+\s+drop\b/i, 'alter…drop'],
   ];
-  for (const [re, 名] of 消す系) if (re.test(本文)) 悪い.push('消す系が混ざっている: ' + 名);
+  for (const [re, 名] of 消す系) if (re.test(見る本文)) 悪い.push('消す系が混ざっている: ' + 名);
   /* ★部屋は exally だけ★ */
   const 部屋 = new Set();
   const re = /\b(?:create|alter|comment on)\s+(?:table|index|view|materialized view)?\s*(?:if not exists\s+)?([a-z_][a-z0-9_]*)\./gi;
@@ -108,6 +116,9 @@ if (args.includes('--self-test')) {
     ['★注記に書いた drop では 止まらない★', '-- drop table は しない\ncreate table exally.a (id int);', true],
     ['★当てる物が1つも無い★', 'select 1;', false],
     ['権限だけ', 'revoke all on exally.a from anon;', true],
+    ['★revoke truncate は 通す（消す事ではない）★', 'revoke truncate on exally.a from authenticated;', true],
+    ['★revoke の後ろに 本物の delete が在れば 止める★',
+      'revoke truncate on exally.a from authenticated; delete from exally.a where 1=1;', false],
   ];
   let 緑 = 0, 赤 = 0;
   console.log('');
