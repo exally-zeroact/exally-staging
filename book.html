@@ -1200,43 +1200,45 @@ background:#FFE066 !important;
 }
 </style>
 
-<script src="hyperformula.full.min.js?v=64ef62e9"></script>
+<script src="hyperformula.full.min.js?v=d0f6bf2f"></script>
 
-<script src="exally-formula.js?v=64ef62e9"></script>
+<script src="exally-formula.js?v=d0f6bf2f"></script>
 <!-- グリッド→xlsx の変換と「落ちる物」の警告(純関数・軽い)。SheetJS本体(930KB)と lib/xlsx-io.js は
      初回の「Excelに書き出す」で初めて読み込む＝グリッドの表示を重くしない -->
-<script src="js/file-out.js?v=64ef62e9"></script>
+<script src="js/file-out.js?v=d0f6bf2f"></script>
 <!-- ★打ち込んだ文字の解釈（1,234 を数にする）。★計算側も書き出し側も この1本を呼ぶ★
      grid-xlsx.js より先に読む（grid-xlsx.js が読み込み時に掴む） -->
-<script src="lib/typed-value.js?v=64ef62e9"></script>
-<script src="lib/grid-xlsx.js?v=64ef62e9"></script>
+<script src="lib/typed-value.js?v=d0f6bf2f"></script>
+<script src="lib/grid-xlsx.js?v=d0f6bf2f"></script>
   <!-- ★式の中の参照を「カーソルの位置で」直せるようにする★
        2026-08-06 司さんが実機で踏んだ: 「=B1+30」の B1 を直そうと A1 を触ると
        「=B1+30A1」になり ★B1 を直す手段が無かった★。テスト線では直っていたが
        ★本番には運ばれていなかった★（2026-08-18 差を数えて見つけた）。 -->
-  <script src="lib/grid-refedit.js?v=64ef62e9"></script>
-<script src="lib/autosum.js?v=64ef62e9"></script>
-<script src="lib/grid-sort.js?v=64ef62e9"></script>
-<script src="lib/grid-filter.js?v=64ef62e9"></script>
-<script src="lib/grid-find.js?v=64ef62e9"></script>
-<script src="lib/grid-print.js?v=64ef62e9"></script>
-<script src="lib/ai-reason.js?v=64ef62e9"></script>
-<script src="lib/menu-place.js?v=64ef62e9"></script>
-<script src="lib/grid-stats.js?v=64ef62e9"></script>
-<script src="lib/grid-valid.js?v=64ef62e9"></script>
-<script src="lib/cond-format.js?v=64ef62e9"></script>
-<script src="lib/ref-graph.js?v=64ef62e9"></script>
-<script src="lib/shindan.js?v=64ef62e9"></script>
-<script src="lib/rireki.js?v=64ef62e9"></script>
-<script src="lib/recipe.js?v=64ef62e9"></script>
-<script src="js/rireki-store.js?v=64ef62e9"></script>
-<script src="lib/excel-version.js?v=64ef62e9"></script>
+  <script src="lib/grid-refedit.js?v=d0f6bf2f"></script>
+<script src="lib/autosum.js?v=d0f6bf2f"></script>
+<script src="lib/grid-sort.js?v=d0f6bf2f"></script>
+<script src="lib/grid-filter.js?v=d0f6bf2f"></script>
+<script src="lib/grid-find.js?v=d0f6bf2f"></script>
+<script src="lib/grid-print.js?v=d0f6bf2f"></script>
+<script src="lib/ai-reason.js?v=d0f6bf2f"></script>
+<script src="lib/menu-place.js?v=d0f6bf2f"></script>
+<script src="lib/grid-stats.js?v=d0f6bf2f"></script>
+<script src="lib/grid-valid.js?v=d0f6bf2f"></script>
+<script src="lib/cond-format.js?v=d0f6bf2f"></script>
+<script src="lib/ref-graph.js?v=d0f6bf2f"></script>
+<script src="lib/shindan.js?v=d0f6bf2f"></script>
+<script src="lib/rireki.js?v=d0f6bf2f"></script>
+<script src="lib/chizu.js?v=d0f6bf2f"></script>
+<script src="lib/horu.js?v=d0f6bf2f"></script>
+<script src="lib/recipe.js?v=d0f6bf2f"></script>
+<script src="js/rireki-store.js?v=d0f6bf2f"></script>
+<script src="lib/excel-version.js?v=d0f6bf2f"></script>
 <!-- ★ログイン（hub.html と同じ4本・新しく作った物は0）★ 2026-08-23
      ここを掛けるまで ★誰の回数か 数えられない＝上限が掛けられない★（指示役 2026-08-23） -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supa-config.js?v=64ef62e9"></script>
-<script src="js/exally-login.js?v=64ef62e9"></script>
-<script src="js/auth.js?v=64ef62e9"></script>
+<script src="js/supa-config.js?v=d0f6bf2f"></script>
+<script src="js/exally-login.js?v=d0f6bf2f"></script>
+<script src="js/auth.js?v=d0f6bf2f"></script>
 
 <script>
 /* ===== canvas-formula-engine.js (inlined) ===== */
@@ -7267,13 +7269,57 @@ async function sendToAI(){
   document.getElementById('ai-response-area').scrollTop = 9999;
 
   {
-    var r = await _aiFetch({ message: userMsg, history: aiHistory });
-    var aiText = r.言葉;
+    /* ══ ★7 地図＋掘る（2026-08-22 司さん決定・4段）★ ═══════════════
+       ①★地図を毎回 渡す（数千文字）★＝機械が0円で作った ブック全体の見取り図
+       ②★参照の網で辿る★（地図の中に「どのシートが どこを 何本 見ているか」が入る）
+       ③★AIが「もっと見せて」と言える★＝範囲を頼まれたら その場で返して もう一度 聞く
+       ④★地図とよく使う所は 置いたまま使い回す★（prompt caching・サーバ側で導入済み）
+       ★掘った回数は 数え場に残る★（1回 呼ぶごとに 1行） */
+    var 地図 = (typeof Chizu !== 'undefined')
+      ? Chizu.作る(sheets, (typeof _refGraph !== 'undefined' ? _refGraph : null),
+          (typeof _shindanResult !== 'undefined' ? _shindanResult : null),
+          { 今のシート: (sheets[activeSheet] || {}).name })
+      : { 字: '', 文字数: 0 };
+    var 材料 = 地図.字 ? [地図.字] : [];
+    var 掘った = 0, 動いた = 0, aiText = '', r = null;
+    for(var 回 = 0; 回 < 12; 回++){
+      var 送る = userMsg + (材料.length ? (String.fromCharCode(10) + String.fromCharCode(10) + 材料.join(String.fromCharCode(10) + String.fromCharCode(10))) : '');
+      r = await _aiFetch({ message: 送る, history: aiHistory });
+      動いた++;
+      if(!r.ok){ aiText = r.言葉; break; }
+      aiText = r.言葉;
+      if(typeof Horu === 'undefined') break;
+      var 頼み = Horu.頼みを読む(aiText);
+      if(!頼み.掘る.length){
+        /* ★どのセルを見て言ったかが 無い答えは 通さない★（1回だけ 付け直しを頼む） */
+        if(!Horu.見た所が在るか(aiText) && 回 < 11 && !材料.付け直した){
+          材料.push(Horu.見た所を付けてと言う());
+          材料.付け直した = true;
+          continue;
+        }
+        break;
+      }
+      if(Horu.もう掘れないか(掘った)){
+        材料.push(Horu.もう掘れない時の言葉(掘った));
+        continue;
+      }
+      掘った++;
+      材料.push(Horu.範囲を出す(sheets, 頼み.掘る, { 今のシート: (sheets[activeSheet]||{}).name }).字);
+    }
 
     var th = document.getElementById('ai-thinking');
     if(th) th.remove();
 
-    if(!r.ok){ addAIChatMsg('ai', aiText); document.getElementById('ai-send').disabled = false; return; }
+    if(!r || !r.ok){ addAIChatMsg('ai', aiText); document.getElementById('ai-send').disabled = false; return; }
+
+    /* ★お金の数字は AIに出させない★＝{{シート!セル}} を うちの計算結果に差し替える */
+    if(typeof Horu !== 'undefined'){
+      var 差 = Horu.値を差し込む(aiText, sheets, function(sh, rr, cc){
+        var cell = (sh.data || {})[rr + ',' + cc];
+        return cell ? (cell.d !== undefined ? cell.d : cell.v) : undefined;
+      });
+      aiText = 差.字;
+    }
 
     // 括弧カウントでJSONを正確に抽出
     var extracted = extractWriteAction(aiText);
@@ -7281,7 +7327,13 @@ async function sendToAI(){
       ? (aiText.substring(0, extracted.start) + aiText.substring(extracted.end)).trim()
       : aiText;
 
-    addAIChatMsg('ai', displayText);
+    /* ★押した後は「AIを ◯回 使いました」＝数え場に残った実数と同じ★
+       （★押す前は「AIを使います」＝数は書かない★＝掘ると 何度も動くので 嘘になる） */
+    addAIChatMsg('ai', displayText
+      + '<span class="toast-n">AIを ' + 動いた + '回 使いました'
+      + (掘った ? '（うち もっと見せて ' + 掘った + '回）' : '') + '</span>');
+    /* ★履歴に残す★（このファイルの分として） */
+    履歴に残す('関数', text.slice(0, 40), { 聞いた: text, やった: 'AIに聞いた（地図 ' + 地図.文字数 + '文字・掘った ' + 掘った + '回）' }, null, 動いた);
 
     aiHistory.push({role:'user',content:text});
     aiHistory.push({role:'assistant',content:displayText});
@@ -8360,6 +8412,6 @@ document.addEventListener('DOMContentLoaded', function(){ checkRequiredFns(); })
 <!-- ★テスト環境の帯★ 本番の倉庫では出ない。今どの倉庫かは js/supa-config.js が唯一の正。
      ホスト名では決めない（配り方は変わるが「本番のデータか」は変わらないため）。
      ★この2本だけが 本番の book.html との違い★（他は1バイトも同じにする）。 -->
-<script src="js/supa-config.js?v=64ef62e9"></script>
-<script src="js/env-badge.js?v=64ef62e9"></script>
+<script src="js/supa-config.js?v=d0f6bf2f"></script>
+<script src="js/env-badge.js?v=d0f6bf2f"></script>
 </html>

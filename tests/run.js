@@ -47,6 +47,8 @@ const FILES = [
   ['cond-format.test.mjs', '--self-test'],
   'cond-format-ui.test.mjs',              // ★本物の画面で 実際に押す(部品が緑=画面で使える ではない)
   ['cond-format-ui.test.mjs', '--self-test'],
+  'chizu-horu.test.mjs',                  // ★7 地図＋掘る
+  ['chizu-horu.test.mjs', '--self-test'],
   'recipe.test.mjs',                      // ★6 レシピ＝2回目からはAIを呼ばない（記録の行数で数える）
   ['recipe.test.mjs', '--self-test'],
   'rireki.test.mjs',                      // ★6 履歴＝見る場所（別の入り口から同じ・客のブックにタブ0件）

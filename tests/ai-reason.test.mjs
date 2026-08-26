@@ -438,7 +438,7 @@ if (SELF) {
     ['book.html', '★使う上限を 勝手に足す（足すなと言われている）★',
       (s) => s.replace('async function _aiFetch(body){', 'var AI_LIMIT = 10;\nasync function _aiFetch(body){')],
     ['book.html', '★つながっていないのに つながった事にする★',
-      (s) => s.replace('    if(!r.ok){ addAIChatMsg(\'ai\', aiText); document.getElementById(\'ai-send\').disabled = false; return; }', '')],
+      (s) => s.replace("if(!r || !r.ok){ addAIChatMsg('ai', aiText); document.getElementById('ai-send').disabled = false; return; }", '')],
     ['lib/ai-reason.js', '★窓口が無い(404)を 読まない★',
       (s) => s.replace('    if (s === 404 || s === 405) {', '    if (false) {')],
     ['lib/ai-reason.js', '★鍵がだめ(401)を 読まない★',
