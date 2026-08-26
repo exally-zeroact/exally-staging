@@ -7510,41 +7510,28 @@ function 履歴を描く(行たち, opt){
   var note = document.getElementById('rkNote');
   if(note){
     /* ★どのファイルの分を 出しているかを 必ず言う★（黙って混ぜない・黙って絞らない） */
-    note.textContent = (_rirekiFile ? ('「' + _rirekiFile + '」の分 ') : 'ぜんぶのファイル ')
+    note.textContent = (_rirekiFile ? ('「' + _rirekiFile + '」の分 ') : '')
       + r.件数 + '件'
-      + (_rirekiFile && r.ぜんぶの件数 > r.このファイルの件数
-          ? '（ほかのファイルの分は 出していません）' : '')
       + (opt.倉庫 === false ? '（この画面の中だけです。ログインすると 残ります）' : '');
   }
-  /* ★どのファイルの分か を 切り替える所★（今のファイル ／ ぜんぶ） */
+  /* ★ブックを開いている時は その ファイルの分だけ★（司さん 2026-08-26
+       「このタブに全部だしてどうするんど。ブック開いてからの画面なら そのファイルに限る方が
+         ごちゃごちゃせんやろが」）
+     ⇒ ★切り替えの帯は 出さない★。選ぶ物が無いなら 並べない。
+     ★ブックを開いていない時だけ★ ぜんぶ出す（その時は 絞りようが無い）。 */
   var 場所 = document.getElementById('rkFiles');
   if(場所){
     場所.innerHTML = '';
-    var 今の名 = ((BookOpen.current() || {}).name) || '';
-    var 作るF = function(名, 字, 数, 選ばれている){
-      var b = document.createElement('button');
-      b.textContent = 字 + '（' + 数 + '）';
-      b.style.cssText = 'font-size:12px;padding:4px 10px;border-radius:14px;font-family:inherit;cursor:pointer;max-width:22em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'
-        + (選ばれている ? 'background:#2E7D54;border:1px solid #2E7D54;color:#ffffff;'
-                        : 'background:#F0FAF4;border:1px solid #C8ECD8;color:#333333;');
-      b.onclick = function(){ _rirekiFile = 名; _rirekiShurui = ''; 履歴を描く(_rirekiIma, opt); };
-      場所.appendChild(b);
-    };
-    if(今の名){
-      var この数 = 0;
-      for(var fi=0; fi<行たち.length; fi++) if((行たち[fi].ファイル名 || '') === 今の名) この数++;
-      作るF(今の名, '今のファイル', この数, _rirekiFile === 今の名);
-    }
-    作るF('', 'ぜんぶのファイル', 行たち.length, _rirekiFile === '');
-    /* ★同じ名前で 中身が違う物が 混ざっていたら 隠さずに 言う★ */
+    /* ★同じ名前で 中身が違う物が 混ざっていたら 隠さずに 言う★（めったに出ない・出たら大事） */
     if(r.同じ名前で違う物 > 0){
       var 注 = document.createElement('div');
-      注.style.cssText = 'font-size:12px;color:#8A5A00;margin-top:6px;white-space:normal;';
+      注.style.cssText = 'font-size:12px;color:#8A5A00;margin-top:2px;';
       注.textContent = '同じ名前で 中身が違うファイルが ' + (r.同じ名前で違う物 + 1) + '本 混ざっています（名前だけでは 見分けられません）。';
       場所.appendChild(注);
     }
   }
-  /* 種類の帯（絞り込みは 見る為だけ） */
+  /* 種類の帯（★見る為だけ★＝ここから 何かを始めさせない）
+     ★数は この ファイルの中だけで数える★（「1件」なのに「ぜんぶ3」では 客が混乱する） */
   var tabs = document.getElementById('rkTabs');
   if(tabs){
     tabs.innerHTML = '';
@@ -7557,9 +7544,6 @@ function 履歴を描く(行たち, opt){
       b.onclick = function(){ _rirekiShurui = (名 === 'ぜんぶ') ? '' : 名; 履歴を描く(_rirekiIma, opt); };
       tabs.appendChild(b);
     };
-    /* ★「ぜんぶ」の数も 今のファイルの中で数える★
-       （前は ほかのファイルの分まで 数えていて「1件なのに ぜんぶ3」と食い違った・
-         自分で押して見つけた 2026-08-26） */
     作る('ぜんぶ', r.このファイルの件数, _rirekiShurui === '');
     for(var i=0;i<Rireki.種類の順.length;i++){
       var 名 = Rireki.種類の順[i];
