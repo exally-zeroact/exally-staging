@@ -42,6 +42,9 @@ const 切る = (頭, 尻, なに) => {
   return book.slice(i, j);
 };
 const レシピの所 = () => 切る('var _覚えた手順 = [];', 'function 診断を始める(){', 'レシピの所');
+/* ★見せる字は 描く側と 同じ関数で作る★ので、その関数も 本物から 切り出して 載せる
+   （写し取らない＝写した瞬間に 古くなる）。XLSX が無い機械でも 動く道（applyNumFmt）に落ちる。 */
+const 字にする所 = () => 切る('function forDisplay(v) {', 'function _debounce(', '字にする所');
 const 窓の字 = () => 切る('<div id="rcOverlay"', '<!-- ★6 履歴', '見せる窓');
 
 let JSDOM;
@@ -77,7 +80,7 @@ function 台(opt) {
     _aiFetch: () => Promise.resolve({ ok: false, 言葉: 'この検査では AIを 呼びません' }),
   };
   const 名 = Object.keys(台本);
-  const f = new w.Function(...名, レシピの所()
+  const f = new w.Function(...名, 字にする所() + ';' + レシピの所()
     + ';return {先に手順で当てる:先に手順で当てる,手順を書く:手順を書く,手順をやめる:手順をやめる,'
     + '覚えた:function(a){_覚えた手順=a;},いまの表の要約:いまの表の要約,'
     + '使えるシート名:使えるシート名,きれいな値:_きれいな値};');
@@ -253,9 +256,15 @@ T('★同じ名前のシートを 2枚 作らない★', () => {
 });
 T('★日付は 通し番号のまま 見せない（1/1 と 見せる）★', () => {
   const { api } = 台({ sheets: 給料表(['白石正人'], 46023, 60) });
-  eq(api.きれいな値({ v: 46023 }), '1/1', '★通し番号のまま 見せている★');
+  eq(api.きれいな値({ v: 46023, numFmt: 'm/d;@' }), '1/1', '★通し番号のまま 見せている★');
+  eq(api.きれいな値({ v: 46023 }), '46023', '★書式が日付でないのに 日付にしている★');
   eq(api.きれいな値({ v: 1234 }), '1234', '★金額を 日付に化けさせている★');
   eq(api.きれいな値({ v: '', d: '9,775' }), '9,775');
+});
+T('★小数を そのまま 見せない（描く側と 同じ字にする）★', () => {
+  /* ★実際に押して 見つけた（2026-08-28）★＝10662.166666666664 と 出ていた。 */
+  const { api } = 台({ sheets: 給料表(['白石正人'], 46023, 60) });
+  eq(api.きれいな値({ v: 10662.166666666664, numFmt: '#,##0' }), '10,662', '★小数が そのまま 出ている★');
 });
 
 /* ══ ③画面の作り（本物の字を読む） ══ */
@@ -342,10 +351,16 @@ if (SELF) {
     ['book.html', '★計算する側に 入れない（式が 動かない）★',
       (s2) => s2.replace("    if(typeof addSheetToEngine === 'function'){ try{ addSheetToEngine(名); }catch(e){} }", '')],
     ['book.html', '★日付を 通し番号のまま 見せる★',
-      (s2) => s2.replace('    if(ymd && cell.v > 40000 && cell.v < 60000) return Kikan.日の字(ymd, false);', '')],
+      (s2) => s2.replace('    if(ymd) return Kikan.日の字(ymd, false);', '')],
     ['book.html', '★出せない理由を 言わない（黙って 外す）★',
       (s2) => s2.replace("      ? ('（' + 出.出すシート[0].なぜ + '）') : '（当てても 変わる所が ありませんでした）';",
                          "      ? '' : '';")],
+    ['book.html', '★小数を そのまま 見せる（描く側と 別の字にする）★',
+      (s2) => s2.replace('  try { return String(fmtForDisplay(raw, cell.numFmt)).trim(); }',
+                         '  try { return String(raw); }')],
+    ['book.html', '★書式が日付でない数まで 日付にする★',
+      (s2) => s2.replace("if(typeof Kikan !== 'undefined' && cell.numFmt && /[ymd]/i.test(String(cell.numFmt))",
+                         "if(typeof Kikan !== 'undefined' && (true)")],
   ];
   let red = 0;
   for (const [rel, name, brk] of BREAKS) {

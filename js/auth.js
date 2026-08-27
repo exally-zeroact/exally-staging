@@ -9,9 +9,22 @@
 
   // ログイン画面は全アプリ共通の部品(js/exally-login.js)。見た目も文言もそこが一次情報。
   var LOGIN = null;
+  var 出す待ち = false;      /* ★body が出来る前に show() が来た時の 預かり★ */
   var ov = null;
   function mountLogin(sbForLogin) {
     if (LOGIN) return LOGIN;
+    /* ★body がまだ無い時に 作ると 落ちる★（実測 2026-08-28・司さんが iPhone と PC の両方で見た）
+         TypeError: Cannot read properties of null (reading 'appendChild')
+         ＝この <script> は <head> に在るので、読み込んだ時点では body が まだ無い。
+       ★共通部品（js/exally-login.js）は 触らない★（全アプリの唯一の正）。
+       ⇒ ★呼ぶ側で body を待つ★。待っている間に show() が来ても 覚えておいて 後で出す。 */
+    if (!document.body) {
+      document.addEventListener('DOMContentLoaded', function () {
+        mountLogin(sbForLogin);
+        if (出す待ち) { 出す待ち = false; show(); }
+      });
+      return null;
+    }
     LOGIN = global.ExallyLogin.mount({
       app: 'ホーム',
       sb: sbForLogin,
@@ -31,7 +44,13 @@
   function lockBody(on) {
     try { document.body.classList[on ? 'add' : 'remove']('exally-locked'); } catch (e) { /* 画面が無い時は何もしない */ }
   }
-  function show() { if (LOGIN) LOGIN.show(); var a = $('app'); if (a) a.hidden = true; lockBody(true); }
+  function show() {
+    /* ★まだ作れていない時は 覚えておく★＝出し忘れると 中身が 丸見えになる */
+    if (!LOGIN) 出す待ち = true;
+    if (LOGIN) LOGIN.show();
+    var a = $('app'); if (a) a.hidden = true;
+    lockBody(true);
+  }
   function hide() { if (LOGIN) LOGIN.hide(); var a = $('app'); if (a) a.hidden = false; lockBody(false); }
   function msg(t, err) { if (err && LOGIN) LOGIN.error(t || ''); }
   function jpErr(s) {

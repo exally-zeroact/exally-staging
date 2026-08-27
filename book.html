@@ -337,6 +337,36 @@ body {
   background:transparent;
   color:#1A2B22;
 }
+/* ★切り替えの帯★（見る人・見る月）。★読ませる字は薄い黒★・色は押せる物だけ。
+   ★1文字ずつ縦に割れないように★ 折り返さない＋横に流す（前科3回）。 */
+#kirikaeBar {
+display:flex; align-items:center; gap:8px;
+padding:6px 10px; background:#F7FBF9; border-bottom:1px solid #D4EDE1;
+font-size:13px; color:#333333; white-space:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch;
+}
+#kirikaeBar[hidden]{ display:none !important; }
+#kirikaeBar .kk-lb { color:#333333; font-weight:700; flex:none; }
+#kirikaeBar select {
+font-family:inherit; font-size:16px;      /* ★iPhoneで 勝手に拡大しない＝16px★ */
+padding:4px 8px; border:1px solid #C8ECD8; border-radius:8px; background:#ffffff; color:#333333;
+max-width:44vw; flex:none;
+}
+#kirikaeBar button {
+font-family:inherit; font-size:13px; padding:5px 10px; border-radius:8px;
+border:1px solid #C8ECD8; background:#ffffff; color:#333333; cursor:pointer; flex:none;
+}
+#kirikaeBar #kkDasu { border-color:#2E7D54; color:#2E7D54; }
+#kirikaeBar .kk-now { color:#333333; flex:none; }
+/* ★スマホでは「今 何を見ているか」を 2行目に 丸ごと出す★
+   ＝1行に並べると 画面の外へ出て、★横に動かさないと 読めない★（390pxで実測 2026-08-28）。
+   ★字は 折り返さない（縦に割れない）／箱ごと 次の行へ★ */
+@media (max-width: 600px) {
+  #kirikaeBar { flex-wrap:wrap; }
+  #kirikaeBar #kkModosu { order:8; }
+  #kirikaeBar .kk-now { order:9; flex-basis:100%; padding-top:2px; }
+  #kirikaeBar #kkDasu { order:10; }
+}
+
 #grid-wrap {
   flex:1;
   min-height:80px;
@@ -1206,49 +1236,50 @@ background:#FFE066 !important;
 }
 </style>
 
-<script src="hyperformula.full.min.js?v=d51951a3"></script>
+<script src="hyperformula.full.min.js?v=25a0c9a7"></script>
 
-<script src="exally-formula.js?v=d51951a3"></script>
+<script src="exally-formula.js?v=25a0c9a7"></script>
 <!-- グリッド→xlsx の変換と「落ちる物」の警告(純関数・軽い)。SheetJS本体(930KB)と lib/xlsx-io.js は
      初回の「Excelに書き出す」で初めて読み込む＝グリッドの表示を重くしない -->
-<script src="js/file-out.js?v=d51951a3"></script>
+<script src="js/file-out.js?v=25a0c9a7"></script>
 <!-- ★打ち込んだ文字の解釈（1,234 を数にする）。★計算側も書き出し側も この1本を呼ぶ★
      grid-xlsx.js より先に読む（grid-xlsx.js が読み込み時に掴む） -->
-<script src="lib/typed-value.js?v=d51951a3"></script>
-<script src="lib/grid-xlsx.js?v=d51951a3"></script>
+<script src="lib/typed-value.js?v=25a0c9a7"></script>
+<script src="lib/grid-xlsx.js?v=25a0c9a7"></script>
   <!-- ★式の中の参照を「カーソルの位置で」直せるようにする★
        2026-08-06 司さんが実機で踏んだ: 「=B1+30」の B1 を直そうと A1 を触ると
        「=B1+30A1」になり ★B1 を直す手段が無かった★。テスト線では直っていたが
        ★本番には運ばれていなかった★（2026-08-18 差を数えて見つけた）。 -->
-  <script src="lib/grid-refedit.js?v=d51951a3"></script>
-<script src="lib/autosum.js?v=d51951a3"></script>
-<script src="lib/grid-sort.js?v=d51951a3"></script>
-<script src="lib/grid-filter.js?v=d51951a3"></script>
-<script src="lib/grid-find.js?v=d51951a3"></script>
-<script src="lib/grid-print.js?v=d51951a3"></script>
-<script src="lib/ai-reason.js?v=d51951a3"></script>
-<script src="lib/menu-place.js?v=d51951a3"></script>
-<script src="lib/grid-stats.js?v=d51951a3"></script>
-<script src="lib/grid-valid.js?v=d51951a3"></script>
-<script src="lib/cond-format.js?v=d51951a3"></script>
-<script src="lib/ref-graph.js?v=d51951a3"></script>
-<script src="lib/shindan.js?v=d51951a3"></script>
-<script src="lib/rireki.js?v=d51951a3"></script>
-<script src="lib/chizu.js?v=d51951a3"></script>
-<script src="lib/horu.js?v=d51951a3"></script>
-<script src="lib/excel-version.js?v=d51951a3"></script>
-<script src="lib/teian.js?v=d51951a3"></script>
-<script src="lib/kikan.js?v=d51951a3"></script>
-<script src="lib/recipe.js?v=d51951a3"></script>
-<script src="js/recipe-store.js?v=d51951a3"></script>
-<script src="js/rireki-store.js?v=d51951a3"></script>
-<script src="lib/excel-version.js?v=d51951a3"></script>
+  <script src="lib/grid-refedit.js?v=25a0c9a7"></script>
+<script src="lib/autosum.js?v=25a0c9a7"></script>
+<script src="lib/grid-sort.js?v=25a0c9a7"></script>
+<script src="lib/grid-filter.js?v=25a0c9a7"></script>
+<script src="lib/grid-find.js?v=25a0c9a7"></script>
+<script src="lib/grid-print.js?v=25a0c9a7"></script>
+<script src="lib/ai-reason.js?v=25a0c9a7"></script>
+<script src="lib/menu-place.js?v=25a0c9a7"></script>
+<script src="lib/grid-stats.js?v=25a0c9a7"></script>
+<script src="lib/grid-valid.js?v=25a0c9a7"></script>
+<script src="lib/cond-format.js?v=25a0c9a7"></script>
+<script src="lib/ref-graph.js?v=25a0c9a7"></script>
+<script src="lib/shindan.js?v=25a0c9a7"></script>
+<script src="lib/rireki.js?v=25a0c9a7"></script>
+<script src="lib/chizu.js?v=25a0c9a7"></script>
+<script src="lib/horu.js?v=25a0c9a7"></script>
+<script src="lib/excel-version.js?v=25a0c9a7"></script>
+<script src="lib/teian.js?v=25a0c9a7"></script>
+<script src="lib/kikan.js?v=25a0c9a7"></script>
+<script src="lib/recipe.js?v=25a0c9a7"></script>
+<script src="lib/kirikae.js?v=25a0c9a7"></script>
+<script src="js/recipe-store.js?v=25a0c9a7"></script>
+<script src="js/rireki-store.js?v=25a0c9a7"></script>
+<script src="lib/excel-version.js?v=25a0c9a7"></script>
 <!-- ★ログイン（hub.html と同じ4本・新しく作った物は0）★ 2026-08-23
      ここを掛けるまで ★誰の回数か 数えられない＝上限が掛けられない★（指示役 2026-08-23） -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supa-config.js?v=d51951a3"></script>
-<script src="js/exally-login.js?v=d51951a3"></script>
-<script src="js/auth.js?v=d51951a3"></script>
+<script src="js/supa-config.js?v=25a0c9a7"></script>
+<script src="js/exally-login.js?v=25a0c9a7"></script>
+<script src="js/auth.js?v=25a0c9a7"></script>
 
 <script>
 /* ===== canvas-formula-engine.js (inlined) ===== */
@@ -2552,8 +2583,20 @@ function _doRender() {
 function _renderPass() {
   _cfBeginPass();                      /* ★条件付き書式：1回の描き直しの間だけ 範囲の値を覚える★ */
   var sC=xToC(HDR_W), sR=yToR(HDR_H), eC=sC, eR=sR;
-  while(colX(eC)<wrapW && eC<COLS-1) eC++;
-  while(rowY(eR)<wrapH && eR<ROWS-1) eR++;
+  /* ★隠れている行が 多いと ここで 100万行 歩いて 画面が 真っ白になる★
+     （実測 2026-08-28＝切り替えで 334行 隠したら 表が 消えた）
+     ＝隠れた行は 高さ0なので rowY が 進まず、eR が ROWS-1 まで 伸びる。
+     ⇒ ★歩く所を 隠れている数だけ 伸ばして 止める★（今までの座標の計算は 1文字も変えない）。 */
+  var _sh = sheets[activeSheet];
+  var _隠れ行 = Object.keys(_sh.hiddenRows||{}).length
+              + Object.keys(_sh.kirikaeRows||{}).length
+              + Object.keys(_sh.filterHidden||{}).length;
+  var _隠れ列 = Object.keys(_sh.hiddenCols||{}).length
+              + Object.keys(_sh.kirikaeCols||{}).length;
+  var _行の端 = Math.min(ROWS-1, sR + Math.ceil(wrapH/Math.max(1,ROW_H*scale)) + _隠れ行 + 4);
+  var _列の端 = Math.min(COLS-1, sC + Math.ceil(wrapW/Math.max(1,COL_W*scale)) + _隠れ列 + 4);
+  while(colX(eC)<wrapW && eC<_列の端) eC++;
+  while(rowY(eR)<wrapH && eR<_行の端) eR++;
 
   // 1. 全体白背景（高速）
   ctx.fillStyle=C_CELL_BG;
@@ -2651,6 +2694,9 @@ function _renderPass() {
   ctx.font=fw+' '+fs+'px "Noto Sans JP",sans-serif';
   for(var c=sC;c<=eC+1;c++){
     var x=colX(c),w=cW(c); if(x+w<0||x>wrapW) continue;
+    /* ★隠れている列（幅0）に 字を 描かない★＝実測 2026-08-28、
+       C〜I を隠したら ★A B の隣に CDEFGHI が 重なって出た★（Excelは 出さない）。 */
+    if(w<=0) continue;
     ctx.fillStyle=_colInAnySel(c)?'#1E88E5':C_HDR_TXT;
     ctx.fillText(colLetter(c),x+w/2,HDR_H/2);
   }
@@ -2659,6 +2705,7 @@ function _renderPass() {
   ctx.font=rf+'px "Noto Sans JP",sans-serif';
   for(var r=sR;r<=eR+1;r++){
     var y=rowY(r),h=rH(r); if(y+h<0||y>wrapH) continue;
+    if(h<=0) continue;                 /* ★隠れている行（高さ0）にも 字を 描かない★ */
     ctx.fillStyle=_rowInAnySel(r)?'#1E88E5':C_HDR_TXT;
     ctx.fillText(r+1,HDR_W-4,y+h/2);
   }
@@ -4173,6 +4220,24 @@ window.addEventListener('load',updateBookVerBadge);
   <button class="fmt-btn" onclick="applyIndent(-1)"      title="インデント減">◁−</button>
 </div>
 
+<!-- ★切り替え＝見る人・見る月を 変える（★シートは1枚も増えない★）★
+     ★切り出し（新しいシートに出す）とは 別物★＝言葉で 分ける。
+     ★当てはまる表の時だけ 出す★（出来ていない物のボタンを 見せない）。 -->
+<div id="kirikaeBar" hidden>
+  <span class="kk-lb">見る人</span>
+  <select id="kkHito" onchange="切り替える()"><option value="">全員</option></select>
+  <span class="kk-lb">見る月</span>
+  <select id="kkTsuki" onchange="切り替える()"><option value="">全期間</option></select>
+  <select id="kkShime" onchange="切り替える()" title="いつから いつまでを 1か月とするか">
+    <option value="1">1日から</option>
+    <option value="10">10日から</option>
+    <option value="21">21日から</option>
+  </select>
+  <button id="kkModosu" onclick="切り替えを戻す()">全員／全期間に戻す</button>
+  <span class="kk-now" id="kkNow"></span>
+  <button id="kkDasu" onclick="切り替えた分を新しいシートに出す()">この分を 新しいシートに 出す</button>
+</div>
+
 <div id="grid-wrap">
 
 <canvas id="grid-canvas" tabindex="0"></canvas>
@@ -4611,6 +4676,21 @@ window.addEventListener('load', function() {
     window.visualViewport.addEventListener('scroll', _throttledVP);
   }
   setTimeout(function(){ scrollTop=0; scrollLeft=0; scale=1; resize(); if(typeof render==='function') render(); }, 150);
+
+  /* ★ログインが済むまで 中身は隠れている（body.exally-locked）★
+     ＝隠れている間に 大きさを測ると ★0×0★になり、ログインしても ★表が真っ白★のまま。
+     ★実測 2026-08-28★（測り直す人が 誰も居なかった）。
+     ⇒ 隠れが外れた その時に 測り直す。★測るのは この1か所だけ★（resize は 前からある物）。 */
+  try {
+    var _見えた = new MutationObserver(function(){
+      if(!document.body.classList.contains('exally-locked')){
+        dpr = window.devicePixelRatio || 1;
+        resize();
+        if(typeof render === 'function') render();
+      }
+    });
+    _見えた.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  } catch (e) { /* 古い画面でも 落とさない（前からの道は そのまま動く） */ }
 });
 function resize() {
   _canvasBCRDirty=true; // BCRキャッシュを無効化
@@ -4842,10 +4922,18 @@ function evalFormula(formula, selfR, selfC){
     return '#ERR';
   }
 }
-function cW(c){ if(sheets[activeSheet].hiddenCols&&sheets[activeSheet].hiddenCols[c]) return 0; return (sheets[activeSheet].colW[c] || COL_W) * scale; }
+function cW(c){
+  var sh = sheets[activeSheet];
+  if(sh.hiddenCols && sh.hiddenCols[c]) return 0;
+  /* ★切り替えで 隠れている列★（人を選んだ時）。★手で隠した物とは 別の入れ物★＝
+     戻す時に 相手の分まで 戻さない。 */
+  if(sh.kirikaeCols && sh.kirikaeCols[c]) return 0;
+  return (sh.colW[c] || COL_W) * scale;
+}
 function rH(r){
   var sh = sheets[activeSheet];
   if(sh.hiddenRows && sh.hiddenRows[r]) return 0;                 /* 人が手で隠した行 */
+  if(sh.kirikaeRows && sh.kirikaeRows[r]) return 0;               /* ★切り替えで 隠れている行（別の入れ物）★ */
   if(sh.filterHidden && sh.filterHidden[r]) return 0;             /* ★絞り込みで隠れた行（別物として持つ）★ */
   return (sh.rowH[r] || ROW_H) * scale;
 }
@@ -6344,6 +6432,9 @@ function switchSheet(idx){
      ここでは控えを取り直さない＝客の操作で変わった分は「変わった」と数えて保存に載せる。 */
   if (typeof recalcSheet === 'function' && sheets[idx]) recalcSheet(idx, sheets[idx].data);
   updateBar(); render();
+  /* ★シートを変えたら 切り替えの帯も 作り直す★（人▼・月▼は そのシートの表から作る）
+     ＝作り直さないと ★前のシートの人が 並んだまま★になる。 */
+  if(typeof 切り替えを整える === 'function') 切り替えを整える();
   document.querySelectorAll('.sheet-tab').forEach(function(t,i){t.classList.toggle('active',i===idx);});
   // モード中はサブバーも更新（別シート範囲のチップ表示に反映）
   if(multiSelectMode && typeof updateMultiSelectBar==='function') updateMultiSelectBar();
@@ -7859,6 +7950,96 @@ function 開いた知らせは済んだ(名前){
   showToast(h, 12000, s.warn ? 'warn' : undefined);
 }
 var _shindanBusy = false;
+/* ══ ★切り替え＝見る人・見る月を 変える★ ═══════════════════════
+   ★司さんの言葉（2026-08-28）「綺麗な形で切り替えれるん？」★
+   ★シートは1枚も増えない／元の表は1セルも触らない／全員・全期間に すぐ戻せる★
+   ★切り出し（新しいシートに出す）は そのまま残す★＝紙にする・人に渡す時に要る。 */
+var _切り替えの姿 = null;
+
+function 切り替えを整える(){
+  var 帯 = document.getElementById('kirikaeBar');
+  if(!帯 || typeof Kirikae === 'undefined') return;
+  var sh = sheets[activeSheet];
+  var 姿 = null;
+  try{ 姿 = Kirikae.見る(sh); }catch(e){ 姿 = null; }
+  _切り替えの姿 = (姿 && 姿.つかえる) ? 姿 : null;
+  /* ★当てはまる表の時だけ 出す★（出来ていない物のボタンを 見せない） */
+  if(!_切り替えの姿){ 帯.hidden = true; return; }
+  帯.hidden = false;
+  var 人 = document.getElementById('kkHito');
+  var 月 = document.getElementById('kkTsuki');
+  var 前の人 = 人.value, 前の月 = 月.value;
+  人.innerHTML = '<option value="">全員</option>';
+  for(var i=0;i<姿.人たち.length;i++){
+    var o = document.createElement('option');
+    o.value = 姿.人たち[i].名; o.textContent = 姿.人たち[i].名;
+    人.appendChild(o);
+  }
+  月.innerHTML = '<option value="">全期間</option>';
+  for(var j=0;j<姿.月たち.length;j++){
+    var o2 = document.createElement('option');
+    o2.value = 姿.月たち[j];
+    o2.textContent = (+姿.月たち[j].slice(5,7)) + '月分（' + 姿.月たち[j].slice(0,4) + '年）';
+    月.appendChild(o2);
+  }
+  /* ★選んでいた物は 出来るだけ 残す★（シートを行き来しても 選び直させない） */
+  人.value = 前の人 || ''; 月.value = 前の月 || '';
+  if(人.value !== (前の人 || '')) 人.value = '';
+  if(月.value !== (前の月 || '')) 月.value = '';
+  切り替える();
+}
+
+function 切り替える(){
+  var sh = sheets[activeSheet];
+  if(!_切り替えの姿) return;
+  var えらび = {
+    人: document.getElementById('kkHito').value,
+    月: document.getElementById('kkTsuki').value,
+    始まりの日: Number(document.getElementById('kkShime').value || 1),
+  };
+  var 出 = (!えらび.人 && !えらび.月)
+    ? Kirikae.戻す()
+    : Kirikae.見る所を決める(sh, _切り替えの姿, えらび);
+  if(出.なぜ){
+    /* ★黙って 何も起きない を作らない★＝出せない時は 理由を出して 戻す */
+    document.getElementById('kkNow').textContent = 出.なぜ;
+    sh.kirikaeRows = {}; sh.kirikaeCols = {};
+    render(); updateBar();
+    return;
+  }
+  sh.kirikaeRows = 出.隠す行; sh.kirikaeCols = 出.隠す列;
+  document.getElementById('kkNow').textContent = 出.いま;
+  var 出す = document.getElementById('kkDasu');
+  if(出す) 出す.hidden = !(えらび.人 && えらび.月);
+  render(); updateBar();
+}
+
+function 切り替えを戻す(){
+  var sh = sheets[activeSheet];
+  document.getElementById('kkHito').value = '';
+  document.getElementById('kkTsuki').value = '';
+  sh.kirikaeRows = {}; sh.kirikaeCols = {};
+  document.getElementById('kkNow').textContent = Kirikae.戻す().いま;
+  var 出す = document.getElementById('kkDasu');
+  if(出す) 出す.hidden = true;
+  render(); updateBar();
+}
+
+/* ★切り替え（増えない）と 切り出し（増える）を つなぐ★
+   ＝今 見ている物を そのまま 新しいシートに出す。★言葉で 2つを 分ける★ */
+function 切り替えた分を新しいシートに出す(){
+  var sh = sheets[activeSheet];
+  if(!_切り替えの姿) return;
+  var 人 = document.getElementById('kkHito').value;
+  var 月 = document.getElementById('kkTsuki').value;
+  if(!人 || !月) return;
+  var 出 = Recipe.切り出す(sh, { 人: 人, 月: 月, 始まりの日: Number(document.getElementById('kkShime').value || 1) });
+  if(出.なぜ){ showToast(出.なぜ, 4000, 'warn'); return; }
+  手順を見せる('新しいシートに 出します',
+    '今 見ている分を そのまま 出します。中身を 見てから 決めてください。',
+    [出.なに], {}, [出]);
+}
+
 /* ══ ★8-③ 覚えた手順（レシピ）を 画面につなぐ★ ═══════════════════
    ★2回目からは AIを呼ばない★＝機械が 先に当てる（0円）。
    ★当てられなければ 普通に呼ぶ・黙って外さない★＝当たらなかった理由を その場で言う。
@@ -7979,16 +8160,21 @@ function 使えるシート名(名){
   while(在る(今)){ 今 = 元 + '(' + n + ')'; n++; }
   return 今;
 }
-/* 見せる時の 値の字（★中の値ではなく 客が見る字★） */
+/* 見せる時の 値の字（★中の値ではなく 客が見る字★）
+   ★実際に押して 見つけた（2026-08-28）★＝見せる窓に 10662.166666666664 と 出ていた。
+   ⇒ ★描く側と 同じ関数（fmtForDisplay）で 字にする★（2つ作らない）。 */
 function _きれいな値(cell){
   if(!cell) return '';
-  if(cell.d !== undefined && cell.d !== '') return String(cell.d);
-  if(typeof cell.v === 'number' && typeof Kikan !== 'undefined'){
-    var ymd = Kikan.通し番号を日付に(cell.v);
-    /* 日付らしい大きさの数だけ 日付として見せる（金額を 日付にしない） */
-    if(ymd && cell.v > 40000 && cell.v < 60000) return Kikan.日の字(ymd, false);
+  var raw = (cell.v !== undefined && cell.v !== '') ? cell.v : cell.d;
+  if(raw === undefined || raw === null || raw === '') return '';
+  /* 日付の通し番号は 日付として見せる（★書式が日付の時だけ★＝金額を 日付にしない） */
+  if(typeof Kikan !== 'undefined' && cell.numFmt && /[ymd]/i.test(String(cell.numFmt))
+     && Number(raw) >= 20000 && Number(raw) < 90000){
+    var ymd = Kikan.通し番号を日付に(Number(raw));
+    if(ymd) return Kikan.日の字(ymd, false);
   }
-  return String(cell.v === undefined ? '' : cell.v);
+  try { return String(fmtForDisplay(raw, cell.numFmt)).trim(); }
+  catch(e){ return String(raw); }
 }
 
 /** ★AIを呼ぶ前に 機械が当てる★ @returns {boolean} 当てたら true（AIは1回も呼ばない） */
@@ -8344,6 +8530,8 @@ function openBookFile(file){
       /* ★覚えた手順は 開いた時に 読んでおく★＝AIを呼ぶ前に 機械が当てるため（0円）。
          ★読めなくても 画面は動く★（その時は 普通にAIに聞く＝黙って外さない） */
       覚えた手順を読む();
+      /* ★切り替えの帯は 開いた時に 整える★（人▼・月▼の中身は 表から作る） */
+      切り替えを整える();
     });
     render(); updateBar();
     var lbl = document.getElementById('openedFileLabel');
@@ -8798,6 +8986,6 @@ document.addEventListener('DOMContentLoaded', function(){ checkRequiredFns(); })
 <!-- ★テスト環境の帯★ 本番の倉庫では出ない。今どの倉庫かは js/supa-config.js が唯一の正。
      ホスト名では決めない（配り方は変わるが「本番のデータか」は変わらないため）。
      ★この2本だけが 本番の book.html との違い★（他は1バイトも同じにする）。 -->
-<script src="js/supa-config.js?v=d51951a3"></script>
-<script src="js/env-badge.js?v=d51951a3"></script>
+<script src="js/supa-config.js?v=25a0c9a7"></script>
+<script src="js/env-badge.js?v=25a0c9a7"></script>
 </html>
