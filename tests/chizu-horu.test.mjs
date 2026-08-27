@@ -47,7 +47,9 @@ const 本 = () => ([
   { name: '計算', data: { '0,0': { v: '区分' }, '0,1': { v: '単価' }, '1,1': { v: 100 } } },
 ]);
 const 網 = { 別シート参照: [], 別ファイル参照: [], 解けない: [] };
-for (let r = 1; r <= 30; r++) 網.別シート参照.push({ from: 0, fromCell: r + ',2', to: '計算' });
+/* ★本物の網は 行き先を「シートの番号」で持つ★（名前ではない）。
+   見本も 同じ形にする＝でないと 検査が 実物と違う物を見る（2026-08-27 素通りした） */
+for (let r = 1; r <= 30; r++) 網.別シート参照.push({ from: 0, fromCell: r + ',2', to: 1 });
 
 console.log('');
 console.log('[chizu-horu] ★7 地図＋掘る★');
@@ -62,6 +64,14 @@ T('★シート一覧・大きさ・式の本数・見出しが 入る★', () =
 T('★どのシートが どこを 何本 見ているかが 入る★', () => {
   const m = Chizu.作る(本(), 網, null);
   ok(m.字.indexOf('売上表→計算 … 30本') > 0, '★参照のまとめが 入っていない★：' + m.字);
+});
+T('★行き先は シートの名前（番号を出さない）★', () => {
+  /* ★2026-08-27 自分で地図を読んで見つけた★
+     網の to は ★シートの番号★。そのまま出していたので
+     「給料表→10 … 5290本」と ★地図の いちばん大事な行が AIに読めない★状態だった。 */
+  const m = Chizu.作る(本(), 網, null);
+  ok(m.字.indexOf('→計算') > 0, '★行き先が 名前になっていない★：' + m.字.slice(m.字.indexOf('どのシート'), m.字.indexOf('どのシート') + 120));
+  ok(!/→\d+ /.test(m.字), '★行き先に 番号が出ている★');
 });
 T('★網がまだ無い時は「未測定」と書く（0本と書かない）★', () => {
   const m = Chizu.作る(本(), null, null);
@@ -243,9 +253,32 @@ T('★画面が 地図を毎回 渡す／掘る／止める／金額を差し替
   ok(/Horu\.見た所が在るか\(aiText\)/.test(book), '★どのセルを見て言ったかを 確かめていない★');
   ok(/Horu\.値を差し込む\(aiText, sheets,/.test(book), '★金額を AIの書いたまま 出している★');
 });
+T('★客の画面に 中の言葉（掘る／もっと見せて／5回／2,000セル）を 出さない★', () => {
+  /* ★指示役 2026-08-27★「客は『5回』を知りません／知る必要もありません」
+     ＝★中の言葉を 客に見せない★は うちの決まり（他アプリで STEP6 を見せて踏んだ）。 */
+  const book = fs.readFileSync(OVERRIDE['book.html'] || path.join(ROOT, 'book.html'), 'utf8');
+  const 出す所 = [];
+  for (const 名 of ['showToast(', 'addAIChatMsg(']) {
+    let i = 0;
+    while ((i = book.indexOf(名, i)) >= 0) {
+      let d = 0, j = i + 名.length - 1;
+      for (; j < book.length; j++) { const c = book[j]; if (c === '(') d++; else if (c === ')') { d--; if (!d) break; } }
+      出す所.push(book.slice(i, j)); i = j;
+    }
+  }
+  ok(出す所.length >= 10, '客に出す口が 見つからない（' + 出す所.length + '件）');
+  const 中の言葉 = ['掘れません', '掘る', 'もっと見せて', '2000セル', '12000字'];
+  const 出た = [];
+  for (const t of 出す所) {
+    const 字 = (t.match(/'[^']*'/g) || []).join('');
+    for (const w of 中の言葉) if (字.indexOf(w) >= 0) 出た.push(w + ' … ' + 字.slice(0, 50));
+  }
+  eq(出た.join(' / '), '', '★中の言葉が 客に出ている★');
+  console.log('       … 客に出す口 ' + 出す所.length + '件を 数えて 中の言葉 0件');
+});
 T('★押した後に「AIを ◯回 使いました」を 出す（押す前は 数を書かない）★', () => {
   const book = 注記を外す(fs.readFileSync(OVERRIDE['book.html'] || path.join(ROOT, 'book.html'), 'utf8'), { html: true });
-  ok(book.indexOf("+ 動いた + '回 使いました'") > 0, '★何回 動いたかを 出していない★');
+  ok(book.indexOf("+ 動いた + '回 使いました") > 0, '★何回 動いたかを 出していない★');
   /* ★「AIを1回 使います」と 押す前に 書かない★（掘ると 何度も動くので 嘘になる） */
   ok(book.indexOf('AIを1回 使います') < 0, '★押す前に 回数を約束している（掘ると 嘘になる）★');
 });
@@ -303,6 +336,8 @@ if (SELF) {
       (s) => s.replace("行.push('- ' + まとめ.行[j].道 + ' … ' + まとめ.行[j].本数 + '本');", '')],
     ['lib/chizu.js', '★網が無いのに 0本と言う★',
       (s) => s.replace("行.push('（未測定 … まだ調べ終わっていません）');", "行.push('（別のシートを見ている式は 0本）');")],
+    ['lib/chizu.js', '★行き先を 番号のまま出す（AIに読めない）★',
+      (s) => s.replace("var 先 = (typeof x.to === 'number' && sheets[x.to]) ? sheets[x.to].name : String(x.to);", 'var 先 = x.to;')],
     ['lib/chizu.js', '★見出しを 入れない★', (s) => s.replace("' 見出し: ' + s.見出し.join(' / ')", "''")],
     ['lib/chizu.js', '★上限を 外す（毎回 大きい物を渡す）★',
       (s) => s.replace('var 上限 = opt.上限 || 既定の上限;', 'var 上限 = 9999999;')],
@@ -323,7 +358,9 @@ if (SELF) {
       (s) => s.replace('var 材料 = 地図.字 ? [地図.字] : [];', 'var 材料 = [];')],
     ['book.html', '★掘りっぱなし（止めない）★', (s) => s.replace('if(Horu.もう掘れないか(掘った)){', 'if(false){')],
     ['book.html', '★金額を AIの書いたまま 出す★', (s) => s.replace('Horu.値を差し込む(aiText, sheets,', 'Horu.値を差し込む2(aiText, sheets,')],
-    ['book.html', '★何回 動いたかを 出さない★', (s) => s.replace("+ 動いた + '回 使いました'", "+ '' ")],
+    ['book.html', '★中の言葉を 客に見せる★',
+      (s) => s.replace("'回 使いました</span>'", "'回 使いました（もっと見せて）</span>'")],
+    ['book.html', '★何回 動いたかを 出さない★', (s) => s.replace("+ 動いた + '回 使いました", "+ '' + '")],
     ['lib/horu.js', '★無いシートでも 黙る★', (s) => s.replace("出.push('（' + 頼み[i] + ' … そのシートは 在りません）'); continue;", 'continue;')],
   ];
   let red = 0;
