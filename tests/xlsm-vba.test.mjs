@@ -52,8 +52,16 @@ T('★客に「どうなるか」を 先に言う（画面に出す言葉が在�
   }
 });
 T('★画面が その言葉を 実際に出す（持っているだけにしない）★', () => {
-  ok(/res\.hasVba/.test(book), '★画面が 見ていない★');
-  ok(/BookOpen\.MSG_VBA/.test(book), '★画面が 言葉を出していない★');
+  /* ★「res.hasVba という字が 在る」では 足りない★＝2026-08-27に 提案でも使うようになり、
+     出す所を 殺しても この検査は 緑のままだった（実際に 壊して 確かめた）。
+     ⇒ ★出す条件そのもの★を 見る。 */
+  ok(book.indexOf("if (res.hasVba && typeof BookOpen !== 'undefined' && BookOpen.MSG_VBA) {") > 0,
+    '★出す条件が 無い（マクロが入っていても 何も言わない）★');
+  const i = book.indexOf("if (res.hasVba && typeof BookOpen !== 'undefined' && BookOpen.MSG_VBA) {");
+  ok(book.slice(i, i + 300).indexOf('BookOpen.MSG_VBA') > 0, '★条件の中で 言葉を出していない★');
+  /* ★②代わりの道（手順として覚える）も 出す★＝マクロの有無を 提案へ渡しているか */
+  ok(book.indexOf('_bookHasVba = !!res.hasVba;') > 0, '★開いた時に 覚えていない★');
+  ok(/マクロ: !!_bookHasVba/.test(book), '★提案へ 渡していない（代わりの道が 一生 出ない）★');
 });
 T('★客に見せる字に ★ を書かない★', () => {
   /* ★注記(コメント)には ★ が在ってよい。客に出る字だけを見る★（検査の側の間違いを直した） */
@@ -107,6 +115,8 @@ if (SELF) {
     ['js/book-open.js', '★「まだ出来ません」と言う★', (s) => s.replace('マクロは そのまま残しますが、ここでは 動きません。', 'マクロは まだ出来ません。')],
     ['js/book-open.js', '★次の手を 言わない★', (s) => s.replace('毎月の繰り返しは、このあと「手順を覚えさせる」で 代わりに出来ます。', '')],
     ['book.html', '★画面が 出さない★', (s) => s.replace('if (res.hasVba && typeof BookOpen', 'if (false && typeof BookOpen')],
+    ['book.html', '★代わりの道を 提案に渡さない（VBAは動かないと言うだけで 終わる）★',
+      (s2) => s2.replace('{ 版: 版, マクロ: !!_bookHasVba }', '{ 版: 版 }')],
   ];
   let red = 0;
   for (const [rel, name, brk] of BREAKS) {

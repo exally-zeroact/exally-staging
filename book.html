@@ -1206,48 +1206,48 @@ background:#FFE066 !important;
 }
 </style>
 
-<script src="hyperformula.full.min.js?v=7ea67e19"></script>
+<script src="hyperformula.full.min.js?v=ae748f53"></script>
 
-<script src="exally-formula.js?v=7ea67e19"></script>
+<script src="exally-formula.js?v=ae748f53"></script>
 <!-- グリッド→xlsx の変換と「落ちる物」の警告(純関数・軽い)。SheetJS本体(930KB)と lib/xlsx-io.js は
      初回の「Excelに書き出す」で初めて読み込む＝グリッドの表示を重くしない -->
-<script src="js/file-out.js?v=7ea67e19"></script>
+<script src="js/file-out.js?v=ae748f53"></script>
 <!-- ★打ち込んだ文字の解釈（1,234 を数にする）。★計算側も書き出し側も この1本を呼ぶ★
      grid-xlsx.js より先に読む（grid-xlsx.js が読み込み時に掴む） -->
-<script src="lib/typed-value.js?v=7ea67e19"></script>
-<script src="lib/grid-xlsx.js?v=7ea67e19"></script>
+<script src="lib/typed-value.js?v=ae748f53"></script>
+<script src="lib/grid-xlsx.js?v=ae748f53"></script>
   <!-- ★式の中の参照を「カーソルの位置で」直せるようにする★
        2026-08-06 司さんが実機で踏んだ: 「=B1+30」の B1 を直そうと A1 を触ると
        「=B1+30A1」になり ★B1 を直す手段が無かった★。テスト線では直っていたが
        ★本番には運ばれていなかった★（2026-08-18 差を数えて見つけた）。 -->
-  <script src="lib/grid-refedit.js?v=7ea67e19"></script>
-<script src="lib/autosum.js?v=7ea67e19"></script>
-<script src="lib/grid-sort.js?v=7ea67e19"></script>
-<script src="lib/grid-filter.js?v=7ea67e19"></script>
-<script src="lib/grid-find.js?v=7ea67e19"></script>
-<script src="lib/grid-print.js?v=7ea67e19"></script>
-<script src="lib/ai-reason.js?v=7ea67e19"></script>
-<script src="lib/menu-place.js?v=7ea67e19"></script>
-<script src="lib/grid-stats.js?v=7ea67e19"></script>
-<script src="lib/grid-valid.js?v=7ea67e19"></script>
-<script src="lib/cond-format.js?v=7ea67e19"></script>
-<script src="lib/ref-graph.js?v=7ea67e19"></script>
-<script src="lib/shindan.js?v=7ea67e19"></script>
-<script src="lib/rireki.js?v=7ea67e19"></script>
-<script src="lib/chizu.js?v=7ea67e19"></script>
-<script src="lib/horu.js?v=7ea67e19"></script>
-<script src="lib/excel-version.js?v=7ea67e19"></script>
-<script src="lib/teian.js?v=7ea67e19"></script>
-<script src="lib/recipe.js?v=7ea67e19"></script>
-<script src="js/recipe-store.js?v=7ea67e19"></script>
-<script src="js/rireki-store.js?v=7ea67e19"></script>
-<script src="lib/excel-version.js?v=7ea67e19"></script>
+  <script src="lib/grid-refedit.js?v=ae748f53"></script>
+<script src="lib/autosum.js?v=ae748f53"></script>
+<script src="lib/grid-sort.js?v=ae748f53"></script>
+<script src="lib/grid-filter.js?v=ae748f53"></script>
+<script src="lib/grid-find.js?v=ae748f53"></script>
+<script src="lib/grid-print.js?v=ae748f53"></script>
+<script src="lib/ai-reason.js?v=ae748f53"></script>
+<script src="lib/menu-place.js?v=ae748f53"></script>
+<script src="lib/grid-stats.js?v=ae748f53"></script>
+<script src="lib/grid-valid.js?v=ae748f53"></script>
+<script src="lib/cond-format.js?v=ae748f53"></script>
+<script src="lib/ref-graph.js?v=ae748f53"></script>
+<script src="lib/shindan.js?v=ae748f53"></script>
+<script src="lib/rireki.js?v=ae748f53"></script>
+<script src="lib/chizu.js?v=ae748f53"></script>
+<script src="lib/horu.js?v=ae748f53"></script>
+<script src="lib/excel-version.js?v=ae748f53"></script>
+<script src="lib/teian.js?v=ae748f53"></script>
+<script src="lib/recipe.js?v=ae748f53"></script>
+<script src="js/recipe-store.js?v=ae748f53"></script>
+<script src="js/rireki-store.js?v=ae748f53"></script>
+<script src="lib/excel-version.js?v=ae748f53"></script>
 <!-- ★ログイン（hub.html と同じ4本・新しく作った物は0）★ 2026-08-23
      ここを掛けるまで ★誰の回数か 数えられない＝上限が掛けられない★（指示役 2026-08-23） -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supa-config.js?v=7ea67e19"></script>
-<script src="js/exally-login.js?v=7ea67e19"></script>
-<script src="js/auth.js?v=7ea67e19"></script>
+<script src="js/supa-config.js?v=ae748f53"></script>
+<script src="js/exally-login.js?v=ae748f53"></script>
+<script src="js/auth.js?v=ae748f53"></script>
 
 <script>
 /* ===== canvas-formula-engine.js (inlined) ===== */
@@ -7625,7 +7625,8 @@ function 提案を始める(){
   _teianBusy = true;
   try{
     var 版 = (typeof bookVerKey !== 'undefined' && bookVerKey) ? bookVerKey : 'excel_365';
-    _teianResult = Teian.見つける(sheets, { 版: 版 });
+    /* ★マクロ（VBA）が入っている時は「代わりに 何が出来るか」も 出す★（VBAは勧めない） */
+    _teianResult = Teian.見つける(sheets, { 版: 版, マクロ: !!_bookHasVba });
   }catch(e){ _teianBusy = false; 開いた知らせは済んだ('提案'); return; }   /* ★見つけられなくても 表は そのまま使える★ */
   _teianBusy = false;
   var 知 = Teian.知らせの字(_teianResult);
@@ -7633,9 +7634,14 @@ function 提案を始める(){
   var b = document.getElementById('teianBtn');
   if(b){
     b.hidden = false;
+    /* ★数える物（式の書き換え）だけ 数える★＝マクロの話を「0か所」と出さない
+       （★実際に .xlsm を開いて 見つけた 2026-08-27★＝「短くできる 0か所」と出ていた） */
     var 合計 = 0;
-    for(var i=0;i<_teianResult.提案.length;i++) if(_teianResult.提案[i].直し方) 合計 += _teianResult.提案[i].何本;
-    b.textContent = '短くできる ' + 合計 + 'か所';
+    for(var i=0;i<_teianResult.提案.length;i++){
+      var t = _teianResult.提案[i];
+      if(t.直し方 && t.数える物か) 合計 += t.何本;
+    }
+    b.textContent = 合計 ? ('短くできる ' + 合計 + 'か所') : 'こちらで 出来る事';
   }
   開いた知らせに足す(知.題, 知.本文 + '<br>' + 知.つぎ);
   履歴に残す('関数', 知.題, { やった: 知.本文 }, null, 0);
@@ -7661,7 +7667,7 @@ function 提案を描く(r){
     row.style.cssText = 'padding:10px 12px;border-bottom:1px solid #EAF6F0;';
     var 頭 = document.createElement('div');
     頭.style.cssText = 'font-weight:700;color:#2E7D54;font-size:13px;';
-    頭.textContent = t.題 + '（' + t.何本 + 'か所）';
+    頭.textContent = t.題 + (t.数える物か ? ('（' + t.何本 + 'か所）') : '');
     row.appendChild(頭);
     var 本 = document.createElement('div');
     本.style.cssText = 'font-size:12px;color:#333333;margin-top:2px;';
@@ -7859,6 +7865,7 @@ var _shindanBusy = false;
    ★直す前に必ず見せる★＝当てた結果を そのまま書かない。
    ★押す前は「AIを使います」／押した後は「AIを ◯回 使いました」★
      （掘ると 何度も動くので、押す前に 数は書かない） */
+var _bookHasVba = false;   /* ★開いたブックに マクロ（VBA）が入っていたか★（提案で使う） */
 var _覚えた手順 = [];
 var _手順の待ち = null;      /* 見せている最中の物（押されたら これを書く） */
 
@@ -8237,6 +8244,8 @@ function openBookFile(file){
     return BookOpen.openFile(file);
   }).then(function(res){
     sheets = res.sheets;
+    /* ★マクロが入っているかは 提案でも使う★（開いた時に こちらから 代わりの道を言う） */
+    _bookHasVba = !!res.hasVba;
     activeSheet = 0;
     /* ★別のファイルを開く時も 捨てる前に写す★（書き出さずに開き直した分が 消えていた） */
     控えへ写す((BookOpen.current() || {}).name || '（名前なし）', _editedCells, 0);
@@ -8724,6 +8733,6 @@ document.addEventListener('DOMContentLoaded', function(){ checkRequiredFns(); })
 <!-- ★テスト環境の帯★ 本番の倉庫では出ない。今どの倉庫かは js/supa-config.js が唯一の正。
      ホスト名では決めない（配り方は変わるが「本番のデータか」は変わらないため）。
      ★この2本だけが 本番の book.html との違い★（他は1バイトも同じにする）。 -->
-<script src="js/supa-config.js?v=7ea67e19"></script>
-<script src="js/env-badge.js?v=7ea67e19"></script>
+<script src="js/supa-config.js?v=ae748f53"></script>
+<script src="js/env-badge.js?v=ae748f53"></script>
 </html>

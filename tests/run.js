@@ -13,16 +13,48 @@ const FILES = [
   'ledger-source.test.js',  // E2 台帳→期間の実績値(ctx)
   'cross-agg.test.js',      // E5 横断集計(事業別のまとめ)
   'hub-ui.mjs',             // E1 UI 全ボタン(jsdom)
-  'grid-xlsx.test.mjs',  // ★グリッド→xlsx の変換と「落ちる物」の警告(+ toHFVal との同期)
-  'grid-date.test.mjs',    // ★打った日付が日付として計算できるか(+30が2056にならない)＋数を日付に化けさせない
+  'grid-xlsx.test.mjs',     // ★グリッド→xlsx の変換と「落ちる物」の警告(+ toHFVal との同期)
+  'grid-date.test.mjs',     // ★打った日付が日付として計算できるか(+30が2056にならない)＋数を日付に化けさせない
   ['grid-date.test.mjs', '--self-test'],
-  'grid-colwidth.test.mjs',  // ★渡した相手の画面で ######## にならないか(日付の列に幅を付ける)
+  'grid-colwidth.test.mjs', // ★渡した相手の画面で ######## にならないか(日付の列に幅を付ける)
   ['grid-colwidth.test.mjs', '--self-test'],
-  'typed-value.test.mjs',    // ★E3: 1,234 が文字列で合計に入らない(金が落ちる・期限9/30)
+  'typed-value.test.mjs',                 // ★E3: 1,234 が文字列で合計に入らない(金が落ちる・期限9/30)
   ['typed-value.test.mjs', '--self-test'],
-  'grid-refedit.test.mjs',   // ★書き間違えた式を直せるか(=B1+30 の B1 を A1 に直せる／数字の直後で式を壊さない)
+  'no-duplicate-libs.test.mjs', // ★同じ物を2箇所に置かせない(法定データのコピペ・ドリフト防止)
+  'refs-resolve.test.mjs',      // ★読んでいるファイルが実在するか(require/importも参照として数える)
+  ['refs-resolve.test.mjs', '--self-test'], // ★わざと壊して赤になるかの自己確認
+  'api-claude.test.mjs',        // ★チャットが客に言う基準数値(実数リテラル・NaN混入検知)
+  ['api-claude.test.mjs', '--self-test'],  // ★失敗しても200で「答えのふり」をしていた穴(2026-08-22)
+  'ios-unsupported.test.mjs',   // ★iPhoneで動かない書き方(type=month/octet-stream/writeFile/Blob散在)
+  ['ios-unsupported.test.mjs', '--self-test'],
+  'op-registry.test.mjs',       // ★契約の入口(二重登録は投げる)
+  'op-boundary.test.mjs',       // ★契約の線(⑤呼ばれているか/⑧面を呼び返していないか/provenance必須)
+  ['op-boundary.test.mjs', '--self-test'],
+  'no-hardcoded-statutory.test.mjs',      // ★法定の率・額を配信物の文に直書きさせない(説明文だけ年度で取り残される事故)
+  ['no-hardcoded-statutory.test.mjs', '--self-test'], // ★わざと壊して赤になるか＋誤検知が出ないか
+  'no-hardcoded-supa.test.mjs',           // ★倉庫の向き先を js/supa-config.js 以外に書かせない(テストrepoが本番倉庫を触る事故)
+  ['no-hardcoded-supa.test.mjs', '--self-test'], // ★わざと壊して赤になるか＋誤検知が出ないか
+  'no-silent-optional.test.mjs',          // ★typeof で守って「無ければ黙って素通り」を許さない(14シート開いてもタブが1枚だった事故)
+  ['no-silent-optional.test.mjs', '--self-test'],
+  'smart-rounding.test.mjs',              // ★計算の結果を14桁で丸めさせない(消費税が1円ズレる)
+  ['smart-rounding.test.mjs', '--self-test'],
+  'text-format.test.mjs',                 // ★TEXT()の書式コード(曜日aaa/月名/時刻の分)。実物730本がシリアル値のまま出ていた
+  ['text-format.test.mjs', '--self-test'],
+  'no-dead-ui.test.mjs',                  // ★出来ていない物のボタン/画面を止める窓/中の言葉(STEP6・実装予定)を客に見せない
+  ['no-dead-ui.test.mjs', '--self-test'],
+  'cross-sheet.test.mjs',                 // ★他のシートを参照している合計が黙って小さくならないか(527,000が186,000になった)
+  'table-refs.test.mjs',                  // ★表の名前での参照(Table[列名])→A1範囲。実物の式11,669本が1本残らず#ERRORだった
+  ['table-refs.test.mjs', '--self-test'], // ★わざと壊して赤になるかの自己確認(16通り)
+  'book-open.test.mjs',                   // ★受け取ったブックを「開いて何も変えずに保存」しても壊れない(実機で出た事故)
+  'diff-preview.test.mjs',                // ★直す前に必ず見せる(方針ver.6の②)。1直しで3シート18本 書き換わる
+  ['diff-preview.test.mjs', '--self-test'],
+  'word-export-import.test.mjs',          // ★言い方を「書き出す↔読み込む」に固定(同じ動きに2通りの名前を付けない)
+  ['word-export-import.test.mjs', '--self-test'],
+  'excel-parity.test.mjs',                // ★Excelとの差を機械で数え直す(表が古くなったら赤)
+  ['excel-parity.test.mjs', '--self-test'],
+  'grid-refedit.test.mjs',                // ★式の中の参照を直せるか(=B1+30 の B1 を A1 に直す)
   ['grid-refedit.test.mjs', '--self-test'],
-  'grid-edit-ui.mjs',        // ★本物の book.html を読み込んで、本物の insertRefAddr を動かす(画面の中で直せるか)
+  'grid-edit-ui.mjs',                     // ★本物の book.html で insertRefAddr を動かす(画面の中で直せるか)
   'excel-shortcuts.test.mjs',             // ★Excelと同じキー割り当てを 本物の画面に実際に押して確かめる(真値は実Excelから機械で取った)
   ['excel-shortcuts.test.mjs', '--self-test'],
   'mobile-labels.test.mjs',               // ★スマホの幅で 字を消して「絵だけ」にするのを禁じる(司さんのiPhoneで 📂💾📊 の絵だけになっていた)
@@ -47,19 +79,29 @@ const FILES = [
   ['cond-format.test.mjs', '--self-test'],
   'cond-format-ui.test.mjs',              // ★本物の画面で 実際に押す(部品が緑=画面で使える ではない)
   ['cond-format-ui.test.mjs', '--self-test'],
+  'ref-graph-forms.test.mjs',             // ★Excelの仕様の側から形を1つずつ（41形＋重い形3つ）
+  ['ref-graph-forms.test.mjs', '--self-test'],
+  'ref-graph.test.mjs',                   // ★ブック全体の参照の網（別シート401本を落とさない・固まらない）
+  ['ref-graph.test.mjs', '--self-test'],
+  'book-scan-ui.test.mjs',                // ★調べている間の知らせ（300ms・何枚目・％・必ず消す）
+  ['book-scan-ui.test.mjs', '--self-test'],
+  'env-badge.test.mjs',      // ★テスト環境の帯(本番に出さない・全画面に入っている)
+  ['env-badge.test.mjs', '--self-test'],
+  'pages-hosting.test.mjs',
+  ['pages-hosting.test.mjs', '--self-test'],  // ★わざと壊して赤になるかの自己確認(7通り)
+  'html-script-syntax.test.mjs',          // ★HTMLの中の<script>が 構文で死んでいないか（lint緑・テスト緑でも 死ぬ）
+  ['html-script-syntax.test.mjs', '--self-test'],
   'recipe-ui.test.mjs',                   // ★8-③ 覚えた手順を 画面で押す（AIを呼ぶ前に 機械が当てる・上限を置かない）
   ['recipe-ui.test.mjs', '--self-test'],
   'teian.test.mjs',                       // ★8 提案＝うちから「こう直せますよ」（0円・向こうから出る）
   ['teian.test.mjs', '--self-test'],
-  'no-dark-green.test.mjs',               // ★使わないと決めた濃い緑が 残っていないか（全アプリ #2E7D54）
-  ['no-dark-green.test.mjs', '--self-test'],
-  'chizu-horu.test.mjs',                  // ★7 地図＋掘る
+  'chizu-horu.test.mjs',                  // ★7 地図＋掘る（地図は数千文字・掘りっぱなしにしない・金額はAIに書かせない）
   ['chizu-horu.test.mjs', '--self-test'],
-  'recipe.test.mjs',                      // ★6 レシピ＝2回目からはAIを呼ばない（記録の行数で数える）
+  'recipe.test.mjs',                      // ★6 レシピ＝手順を覚えて 2回目からはAIを呼ばない（記録の行数で数える）
   ['recipe.test.mjs', '--self-test'],
-  'rireki.test.mjs',                      // ★6 履歴＝見る場所（別の入り口から同じ・客のブックにタブ0件）
+  'rireki.test.mjs',                      // ★6 履歴＝見る場所（別の入り口から同じに見える・客のブックにタブ0件）
   ['rireki.test.mjs', '--self-test'],
-  'chuki.test.mjs',                       // ★注記を外してから読む（見張りの共通部品）
+  'chuki.test.mjs',                       // ★注記を外してから読む（見張りの共通部品・同じ型を3回踏んだので決まりにした）
   ['chuki.test.mjs', '--self-test'],
   'shindan.test.mjs',                     // ★5 E2診断1本目＝消えた参照が IFERROR で隠れている（実物122本）
   ['shindan.test.mjs', '--self-test'],
@@ -67,60 +109,19 @@ const FILES = [
   ['shindan-ui.test.mjs', '--self-test'],
   'ai-jiko-dome.test.mjs',                // ★4 事故止め（1分10回・1日100回・40,000字・2万トークン・429の言い方・記録）
   ['ai-jiko-dome.test.mjs', '--self-test'],
-  'ref-graph-forms.test.mjs',             // ★Excelの仕様の側から形を1つずつ（41形＋重い形3つ）
-  ['ref-graph-forms.test.mjs', '--self-test'],
-  'ref-graph.test.mjs',                   // ★ブック全体の参照の網（別シートを落とさない・固まらない）
-  ['ref-graph.test.mjs', '--self-test'],
-  'book-scan-ui.test.mjs',                // ★調べている間の知らせ（300ms・何枚目・％・必ず消す・客の字に★を書かない）
-  ['book-scan-ui.test.mjs', '--self-test'],
   'xlsm-vba.test.mjs',                    // ★VBA入り(.xlsm)＝開ける・VBAは1バイトも触らない・動かさない・言葉で先に言う
   ['xlsm-vba.test.mjs', '--self-test'],
   'login-gate.test.mjs',                  // ★表の画面にもログイン／忘れた人の逃げ道（無いと二度と入れない）
   ['login-gate.test.mjs', '--self-test'],
   'ai-reason.test.mjs',                   // ★AIに繋がらない時の理由と次の一手／★空のセルでAIを呼ばない(お金)★
   ['ai-reason.test.mjs', '--self-test'],
-  'no-dead-ui.test.mjs',     // ★出来ていない物のボタン/画面を止める窓/中の言葉(STEP6・実装予定)を客に見せない
-  ['no-dead-ui.test.mjs', '--self-test'],
-  'word-export-import.test.mjs',   // ★言い方を「書き出す↔読み込む」に固定
-  ['word-export-import.test.mjs', '--self-test'],
-  'excel-parity.test.mjs',         // ★Excelとの差を機械で数え直す(表が古くなったら赤)
-  ['excel-parity.test.mjs', '--self-test'],
-  'cross-sheet.test.mjs',          // ★他のシートを参照している合計が黙って小さくならないか(527,000が186,000)
-  'smart-rounding.test.mjs',       // ★計算の結果を14桁で丸めさせない(消費税が1円ズレる)
-  ['smart-rounding.test.mjs', '--self-test'],
-  'text-format.test.mjs',          // ★TEXT()の書式コード(曜日aaa)。実物730本がシリアル値のまま出ていた
-  ['text-format.test.mjs', '--self-test'],
-  'no-silent-optional.test.mjs',   // ★typeofで守って「無ければ黙って素通り」を許さない
-  ['no-silent-optional.test.mjs', '--self-test'],
-  'book-open.test.mjs',      // ★受け取ったブックを「開いて何も変えずに保存」しても1バイトも変わらない(zip直編集の3本＋book-open.js)
-  'diff-preview.test.mjs',   // ★直す前に必ず見せる(方針ver.6の②)。1直しで3シート18本 書き換わる
-  ['diff-preview.test.mjs', '--self-test'],
-  'table-refs.test.mjs',     // ★表の名前での参照(Table[列名])→A1範囲。実物の式11,669本が1本残らず#ERRORだった
-  ['table-refs.test.mjs', '--self-test'], // ★わざと壊して赤になるかの自己確認(16通り)
-  'no-duplicate-libs.test.mjs', // ★同じ物を2箇所に置かせない(法定データのコピペ・ドリフト防止)
+  'no-dark-green.test.mjs',               // ★使わないと決めた濃い緑(コードは直ったのにCLAUDE.mdの色の表が教え続けていた)
+  ['no-dark-green.test.mjs', '--self-test'],
+  // P1② 版対応 検証ハーネス
   'excel-version.test.mjs', // ★その式が相手のExcelで動くか(Excelに無い23個＝常時 / 版マーカー14個＝版連動)
   ['excel-version.test.mjs', '--self-test'],
-  // ★staging(GitHub Pages のサブパス配信)で壊れる書き方＋本番倉庫への誤接続を止める恒久ガード
-  'env-badge.test.mjs',      // ★テスト環境の帯(本番に出さない・全画面に入っている)
-  ['env-badge.test.mjs', '--self-test'],
-  'pages-hosting.test.mjs',
-  ['pages-hosting.test.mjs', '--self-test'],  // ★わざと壊して赤になるかの自己確認(7通り)
-  'refs-resolve.test.mjs',      // ★読んでいるファイルが実在するか(require/importも参照として数える)
-  ['refs-resolve.test.mjs', '--self-test'], // ★わざと壊して赤になるかの自己確認
-  'api-claude.test.mjs',        // ★チャットが客に言う基準数値(実数リテラル・NaN混入検知)
-  ['api-claude.test.mjs', '--self-test'],  // ★失敗しても200で「答えのふり」をしていた穴(2026-08-22)
-  'no-hardcoded-statutory.test.mjs',      // ★法定の率・額を配信物の文に直書きさせない(説明文だけ年度で取り残される事故)
-  ['no-hardcoded-statutory.test.mjs', '--self-test'], // ★わざと壊して赤になるか＋誤検知が出ないか
-  'no-hardcoded-supa.test.mjs',           // ★倉庫の向き先を js/supa-config.js 以外に書かせない(テストrepoが本番倉庫を触る事故)
-  ['no-hardcoded-supa.test.mjs', '--self-test'], // ★わざと壊して赤になるか＋誤検知が出ないか
-  'ios-unsupported.test.mjs',   // ★iPhoneで動かない書き方(type=month/octet-stream/writeFile/Blob散在)
-  ['ios-unsupported.test.mjs', '--self-test'],
-  'op-registry.test.mjs',       // ★契約の入口(二重登録は投げる)
-  'op-boundary.test.mjs',       // ★契約の線(⑤呼ばれているか/⑧面を呼び返していないか/provenance必須)
-  ['op-boundary.test.mjs', '--self-test'],
-  // P1② 版対応 検証ハーネス
   'xlsx-harness/roundtrip.test.mjs',        // 数式入りxlsxの往復(SheetJS・★新関数の _xlfn.)
-  'xlsx-harness/bare-form.test.mjs',   // ★「客が最初に書く形」のケースが無い関数を赤にする(R19の再発防止)
+  'xlsx-harness/bare-form.test.mjs',        // ★「客が最初に書く形」のケースが無い関数を赤にする(R19の再発防止)
   'xlsx-harness/alias.test.mjs',            // ★日本語UI名→本名(JIS→DBCS / YEN→DOLLAR。入口=エンジン/出口=書き出し)
   'xlsx-harness/xlfn-coverage.test.mjs',    // ★書き出す関数名が分類済みか(_xlfn.の付け忘れを止める)
   'xlsx-harness/version-scope.test.mjs',    // ★「版対応はここまで」の記述と実装がズレたら赤
@@ -134,6 +135,11 @@ const 失敗一覧 = [];
 for (const f of FILES) {
   const [file, ...args] = Array.isArray(f) ? f : [f];
   console.log('\n=== ' + file + (args.length ? ' ' + args.join(' ') : '') + ' ===');
+  /* ★落ちた理由を必ず出す（2026-08-23）★
+     CIで1回 赤になったのに ★同じコミットを回し直したら緑★＝★ムラ★だった。
+     その時 出ていたのは「★ N ファイルで失敗」だけで、
+     ★中で死んだのか（signal）／自分で1を返したのか（status）が 分からなかった★。
+     ⇒ ★どちらかを 必ず1行 出す★（次に赤くなった時、新しい壊れ か ムラ かを その場で見分ける） */
   /* ★中で殺される(SIGTRAP)のを止める（2026-08-24）★
      CIで excel-parity が ★signal=SIGTRAP★ で死んだ＝V8 が力尽きた（本物の壊れではない）。
      本物の画面(book.html)を jsdom に丸ごと載せる検査は 重い。★積める量を増やす★。
@@ -141,8 +147,6 @@ for (const f of FILES) {
   try { execFileSync(process.execPath, ['--max-old-space-size=4096', path.join(__dirname, file), ...args], { stdio: 'inherit' }); }
   catch (e) {
     ng++;
-    /* ★落ちた理由を必ず出す（2026-08-23）★ CIで1回 赤→同じコミットを回し直したら緑＝★ムラ★だった。
-       「N ファイルで失敗」だけでは ★中で殺されたのか／自分で1を返したのか★ が分からない。 */
     const 印 = e && e.signal ? ('★中で殺された(signal=' + e.signal + ')★＝新しい壊れではない可能性')
       : ('自分で ' + (e && e.status !== undefined && e.status !== null ? e.status : '?') + ' を返した');
     console.log('  ★落ちた★ ' + file + (args.length ? ' ' + args.join(' ') : '') + ' … ' + 印);
