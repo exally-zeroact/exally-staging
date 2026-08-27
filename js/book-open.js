@@ -160,7 +160,19 @@
     (ws['!cols'] || []).forEach(function (col, i) {
       if (col && (col.wpx || col.wch)) colW[i] = col.wpx || Math.round(col.wch * 7);
     });
-    return { name: name, data: data, colW: colW, rowH: {}, hiddenRows: {}, hiddenCols: {}, _fromFile: true };
+    /* ★表の枠（!ref）も 覚えておく★（2026-08-27 指示役の指摘）
+       ＝★「値か式が在る所」と「表の枠」は 違う★。
+         実物 計算シート … ★値か式 400行×72列／表の枠 404行×152列★
+       ★地図が 72列と言うと AIは 73列目から先を 一生 掘らない★ので、
+       ★両方を 名前つきで 出す★ため ここで拾う（捨てない）。 */
+    var 枠 = null;
+    try {
+      if (ws['!ref']) {
+        var rg = X.utils.decode_range(ws['!ref']);
+        枠 = { 行数: rg.e.r + 1, 列数: rg.e.c + 1 };
+      }
+    } catch (e) { /* 読めない時は null＝「未測定」（0にしない） */ }
+    return { name: name, data: data, colW: colW, rowH: {}, hiddenRows: {}, hiddenCols: {}, 枠: 枠, _fromFile: true };
   }
 
   /* ── 保存：★元のバイト列を書き換える★ ── */
