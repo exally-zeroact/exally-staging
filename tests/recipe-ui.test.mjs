@@ -23,6 +23,7 @@ const 読む = (rel) => fs.readFileSync(OVERRIDE[rel] || path.join(ROOT, rel), '
 const require_ = createRequire(pathToFileURL(path.join(ROOT, 'package.json')));
 const Recipe = require_(OVERRIDE['lib/recipe.js'] || path.join(ROOT, 'lib/recipe.js'));
 const DiffPreview = require_(path.join(ROOT, 'lib/diff-preview.js'));
+const Kikan = require_(path.join(ROOT, 'lib/kikan.js'));
 
 let pass = 0, fail = 0;
 const T = (n, fn) => { try { fn(); pass++; console.log('  ok   ' + n); } catch (e) { fail++; console.log('  NG   ' + n + '\n       ' + (e && e.message)); } };
@@ -54,7 +55,7 @@ function 台(opt) {
     + '<div id="ai-response-area"></div><div id="popup-response-area"></div></body></html>',
     { pretendToBeVisual: true });
   const w = dom.window;
-  const 記録 = { 書いた: [], 知らせ: [], 履歴: [], 言った: [] };
+  const 記録 = { 書いた: [], 知らせ: [], 履歴: [], 言った: [], 計算に足した: [] };
   const 台本 = {
     document: w.document,
     sheets: opt.sheets || [],
@@ -64,7 +65,11 @@ function 台(opt) {
     RecipeStore: { 覚える: () => Promise.resolve(true), 覚えた物: () => Promise.resolve({ レシピたち: [], 倉庫: true }) },
     setCell: (r, c, v) => 記録.書いた.push({ r, c, v }),
     render: () => {},
-    switchSheet: () => {},
+    switchSheet: (i) => { 記録.移った = i; },
+    rebuildSheetTabs: () => { 記録.タブを作り直した = true; },
+    addSheetToEngine: (n) => 記録.計算に足した.push(n),
+    loadSheetIntoEngine: () => {},
+    Kikan: Kikan,
     showToast: (h) => 記録.知らせ.push(String(h)),
     履歴に残す: (種類, 見出し, 中身, f, credit) => 記録.履歴.push({ 種類, 見出し, credit }),
     addAIChatMsg: (t, x) => 記録.言った.push({ どこ: 'panel', 字: String(x) }),
@@ -74,7 +79,8 @@ function 台(opt) {
   const 名 = Object.keys(台本);
   const f = new w.Function(...名, レシピの所()
     + ';return {先に手順で当てる:先に手順で当てる,手順を書く:手順を書く,手順をやめる:手順をやめる,'
-    + '覚えた:function(a){_覚えた手順=a;},いまの表の要約:いまの表の要約};');
+    + '覚えた:function(a){_覚えた手順=a;},いまの表の要約:いまの表の要約,'
+    + '使えるシート名:使えるシート名,きれいな値:_きれいな値};');
   return { api: f(...名.map((k) => 台本[k])), 記録, w };
 }
 
@@ -164,6 +170,94 @@ T('★スマホの窓でも 同じ言葉が 出る（口が違っても 中身�
   ok(記録.言った.every((x) => x.どこ === 'popup'), '★スマホで押したのに パネルへ出している★');
 });
 
+/* ══ ★切り出す（1人分×何月分）を 画面で 押す★ ══════════════
+   ★司さんの言葉（2026-08-27）★「1人分と 何月分って 分けて表示もさせれるん？」 */
+const 給料表 = (人たち, 始まりの通し番号, 日数) => {
+  const d = { '0,0': { v: 'ZERO代行　給料表' }, '1,0': { v: '日付' } };
+  人たち.forEach((n, i) => { d['1,' + (i + 1)] = { v: n }; });
+  for (let r = 0; r < 日数; r++) {
+    /* ★画面と同じ形★＝式のセルは v が空で 計算した値は d（字） */
+    d[(r + 2) + ',0'] = { v: '', f: '=A' + r, d: String(始まりの通し番号 + r), numFmt: 'm/d;@' };
+    人たち.forEach((n, i) => { d[(r + 2) + ',' + (i + 1)] = { v: '', f: '=X', d: String((i + 1) * 100 + r) }; });
+  }
+  return [{ name: '給料表', data: d }];
+};
+const 切り出しレシピ = (t, 頼み) => Recipe.レシピを作る(頼み, 頼み, Recipe.要約を作る(t[0]),
+  [{ 種類: '切り出す', 人: '白石正人', 月: '2026-01', 始まりの日: 1 }]);
+
+T('★1人分×1月分を 出す（AIを 1回も 呼ばない）★', () => {
+  const t = 給料表(['白石正人', '長野孝'], 46023, 60);
+  const { api, 記録, w } = 台({ sheets: t });
+  api.覚えた([切り出しレシピ(t, '白石正人の1月分を出して')]);
+  eq(api.先に手順で当てる('白石正人の1月分を出して'), true, '★当てていない（AIに行ってしまう）★');
+  eq(記録.書いた.length, 0, '★見せる前に 書いている★');
+  eq(w.document.getElementById('rcOverlay').style.display, 'flex', '★見せていない★');
+  eq(w.document.getElementById('rcGo').textContent, '新しいシートに 31行 出す', '★出す数が 違う★');
+  ok(w.document.getElementById('rcList').textContent.indexOf('白石正人 1月分') > 0, '★シートの名前を 見せていない★');
+});
+T('★押すと 新しいシートが 出来る（元の表は 触らない）★', () => {
+  const t = 給料表(['白石正人'], 46023, 60);
+  const 元 = JSON.stringify(t[0].data);
+  const { api, 記録 } = 台({ sheets: t });
+  api.覚えた([切り出しレシピ(t, '白石正人の1月分を出して')]);
+  api.先に手順で当てる('白石正人の1月分を出して');
+  api.手順を書く();
+  eq(t.length, 2, '★シートが 増えていない★');
+  eq(t[1].name, '白石正人 1月分');
+  eq(Object.keys(t[1].data).length, 64, '★31行×2列＋見出し で 64セル★');
+  eq(JSON.stringify(t[0].data), 元, '★元の表が 書き換わった★');
+  eq(記録.書いた.length, 0, '★元のシートに 書き込んでいる★');
+  ok(記録.タブを作り直した, '★タブを 作り直していない（見えない）★');
+  eq(記録.計算に足した[0], '白石正人 1月分', '★計算する側に 入れていない（式が 動かない）★');
+  ok(記録.知らせ.some((x) => x.indexOf('AIを 0回 使いました') > 0), '★0回だと 言っていない★');
+  eq(記録.履歴[0].credit, 0, '★履歴に AIを使った事にしている★');
+});
+T('★2回目も AIを 0回（同じ頼み・同じ形）★', () => {
+  const t = 給料表(['白石正人'], 46023, 60);
+  const { api, 記録 } = 台({ sheets: t });
+  api.覚えた([切り出しレシピ(t, '白石正人の1月分を出して')]);
+  for (let i = 0; i < 2; i++) {
+    eq(api.先に手順で当てる('白石正人の1月分を出して'), true, '★' + (i + 1) + '回目に 外れた★');
+    api.手順を書く();
+  }
+  eq(t.length, 3, '★2回目が 出ていない★');
+  eq(t[2].name, '白石正人 1月分(2)', '★同じ名前の シートを 2枚 作った★');
+  eq(記録.履歴.filter((x) => x.credit > 0).length, 0, '★AIを使った事に なっている★');
+});
+T('★居ない人の時は 理由を言って AIへ（黙って 外さない）★', () => {
+  const t = 給料表(['白石正人'], 46023, 60);
+  const { api, 記録 } = 台({ sheets: t });
+  const レ = Recipe.レシピを作る('居ない人の1月分', '居ない人の1月分', Recipe.要約を作る(t[0]),
+    [{ 種類: '切り出す', 人: '居ない人', 月: '2026-01', 始まりの日: 1 }]);
+  api.覚えた([レ]);
+  eq(api.先に手順で当てる('居ない人の1月分'), false);
+  ok(記録.言った.some((x) => x.字.indexOf('見つかりません') > 0), '★理由を 言っていない★');
+  ok(記録.言った.some((x) => x.字.indexOf('AIに聞きます') > 0), '★このあと どうなるかを 言っていない★');
+});
+T('★スマホの窓でも 同じ道を通る（口が違っても 中身は1本）★', () => {
+  const t = 給料表(['白石正人'], 46023, 60);
+  const { api, 記録, w } = 台({ sheets: t });
+  api.覚えた([切り出しレシピ(t, '白石正人の1月分を出して')]);
+  const 口 = { 足す: (ty, x) => 記録.言った.push({ どこ: 'popup', 字: String(x) }) };
+  eq(api.先に手順で当てる('白石正人の1月分を出して', 口), true, '★スマホで 当たらない★');
+  ok(記録.言った.length > 0 && 記録.言った.every((x) => x.どこ === 'popup'), '★パネルへ出している★');
+  eq(w.document.getElementById('rcOverlay').style.display, 'flex', '★スマホで 窓が 出ない★');
+  api.手順を書く();
+  eq(t.length, 2, '★スマホで 出せていない★');
+});
+T('★同じ名前のシートを 2枚 作らない★', () => {
+  const t = 給料表(['白石正人'], 46023, 60);
+  const { api } = 台({ sheets: t });
+  eq(api.使えるシート名('給料表'), '給料表(2)');
+  eq(api.使えるシート名('新しい名前'), '新しい名前');
+});
+T('★日付は 通し番号のまま 見せない（1/1 と 見せる）★', () => {
+  const { api } = 台({ sheets: 給料表(['白石正人'], 46023, 60) });
+  eq(api.きれいな値({ v: 46023 }), '1/1', '★通し番号のまま 見せている★');
+  eq(api.きれいな値({ v: 1234 }), '1234', '★金額を 日付に化けさせている★');
+  eq(api.きれいな値({ v: '', d: '9,775' }), '9,775');
+});
+
 /* ══ ③画面の作り（本物の字を読む） ══ */
 T('★聞く口は 1つだけ＝スマホも 同じ1本を通る★', () => {
   const b = 注記を外す(book, { html: true });
@@ -218,8 +312,8 @@ if (SELF) {
       (s) => s.replace('  var 番地 = Object.keys(待.変える);', '  var 番地 = Object.keys(待.変える).slice(0, 100);')],
     ['book.html', '★0回だと 言わない★', (s) => s.replace('<span class="toast-n">AIを 0回 使いました</span>', '')],
     ['book.html', '★履歴に AIを使った事にする★',
-      (s) => s.replace("{ やった: '覚えた手順を 全行に当てた（AIは呼んでいない）', 何か所: 番地.length }, null, 0);",
-                       "{ やった: '覚えた手順を 全行に当てた', 何か所: 番地.length }, null, 1);")],
+      (s) => s.replace("{ やった: '覚えた手順を 当てた（AIは呼んでいない）', 何か所: 番地.length + 出した行 }, null, 0);",
+                       "{ やった: '覚えた手順を 当てた', 何か所: 番地.length + 出した行 }, null, 1);")],
     ['book.html', '★黙って外す（理由を言わない）★',
       (s) => s.replace("    if(_覚えた手順.length) 言う('ai', '覚えた手順は 使いませんでした（' + 答.なぜ + '）。AIに聞きます。');", '')],
     ['book.html', '★スマホを 別の道に 戻す★',
@@ -236,6 +330,22 @@ if (SELF) {
       (s) => s.replace('String(t.式).replace(/\\{行\\}/g, String(r + 1))', 'String(t.式)')],
     ['lib/recipe.js', '★頼みが違っても 当てる★',
       (s) => s.replace('if (同形 && 頼みの形(R.頼み) === t) {', 'if (同形) {')],
+    /* ★切り出す（1人分×何月分）★ */
+    ['book.html', '★新しいシートを 作らない（切り出しが 一生 出ない）★',
+      (s2) => s2.replace('  for(var m=0;m<待.出すシート.length;m++){', '  for(var m=0;m<0;m++){')],
+    ['book.html', '★出すシートを 見せずに 出す（直す前に 見せない）★',
+      (s2) => s2.replace('  var 新 = _手順の待ち.出すシート;', '  var 新 = [];')],
+    ['book.html', '★同じ名前のシートを 2枚 作る★',
+      (s2) => s2.replace("  while(在る(今)){ 今 = 元 + '(' + n + ')'; n++; }", '')],
+    ['book.html', '★タブを 作り直さない（出したのに 見えない）★',
+      (s2) => s2.replace('    rebuildSheetTabs();\n    switchSheet(sheets.length - 1);', '    switchSheet(sheets.length - 1);')],
+    ['book.html', '★計算する側に 入れない（式が 動かない）★',
+      (s2) => s2.replace("    if(typeof addSheetToEngine === 'function'){ try{ addSheetToEngine(名); }catch(e){} }", '')],
+    ['book.html', '★日付を 通し番号のまま 見せる★',
+      (s2) => s2.replace('    if(ymd && cell.v > 40000 && cell.v < 60000) return Kikan.日の字(ymd, false);', '')],
+    ['book.html', '★出せない理由を 言わない（黙って 外す）★',
+      (s2) => s2.replace("      ? ('（' + 出.出すシート[0].なぜ + '）') : '（当てても 変わる所が ありませんでした）';",
+                         "      ? '' : '';")],
   ];
   let red = 0;
   for (const [rel, name, brk] of BREAKS) {

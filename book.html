@@ -1206,48 +1206,49 @@ background:#FFE066 !important;
 }
 </style>
 
-<script src="hyperformula.full.min.js?v=ae748f53"></script>
+<script src="hyperformula.full.min.js?v=d51951a3"></script>
 
-<script src="exally-formula.js?v=ae748f53"></script>
+<script src="exally-formula.js?v=d51951a3"></script>
 <!-- グリッド→xlsx の変換と「落ちる物」の警告(純関数・軽い)。SheetJS本体(930KB)と lib/xlsx-io.js は
      初回の「Excelに書き出す」で初めて読み込む＝グリッドの表示を重くしない -->
-<script src="js/file-out.js?v=ae748f53"></script>
+<script src="js/file-out.js?v=d51951a3"></script>
 <!-- ★打ち込んだ文字の解釈（1,234 を数にする）。★計算側も書き出し側も この1本を呼ぶ★
      grid-xlsx.js より先に読む（grid-xlsx.js が読み込み時に掴む） -->
-<script src="lib/typed-value.js?v=ae748f53"></script>
-<script src="lib/grid-xlsx.js?v=ae748f53"></script>
+<script src="lib/typed-value.js?v=d51951a3"></script>
+<script src="lib/grid-xlsx.js?v=d51951a3"></script>
   <!-- ★式の中の参照を「カーソルの位置で」直せるようにする★
        2026-08-06 司さんが実機で踏んだ: 「=B1+30」の B1 を直そうと A1 を触ると
        「=B1+30A1」になり ★B1 を直す手段が無かった★。テスト線では直っていたが
        ★本番には運ばれていなかった★（2026-08-18 差を数えて見つけた）。 -->
-  <script src="lib/grid-refedit.js?v=ae748f53"></script>
-<script src="lib/autosum.js?v=ae748f53"></script>
-<script src="lib/grid-sort.js?v=ae748f53"></script>
-<script src="lib/grid-filter.js?v=ae748f53"></script>
-<script src="lib/grid-find.js?v=ae748f53"></script>
-<script src="lib/grid-print.js?v=ae748f53"></script>
-<script src="lib/ai-reason.js?v=ae748f53"></script>
-<script src="lib/menu-place.js?v=ae748f53"></script>
-<script src="lib/grid-stats.js?v=ae748f53"></script>
-<script src="lib/grid-valid.js?v=ae748f53"></script>
-<script src="lib/cond-format.js?v=ae748f53"></script>
-<script src="lib/ref-graph.js?v=ae748f53"></script>
-<script src="lib/shindan.js?v=ae748f53"></script>
-<script src="lib/rireki.js?v=ae748f53"></script>
-<script src="lib/chizu.js?v=ae748f53"></script>
-<script src="lib/horu.js?v=ae748f53"></script>
-<script src="lib/excel-version.js?v=ae748f53"></script>
-<script src="lib/teian.js?v=ae748f53"></script>
-<script src="lib/recipe.js?v=ae748f53"></script>
-<script src="js/recipe-store.js?v=ae748f53"></script>
-<script src="js/rireki-store.js?v=ae748f53"></script>
-<script src="lib/excel-version.js?v=ae748f53"></script>
+  <script src="lib/grid-refedit.js?v=d51951a3"></script>
+<script src="lib/autosum.js?v=d51951a3"></script>
+<script src="lib/grid-sort.js?v=d51951a3"></script>
+<script src="lib/grid-filter.js?v=d51951a3"></script>
+<script src="lib/grid-find.js?v=d51951a3"></script>
+<script src="lib/grid-print.js?v=d51951a3"></script>
+<script src="lib/ai-reason.js?v=d51951a3"></script>
+<script src="lib/menu-place.js?v=d51951a3"></script>
+<script src="lib/grid-stats.js?v=d51951a3"></script>
+<script src="lib/grid-valid.js?v=d51951a3"></script>
+<script src="lib/cond-format.js?v=d51951a3"></script>
+<script src="lib/ref-graph.js?v=d51951a3"></script>
+<script src="lib/shindan.js?v=d51951a3"></script>
+<script src="lib/rireki.js?v=d51951a3"></script>
+<script src="lib/chizu.js?v=d51951a3"></script>
+<script src="lib/horu.js?v=d51951a3"></script>
+<script src="lib/excel-version.js?v=d51951a3"></script>
+<script src="lib/teian.js?v=d51951a3"></script>
+<script src="lib/kikan.js?v=d51951a3"></script>
+<script src="lib/recipe.js?v=d51951a3"></script>
+<script src="js/recipe-store.js?v=d51951a3"></script>
+<script src="js/rireki-store.js?v=d51951a3"></script>
+<script src="lib/excel-version.js?v=d51951a3"></script>
 <!-- ★ログイン（hub.html と同じ4本・新しく作った物は0）★ 2026-08-23
      ここを掛けるまで ★誰の回数か 数えられない＝上限が掛けられない★（指示役 2026-08-23） -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supa-config.js?v=ae748f53"></script>
-<script src="js/exally-login.js?v=ae748f53"></script>
-<script src="js/auth.js?v=ae748f53"></script>
+<script src="js/supa-config.js?v=d51951a3"></script>
+<script src="js/exally-login.js?v=d51951a3"></script>
+<script src="js/auth.js?v=d51951a3"></script>
 
 <script>
 /* ===== canvas-formula-engine.js (inlined) ===== */
@@ -7885,8 +7886,8 @@ function いまの表の要約(){
 }
 
 /** ★当てた結果を 先に見せる★（ここでは 1セルも 書かない） */
-function 手順を見せる(題, 本文, 何, 変える){
-  _手順の待ち = { 変える: 変える, シート: activeSheet };
+function 手順を見せる(題, 本文, 何, 変える, 出すシート){
+  _手順の待ち = { 変える: 変える, シート: activeSheet, 出すシート: 出すシート || [] };
   document.getElementById('rcTitle').textContent = 題;
   document.getElementById('rcBody').textContent = 本文;
   var box = document.getElementById('rcList');
@@ -7907,8 +7908,26 @@ function 手順を見せる(題, 本文, 何, 変える){
     出す.push(DiffPreview.colName(Number(p[1])) + (Number(p[0])+1) + ' → ' + (v.f || v.v));
   }
   見本.textContent = 出す.join('  /  ') + (番地.length > 3 ? ('  ほか ' + (番地.length - 3) + 'か所') : '');
-  box.appendChild(見本);
-  document.getElementById('rcGo').textContent = 'この ' + 番地.length + 'か所を 直す';
+  if(出す.length) box.appendChild(見本);
+  /* ★新しいシートに出す時は「先頭の3行」を 見せる★（何が出るか 見てから 決めてもらう） */
+  var 新 = _手順の待ち.出すシート;
+  for(var m=0;m<新.length;m++){
+    var 頭 = document.createElement('div');
+    頭.style.cssText = 'padding:8px 12px;color:#333333;border-top:1px solid #EAF6F0;';
+    var 見せる行 = [];
+    for(var q=0;q<Math.min(3, 新[m].何行);q++){
+      var a = 新[m].data[(q+1) + ',0'], b = 新[m].data[(q+1) + ',1'];
+      見せる行.push(_きれいな値(a) + '　' + _きれいな値(b));
+    }
+    頭.textContent = '新しいシート「' + 新[m].name + '」に ' + 新[m].何行 + '行'
+      + (見せる行.length ? ('　' + 見せる行.join('　/　')) : '')
+      + (新[m].何行 > 3 ? ('　ほか ' + (新[m].何行 - 3) + '行') : '');
+    box.appendChild(頭);
+  }
+  var 直す数 = 番地.length;
+  document.getElementById('rcGo').textContent = 直す数
+    ? ('この ' + 直す数 + 'か所を 直す')
+    : ('新しいシートに ' + 新.reduce(function(a,x){ return a + x.何行; }, 0) + '行 出す');
   document.getElementById('rcOverlay').style.display = 'flex';
 }
 function 手順をやめる(){
@@ -7927,10 +7946,49 @@ function 手順を書く(){
     var v = 待.変える[番地[i]];
     setCell(Number(p[0]), Number(p[1]), (v.f !== undefined ? v.f : v.v));
   }
+  /* ★切り出しは 新しいシートに出す★＝元の表は 1セルも 触らない（原本を触らない） */
+  var 出した行 = 0, 出したシート = [];
+  for(var m=0;m<待.出すシート.length;m++){
+    var 名 = 使えるシート名(待.出すシート[m].name);
+    sheets.push({ name: 名, data: 待.出すシート[m].data, colW: {}, rowH: {},
+      hiddenRows: {}, hiddenCols: {} });
+    if(typeof addSheetToEngine === 'function'){ try{ addSheetToEngine(名); }catch(e){} }
+    出した行 += 待.出すシート[m].何行;
+    出したシート.push(名);
+  }
+  if(出したシート.length){
+    rebuildSheetTabs();
+    switchSheet(sheets.length - 1);
+    loadSheetIntoEngine(sheets.length - 1);
+  }
   render();
-  showToast('<span class="toast-h">' + 番地.length + 'か所 直しました</span>覚えた手順で やりました。<span class="toast-n">AIを 0回 使いました</span>', 6000);
-  履歴に残す('自動化', '覚えた手順で ' + 番地.length + 'か所 直した',
-    { やった: '覚えた手順を 全行に当てた（AIは呼んでいない）', 何か所: 番地.length }, null, 0);
+  var 文 = 番地.length
+    ? (番地.length + 'か所 直しました')
+    : (出したシート.join('・') + ' に ' + 出した行 + '行 出しました');
+  showToast('<span class="toast-h">' + 文 + '</span>覚えた手順で やりました。<span class="toast-n">AIを 0回 使いました</span>', 6000);
+  履歴に残す('自動化', '覚えた手順で ' + 文,
+    { やった: '覚えた手順を 当てた（AIは呼んでいない）', 何か所: 番地.length + 出した行 }, null, 0);
+}
+/* ★同じ名前のシートを 2枚 作らない★（Excelは 同じ名前を 許さない） */
+function 使えるシート名(名){
+  var 元 = String(名 || 'シート').slice(0, 28), 今 = 元, n = 2;
+  var 在る = function(x){
+    for(var i=0;i<sheets.length;i++) if(sheets[i].name === x) return true;
+    return false;
+  };
+  while(在る(今)){ 今 = 元 + '(' + n + ')'; n++; }
+  return 今;
+}
+/* 見せる時の 値の字（★中の値ではなく 客が見る字★） */
+function _きれいな値(cell){
+  if(!cell) return '';
+  if(cell.d !== undefined && cell.d !== '') return String(cell.d);
+  if(typeof cell.v === 'number' && typeof Kikan !== 'undefined'){
+    var ymd = Kikan.通し番号を日付に(cell.v);
+    /* 日付らしい大きさの数だけ 日付として見せる（金額を 日付にしない） */
+    if(ymd && cell.v > 40000 && cell.v < 60000) return Kikan.日の字(ymd, false);
+  }
+  return String(cell.v === undefined ? '' : cell.v);
 }
 
 /** ★AIを呼ぶ前に 機械が当てる★ @returns {boolean} 当てたら true（AIは1回も呼ばない） */
@@ -7946,14 +8004,19 @@ function 先に手順で当てる(頼み, 口){
     return false;
   }
   var 出 = Recipe.手順を当てる(sheets[activeSheet], 答.レシピ.手順);
-  if(!出 || !Object.keys(出.変える).length){
-    言う('ai', '覚えた手順は 使いませんでした（当てても 変わる所が ありませんでした）。AIに聞きます。');
+  var 出すシート = (出 && 出.出すシート) ? 出.出すシート.filter(function(x){ return !!x.data; }) : [];
+  if(!出 || (!Object.keys(出.変える).length && !出すシート.length)){
+    /* ★出せない理由が 在れば そのまま言う★（黙って 外さない） */
+    var なぜ = (出 && 出.出すシート && 出.出すシート.length && 出.出すシート[0].なぜ)
+      ? ('（' + 出.出すシート[0].なぜ + '）') : '（当てても 変わる所が ありませんでした）';
+    言う('ai', '覚えた手順は 使いませんでした' + なぜ + '。AIに聞きます。');
     return false;
   }
   言う('ai', '前と同じ事なので、覚えた手順で やります。AIは使いません。');
-  手順を見せる('覚えた手順で 直します',
-    答.なぜ + '。' + 出.何行 + '行 ぜんぶに 当てました。直すかどうかは 見てから 決めてください。',
-    出.なに, 出.変える);
+  手順を見せる(出すシート.length ? '覚えた手順で 出します' : '覚えた手順で 直します',
+    答.なぜ + '。' + (出すシート.length ? '' : (出.何行 + '行 ぜんぶに 当てました。'))
+      + '中身を 見てから 決めてください。',
+    出.なに, 出.変える, 出すシート);
   return true;
 }
 
@@ -7982,9 +8045,11 @@ async function やり方を覚える(頼み, どこ){
   言う('覚えました。次に 同じ形の表で 同じ事を頼まれたら、AIを呼ばずに やります。'
     + '<span class="toast-n">AIを 1回 使いました</span>');
   var 出 = Recipe.手順を当てる(sheets[activeSheet], 読.手順);
-  if(出 && Object.keys(出.変える).length){
-    手順を見せる('覚えた手順で 直します', '今の表にも 当てられます。'
-      + 出.何行 + '行 ぜんぶに 当てました。直すかどうかは 見てから 決めてください。', 出.なに, 出.変える);
+  var 出すシート2 = (出 && 出.出すシート) ? 出.出すシート.filter(function(x){ return !!x.data; }) : [];
+  if(出 && (Object.keys(出.変える).length || 出すシート2.length)){
+    手順を見せる(出すシート2.length ? '覚えた手順で 出します' : '覚えた手順で 直します',
+      '今の表にも 当てられます。' + (出すシート2.length ? '' : (出.何行 + '行 ぜんぶに 当てました。'))
+      + '中身を 見てから 決めてください。', 出.なに, 出.変える, 出すシート2);
   }
 }
 
@@ -8733,6 +8798,6 @@ document.addEventListener('DOMContentLoaded', function(){ checkRequiredFns(); })
 <!-- ★テスト環境の帯★ 本番の倉庫では出ない。今どの倉庫かは js/supa-config.js が唯一の正。
      ホスト名では決めない（配り方は変わるが「本番のデータか」は変わらないため）。
      ★この2本だけが 本番の book.html との違い★（他は1バイトも同じにする）。 -->
-<script src="js/supa-config.js?v=ae748f53"></script>
-<script src="js/env-badge.js?v=ae748f53"></script>
+<script src="js/supa-config.js?v=d51951a3"></script>
+<script src="js/env-badge.js?v=d51951a3"></script>
 </html>

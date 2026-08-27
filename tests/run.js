@@ -91,6 +91,10 @@ const FILES = [
   ['pages-hosting.test.mjs', '--self-test'],  // ★わざと壊して赤になるかの自己確認(7通り)
   'html-script-syntax.test.mjs',          // ★HTMLの中の<script>が 構文で死んでいないか（lint緑・テスト緑でも 死ぬ）
   ['html-script-syntax.test.mjs', '--self-test'],
+  'kikan.test.mjs',                       // ★何月分・◯日からの分（締め期間は Timeally が正本・124通り）
+  ['kikan.test.mjs', '--self-test'],
+  'kiridashi-jitsubutsu.test.mjs',        // ★司さんの実物で 1人分×何月分を 切り出す（描かれた字で 数え直す）
+  ['kiridashi-jitsubutsu.test.mjs', '--self-test'],
   'recipe-ui.test.mjs',                   // ★8-③ 覚えた手順を 画面で押す（AIを呼ぶ前に 機械が当てる・上限を置かない）
   ['recipe-ui.test.mjs', '--self-test'],
   'teian.test.mjs',                       // ★8 提案＝うちから「こう直せますよ」（0円・向こうから出る）
