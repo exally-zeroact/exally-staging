@@ -44,7 +44,8 @@ T('★見つからなかった時は 何も出さない（0件で騒がない）
 T('★調べられなくても 表は そのまま使える（落ちない）★', () => {
   const i = book.indexOf('function 診断を始める');
   const 所 = book.slice(i, i + 900);
-  ok(/catch\(e\)\{ _shindanBusy = false; return; \}/.test(所), '★失敗したら 画面ごと止まる★');
+  ok(/catch\(e\)\{ _shindanBusy = false; 開いた知らせは済んだ\('診断'\); return; \}/.test(所),
+    '★失敗したら 画面ごと止まる（か、待っている知らせが 永久に出ない）★');
 });
 T('★小分けで調べる（画面を固めない）★', () => {
   ok(/Shindan\.調べる途中\(sheets, \{ 一度に: 3000 \}\)/.test(book), '★一度に全部 やっている★');
@@ -198,7 +199,7 @@ if (SELF) {
     ['book.html', '★[hidden] の1行を 消す★', (s) => s.replace('#shindanBtn[hidden]{display:none!important;}', '')],
     ['book.html', '★0件でも 知らせる★', (s) => s.replace('if(_shindanResult.式の本数 > 0)', 'if(true)')],
     ['book.html', '★中身が無くても 窓を開く★', (s) => s.replace('if(!r || !r.式の本数) return;', 'r = r || { 見つけた: [], 式の本数: 0 };')],
-    ['book.html', '★調べられない時に 画面ごと止まる★', (s) => s.replace('catch(e){ _shindanBusy = false; return; }', 'catch(e){ throw e; }')],
+    ['book.html', '★調べられない時に 画面ごと止まる★', (s) => s.replace("catch(e){ _shindanBusy = false; 開いた知らせは済んだ('診断'); return; }", 'catch(e){ throw e; }')],
     ['book.html', '★一度に全部 やる（画面が固まる）★', (s) => s.replace('Shindan.調べる途中(sheets, { 一度に: 3000 })', 'Shindan.調べる途中(sheets, { 一度に: 1e9 })')],
     ['book.html', '★0円だと 言わない★', (s) => s.replace('AIは使っていません', '')],
     ['book.html', '★場所を 出さない★', (s) => s.replace("頭.textContent = x.シート + ' の ' + x.セル + '　いま出ている物：' + x.いま出ている物;", "頭.textContent = 'ここが危ない';")],

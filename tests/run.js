@@ -47,6 +47,12 @@ const FILES = [
   ['cond-format.test.mjs', '--self-test'],
   'cond-format-ui.test.mjs',              // ★本物の画面で 実際に押す(部品が緑=画面で使える ではない)
   ['cond-format-ui.test.mjs', '--self-test'],
+  'recipe-ui.test.mjs',                   // ★8-③ 覚えた手順を 画面で押す（AIを呼ぶ前に 機械が当てる・上限を置かない）
+  ['recipe-ui.test.mjs', '--self-test'],
+  'teian.test.mjs',                       // ★8 提案＝うちから「こう直せますよ」（0円・向こうから出る）
+  ['teian.test.mjs', '--self-test'],
+  'no-dark-green.test.mjs',               // ★使わないと決めた濃い緑が 残っていないか（全アプリ #2E7D54）
+  ['no-dark-green.test.mjs', '--self-test'],
   'chizu-horu.test.mjs',                  // ★7 地図＋掘る
   ['chizu-horu.test.mjs', '--self-test'],
   'recipe.test.mjs',                      // ★6 レシピ＝2回目からはAIを呼ばない（記録の行数で数える）

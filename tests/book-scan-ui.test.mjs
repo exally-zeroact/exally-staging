@@ -85,18 +85,24 @@ T('★客に見せる字に ★ を書かない★', () => {
 
 /* ★2026-08-25 実際に撮ってみたら、★終わった時の知らせ★に ★ が出ていた★
    ＝この検査は「調べている間」の字しか見ていなかった。⇒ ★画面に出る知らせ 全部★を見る。 */
-T('★客に見せる知らせ 全部に ★ を書かない（showToast をひとつ残らず）★', () => {
+T('★客に見せる知らせ 全部に ★ を書かない（出す口を ひとつ残らず）★', () => {
+  /* ★2026-08-27 また 同じ穴で 素通りした★
+     ＝開いた時の知らせを 1つにまとめた時、字は 開いた知らせに足す() へ移り、
+       この見張りは showToast だけを 見ていたので ★壊しても 赤くならなかった★。
+     ⇒ ★出す口を 全部 数える★（口を足したら ここも足す）。 */
   const 出す = [];
-  let i = 0;
-  while ((i = book.indexOf('showToast(', i)) >= 0) {
-    let d = 0, j = i + 'showToast'.length;
-    for (; j < book.length; j++) {
-      const c = book[j];
-      if (c === '(') d++;
-      else if (c === ')') { d--; if (d === 0) break; }
+  for (const 名 of ['showToast(', '開いた知らせに足す(']) {
+    let i = 0;
+    while ((i = book.indexOf(名, i)) >= 0) {
+      let d = 0, j = i + 名.length - 1;
+      for (; j < book.length; j++) {
+        const c = book[j];
+        if (c === '(') d++;
+        else if (c === ')') { d--; if (d === 0) break; }
+      }
+      出す.push(book.slice(i, j));
+      i = j;
     }
-    出す.push(book.slice(i, j));
-    i = j;
   }
   ok(出す.length >= 10, '知らせが見つからない（' + 出す.length + '件）');
   const 悪い = [];

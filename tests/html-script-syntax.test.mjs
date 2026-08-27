@@ -120,7 +120,11 @@ if (process.argv.includes('--self-test')) {
   });
 
   S('★本物のHTMLを1本 わざと壊すと赤になる（紙の上だけの検査にしない）', () => {
-    const raw = fs.readFileSync(path.join(ROOT, 'seikyu/index.html'), 'utf8');
+    /* ★repo によって 在るHTMLが違う（本番の repo に seikyu は 無い）★
+       ⇒ 名前で決め打ちせず、★<script> が在るHTMLを1本 選んで 壊す★（空振りは 下で弾く）。 */
+    const 的 = trackedHtml().find((f) => /<script>/.test(fs.readFileSync(path.join(ROOT, f), 'utf8')));
+    if (!的) throw new Error('壊す的が 1本も無い＝この自己確認が空振り');
+    const raw = fs.readFileSync(path.join(ROOT, 的), 'utf8');
     const broken = raw.replace(/<script>/, '<script>var s = \'" onclick="f(\'\' + x;');
     if (broken === raw) throw new Error('壊せていない＝この自己確認が空振り');
     const bad = inlineScripts(broken).filter((s) => s.isJs && syntaxError(s.code, { module: s.isModule }));
@@ -145,7 +149,7 @@ for (const f of FILES) {
 T('★git が知っているHTMLを拾えている（0本なら何も見ていない）', () => {
   ok(FILES.length > 0, 'git ls-files が0本を返した');
   ok(FILES.indexOf('book.html') >= 0, 'book.html を拾えていない（いちばん大きい的）');
-  ok(FILES.indexOf('seikyu/index.html') >= 0, 'seikyu/index.html を拾えていない');
+  ok(FILES.length >= 2, '拾ったHTMLが 1本だけ（拾い方が 効いていない）');
   console.log('     拾ったHTML: ' + FILES.length + '本');
 });
 

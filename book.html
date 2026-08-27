@@ -1143,7 +1143,13 @@ font-size:14px;
 font-weight:500;
 line-height:1.8;
 padding:16px 20px;
-max-width:min(560px,88vw);
+/* ★left:50% だと 使える幅が 画面の半分しか無い★＝実測 375pxの画面で 188px・高さ990pxになり
+   上下に 162pxずつ はみ出して 読めなかった（2026-08-27 実機の幅で測って気づいた）。
+   ⇒ 幅は 中身の分だけ取り、画面から 12px 内側で止める。高さも 画面に収める。 */
+width:max-content;
+max-width:min(560px,calc(100vw - 24px));
+max-height:calc(100vh - 24px);
+overflow:auto;
 box-shadow:0 8px 28px rgba(30,60,40,0.22);
 }
 #toast.warn b { color:#8A5A00; }
@@ -1200,45 +1206,48 @@ background:#FFE066 !important;
 }
 </style>
 
-<script src="hyperformula.full.min.js?v=7bf3a634"></script>
+<script src="hyperformula.full.min.js?v=7ea67e19"></script>
 
-<script src="exally-formula.js?v=7bf3a634"></script>
+<script src="exally-formula.js?v=7ea67e19"></script>
 <!-- グリッド→xlsx の変換と「落ちる物」の警告(純関数・軽い)。SheetJS本体(930KB)と lib/xlsx-io.js は
      初回の「Excelに書き出す」で初めて読み込む＝グリッドの表示を重くしない -->
-<script src="js/file-out.js?v=7bf3a634"></script>
+<script src="js/file-out.js?v=7ea67e19"></script>
 <!-- ★打ち込んだ文字の解釈（1,234 を数にする）。★計算側も書き出し側も この1本を呼ぶ★
      grid-xlsx.js より先に読む（grid-xlsx.js が読み込み時に掴む） -->
-<script src="lib/typed-value.js?v=7bf3a634"></script>
-<script src="lib/grid-xlsx.js?v=7bf3a634"></script>
+<script src="lib/typed-value.js?v=7ea67e19"></script>
+<script src="lib/grid-xlsx.js?v=7ea67e19"></script>
   <!-- ★式の中の参照を「カーソルの位置で」直せるようにする★
        2026-08-06 司さんが実機で踏んだ: 「=B1+30」の B1 を直そうと A1 を触ると
        「=B1+30A1」になり ★B1 を直す手段が無かった★。テスト線では直っていたが
        ★本番には運ばれていなかった★（2026-08-18 差を数えて見つけた）。 -->
-  <script src="lib/grid-refedit.js?v=7bf3a634"></script>
-<script src="lib/autosum.js?v=7bf3a634"></script>
-<script src="lib/grid-sort.js?v=7bf3a634"></script>
-<script src="lib/grid-filter.js?v=7bf3a634"></script>
-<script src="lib/grid-find.js?v=7bf3a634"></script>
-<script src="lib/grid-print.js?v=7bf3a634"></script>
-<script src="lib/ai-reason.js?v=7bf3a634"></script>
-<script src="lib/menu-place.js?v=7bf3a634"></script>
-<script src="lib/grid-stats.js?v=7bf3a634"></script>
-<script src="lib/grid-valid.js?v=7bf3a634"></script>
-<script src="lib/cond-format.js?v=7bf3a634"></script>
-<script src="lib/ref-graph.js?v=7bf3a634"></script>
-<script src="lib/shindan.js?v=7bf3a634"></script>
-<script src="lib/rireki.js?v=7bf3a634"></script>
-<script src="lib/chizu.js?v=7bf3a634"></script>
-<script src="lib/horu.js?v=7bf3a634"></script>
-<script src="lib/recipe.js?v=7bf3a634"></script>
-<script src="js/rireki-store.js?v=7bf3a634"></script>
-<script src="lib/excel-version.js?v=7bf3a634"></script>
+  <script src="lib/grid-refedit.js?v=7ea67e19"></script>
+<script src="lib/autosum.js?v=7ea67e19"></script>
+<script src="lib/grid-sort.js?v=7ea67e19"></script>
+<script src="lib/grid-filter.js?v=7ea67e19"></script>
+<script src="lib/grid-find.js?v=7ea67e19"></script>
+<script src="lib/grid-print.js?v=7ea67e19"></script>
+<script src="lib/ai-reason.js?v=7ea67e19"></script>
+<script src="lib/menu-place.js?v=7ea67e19"></script>
+<script src="lib/grid-stats.js?v=7ea67e19"></script>
+<script src="lib/grid-valid.js?v=7ea67e19"></script>
+<script src="lib/cond-format.js?v=7ea67e19"></script>
+<script src="lib/ref-graph.js?v=7ea67e19"></script>
+<script src="lib/shindan.js?v=7ea67e19"></script>
+<script src="lib/rireki.js?v=7ea67e19"></script>
+<script src="lib/chizu.js?v=7ea67e19"></script>
+<script src="lib/horu.js?v=7ea67e19"></script>
+<script src="lib/excel-version.js?v=7ea67e19"></script>
+<script src="lib/teian.js?v=7ea67e19"></script>
+<script src="lib/recipe.js?v=7ea67e19"></script>
+<script src="js/recipe-store.js?v=7ea67e19"></script>
+<script src="js/rireki-store.js?v=7ea67e19"></script>
+<script src="lib/excel-version.js?v=7ea67e19"></script>
 <!-- ★ログイン（hub.html と同じ4本・新しく作った物は0）★ 2026-08-23
      ここを掛けるまで ★誰の回数か 数えられない＝上限が掛けられない★（指示役 2026-08-23） -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supa-config.js?v=7bf3a634"></script>
-<script src="js/exally-login.js?v=7bf3a634"></script>
-<script src="js/auth.js?v=7bf3a634"></script>
+<script src="js/supa-config.js?v=7ea67e19"></script>
+<script src="js/exally-login.js?v=7ea67e19"></script>
+<script src="js/auth.js?v=7ea67e19"></script>
 
 <script>
 /* ===== canvas-formula-engine.js (inlined) ===== */
@@ -3414,6 +3423,7 @@ body.exally-locked > *:not(#loginOv){display:none!important;}
    ★[hidden] は class の display に負ける★ので この1行を必ず置く（他アプリで2回 事故） */
 #bookScan[hidden]{display:none!important;}
 #shindanBtn[hidden]{display:none!important;}
+#teianBtn[hidden]{display:none!important;}
 #bookScan{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:9998;
  background:#ffffff;border:1px solid #C8ECD8;border-radius:14px;box-shadow:0 4px 16px rgba(0,0,0,.14);
  padding:10px 16px;display:flex;align-items:center;gap:10px;max-width:92vw;}
@@ -3599,6 +3609,8 @@ body.exally-locked > *:not(#loginOv){display:none!important;}
          色は「押せる物」に使う＝琥珀（赤ではない＝止まってはいない） -->
     <!-- ★入り口②＝履歴ページ★（見る場所。ここから 何かを始めさせない） -->
     <button id="rirekiBtn" onclick="openRireki('page')" style="background:#F0FAF4;border:1px solid #C8ECD8;color:#3D9E72;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;white-space:nowrap;" title="これまでにやった事（見る場所）"><span class="hdr-ic">🕘</span> <span class="hdr-lb">これまで</span></button>
+    <!-- ★8 提案★ 見つかった時だけ 出す（出来ていない物のボタンを見せない） -->
+    <button id="teianBtn" hidden onclick="openTeian()" style="background:#F0FAF4;border:1px solid #C8ECD8;color:#3D9E72;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;white-space:nowrap;" title="うちが見つけた「もっと短く書ける所」"></button>
     <button id="shindanBtn" hidden onclick="openShindan()" style="background:#FFF6E0;border:1px solid #F0D9A0;color:#8A5A00;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;white-space:nowrap;" title="開いた時に うちが見つけた「気づけない所」"></button>
     <button id="bookVerBtn" onclick="openBookVerModal()" style="background:#F0FAF4;border:1px solid #C8ECD8;color:#3D9E72;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;" title="相手が使っているExcelの版を選ぶ"><span class="hdr-ic">📊</span> <span class="hdr-lb"><span class="hdr-lb-long">Excel</span>版 <span id="bookVerLabel">365</span></span> ▼</button>
   </div>
@@ -3719,6 +3731,42 @@ body.exally-locked > *:not(#loginOv){display:none!important;}
   </div>
 </div>
 
+
+<!-- ★8 提案★ うちから「こう直せますよ」と言う窓。
+     ★見つけるのは 機械（0円）・AIは 言葉にするだけ★／★勝手に直さない★＝出すだけ。 -->
+<div id="tnOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:10000;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#ffffff;border-radius:20px;width:100%;max-width:680px;max-height:88vh;overflow:auto;display:flex;flex-direction:column;">
+    <div style="padding:16px 18px 10px;border-bottom:1px solid #D4EDE1;">
+      <div style="font-size:16px;font-weight:700;color:#2E7D54;" id="tnTitle">もっと短く書ける所が あります</div>
+      <div style="font-size:13px;color:#333333;margin-top:6px;line-height:1.8;" id="tnBody"></div>
+    </div>
+    <div style="padding:10px 18px;font-size:13px;color:#333333;line-height:1.8;">
+      <div id="tnList" style="border:1px solid #D4EDE1;border-radius:12px;overflow:auto;max-height:52vh;"></div>
+    </div>
+    <div style="padding:12px 18px 16px;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid #D4EDE1;">
+      <button onclick="closeTeian()" style="font-size:15px;padding:10px 18px;border-radius:12px;border:1px solid #C8ECD8;background:#ffffff;color:#333333;font-family:inherit;cursor:pointer;">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- ★8-③ 覚えた手順で 直す前に 見せる窓★
+     ★勝手に直さない★＝当てた結果を そのまま書かず、先に「何か所 どうなるか」を出す。
+     ★出来ていない物のボタンを見せない★＝当たった時しか この窓は開かない。 -->
+<div id="rcOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:10000;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#ffffff;border-radius:20px;width:100%;max-width:680px;max-height:88vh;overflow:auto;display:flex;flex-direction:column;">
+    <div style="padding:16px 18px 10px;border-bottom:1px solid #D4EDE1;">
+      <div style="font-size:16px;font-weight:700;color:#2E7D54;" id="rcTitle">覚えた手順で 直します</div>
+      <div style="font-size:13px;color:#333333;margin-top:6px;line-height:1.8;" id="rcBody"></div>
+    </div>
+    <div style="padding:10px 18px;font-size:13px;color:#333333;line-height:1.8;">
+      <div id="rcList" style="border:1px solid #D4EDE1;border-radius:12px;overflow:auto;max-height:52vh;"></div>
+    </div>
+    <div style="padding:12px 18px 16px;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid #D4EDE1;">
+      <button onclick="手順をやめる()" style="font-size:15px;padding:10px 18px;border-radius:12px;border:1px solid #C8ECD8;background:#ffffff;color:#333333;font-family:inherit;cursor:pointer;">やめる</button>
+      <button id="rcGo" onclick="手順を書く()" style="font-size:15px;padding:10px 18px;border-radius:12px;border:none;background:#2E7D54;color:#ffffff;font-weight:700;font-family:inherit;cursor:pointer;">直す</button>
+    </div>
+  </div>
+</div>
 
 <!-- ★6 履歴＝見る場所★（司さん 2026-08-25）
      ★探す入口にしない★＝ここから 何かを始めさせない。
@@ -7244,11 +7292,49 @@ function addAIChatMsg(type, text){
   resp.scrollTop = resp.scrollHeight;
 }
 
-async function sendToAI(){
-  var input = document.getElementById('ai-input');
-  var text = input.value.trim();
-  if(!text) return;
+/* ══ ★聞く口は 1つだけ★（司さん決定 A／2026-08-25）════════════════
+   ★実際に押して 見つけた（2026-08-27）★＝スマホ（769px未満）は 別の道を通っていて、
+     ★地図も 掘るも 使った回数も 履歴も 覚えた手順も 何一つ 通っていなかった★。
+     ＝司さんは iPhone で見る人。★作った物が 半分 届いていなかった★。
+   ⇒ ★中身は この1本だけ★。画面（パネル／スマホの窓）は「出す所」を渡すだけにする。 */
+function _AIの出し口(どこ){
+  if(どこ === 'popup'){
+    return {
+      足す: function(t, x){ _addPopupMsg(t, x); },
+      考え中: function(on){
+        var old = document.getElementById('popup-thinking');
+        if(old) old.remove();
+        var resp = document.getElementById('popup-response-area');
+        if(!on || !resp) return;
+        var d = document.createElement('div');
+        d.id = 'popup-thinking';
+        d.className = 'ai-msg-ai';
+        d.innerHTML = '<span style="color:#3D9E72;font-size:12px;">考え中...</span>';
+        resp.appendChild(d); resp.scrollTop = 9999;
+      },
+      止める: function(b){ var e = document.getElementById('popup-send'); if(e) e.disabled = b; },
+      覚える口: function(頼み){ 覚えるボタンを出す(頼み, 'popup-response-area'); },
+    };
+  }
+  return {
+    足す: function(t, x){ addAIChatMsg(t, x); },
+    考え中: function(on){
+      var old = document.getElementById('ai-thinking');
+      if(old) old.remove();
+      var resp = document.getElementById('ai-response-area');
+      if(!on || !resp) return;
+      var d = document.createElement('div');
+      d.id = 'ai-thinking';
+      d.className = 'ai-msg-ai';
+      d.innerHTML = '<span style="color:#3D9E72;font-size:12px;">考え中...</span>';
+      resp.appendChild(d); resp.scrollTop = 9999;
+    },
+    止める: function(b){ var e = document.getElementById('ai-send'); if(e) e.disabled = b; },
+    覚える口: function(頼み){ 覚えるボタンを出す(頼み, 'ai-response-area'); },
+  };
+}
 
+async function AIに聞く(text, 口){
   var selData = getSelectionData();
   var ctxNote = selData.cells.length > 0
     ? '\n【選択セル:'+selData.addr+'→'+selData.cells.join(',')+'】'
@@ -7257,16 +7343,14 @@ async function sendToAI(){
   var writeInstruction = '\nルール：ユーザーが「〜を入れて」「〜を書いて」「〜に設定して」など明示的にセルへの書き込みを求めた場合のみ、返答の最後に {"action":"write","cells":[{"addr":"A1","value":"=SUM(A1:C1)"}]} の形式のJSONを1行で出力してね。説明・解説・使い方を教えるだけの質問ではJSONを出力しないこと。';
   var userMsg = text + ctxNote + writeInstruction;
 
-  addAIChatMsg('user', text);
-  input.value = '';
-  document.getElementById('ai-send').disabled = true;
+  口.足す('user', text);
 
-  var thinkDiv = document.createElement('div');
-  thinkDiv.className = 'ai-msg-ai';
-  thinkDiv.id = 'ai-thinking';
-  thinkDiv.innerHTML = '<span style="color:#3D9E72;font-size:12px;">考え中...</span>';
-  document.getElementById('ai-response-area').appendChild(thinkDiv);
-  document.getElementById('ai-response-area').scrollTop = 9999;
+  /* ★AIを呼ぶ前に 機械が当てる★（2回目からは 0円）。
+     ★当てられなければ 普通に呼ぶ・黙って外さない★＝当たらなかった理由は 先に言う。 */
+  if(先に手順で当てる(text, 口)) return;
+
+  口.止める(true);
+  口.考え中(true);
 
   {
     /* ══ ★7 地図＋掘る（2026-08-22 司さん決定・4段）★ ═══════════════
@@ -7307,10 +7391,9 @@ async function sendToAI(){
       材料.push(Horu.範囲を出す(sheets, 頼み.掘る, { 今のシート: (sheets[activeSheet]||{}).name }).字);
     }
 
-    var th = document.getElementById('ai-thinking');
-    if(th) th.remove();
+    口.考え中(false);
 
-    if(!r || !r.ok){ addAIChatMsg('ai', aiText); document.getElementById('ai-send').disabled = false; return; }
+    if(!r || !r.ok){ 口.足す('ai', aiText); 口.止める(false); return; }
 
     /* ★お金の数字は AIに出させない★＝{{シート!セル}} を うちの計算結果に差し替える */
     if(typeof Horu !== 'undefined'){
@@ -7331,7 +7414,7 @@ async function sendToAI(){
        （★押す前は「AIを使います」＝数は書かない★＝掘ると 何度も動くので 嘘になる） */
     /* ★中の言葉（掘る／もっと見せて／5回／2,000セル）を 客に見せない★（指示役 2026-08-27）
        ＝客は 掘り方を 知りません／知る必要もありません。出すのは ★使った回数だけ★。 */
-    addAIChatMsg('ai', displayText
+    口.足す('ai', displayText
       + '<span class="toast-n">AIを ' + 動いた + '回 使いました</span>');
     /* ★履歴に残す★（このファイルの分として） */
     履歴に残す('関数', text.slice(0, 40), { 聞いた: text, やった: 'AIに聞いた（地図 ' + 地図.文字数 + '文字・掘った ' + 掘った + '回）' }, null, 動いた);
@@ -7342,8 +7425,19 @@ async function sendToAI(){
 
     if(extracted) showWriteConfirm(extracted.json.cells);
 
+    /* ★「毎月 同じ事」を 2回目から 0円にする★＝覚えるかどうかは 客が決める（勝手に覚えない）。
+       ★出来ていない物のボタンを見せない★＝手順に出来る形の表の時だけ 出す。 */
+    if(typeof Recipe !== 'undefined' && いまの表の要約()) 口.覚える口(text);
   }
-  document.getElementById('ai-send').disabled = false;
+  口.止める(false);
+}
+
+function sendToAI(){
+  var input = document.getElementById('ai-input');
+  var text = input.value.trim();
+  if(!text) return;
+  input.value = '';
+  return AIに聞く(text, _AIの出し口('panel'));
 }
 
 // セル書き込み確認モーダル
@@ -7519,6 +7613,76 @@ function quoteSheetRefs(f){
    ⇒ ★開いた直後に 網だけ先に作る★。計算は 今までどおり 見るシートから。 */
 var _refGraph = null, _refGraphBusy = false;
 function 参照の網(){ return _refGraph; }
+/* ══ ★8 提案＝うちから「こう直せますよ」と言う（2026-08-27）★ ═══════
+   ★競合は「聞かれたら答える」＝受け身★。うちは ★開いた時に 自分から★ 言う。
+   ★見つけるのは 機械（0円・AIを1回も呼ばない）★／★AIは 言葉にするだけ★
+   ★勝手に直さない★＝出すだけ。直すのは 客が押してから（差分プレビューを通す）。 */
+var _teianResult = null;
+var _teianBusy = false;
+function 提案を始める(){
+  if(typeof Teian === 'undefined'){ 開いた知らせは済んだ('提案'); return; }
+  if(_teianBusy){ 開いた知らせは済んだ('提案'); return; }
+  _teianBusy = true;
+  try{
+    var 版 = (typeof bookVerKey !== 'undefined' && bookVerKey) ? bookVerKey : 'excel_365';
+    _teianResult = Teian.見つける(sheets, { 版: 版 });
+  }catch(e){ _teianBusy = false; 開いた知らせは済んだ('提案'); return; }   /* ★見つけられなくても 表は そのまま使える★ */
+  _teianBusy = false;
+  var 知 = Teian.知らせの字(_teianResult);
+  if(!知){ 開いた知らせは済んだ('提案'); return; }   /* ★0件・直せない時は 何も言わない★ */
+  var b = document.getElementById('teianBtn');
+  if(b){
+    b.hidden = false;
+    var 合計 = 0;
+    for(var i=0;i<_teianResult.提案.length;i++) if(_teianResult.提案[i].直し方) 合計 += _teianResult.提案[i].何本;
+    b.textContent = '短くできる ' + 合計 + 'か所';
+  }
+  開いた知らせに足す(知.題, 知.本文 + '<br>' + 知.つぎ);
+  履歴に残す('関数', 知.題, { やった: 知.本文 }, null, 0);
+  開いた知らせは済んだ('提案');
+}
+function openTeian(){
+  if(!_teianResult || !_teianResult.提案.length) return;   /* 出来ていない物のボタンは 見せない */
+  提案を描く(_teianResult);
+  document.getElementById('tnOverlay').style.display = 'flex';
+}
+function closeTeian(){ var o = document.getElementById('tnOverlay'); if(o) o.style.display='none'; }
+
+/* ★組み立てる所は ここ1つだけ★ */
+function 提案を描く(r){
+  var 知 = Teian.知らせの字(r);
+  document.getElementById('tnTitle').textContent = (知 && 知.題) || 'もっと短く書ける所が あります';
+  document.getElementById('tnBody').textContent = (知 && 知.本文) || '';
+  var box = document.getElementById('tnList');
+  box.innerHTML = '';
+  for(var i=0;i<r.提案.length;i++){
+    var t = r.提案[i];
+    var row = document.createElement('div');
+    row.style.cssText = 'padding:10px 12px;border-bottom:1px solid #EAF6F0;';
+    var 頭 = document.createElement('div');
+    頭.style.cssText = 'font-weight:700;color:#2E7D54;font-size:13px;';
+    頭.textContent = t.題 + '（' + t.何本 + 'か所）';
+    row.appendChild(頭);
+    var 本 = document.createElement('div');
+    本.style.cssText = 'font-size:12px;color:#333333;margin-top:2px;';
+    本.textContent = t.本文 + (t.直し方 || t.使えない理由 || '');
+    row.appendChild(本);
+    if(t.場所 && t.場所.length){
+      var 場 = document.createElement('div');
+      場.style.cssText = 'font-size:12px;color:#333333;margin-top:2px;';
+      場.textContent = '場所: ' + t.場所.join(' / ') + (t.何本 > t.場所.length ? (' ほか ' + (t.何本 - t.場所.length) + 'か所') : '');
+      row.appendChild(場);
+    }
+    if(t.例){
+      var 例 = document.createElement('div');
+      例.style.cssText = 'font-size:12px;color:#333333;margin-top:2px;word-break:break-all;';
+      例.textContent = t.例.length > 120 ? (t.例.slice(0,120) + '…') : t.例;
+      row.appendChild(例);
+    }
+    box.appendChild(row);
+  }
+}
+
 /* ══ ★6 履歴＝見る場所（2026-08-25 司さん／08-26 指示役）★ ═══════════
    ★入り口は2つ（AIタブ／履歴ページのボタン）だが、★組み立てる所は 1つだけ★★
      ＝別の入り口から 同じに見える（2か所で作ると 必ず ずれる）。
@@ -7662,16 +7826,184 @@ function 履歴に残す(種類, 見出し, 中身, ファイル名, クレジ�
    ★人が気づけない物は 一生 聞かれない★ので ★開いた時に うちから出す★。
    ★機械が全セルを見るのは 0円★（AIを1回も呼ばない）。 */
 var _shindanResult = null;
+
+/* ★開いた時の知らせは 1つだけ★
+   ＝網・提案・診断が それぞれ showToast を呼ぶと、後の物が 前の物を 消す。
+     実際に 司さんの本を開いて 測った（2026-08-27）＝★提案の知らせが 一度も 出ていなかった★。
+     ⇒ 出そろうまで ためて、★1回だけ★ 出す（知らせの出口は 1つ）。 */
+var _開いた知らせ = null;
+function 開いた知らせを始める(名前たち){
+  _開いた知らせ = { 待ち: {}, 行: [], warn: false };
+  for(var i=0;i<名前たち.length;i++) _開いた知らせ.待ち[名前たち[i]] = 1;
+}
+function 開いた知らせに足す(題, 本文, warn){
+  if(!_開いた知らせ){ showToast('<span class="toast-h">' + 題 + '</span>' + 本文, 9000, warn ? 'warn' : undefined); return; }
+  _開いた知らせ.行.push({ 題: 題, 本文: 本文 });
+  if(warn) _開いた知らせ.warn = true;
+}
+function 開いた知らせは済んだ(名前){
+  if(!_開いた知らせ) return;
+  delete _開いた知らせ.待ち[名前];
+  for(var k in _開いた知らせ.待ち){ if(Object.prototype.hasOwnProperty.call(_開いた知らせ.待ち, k)) return; }
+  var s = _開いた知らせ; _開いた知らせ = null;
+  if(!s.行.length) return;                    /* 何も見つからなければ 何も言わない */
+  var h = '';
+  for(var i=0;i<s.行.length;i++) h += (i ? '<br>' : '') + '<span class="toast-h">' + s.行[i].題 + '</span>' + s.行[i].本文;
+  showToast(h, 12000, s.warn ? 'warn' : undefined);
+}
 var _shindanBusy = false;
+/* ══ ★8-③ 覚えた手順（レシピ）を 画面につなぐ★ ═══════════════════
+   ★2回目からは AIを呼ばない★＝機械が 先に当てる（0円）。
+   ★当てられなければ 普通に呼ぶ・黙って外さない★＝当たらなかった理由を その場で言う。
+   ★実行に上限を置かない★＝当てる時は 何行でも 全部に当てる。
+   ★直す前に必ず見せる★＝当てた結果を そのまま書かない。
+   ★押す前は「AIを使います」／押した後は「AIを ◯回 使いました」★
+     （掘ると 何度も動くので、押す前に 数は書かない） */
+var _覚えた手順 = [];
+var _手順の待ち = null;      /* 見せている最中の物（押されたら これを書く） */
+
+function 覚えた手順を読む(){
+  if(typeof RecipeStore === 'undefined') return Promise.resolve([]);
+  return RecipeStore.覚えた物().then(function(r){
+    _覚えた手順 = (r && r.レシピたち) || [];
+    return _覚えた手順;
+  }).catch(function(){ return _覚えた手順; });
+}
+
+function いまの表の要約(){
+  if(typeof Recipe === 'undefined') return null;
+  var sh = sheets[activeSheet];
+  if(!sh) return null;
+  try{ return Recipe.要約を作る(sh); }catch(e){ return null; }
+}
+
+/** ★当てた結果を 先に見せる★（ここでは 1セルも 書かない） */
+function 手順を見せる(題, 本文, 何, 変える){
+  _手順の待ち = { 変える: 変える, シート: activeSheet };
+  document.getElementById('rcTitle').textContent = 題;
+  document.getElementById('rcBody').textContent = 本文;
+  var box = document.getElementById('rcList');
+  box.innerHTML = '';
+  for(var i=0;i<何.length;i++){
+    var row = document.createElement('div');
+    row.style.cssText = 'padding:8px 12px;border-bottom:1px solid #EAF6F0;color:#333333;';
+    row.textContent = 何[i];
+    box.appendChild(row);
+  }
+  var 番地 = Object.keys(変える);
+  var 見本 = document.createElement('div');
+  見本.style.cssText = 'padding:8px 12px;color:#333333;';
+  var 出す = [];
+  for(var k=0;k<Math.min(3, 番地.length);k++){
+    var p = 番地[k].split(',');
+    var v = 変える[番地[k]];
+    出す.push(DiffPreview.colName(Number(p[1])) + (Number(p[0])+1) + ' → ' + (v.f || v.v));
+  }
+  見本.textContent = 出す.join('  /  ') + (番地.length > 3 ? ('  ほか ' + (番地.length - 3) + 'か所') : '');
+  box.appendChild(見本);
+  document.getElementById('rcGo').textContent = 'この ' + 番地.length + 'か所を 直す';
+  document.getElementById('rcOverlay').style.display = 'flex';
+}
+function 手順をやめる(){
+  _手順の待ち = null;
+  var o = document.getElementById('rcOverlay');
+  if(o) o.style.display = 'none';
+}
+function 手順を書く(){
+  var 待 = _手順の待ち;
+  手順をやめる();
+  if(!待) return;
+  if(待.シート !== activeSheet) switchSheet(待.シート);
+  var 番地 = Object.keys(待.変える);
+  for(var i=0;i<番地.length;i++){
+    var p = 番地[i].split(',');
+    var v = 待.変える[番地[i]];
+    setCell(Number(p[0]), Number(p[1]), (v.f !== undefined ? v.f : v.v));
+  }
+  render();
+  showToast('<span class="toast-h">' + 番地.length + 'か所 直しました</span>覚えた手順で やりました。<span class="toast-n">AIを 0回 使いました</span>', 6000);
+  履歴に残す('自動化', '覚えた手順で ' + 番地.length + 'か所 直した',
+    { やった: '覚えた手順を 全行に当てた（AIは呼んでいない）', 何か所: 番地.length }, null, 0);
+}
+
+/** ★AIを呼ぶ前に 機械が当てる★ @returns {boolean} 当てたら true（AIは1回も呼ばない） */
+function 先に手順で当てる(頼み, 口){
+  var 言う = (口 && 口.足す) ? 口.足す : function(t, x){ addAIChatMsg(t, x); };
+  if(typeof Recipe === 'undefined') return false;
+  var 要約 = いまの表の要約();
+  if(!要約) return false;
+  var 答 = Recipe.前と同じか(頼み, 要約, _覚えた手順);
+  if(!答.やる){
+    /* ★黙って外さない★＝覚えた物が在るのに 当たらなかった時は 理由を言ってから 普通に呼ぶ */
+    if(_覚えた手順.length) 言う('ai', '覚えた手順は 使いませんでした（' + 答.なぜ + '）。AIに聞きます。');
+    return false;
+  }
+  var 出 = Recipe.手順を当てる(sheets[activeSheet], 答.レシピ.手順);
+  if(!出 || !Object.keys(出.変える).length){
+    言う('ai', '覚えた手順は 使いませんでした（当てても 変わる所が ありませんでした）。AIに聞きます。');
+    return false;
+  }
+  言う('ai', '前と同じ事なので、覚えた手順で やります。AIは使いません。');
+  手順を見せる('覚えた手順で 直します',
+    答.なぜ + '。' + 出.何行 + '行 ぜんぶに 当てました。直すかどうかは 見てから 決めてください。',
+    出.なに, 出.変える);
+  return true;
+}
+
+/** ★この やり方を 覚える★（★AIを使います★＝手順だけを もらう・答えの値は もらわない） */
+async function やり方を覚える(頼み, どこ){
+  var 言う = function(x){ if(どこ === 'popup-response-area') _addPopupMsg('ai', x); else addAIChatMsg('ai', x); };
+  if(typeof Recipe === 'undefined' || typeof RecipeStore === 'undefined') return;
+  var 要約 = いまの表の要約();
+  if(!要約){ 言う('この画面では 覚えられません（表が 読めませんでした）。'); return; }
+  言う('やり方を 手順にしています…');
+  var r = await _aiFetch({ message: Recipe.AIへ渡す物(要約, 頼み), history: [] });
+  if(!r.ok){ 言う(r.言葉); return; }
+  var 読 = Recipe.手順を読む(r.言葉);
+  if(!読.ok){
+    /* ★黙って外さない★＝覚えられなかった事を 理由つきで言う */
+    言う('覚えられませんでした（' + 読.なぜ + '）。<span class="toast-n">AIを 1回 使いました</span>');
+    return;
+  }
+  var レ = Recipe.レシピを作る(頼み, 頼み, 要約, 読.手順);
+  _覚えた手順.push(レ);
+  RecipeStore.覚える(レ).then(function(入った){
+    if(!入った) 言う('この画面を閉じるまでは 覚えています（倉庫に 残せませんでした）。');
+  });
+  履歴に残す('自動化', 'やり方を覚えた：' + String(頼み).slice(0, 30),
+    { 聞いた: 頼み, やった: '手順として覚えた（次からは AIを呼ばずに 当てます）' }, null, 1);
+  言う('覚えました。次に 同じ形の表で 同じ事を頼まれたら、AIを呼ばずに やります。'
+    + '<span class="toast-n">AIを 1回 使いました</span>');
+  var 出 = Recipe.手順を当てる(sheets[activeSheet], 読.手順);
+  if(出 && Object.keys(出.変える).length){
+    手順を見せる('覚えた手順で 直します', '今の表にも 当てられます。'
+      + 出.何行 + '行 ぜんぶに 当てました。直すかどうかは 見てから 決めてください。', 出.なに, 出.変える);
+  }
+}
+
+function 覚えるボタンを出す(頼み, どこ){
+  var resp = document.getElementById(どこ || 'ai-response-area');
+  if(!resp) return;
+  var d = document.createElement('div');
+  d.className = 'ai-msg-ai';
+  var b = document.createElement('button');
+  b.textContent = 'この やり方を 覚える（AIを使います）';
+  b.style.cssText = 'font-size:12px;padding:6px 12px;border-radius:14px;border:1px solid #C8ECD8;background:#F0FAF4;color:#333333;font-family:inherit;cursor:pointer;';
+  b.onclick = function(){ d.remove(); やり方を覚える(頼み, どこ || 'ai-response-area'); };
+  d.appendChild(b);
+  resp.appendChild(d);
+  resp.scrollTop = resp.scrollHeight;
+}
+
 function 診断を始める(){
-  if(typeof Shindan === 'undefined') return;
-  if(_shindanBusy) return;
+  if(typeof Shindan === 'undefined'){ 開いた知らせは済んだ('診断'); return; }
+  if(_shindanBusy){ 開いた知らせは済んだ('診断'); return; }
   _shindanBusy = true;
   var it = Shindan.調べる途中(sheets, { 一度に: 3000 });
   function 続き(){
     var r;
     try { r = it.next(); }
-    catch(e){ _shindanBusy = false; return; }   /* ★調べられなくても 表は そのまま使える★ */
+    catch(e){ _shindanBusy = false; 開いた知らせは済んだ('診断'); return; }   /* ★調べられなくても 表は そのまま使える★ */
     if(r.done){
       _shindanBusy = false;
       _shindanResult = r.value;
@@ -7682,6 +8014,7 @@ function 診断を始める(){
           { やった: 'ブック全体を調べた（AIは呼んでいない）', 何か所: _shindanResult.式の本数,
             どこ: _shindanResult.見つけた.slice(0, 5).map(function(x){ return { 場所: x.シート + '!' + x.セル, 前: x.いま出ている物, 後: x.いま出ている物 }; }) }, null, 0);
       }
+      開いた知らせは済んだ('診断');
       return;
     }
     (window.requestAnimationFrame || window.setTimeout)(続き, 0);
@@ -7693,8 +8026,8 @@ function 診断の知らせを出す(r){
   if(!w) return;
   /* ★出るまでの時間ではなく「調べるのにかかった時間」を言う★
      （実測：仕事は0.01秒／出るまで5.6秒＝★開いた直後は 画面が別の仕事で忙しい★） */
-  showToast('<span class="toast-h">' + w.題 + '</span>' + w.本文
-    + '<br><b>場所を出せます</b>（ブック全体を ' + r.かかった秒 + '秒で見ました。AIは使っていません）', 9000, 'warn');
+  開いた知らせに足す(w.題, w.本文
+    + '<br><b>場所を出せます</b>（ブック全体を ' + r.かかった秒 + '秒で見ました。AIは使っていません）', true);
   var b = document.getElementById('shindanBtn');
   if(b){ b.hidden = false; b.textContent = '危ない所 ' + r.式の本数 + 'か所'; }
 }
@@ -7915,19 +8248,28 @@ function openBookFile(file){
     if (typeof initFormulaEngine === 'function') initFormulaEngine(sheets.map(function(s){ return s.name; }));
     rebuildSheetTabs();          // ★14枚あってもタブを出す（出さないと1枚目しか触れない）★
     loadSheetIntoEngine(0);      // ★計算に流すのは 見るシートから（全部流すと固まる）★
+    /* ★開いた時の知らせは ここから 1つにまとめる★
+       ＝「開きました」も 0.1秒で 調べた結果に 消されていた（実測 2026-08-27）。 */
+    開いた知らせを始める(['開いた', '網', '提案', '診断']);
     /* ★参照の網だけは ブック全体ぶん 先に作る（0.04秒・小分けなので固まらない）★
        これが在るから「別のシートも見て答えます」が言える（2026-08-25 司さん） */
     参照の網を作り始める(function(g){
-      if(!g) return;
+      if(!g){ 開いた知らせは済んだ('網'); 開いた知らせは済んだ('提案'); 開いた知らせは済んだ('診断'); return; }
       var 式 = 0, 見た = {};
       for(var i=0;i<g.別シート参照.length;i++){ var k=g.別シート参照[i].from+':'+g.別シート参照[i].fromCell; if(!見た[k]){見た[k]=1;式++;} }
-      showToast('<span class="toast-h">ブック全体を調べました</span>'
-        + g.シート数 + 'シート・式' + g.式の数 + '本／別のシートを見ている式 ' + 式 + '本'
+      開いた知らせに足す('ブック全体を調べました',
+        g.シート数 + 'シート・式' + g.式の数 + '本／別のシートを見ている式 ' + 式 + '本'
         + (g.別ファイル参照.length ? '／別のファイルを見ている式 ' + g.別ファイル参照.length + '本' : '')
-        + '（' + g.かかった秒 + '秒）', 5000);
+        + '（' + g.かかった秒 + '秒）');
+      開いた知らせは済んだ('網');
       /* ★5 E2診断★ 網の次に 診断も走らせる（★0円・AIを1回も呼ばない★）。
          ★開いた時に こちらから言う★＝客は「見えない空」に 一生 気づけない。 */
       診断を始める();
+      /* ★8 提案も 開いた時に 自分から★（押されるまで 何もしない＝受け身＝競合と同じ） */
+      提案を始める();
+      /* ★覚えた手順は 開いた時に 読んでおく★＝AIを呼ぶ前に 機械が当てるため（0円）。
+         ★読めなくても 画面は動く★（その時は 普通にAIに聞く＝黙って外さない） */
+      覚えた手順を読む();
     });
     render(); updateBar();
     var lbl = document.getElementById('openedFileLabel');
@@ -7935,16 +8277,18 @@ function openBookFile(file){
     /* ★マクロ(VBA)が入っていた時は 先に「どうなるか」を言う（2026-08-25）★
        ★「まだ出来ません」ではなく「そのまま残す・ここでは動かない・代わりにこう出来る」★ */
     if (res.hasVba && typeof BookOpen !== 'undefined' && BookOpen.MSG_VBA) {
-      showToast('<span class="toast-h">マクロ（VBA）が入っています</span>' + BookOpen.MSG_VBA, 7000);
+      開いた知らせに足す('マクロ（VBA）が入っています', BookOpen.MSG_VBA);
     }
     if (res.kind === 'xls') {
       // ★「対応していません」ではなく「まだ直せません」★（後で作る）
-      showToast('<span class="toast-h">開きました（見るだけ）</span>' + BookOpen.MSG_XLS, 6000, 'warn');
+      開いた知らせに足す('開きました（見るだけ）', BookOpen.MSG_XLS, true);
     } else {
-      showToast('開きました：' + file.name + '（' + res.sheets.length + 'シート）'
-        + '<br>保存すると<b>元の書式・判子・グラフはそのまま</b>で、値だけ書き換えます。', 5000);
+      開いた知らせに足す('開きました：' + file.name + '（' + res.sheets.length + 'シート）',
+        '保存すると<b>元の書式・判子・グラフはそのまま</b>で、値だけ書き換えます。');
     }
+    開いた知らせは済んだ('開いた');
   }).catch(function(err){
+    _開いた知らせ = null;   /* ★開けなかった時は ためた物を 捨てる（後で 混ざって出ない）★ */
     showToast('開けませんでした：' + ((err && err.message) || err), 5000, 'warn');
   });
 }
@@ -8160,44 +8504,11 @@ function sendToAIMobile(){
   _sendToAIMobile(text);
 }
 
-async function _sendToAIMobile(text){
-  var selData = getSelectionData();
-  var ctxNote = selData.cells.length > 0
-    ? '\n【選択セル:'+selData.addr+'→'+selData.cells.join(',')+'】'
-    : '\n【選択セル:'+selData.addr+'（空）】';
-  var writeInstruction = '\nルール：ユーザーが「〜を入れて」「〜を書いて」「〜に設定して」など明示的にセルへの書き込みを求めた場合のみ、返答の最後に {"action":"write","cells":[{"addr":"A1","value":"=SUM(A1:C1)"}]} の形式のJSONを1行で出力してね。説明・解説・使い方を教えるだけの質問ではJSONを出力しないこと。';
-  var userMsg = text + ctxNote + writeInstruction;
-
-  var sendBtn = document.getElementById('popup-send');
-  if(sendBtn) sendBtn.disabled = true;
-
-  _addPopupMsg('user', text);
-
-  var respArea = document.getElementById('popup-response-area');
-  var thinkEl = document.createElement('div');
-  thinkEl.id = 'popup-thinking';
-  thinkEl.className = 'ai-msg-ai';
-  thinkEl.innerHTML = '<span style="color:#3D9E72;font-size:12px;">考え中...</span>';
-  if(respArea){ respArea.appendChild(thinkEl); respArea.scrollTop = 9999; }
-
-  {
-    var r = await _aiFetch({ message: userMsg, history: aiHistory });
-    var aiText = r.言葉;
-    var th = document.getElementById('popup-thinking');
-    if(th) th.remove();
-    if(!r.ok){ _addPopupMsg('ai', aiText); if(sendBtn) sendBtn.disabled = false; return; }
-    var extracted = extractWriteAction(aiText);
-    var displayText = extracted
-      ? (aiText.substring(0, extracted.start) + aiText.substring(extracted.end)).trim()
-      : aiText;
-    _addPopupMsg('ai', displayText);
-    aiHistory.push({role:'user',content:text});
-    aiHistory.push({role:'assistant',content:displayText});
-    if(aiHistory.length > 40) aiHistory = aiHistory.slice(-40);
-    if(extracted) showWriteConfirm(extracted.json.cells);
-    if(respArea) respArea.scrollTop = respArea.scrollHeight;
-  }
-  if(sendBtn) sendBtn.disabled = false;
+/* ★スマホの窓も 同じ1本を通す★（2026-08-27）
+   ＝ここに 同じ物を もう1つ 書かない。★同じ動きに 2つの作りを 持たせない★
+     （前は ここが 別物で、地図・掘る・使った回数・履歴・覚えた手順が 全部 抜けていた） */
+function _sendToAIMobile(text){
+  return AIに聞く(text, _AIの出し口('popup'));
 }
 
 function _addPopupMsg(type, text){
@@ -8413,6 +8724,6 @@ document.addEventListener('DOMContentLoaded', function(){ checkRequiredFns(); })
 <!-- ★テスト環境の帯★ 本番の倉庫では出ない。今どの倉庫かは js/supa-config.js が唯一の正。
      ホスト名では決めない（配り方は変わるが「本番のデータか」は変わらないため）。
      ★この2本だけが 本番の book.html との違い★（他は1バイトも同じにする）。 -->
-<script src="js/supa-config.js?v=7bf3a634"></script>
-<script src="js/env-badge.js?v=7bf3a634"></script>
+<script src="js/supa-config.js?v=7ea67e19"></script>
+<script src="js/env-badge.js?v=7ea67e19"></script>
 </html>
