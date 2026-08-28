@@ -91,6 +91,8 @@ const FILES = [
   ['pages-hosting.test.mjs', '--self-test'],  // ★わざと壊して赤になるかの自己確認(7通り)
   'html-script-syntax.test.mjs',          // ★HTMLの中の<script>が 構文で死んでいないか（lint緑・テスト緑でも 死ぬ）
   ['html-script-syntax.test.mjs', '--self-test'],
+  'kirikae-egaku.test.mjs',               // ★切り替えた行が「画面に描かれる所」に在るか（選ばれた数ではなく 描かれた物）
+  ['kirikae-egaku.test.mjs', '--self-test'],
   'kirikae.test.mjs',                     // ★切り替え＝見る人・見る月を変える（シートは増えない・戻すと元どおり）
   ['kirikae.test.mjs', '--self-test'],
   'kikan.test.mjs',                       // ★何月分・◯日からの分（締め期間は Timeally が正本・124通り）

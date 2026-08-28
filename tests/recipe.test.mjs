@@ -486,7 +486,9 @@ if (SELF) {
     ['★小さい数（点数・個数）を 日付の列にする★',
       (s3) => s3.replace('return Number(v) >= 20000;', 'return true;')],
     ['★1つ当たっただけで 日付の列にする★',
-      (s3) => s3.replace('if (一番の数 < 3) return { 列: -1, 数: 0 };', '')],
+      (s3) => s3.replace('if (一番の数 < 日付の列の決まり.何個以上) return { 列: -1, 数: 0 };', '')],
+    ['★散らばりが 広い列（金額）も 日付の列にする★',
+      (s3) => s3.replace('if (小 !== null && (大 - 小) > 日付の列の決まり.何日まで) continue;', '')],
   ];
   let red = 0;
   for (const [name, brk] of BREAKS) {
