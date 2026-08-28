@@ -52,7 +52,7 @@ function 台(sheet, opt) {
   opt = opt || {};
   const 名 = ['sheets', 'activeSheet', 'scale', 'scrollTop', 'scrollLeft',
     'HDR_W', 'HDR_H', 'ROW_H', 'COL_W', 'ROWS', 'COLS', 'wrapW', 'wrapH'];
-  const 値 = [[sheet], 0, 1, opt.scrollTop || 0, 0,
+  const 値 = [[sheet], 0, 1, opt.scrollTop || 0, opt.scrollLeft || 0,
     46, 22, 22, 80, 1048576, 16384, opt.wrapW || 1280, opt.wrapH || 590];
   const f = new Function(...名, 座標の所()
     + ';return { rowY:rowY, colX:colX, rH:rH, cW:cW };');
@@ -109,6 +109,37 @@ function 描かれた字(sheet, 行たち) {
     return 列;
   });
 }
+
+/** ★画面の 描かれる所に 在る列★を 拾う（横に流して 全部 見る） */
+function 描かれる列(sheet, opt) {
+  const HDR_W = 46, COL_W = 80;
+  const wrapW = (opt && opt.wrapW) || 1280;
+  const 出 = [];
+  for (let 送り = 0; 送り < 40; 送り++) {
+    const g = 台(sheet, { wrapW: wrapW, scrollLeft: 送り * COL_W * 10 });
+    let 見た = 0;
+    for (let c = 0; c < 200; c++) {
+      if (g.cW(c) <= 0) continue;
+      const x = g.colX(c);
+      if (x < HDR_W || x + COL_W > wrapW) continue;
+      見た++;
+      if (!出.some((y) => y.列 === c)) 出.push({ 列: c, x: x });
+    }
+    if (送り > 2 && !見た) break;
+  }
+  return 出.sort((a, b) => a.列 - b.列);
+}
+
+/** ★中身が在る列だけ★（表の右の 空っぽの列は 数えない） */
+const 中身がある列 = (sheet, 列たち) => 列たち.filter((y) => {
+  for (let r = 0; r < 600; r++) {
+    const cell = sheet.data[r + ',' + y.列];
+    if (!cell) continue;
+    const v = (cell.v !== undefined && cell.v !== '') ? cell.v : cell.d;
+    if (v !== undefined && v !== null && v !== '') return true;
+  }
+  return false;
+});
 
 /** ★日付の行だけ★（表の下の 空っぽの行は 数えない＝Excelでも 空行は ずっと続く） */
 const 日付の行だけ = (sheet, 行たち) => 行たち.filter((x) => {
@@ -210,6 +241,63 @@ T('★選び直したら 座標も 数え直す（前の並びを 使い回さ�
   eq(g.rowY(53), 22 + 44, '★選び直したのに 前の並びで 場所を計算している★');
 });
 
+/* ══ ★列も「描かれた列」で 数える（行と 同じ形）★ ══
+   ★指示役 2026-08-28★「★選ばれた列★ではなく ★画面に描かれた列★／出る組と 空だった組の両方で」 */
+T('★人を選ぶと 描かれる列は「日付＋その人」だけ（中身が在る列で 数える）★', () => {
+  const sh = 表を作る(['白石正人', '長野孝', '長野真道'], 46023, 365);
+  当てる(sh, { 人: '長野孝', 月: '2026-03', 始まりの日: 21 });   /* ★空だった組★ */
+  const 中身 = 中身がある列(sh, 描かれる列(sh, {}));
+  eq(中身.length, 2, '★描かれた（中身が在る）列が 2本でない★');
+  eq(中身.map((x) => x.列).join(','), '0,2', '★日付(A)と 長野孝(C) でない★');
+  eq(中身[0].x, 46, '★日付の列が 左端に 無い★');
+  eq(中身[1].x, 46 + 80, '★選んだ人の列が すぐ隣に 来ていない（隠れた列が 場所を取っている）★');
+});
+T('★出る組（1月分・表の頭から）でも 同じ★', () => {
+  const sh = 表を作る(['白石正人', '長野孝', '長野真道'], 46023, 365);
+  当てる(sh, { 人: '白石正人', 月: '2026-01', 始まりの日: 1 });
+  const 中身 = 中身がある列(sh, 描かれる列(sh, {}));
+  eq(中身.map((x) => x.列).join(','), '0,1', '★日付(A)と 白石正人(B) でない★');
+  eq(中身[1].x, 46 + 80);
+});
+T('★隠さなかった列は「元から空」（1セルも 中身が無い）★', () => {
+  const sh = 表を作る(['白石正人', '長野孝'], 46023, 365);
+  当てる(sh, { 人: '長野孝' });
+  const 見え = 描かれる列(sh, {});
+  const 中身 = 中身がある列(sh, 見え);
+  const 空 = 見え.length - 中身.length;
+  eq(中身.length, 2, '★中身が在る列が 2本でない★');
+  ok(空 > 0, '★空の列が 1本も 無い（数え方が 効いていない）★');
+  /* ★空だと 言い切れるか★＝その列に 1セルも データが 無い事を 数える */
+  for (const y of 見え) {
+    if (中身.some((m) => m.列 === y.列)) continue;
+    for (let r = 0; r < 600; r++) {
+      const cell = sh.data[r + ',' + y.列];
+      const v = cell ? ((cell.v !== undefined && cell.v !== '') ? cell.v : cell.d) : '';
+      ok(v === undefined || v === null || v === '', '★空のはずの列に 中身が在る★');
+    }
+  }
+});
+T('★人を変えると 隠す列が 入れ替わる（3人ぶん・列名で）★', () => {
+  const sh = 表を作る(['白石正人', '長野孝', '長野真道'], 46023, 365);
+  const 見た = [];
+  for (const 人 of ['白石正人', '長野孝', '長野真道']) {
+    当てる(sh, { 人: 人 });
+    見た.push(人 + '=' + 中身がある列(sh, 描かれる列(sh, {})).map((x) => Kirikae.列の字(x.列)).join(''));
+  }
+  eq(見た.join(' / '), '白石正人=AB / 長野孝=AC / 長野真道=AD', '★入れ替わっていない★');
+});
+T('★戻すと 列も 全部 戻る（隠した本数が 0）★', () => {
+  const sh = 表を作る(['白石正人', '長野孝', '長野真道'], 46023, 365);
+  当てる(sh, { 人: '長野孝', 月: '2026-03', 始まりの日: 21 });
+  const 戻 = Kirikae.戻す();
+  sh.kirikaeRows = 戻.隠す行; sh.kirikaeCols = 戻.隠す列;
+  const g = 台(sh, {});
+  let 隠れ = 0;
+  for (let c = 0; c < 10; c++) if (g.cW(c) <= 0) 隠れ++;
+  eq(隠れ, 0, '★列が 隠れたまま★');
+  eq(中身がある列(sh, 描かれる列(sh, {})).length, 4, '★日付＋3人が 戻っていない★');
+});
+
 /* ══ ★戻すと 元どおり★ ══ */
 T('★全員／全期間に戻すと 1行目から 順に 並ぶ★', () => {
   const sh = 表を作る(['白石正人', '長野孝'], 46023, 365);
@@ -246,6 +334,8 @@ if (SELF) {
       (s) => s.replace('  if(sh.kirikaeCols && sh.kirikaeCols[c]) return 0;', '')],
     ['★隠す物が 変わっても 数え直さない（前の並びを 使い回す）★',
       (s) => s.replace('  if(箱.印 === 印) return 箱.並び;', '  if(箱.並び.length) return 箱.並び;')],
+    ['★人を選んでも 列を 隠さない★',
+      (s2) => s2.replace('  if(sh.kirikaeCols && sh.kirikaeCols[c]) return 0;', '')],
   ];
   let red = 0;
   for (const [name, brk] of BREAKS) {
