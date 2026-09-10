@@ -8,6 +8,8 @@ const path = require('path');
 
 const FILES = [
   'stamp.test.mjs',         // キャッシュバスター(?v=)の道具そのもの
+  'shirase-omoku-nuru-na.test.mjs',        // ★知らせの箱を濃い色で塗らない（09-10 司さん「絶対これがええ」）
+  ['shirase-omoku-nuru-na.test.mjs','--self-test'],
   'suite-data.test.js',     // E0 共有データ層の契約
   'aggregate.test.js',      // E1 事業別集計(純関数)
   'ledger-source.test.js',  // E2 台帳→期間の実績値(ctx)

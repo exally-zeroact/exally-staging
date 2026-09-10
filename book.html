@@ -1135,14 +1135,39 @@ touch-action:manipulation;
 .fmtmd-cat{flex:none;max-height:130px;}
 }
 
-/* トースト通知 */
+/* トースト通知
+   ★★2026-09-10 司さん「色が 濃すぎるし 背景ボックスの 使い方が 悪くないか」★★
+     ⇒★測ったら ★答えは うちの 中に 既に 在りました★★
+       ★注意の 知らせ（下の `.warn`）は 2026-08-25 に ★白地・薄い黒の 字・左に 色の 帯★に 直して 在る★
+       ★普通の 知らせだけが ★大きく 塗った 緑★の まま 取り残されて いました★
+       しかも その時 私は こう 書いて います →「濃い緑＋白文字＋半透明は、下のグリッドが
+       透けて 読みにくい。紙のように 白地・濃い文字にして…」
+       ⇒★同じ 事が 普通の 知らせにも 当てはまるのに ★片方だけ★ 直して いた★
+       ⇒★作る 道が 2本 在る時は 両方 直せ★（同じ 型を また 踏んだ）
+
+   ★何を 変えたか★ ★色を 選び直して いません★＝★`.warn` と 同じ 形に 揃えた だけ★
+     ・塗り … ★濃い緑で 全面を 塗る★ → ★白地★（★濃い緑は 左の 5px の 帯だけ★）
+     ・字 … 白 → ★#333333★（`.warn` と 同じ）
+     ・寄せ … 中央 → ★左★（`.warn` と 同じ＝行頭が 揃って 読める）
+     ・幅 … 85vw → ★中身の 分だけ★（`.warn` と 同じ）
+
+   ★★実測（★絵を 撮って 点を 数えた★・当て推量では ない）★★
+     箱の 中 330 × 148 ＝ 48,840点 の うち ★暗い 点（明るさ 170未満）★
+       前 … ★42,780点（88%）★  一番 多い 色 #518262（明るさ 111.7）
+       後 … ★ 2,900点（ 6%）★  一番 多い 色 ★白★（56%）
+     ⇒★暗く 塗る 広さが 14.8分の1★（字と 左の 帯だけ 残る）
+
+   ★禁止色（`tests/no-dark-green.test.mjs` が 持って いる 濃い緑）は 元から 使って いません★
+     ここに 在ったのは ★司さんが 2026-08-02 に 選んだ #2E7D54★＝★色では なく 塗る 広さの 話★ */
 #toast {
 position:fixed;
 top:50%; left:50%;
 transform:translate(-50%,-50%);
-background:rgba(46,125,84,0.94);
-color:#fff;
-padding:14px 22px;
+background:#fff;
+color:#333333;
+border:1px solid #D4EDE1;
+border-left:5px solid #2E7D54;
+padding:14px 20px;
 border-radius:12px;
 font-size:13px;
 font-weight:500;
@@ -1150,13 +1175,18 @@ z-index:2000;
 pointer-events:none;
 opacity:0;
 transition:opacity 0.2s;
-box-shadow:0 4px 20px rgba(0,0,0,0.3);
-max-width:85vw;
-text-align:center;
+box-shadow:0 8px 28px rgba(30,60,40,0.22);
+width:max-content;
+max-width:min(560px,calc(100vw - 24px));
+max-height:calc(100vh - 24px);
+overflow:auto;
+text-align:left;
 line-height:1.6;
 white-space:pre-line;
 }
-#toast b { color:#FFE066; font-weight:700; }
+/* ★白地に なったので 太字は 読める 色に する★（前は 白地に 黄 #FFE066 ＝ 読めない）
+   ★#2E7D54 の 白地での 見え方は 4.5 の 基準を 超える（5.03・2026-08-02 に 測って 在る）★ */
+#toast b { color:#2E7D54; font-weight:700; }
 #toast.show { opacity:1; }
 /* ★警告(長い文章を読ませる用)。濃い緑＋白文字＋半透明は、下のグリッドが透けて読みにくい。
    紙のように白地・濃い文字にして、行頭を揃える(中央寄せをやめる)。左の橙帯で警告と分かる。 */
@@ -1236,50 +1266,50 @@ background:#FFE066 !important;
 }
 </style>
 
-<script src="hyperformula.full.min.js?v=f8f85119"></script>
+<script src="hyperformula.full.min.js?v=f73d3074"></script>
 
-<script src="exally-formula.js?v=f8f85119"></script>
+<script src="exally-formula.js?v=f73d3074"></script>
 <!-- グリッド→xlsx の変換と「落ちる物」の警告(純関数・軽い)。SheetJS本体(930KB)と lib/xlsx-io.js は
      初回の「Excelに書き出す」で初めて読み込む＝グリッドの表示を重くしない -->
-<script src="js/file-out.js?v=f8f85119"></script>
+<script src="js/file-out.js?v=f73d3074"></script>
 <!-- ★打ち込んだ文字の解釈（1,234 を数にする）。★計算側も書き出し側も この1本を呼ぶ★
      grid-xlsx.js より先に読む（grid-xlsx.js が読み込み時に掴む） -->
-<script src="lib/typed-value.js?v=f8f85119"></script>
-<script src="lib/grid-xlsx.js?v=f8f85119"></script>
+<script src="lib/typed-value.js?v=f73d3074"></script>
+<script src="lib/grid-xlsx.js?v=f73d3074"></script>
   <!-- ★式の中の参照を「カーソルの位置で」直せるようにする★
        2026-08-06 司さんが実機で踏んだ: 「=B1+30」の B1 を直そうと A1 を触ると
        「=B1+30A1」になり ★B1 を直す手段が無かった★。テスト線では直っていたが
        ★本番には運ばれていなかった★（2026-08-18 差を数えて見つけた）。 -->
-  <script src="lib/grid-refedit.js?v=f8f85119"></script>
-<script src="lib/autosum.js?v=f8f85119"></script>
-<script src="lib/grid-sort.js?v=f8f85119"></script>
-<script src="lib/grid-filter.js?v=f8f85119"></script>
-<script src="lib/grid-find.js?v=f8f85119"></script>
-<script src="lib/grid-print.js?v=f8f85119"></script>
-<script src="lib/ai-reason.js?v=f8f85119"></script>
-<script src="lib/menu-place.js?v=f8f85119"></script>
-<script src="lib/grid-stats.js?v=f8f85119"></script>
-<script src="lib/grid-valid.js?v=f8f85119"></script>
-<script src="lib/cond-format.js?v=f8f85119"></script>
-<script src="lib/ref-graph.js?v=f8f85119"></script>
-<script src="lib/shindan.js?v=f8f85119"></script>
-<script src="lib/rireki.js?v=f8f85119"></script>
-<script src="lib/chizu.js?v=f8f85119"></script>
-<script src="lib/horu.js?v=f8f85119"></script>
-<script src="lib/excel-version.js?v=f8f85119"></script>
-<script src="lib/teian.js?v=f8f85119"></script>
-<script src="lib/kikan.js?v=f8f85119"></script>
-<script src="lib/recipe.js?v=f8f85119"></script>
-<script src="lib/kirikae.js?v=f8f85119"></script>
-<script src="js/recipe-store.js?v=f8f85119"></script>
-<script src="js/rireki-store.js?v=f8f85119"></script>
-<script src="lib/excel-version.js?v=f8f85119"></script>
+  <script src="lib/grid-refedit.js?v=f73d3074"></script>
+<script src="lib/autosum.js?v=f73d3074"></script>
+<script src="lib/grid-sort.js?v=f73d3074"></script>
+<script src="lib/grid-filter.js?v=f73d3074"></script>
+<script src="lib/grid-find.js?v=f73d3074"></script>
+<script src="lib/grid-print.js?v=f73d3074"></script>
+<script src="lib/ai-reason.js?v=f73d3074"></script>
+<script src="lib/menu-place.js?v=f73d3074"></script>
+<script src="lib/grid-stats.js?v=f73d3074"></script>
+<script src="lib/grid-valid.js?v=f73d3074"></script>
+<script src="lib/cond-format.js?v=f73d3074"></script>
+<script src="lib/ref-graph.js?v=f73d3074"></script>
+<script src="lib/shindan.js?v=f73d3074"></script>
+<script src="lib/rireki.js?v=f73d3074"></script>
+<script src="lib/chizu.js?v=f73d3074"></script>
+<script src="lib/horu.js?v=f73d3074"></script>
+<script src="lib/excel-version.js?v=f73d3074"></script>
+<script src="lib/teian.js?v=f73d3074"></script>
+<script src="lib/kikan.js?v=f73d3074"></script>
+<script src="lib/recipe.js?v=f73d3074"></script>
+<script src="lib/kirikae.js?v=f73d3074"></script>
+<script src="js/recipe-store.js?v=f73d3074"></script>
+<script src="js/rireki-store.js?v=f73d3074"></script>
+<script src="lib/excel-version.js?v=f73d3074"></script>
 <!-- ★ログイン（hub.html と同じ4本・新しく作った物は0）★ 2026-08-23
      ここを掛けるまで ★誰の回数か 数えられない＝上限が掛けられない★（指示役 2026-08-23） -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4"></script>
-<script src="js/supa-config.js?v=f8f85119"></script>
-<script src="js/exally-login.js?v=f8f85119"></script>
-<script src="js/auth.js?v=f8f85119"></script>
+<script src="js/supa-config.js?v=f73d3074"></script>
+<script src="js/exally-login.js?v=f73d3074"></script>
+<script src="js/auth.js?v=f73d3074"></script>
 
 <script>
 /* ===== canvas-formula-engine.js (inlined) ===== */
@@ -9046,6 +9076,6 @@ document.addEventListener('DOMContentLoaded', function(){ checkRequiredFns(); })
 <!-- ★テスト環境の帯★ 本番の倉庫では出ない。今どの倉庫かは js/supa-config.js が唯一の正。
      ホスト名では決めない（配り方は変わるが「本番のデータか」は変わらないため）。
      ★この2本だけが 本番の book.html との違い★（他は1バイトも同じにする）。 -->
-<script src="js/supa-config.js?v=f8f85119"></script>
-<script src="js/env-badge.js?v=f8f85119"></script>
+<script src="js/supa-config.js?v=f73d3074"></script>
+<script src="js/env-badge.js?v=f73d3074"></script>
 </html>
