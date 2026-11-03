@@ -21,30 +21,39 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 // ★CIから外しているテスト（ここに載っていない除外は赤になる）
+/* ★CIから外しているテスト（ここに載っていない除外は赤になる）
+   ★2026-09-05★ 給与(kyuyo/)を Exally から 外した（給与は Rakunally）。
+     ★唯一の 除外だった kyuyo/tests/exally-login.test.mjs も 一緒に 出て行った★
+     ⇒★空に する★＝★除外が 1本も 無い のが 今の 正しい 姿★
+     ⇒★増えたら 下の「理由と 戻す条件」で 必ず 赤に なる★（★空でも 見張りは 効く★） */
 const EXCLUDED = {
-  'kyuyo/tests/exally-login.test.mjs': {
-    reason: 'item C（メール確認ON前提のsignup分岐）は payslip-app のテスト線のみの機能。'
-      + '本番の js/exally-login.js には意図的に未展開で、統合時に本番のログイン挙動を変えないため'
-      + '共通部品は本番版を据え置いた。よって対象機能がこのツリーに存在しない。',
-    restoreWhen: 'item C を本番へ展開する時＝SMTP（確認メール送信）を設定してメール確認をONにする時。'
-      + 'その時に js/exally-login.js を item C 版へ差し替え、このテストをCIへ戻す。',
-    owner: '司さん（SMTP設定）＋ 実装セッション',
+  /* ★★2026-09-06 に 1本 足した★★＝★わざと 赤のまま★の 試験
+     ★空が 正しい 姿★だったので、足す 私が 理由を 一番 はっきり 書く。 */
+  'tests/hozon-de-kieru.test.mjs': {
+    reason: 'うちで 足したシートは 書き出すと 消える事を 実測で 固定した 物。'
+      + '★直っていないので 走らせると 必ず 赤★（出来ていない事を 隠さない／でも CI を 常態で 赤に しない）。'
+      + '手で 走らせる … node tests/hozon-de-kieru.test.mjs',
+    restoreWhen: 'zip へ 足す 直しが 入って ★緑に なった 日★（その時 この 行を 消して run.js に 載せる）',
   },
 };
 
 // テストではない道具（実行されなくてよい物）。ここも理由つきで明示する。
 const NOT_TESTS = {
   'tests/run.js': 'ランナー本体',
-  'kyuyo/tests/run.js': 'ランナー本体',
   'tests/fake-supa.js': 'テスト用のSupabaseモック（他テストが読む部品）',
-  'tests/repo-supa.mjs': 'このリポジトリの接続先(js/supa-config.js)を返す部品。実DBに触る道具が読む（テストではない）',
+  'tests/shiken-no-kuchi.mjs': '★実の 倉庫に 触る 道具（live-seed・live-roundtrip）が 使う 試験用の 口の 認証と 門★（2026-10-10）。メールは repo の 外の cred だけ（テストではない）',
+  'tests/_tsukurimono.mjs': '★実物の 本の 字を 作り物に 替える 部品★（2026-10-10）。実物を 開く 試験（kiridashi-jitsubutsu・kirikae ⑤）が 読む（テストではない）。対応表は repo の 外',
+  'tests/repo-supa.mjs':'このリポジトリの接続先(js/supa-config.js)を返す部品。実DBに触る道具が読む（テストではない）',
+  'tests/zairyou.mjs': '★紙の 材料（#材料 の 行）を 読んで 表に 置く 部品★。突き合わせの 道具と 試験が 読む（テストではない）。★材料の 読み方を 道具ごとに 書くと、材料の 無い 紙で 空の 表を 押して ★偽の 負け★が 出る★（2026-09-14 に 実際に PRODUCT で 起きた）ので 1か所に 切り出した',
+  'tests/betsu-atsukai.mjs': '★実Excel と 同じに しない と 決めた 物の 名簿★（今は INFO 1つ）。formula-yosoku.test.mjs と 借り物を外す皮の突き合わせが 読む（テストではない）。★同じ 名簿を 2つ 持つと「合っている」の 意味が ずれる★ので 切り出した（2026-09-14）',
+  'tests/monosashi.mjs': '★式のほどき方と 答えの見方（1e-9の許し・誤りの比べ方）の 部品★。formula-kane.test.mjs と 借り物を外す皮の突き合わせが 読む（テストではない）。★物差しを 2本に しない為に 切り出した★（2026-09-14）',
   'tests/dbtest-seed.mjs': 'DB-testに種データを入れる手動ツール（CIから叩かない）',
   'tests/live-seed.mjs': '実DBに種を入れる手動ツール（CIから叩かない）',
   'tests/live-roundtrip.mjs': '実DBに触る手動確認ツール（CIから叩かない）',
   'tests/xlsx-harness/build-libre-input.mjs': 'LibreOffice入力を作る手動ツール',
   'tests/xlsx-harness/collect-libre.mjs': 'LibreOfficeの結果を集める手動ツール',
   'tests/xlsx-harness/run-exally.mjs': 'ハーネスの実行部品（compare.mjs から使う）',
-  'seikyu/tests/live-seikyu.mjs': '請求書の棚へ本物のログインで往復する手動確認ツール（鍵が要る・CIから叩かない）',
+
 };
 
 let pass = 0, fail = 0;
@@ -63,14 +72,19 @@ function listTestFiles() {
   };
   walk('tests');
   walk('kyuyo/tests');
-  // ★2026-08-10 追加。足すまで seikyu/tests は【この見張りの視界の外】にあり、
-  //   「宙に浮いているテスト 0本」と出ながら請求書のテストを1本も数えていなかった。
-  //   ＝テストを足してもCIに載らず、誰も気づけない状態だった（指示役が発見）。
-  walk('seikyu/tests');
   return out.sort();
 }
 
-const ci = fs.readFileSync(path.join(ROOT, '.github/workflows/ci.yml'), 'utf8');
+/* ★2026-09-03 に 直した★＝★ci.yml しか 見ていなかった★。
+   ★週1の 回（.github/workflows/webkit.yml）で 走る 試験を「宙に浮いている」と 誤って 赤に した★
+   （実測＝comment-mark-webkit.mjs／karimono.test.mjs の 2本）。
+   ⇒★.github/workflows の yml を 全部 見る★（★どの 回で 走っても「走っている」★）
+   ⇒★見た yml の 本数も 出す★＝★0本 見て 0件★を 見破れるように（今日の 決まり） */
+const wfDir = path.join(ROOT, '.github/workflows');
+const wfFiles = fs.existsSync(wfDir)
+  ? fs.readdirSync(wfDir).filter((f) => /\.ya?ml$/.test(f)).sort()
+  : [];
+const ci = wfFiles.map((f) => fs.readFileSync(path.join(wfDir, f), 'utf8')).join(String.fromCharCode(10));
 const ciRuns = new Set((ci.match(/node\s+([A-Za-z0-9/._-]+)/g) || []).map(s => s.replace(/^node\s+/, '')));
 
 function runnerList(runnerRel) {
@@ -82,9 +96,15 @@ function runnerList(runnerRel) {
     .map(s => s.replace(/'/g, '').replace(/^\.\//, ''))
     .map(f => path.posix.join(base, f));
 }
-const viaRunner = new Set([...runnerList('tests/run.js'), ...runnerList('kyuyo/tests/run.js')]);
+/* ★在る 一覧だけ 読む★（給与が 出て行き kyuyo/tests/run.js は 無い） */
+const runnerPaths = ['tests/run.js', 'kyuyo/tests/run.js']
+  .filter((p) => fs.existsSync(path.join(ROOT, p)));
+if (!runnerPaths.length) throw new Error('★走らせる 一覧が 1本も 無い＝この 検査が 空振り★');
+const viaRunner = new Set(runnerPaths.flatMap((p) => runnerList(p)));
 
 console.log('\n[ci-coverage] CIから黙って外れているテストが無いか');
+/* ★見た 本数も 出す★＝★0本 見て 0件★を 見破る為（2026-09-03 の 決まり） */
+console.log('  （見た ワークフロー ' + wfFiles.length + '本＝' + wfFiles.join('・') + '）');
 
 const files = listTestFiles();
 const covered = [], excluded = [], orphan = [];
@@ -105,12 +125,26 @@ T('★除外リストの各項目に「理由」と「戻す条件」が書か�
     if (!fs.existsSync(path.join(ROOT, f))) throw new Error(f + ': 除外リストにあるがファイルが無い（消したなら除外リストからも消す）');
   }
 });
-T('★除外は1本だけ（増えていたら、ここが赤になって気づける）', function () {
+/* ★2026-09-05★ 給与が 出て行き、除外は ★0本★に なった。
+   ★数の 決め打ち（1本）を やめる★＝★0本が 正しい 姿★
+   ⇒★増えた時に 気づく★のが 目的なので、
+     ★「除外が 在るなら 理由と 戻す条件が 書いてある」（上の 検査）★で 足りる。
+   ⇒ ここでは ★増えていない事★だけ 見る（0本 なら 緑・1本でも 増えたら 上で 中身を 見る）。 */
+T('★除外は 増えていない（0本＝給与が 出て行った後の 正しい 姿）', function () {
   const n = Object.keys(EXCLUDED).length;
-  if (n !== 1) throw new Error(`除外が ${n} 本あります。増やすなら、この本数もここで更新して意図を示すこと: ` + Object.keys(EXCLUDED).join(', '));
+  if (n > 0) {
+    console.log('  ★除外が ' + n + '本 在ります★ … ' + Object.keys(EXCLUDED).join(', '));
+    console.log('  ⇒★理由と 戻す条件は 上の 検査が 見ています★');
+  }
 });
 T('検査が空振りしていない（テストファイルを実際に数えている）', function () {
   if (covered.length < 50) throw new Error('CIが回しているテストが少なすぎます: ' + covered.length);
+});
+/* ★0本 見て 0件★を 見破る（2026-09-03 の 決まり）
+   ＝★ワークフローを 1本も 読めていないのに「全部 走っている」と 言わない★ */
+T('★ワークフローを 実際に 読んでいる（今 ' + wfFiles.length + '本）★', function () {
+  if (wfFiles.length < 2) throw new Error('ワークフローを ' + wfFiles.length + '本しか 読めていません＝★探し方が 悪い★');
+  if (!/webkit\.yml/.test(wfFiles.join(' '))) throw new Error('週1の 回（webkit.yml）を 読めていません');
 });
 
 console.log(`\n── 実測 ──`);

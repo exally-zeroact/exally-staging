@@ -24,10 +24,24 @@
  *         node scripts/check-deployed-version.mjs --host https://exally.vercel.app
  *         node scripts/check-deployed-version.mjs --json
  *         node scripts/check-deployed-version.mjs --self-test   ★判定が空振りしていないか（外へ出ない）
+ *         node scripts/check-deployed-version.mjs --汚れていても  ★未commit が在っても走らせる（数は信じない）
+ *
+ * ★★2026-09-20 追記 ── 「今のコード」は 自分の commit だけでは 決まらない★★
+ *   この道具は ★手元の作業場★から刻印を作る（`buildHash(ROOT)`）。
+ *   ★同じ作業場を 別の席（別の Claude）と 共有している★ので、
+ *   相手の ★未commit★ が混ざると刻印が変わり ★「配信が古い」＝嘘の赤★ を出す。
+ *   ★実際に起きた（2026-09-20）★:
+ *     #89 を本番へ入れた直後にこれを走らせ ★NG 2枚★。
+ *     正体は 別の席の未commit 5本（lib/grid-xlsx.js ほか）。
+ *     包みの中の字から組み直したら ★配信=main=4655afae＝届いていた★。
+ *   ⇒★作業場が汚れていたら 数を出さずに 止める★
+ *     ＝記憶「材料が足りない時は『決められません』と出して止める」
+ *   ⇒止める時は ★何本 と どの紙か★ を出す（数だけだと次の人がまた git status を打つ）
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
 import { buildHash } from './stamp-build.mjs';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -74,6 +88,19 @@ export function judgeVersion(want, stamps) {
     return { ok: false, why: '★配信が今のコードと違う版★ 配信=' + stamps.join(',') + ' / 今のコード=' + want };
   }
   return { ok: true, why: null };
+}
+
+/** ★作業場が汚れていないかの判定（純関数＝self-test でわざと壊せる）★
+ *  `git status --porcelain` の出しをそのまま渡す。
+ *  ★「git が動かない」も緑にしない★（記憶「測る道具が返した0を根拠にするな」）。 */
+export function judgeDirty(res, 許す) {
+  if (!res || res.error || res.status !== 0) {
+    return { ok: false, 止める: true, 紙: [], why: 'git status が読めない（' + ((res && (res.error || ('終わり値 ' + res.status))) || '返事が無い') + '）' };
+  }
+  const 紙 = String(res.stdout || '').split(/\r?\n/).filter((l) => l.trim() !== '');
+  if (紙.length === 0) return { ok: true, 止める: false, 紙: [], why: null };
+  if (許す) return { ok: false, 止める: false, 紙, why: '未commit が ' + 紙.length + '本 在る（--汚れていても で 続けた＝★数は信じない★）' };
+  return { ok: false, 止める: true, 紙, why: '未commit が ' + 紙.length + '本 在る＝刻印が手元の字から作られるので比べる意味が無い' };
 }
 
 /* ★HTTP 200 は「そのファイルが在る」ではない★（2026-08-18 に自分で踏んだ）
@@ -132,6 +159,22 @@ if (process.argv.includes('--self-test')) {
     const a = assetsOf('<script src="https://cdn.example/x.js"></script>');
     if (a.length) throw new Error('混ざった: ' + a.join(','));
   });
+  T('作業場が空なら緑', () => { if (!judgeDirty({ status: 0, stdout: '' }, false).ok) throw new Error('緑にならない'); });
+  T('★未commit が1本でも在れば止める', () => {
+    const d = judgeDirty({ status: 0, stdout: ' M lib/grid-xlsx.js\n' }, false);
+    if (d.ok || !d.止める) throw new Error('止まらない');
+    if (d.紙.length !== 1) throw new Error('本数が合わない: ' + d.紙.length);
+  });
+  T('★--汚れていても なら 止めないが 緑にもしない', () => {
+    const d = judgeDirty({ status: 0, stdout: ' M a.js\n?? b.js\n' }, true);
+    if (d.ok) throw new Error('緑になった');
+    if (d.止める) throw new Error('止まった');
+    if (d.紙.length !== 2) throw new Error('本数が合わない: ' + d.紙.length);
+  });
+  T('★git が動かなければ止める（0件を緑にしない）', () => {
+    const d = judgeDirty({ status: 128, stdout: '', error: null }, false);
+    if (d.ok || !d.止める) throw new Error('止まらない');
+  });
   T('刻印を取り出せる', () => {
     const s = stampsOf('<script src="js/a.js?v=af48d21f"></script>');
     if (s.join() !== 'af48d21f') throw new Error('取れない: ' + s.join());
@@ -185,6 +228,28 @@ if (process.argv.includes('--self-test')) {
   const hostArg = process.argv.indexOf('--host');
   const HOST = (hostArg > 0 && process.argv[hostArg + 1]) ? process.argv[hostArg + 1].replace(/\/$/, '') : DEFAULT_HOST;
   const JSON_OUT = process.argv.includes('--json');
+
+  /* ══ ★★門＝作業場が汚れていたら 数を出さずに 止める★★ ═══════════════
+     ★早く返る形にする★＝`process.exit` で抜ける（★深い入れ子を作らない★）。
+     ★2026-09-20 に 1回 書き損じた★: `$答.Add((if ...))` の形（PowerShell 5.1 は
+       `if` を式として渡せない）と同じで、JS でも入れ子を増やすと括弧を組み間違える。
+       ⇒★「途中で止める」は 早く返るのが 一番 短い★ */
+  const 汚れを許す = process.argv.includes('--汚れていても');
+  const d = judgeDirty(spawnSync('git', ['status', '--porcelain'], { cwd: ROOT, encoding: 'utf8' }), 汚れを許す);
+  if (d.止める) {
+    console.log('★★測れません★★ ⇒ ' + d.why);
+    for (const l of d.紙.slice(0, 12)) console.log('    ' + l);
+    if (d.紙.length > 12) console.log('    ほか ' + (d.紙.length - 12) + '本');
+    console.log('  ⇒★この道具は ★手元のファイル★ から `?v=` の刻印を作ります★');
+    console.log('     ＝★同じ作業場を 別の席と 共有しています＝あなたの物でない事も 在ります★');
+    console.log('  ⇒★直し方★ commit してから もう一度／または --汚れていても（★その数は信じない★）');
+    process.exit(4);
+  }
+  if (!d.ok) {
+    console.log('★★注意★★ ⇒ ' + d.why);
+    for (const l of d.紙.slice(0, 12)) console.log('    ' + l);
+    console.log('  ⇒★下の刻印の突き合わせは 信じないでください★');
+  }
   const want = buildHash(ROOT);
 
   const pages = [];

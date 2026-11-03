@@ -14,17 +14,18 @@ import fs from 'fs'; import path from 'path';
 import { repoSupa } from './repo-supa.mjs';
 const { url: URL, key: ANON } = repoSupa();
 console.log('接続先(このリポジトリの js/supa-config.js 由来): ' + URL);
-const TEST_EMAIL = 'exally.supoort+e0test@gmail.com';
-const CRED_FILE = process.env.EXALLY_TEST_CRED || path.join(process.env.TEMP || '/tmp', 'exally-e0-test-cred.json');
+// ★試験用の 口の メールは repo に 置かない★（cred ファイルだけ・門は +タグ の 白名簿＝tests/shiken-no-kuchi.mjs・2026-10-10）
+import { 試験の口を読む, 試験の口か } from './shiken-no-kuchi.mjs';
 
 const mode = process.argv[2] || 'seed';
-const cred = JSON.parse(fs.readFileSync(CRED_FILE, 'utf8'));
+let cred;
+try { cred = 試験の口を読む(); } catch (e) { console.error(e.message); process.exit(2); }
 const sb = createClient(URL, ANON);
 const { data: auth, error } = await sb.auth.signInWithPassword({ email: cred.email, password: cred.password });
 if (error || !auth.session) { console.error('ログインできません: ' + (error && error.message)); process.exit(2); }
-if (cred.email !== TEST_EMAIL) { console.error('中止: テスト専用アカウント以外では走らせません: ' + cred.email); process.exit(2); }
+if (!試験の口か(auth.user && auth.user.email)) { console.error('中止: ログインした口が 試験用の 口で ない'); process.exit(2); }
 const uid = auth.user.id;
-console.log('ログイン: ' + cred.email);
+console.log('ログイン: 試験用の 口');
 
 // 今月の日付を作る(実機で「今月」を押した時に中身が出るように)
 const now = new Date();
@@ -45,8 +46,8 @@ const LEDGER = [
   { id: 'lg_seed6', employee_id: 'e_seed3', ymd: d(8), data: { uriage: 12000 } }
 ];
 const PARTNERS = [
-  { id: 'pt_seed1', sort: 0, data: { name: '○○建設株式会社', keisho: '御中', addr: '愛媛県松山市本町1-1', invoiceNo: 'T9876543210987' } },
-  { id: 'pt_seed2', sort: 1, data: { name: '△△工務店', keisho: '御中', addr: '愛媛県今治市南町2-2', invoiceNo: '' } }
+  { id: 'pt_seed1', sort: 0, data: { name: '○○建設株式会社', keisho: '御中', addr: '東京都架空区見本台1-1', invoiceNo: 'T9000000000009' } },
+  { id: 'pt_seed2', sort: 1, data: { name: '△△工務店', keisho: '御中', addr: '東京都架空区見本台2-2', invoiceNo: '' } }
 ];
 
 async function clean() {
@@ -63,7 +64,7 @@ const nowIso = new Date().toISOString();
 let ng = 0;
 const put = async (t, rows) => { const { error } = await sb.from(t).upsert(rows); if (error) { ng++; console.log('  ✗ ' + t + ': ' + error.message); } else console.log('  ok ' + t + ' ' + rows.length + '件'); };
 
-await put('pay_org', [{ account_id: uid, data: { yago: '株式会社ゼロアクト', addr: '愛媛県今治市○○町1-2-3', tel: '0898-00-0000', invoiceNo: 'T1234567890123', businesses: ['代行', '空調'] }, updated_at: nowIso }]);
+await put('pay_org', [{ account_id: uid, data: { yago: '株式会社見本', addr: '東京都架空区見本台1-2-3', tel: '090-0000-0000', invoiceNo: 'T9000000000009', businesses: ['代行', '空調'] }, updated_at: nowIso }]);
 await put('pay_employees', EMPS.map((e, i) => ({ id: e.id, account_id: uid, sort: i, data: { id: e.id, name: e.name, birthYmd: '1985-04-01', payType: '月給', base: '250000', business: e.business, employmentType: e.employmentType }, updated_at: nowIso })));
 await put('pay_partners', PARTNERS.map(p => ({ ...p, account_id: uid, deleted_at: null, updated_at: nowIso })));
 await put('pay_ledger', LEDGER.map(r => ({ ...r, account_id: uid, deleted_at: null, updated_at: nowIso })));

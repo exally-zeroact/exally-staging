@@ -1,50 +1,8 @@
 {
- "overrideCount": 27,
+ "overrideCount": 24,
  "pluginCount": 43,
- "measured": 429,
- "brokenCount": 5,
- "byFunc": {
-  "PERCENTILE": 1,
-  "QUARTILE": 1,
-  "N": 1,
-  "DSUM": 1,
-  "DCOUNT": 1
- },
- "broken": [
-  {
-   "id": "PROBE_PERCENTILE",
-   "func": "PERCENTILE",
-   "f": "=PERCENTILE(E1:E6,0.5)",
-   "top": "350",
-   "nested": "#NAME?"
-  },
-  {
-   "id": "PROBE_QUARTILE",
-   "func": "QUARTILE",
-   "f": "=QUARTILE(E1:E6,2)",
-   "top": "350",
-   "nested": "#NAME?"
-  },
-  {
-   "id": "PROBE_N",
-   "func": "N",
-   "f": "=N(A1)",
-   "top": "1000",
-   "nested": "#NAME?"
-  },
-  {
-   "id": "PROBE_DSUM",
-   "func": "DSUM",
-   "f": "=DSUM(C1:E6,3,D1:D2)",
-   "top": "700",
-   "nested": "#NAME?"
-  },
-  {
-   "id": "PROBE_DCOUNT",
-   "func": "DCOUNT",
-   "f": "=DCOUNT(C1:E6,3,D1:D2)",
-   "top": "2",
-   "nested": "#NAME?"
-  }
- ]
+ "measured": 624,
+ "brokenCount": 0,
+ "byFunc": {},
+ "broken": []
 }

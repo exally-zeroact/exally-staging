@@ -1,0 +1,106 @@
+# ★横・2次元が 塞がれた 溢れを 実Excel に 開かせた★（㊾）（2026-09-20）
+# ★開いた 物★ ... C:\Users\zeroa\AppData\Local\Temp\exally-kakidashi-spill2.xlsx（16385 バイト）
+# ★読むだけ★（保存して いません）
+# ★どの Excel か★ ... 版 16.0 ／ build 20326
+# ★どの 貝殻か★ ... PowerShell 5.1.26100.9278
+# ★生の 字★ A2 `ref="A2:A2"` =SEQUENCE(1,3)／A5 `ref="A5:A5"` =SEQUENCE(2,3)
+# ★邪魔★   B2 jama（本来 A2:C2）／B6 jama2（本来 A5:C6）
+# ★対照★   E1 `ref="E1:E3"`（縦）／A10 `ref="A10:C10"`（横）
+# ★縦で 測った 時★ ... #SPILL! に なり 塞ぎを 消すと 溢れ直した（golden-kobore-fusagi-excel-ato-）
+#
+# ★★①開いた 瞬間★★（★まだ 何も 打って いません★）
+# マス	値	出る字	式	型	溢れの一部か
+A2	-2146826243	#スピル!	=SEQUENCE(1,3)	Other	False
+B2	jama	jama	jama	String	False
+C2	(kara)			(kara)	False
+D2	(kara)			(kara)	False
+A5	-2146826243	#スピル!	=SEQUENCE(2,3)	Other	False
+B5	(kara)			(kara)	False
+C5	(kara)			(kara)	False
+A6	(kara)			(kara)	False
+B6	jama2	jama2	jama2	String	False
+C6	(kara)			(kara)	False
+A7	(kara)			(kara)	False
+E1	1	1	=SEQUENCE(3)	Double	False
+E2	2	2		Double	False
+E3	3	3		Double	False
+E4	(kara)			(kara)	False
+A10	1	1	=SEQUENCE(1,3)	Double	False
+B10	2	2		Double	False
+C10	3	3		Double	False
+D10	(kara)			(kara)	False
+#
+# ★★②ISERROR / ISTEXT / ISNUMBER★★（★ここから 計算し直しが 起きます★）
+# マス	ISERROR	ISTEXT	ISNUMBER	窓に入っている式(3つ)
+A2	True	False	False	=ISERROR(A2) / =ISTEXT(A2) / =ISNUMBER(A2)
+A5	True	False	False	=ISERROR(A5) / =ISTEXT(A5) / =ISNUMBER(A5)
+E1	False	False	True	=ISERROR(E1) / =ISTEXT(E1) / =ISNUMBER(E1)
+A10	False	False	True	=ISERROR(A10) / =ISTEXT(A10) / =ISNUMBER(A10)
+#
+# ★★③邪魔 B2 を 消した 後★★
+# ★消した 結果★ ... ok（★変わりました★）
+# マス	値	出る字	式	型	溢れの一部か
+A2	1	1	=SEQUENCE(1,3)	Double	False
+B2	2	2		Double	False
+C2	3	3		Double	False
+D2	(kara)			(kara)	False
+A5	-2146826243	#スピル!	=SEQUENCE(2,3)	Other	False
+B5	(kara)			(kara)	False
+C5	(kara)			(kara)	False
+A6	(kara)			(kara)	False
+B6	jama2	jama2	jama2	String	False
+C6	(kara)			(kara)	False
+A7	(kara)			(kara)	False
+E1	1	1	=SEQUENCE(3)	Double	False
+E2	2	2		Double	False
+E3	3	3		Double	False
+E4	(kara)			(kara)	False
+A10	1	1	=SEQUENCE(1,3)	Double	False
+B10	2	2		Double	False
+C10	3	3		Double	False
+D10	(kara)			(kara)	False
+#
+# ★★③邪魔 B6 を 消した 後★★
+# ★消した 結果★ ... ok（★変わりました★）
+# マス	値	出る字	式	型	溢れの一部か
+A2	1	1	=SEQUENCE(1,3)	Double	False
+B2	2	2		Double	False
+C2	3	3		Double	False
+D2	(kara)			(kara)	False
+A5	1	1	=SEQUENCE(2,3)	Double	False
+B5	2	2		Double	False
+C5	3	3		Double	False
+A6	4	4		Double	False
+B6	5	5		Double	False
+C6	6	6		Double	False
+A7	(kara)			(kara)	False
+E1	1	1	=SEQUENCE(3)	Double	False
+E2	2	2		Double	False
+E3	3	3		Double	False
+E4	(kara)			(kara)	False
+A10	1	1	=SEQUENCE(1,3)	Double	False
+B10	2	2		Double	False
+C10	3	3		Double	False
+D10	(kara)			(kara)	False
+#
+# ★★2つ目の 窓★★（★上の 読みの 後に 打って います★）
+# マス	値	型	=(マス)=0
+A2	1	Double	False
+B2	2	Double	False
+C2	3	Double	False
+D2	(kara)	(kara)	True
+A5	1	Double	False
+B5	2	Double	False
+C5	3	Double	False
+A6	4	Double	False
+B6	5	Double	False
+C6	6	Double	False
+A7	(kara)	(kara)	True
+E1	1	Double	False
+E2	2	Double	False
+E3	3	Double	False
+E4	(kara)	(kara)	True
+A10	1	Double	False
+B10	2	Double	False
+C10	3	Double	False
+D10	(kara)	(kara)	True

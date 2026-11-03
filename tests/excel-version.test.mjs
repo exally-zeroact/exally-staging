@@ -36,8 +36,17 @@ function registeredNames() {
    ・2026-08-01: 412個（実Excel 16.0.20228 に COM で1つずつ問い合わせ）
    ・2026-08-02: 425個（第3波P3で MODE/TRIMMEAN/PERCENTRANK/KURT/INTERCEPT/FORECAST(+.LINEAR)/
      IRR/PERMUT/PERMUTATIONA/MDETERM/GESTEP/MODE.SNGL の13個を登録した分。
-     13個とも実Excelにある関数なので NOT_IN_EXCEL は増えていない＝実Excelで書き出しブックを開いて確認済み）。 */
-const CLASSIFIED_COUNT = 425;
+     13個とも実Excelにある関数なので NOT_IN_EXCEL は増えていない＝実Excelで書き出しブックを開いて確認済み）。
+   ・2026-08-29: 454個（★計算の道具を HyperFormula 2.6.1 → 3.4.0 に 上げた分＝+29個★）
+     増えた29個 … DAVERAGE DCOUNT DCOUNTA DGET DMAX DMIN DPRODUCT DSTDEV DSTDEVP DSUM DVAR DVARP
+       HSTACK IRR N PERCENTILE PERCENTILE.EXC PERCENTILE.INC QUARTILE QUARTILE.EXC QUARTILE.INC
+       SEQUENCE SORT TEXTJOIN UNIQUE VALUE VSTACK XIRR XLOOKUP
+     ★29個とも 実Excelに 在る関数★（経営者セッションが 実Excel 16.0 build 20326 に
+       1つずつ COM で 問い合わせて 作った「欠け153個」の一覧の 中の物）＝NOT_IN_EXCEL は 増えない。
+     ★版の制限が 要る7個（HSTACK/SEQUENCE/SORT/TEXTJOIN/UNIQUE/VSTACK/XLOOKUP）は
+       もともと MIN_VER の表に 在った★（実測で 確認）。残り22個は 昔からの関数＝制限なし。
+     ★減った関数は 0個★（実測）。 */
+const CLASSIFIED_COUNT = 454;
 
 let pass = 0, fail = 0;
 const T = (n, fn) => { try { fn(); pass++; console.log('  ✓ ' + n); } catch (e) { fail++; console.log('  ✗ ' + n + ' — ' + e.message); } };

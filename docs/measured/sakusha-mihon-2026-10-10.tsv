@@ -1,0 +1,23 @@
+# Office ファイルの 作者の 欄を「見本」に 替えた 18本（2026-10-10・scripts/sakusha-mihon.mjs）
+# 替えたのは docProps/core.xml の dc:creator と cp:lastModifiedBy の 字だけ。ほかの 部品 228個は 圧縮の バイトまで 同じ（照らした）。
+# 紙（golden-*.tsv など）に 書いて ある 前の sha・大きさは、測った 時の 物として そのまま 残す。今の ファイルとの 対応は この 表。
+# docs/measured の 4本は「実 Excel が 書いた ファイルに、作者の 欄だけ 手を 入れた 物」になった。
+ファイル	前の sha256 頭16	前の大きさ	今の sha256 頭16	今の大きさ
+docs/measured/excel-kara-2026-09-11.xlsx	09a652e6604613f9	10535	178252ba78e3be1c	10514
+docs/measured/hashira-haba-2026-09-11.xlsx	14f94f04d202aab8	8767	186ebc3298c7b9e1	8747
+docs/measured/xlfn-shirabe.xlsx	4ac694e96ad9dcdc	9291	51f65fa3b0eb53d2	9271
+docs/measured/xlfn-zenbu.xlsx	71a160eab18d393b	15826	6e4fa67da9c291fb	15806
+tests/fixtures/bahttext-sample.xlsx	021e6e90fa5c7c71	9876	fe081ce1e46521e4	9856
+tests/fixtures/book-open-sample.xlsb	7800c7469d14ef44	9757	0257016f05147f68	9737
+tests/fixtures/book-open-sample.xlsx	3830eacb08f5fe2f	10523	2b7c7433ec378aef	10503
+tests/fixtures/cross-sheet-sample.xlsb	f97feb492b37f8f2	12468	f3b88387f9fd0b32	12448
+tests/fixtures/ita2mai-irekae.xlsb	c1551aea4e9c2414	10870	a59f6091ef70833e	10850
+tests/fixtures/ita2mai.xlsb	366f296220b9ce88	10866	bed578440cecb936	10846
+tests/fixtures/jitai-2026-09-11.xlsb	c6dc44fef1b22ad6	9255	3a6c4fdb2a77b130	9235
+tests/fixtures/kazari-graph.xlsx	1ee0195ffa2e418a	13399	f9acca3f2cef5c91	13379
+tests/fixtures/kazari-hiraku3.xlsb	b21b67cac5c53ae7	10132	72ad4954b29a6567	10112
+tests/fixtures/kazari-hiraku3.xlsx	cef5657d3c521e37	11725	80369ed3c35497d4	11705
+tests/fixtures/ketsugou-2026-09-11.xlsx	2af13949f7d9fc94	9135	9112ea629ca29003	9115
+tests/fixtures/kumikomi-38-2026-09-11.xlsx	50d273f348bd978c	8778	203530844b7b0907	8758
+tests/fixtures/table-refs-sample.xlsb	bfa82b2e05e843dd	10686	21346e731eb3a594	10666
+tests/fixtures/table-refs-sample.xlsx	7fb106b3ba401c9d	12179	a3c6ee1326e36cd9	12159

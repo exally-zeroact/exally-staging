@@ -23,9 +23,8 @@ const SuiteData = require('../js/suite-data.js');
 import { repoSupa } from './repo-supa.mjs';
 const { url: URL, key: ANON } = repoSupa();
 console.log('接続先(このリポジトリの js/supa-config.js 由来): ' + URL);
-const CRED_FILE = process.env.EXALLY_TEST_CRED || path.join(process.env.TEMP || '/tmp', 'exally-e0-test-cred.json');
-// ★このメール以外のアカウントでは絶対に走らせない（本番データを消さない最後の砦）
-const TEST_EMAIL = 'exally.supoort+e0test@gmail.com';
+// ★試験用の 口の メールは repo に 置かない★（cred ファイルだけ・門は +タグ の 白名簿＝tests/shiken-no-kuchi.mjs・2026-10-10）
+import { 試験の口を読む, 試験の口か } from './shiken-no-kuchi.mjs';
 
 let pass = 0, fail = 0;
 const created = { employees: [], companies: [], org: [], partners: [], ledger: [], entitlements: [] };
@@ -35,26 +34,13 @@ function ok(name, cond, detail) {
 }
 
 async function login() {
+  /* ★試験用の 口は 作り直さない★（10-10 司さんの決め）＝cred が 無い・入れない 時は 止める（司さんの 手番） */
   const sb = createClient(URL, ANON);
-  let cred = null;
-  try { cred = JSON.parse(fs.readFileSync(CRED_FILE, 'utf8')); } catch {}
-  if (cred) {
-    const { data, error } = await sb.auth.signInWithPassword({ email: cred.email, password: cred.password });
-    if (!error && data.session) { console.log('既存のテストアカウントでログイン: ' + cred.email); return { sb, email: cred.email, uid: data.user.id }; }
-    console.log('既存の認証情報で入れませんでした（作り直します）: ' + (error && error.message));
-  }
-  // 新規作成(テスト専用)。★司さんの受信箱に届く plus エイリアス＝素性が分かる形にする★
-  const email = TEST_EMAIL;
-  const password = 'E0test-' + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
-  const { data, error } = await sb.auth.signUp({ email, password });
-  if (error || !data.session) {
-    // 既にそのメールで登録済み＝パスワードが分からない → 司さん手番
-    throw new Error('テストアカウントを用意できません: ' + ((error && error.message) || 'セッションが返らない(メール確認が必要な設定)') +
-      '\n  → 司さんへ: ' + email + ' のパスワードを教えてもらうか、別のテスト用ログインを作ってください。');
-  }
-  fs.writeFileSync(CRED_FILE, JSON.stringify({ email, password }, null, 2));
-  console.log('テストアカウントを新規作成: ' + email + '（認証情報は ' + CRED_FILE + ' に保存・リポジトリ外）');
-  return { sb, email, uid: data.user.id };
+  const cred = 試験の口を読む();
+  const { data, error } = await sb.auth.signInWithPassword({ email: cred.email, password: cred.password });
+  if (error || !data.session) throw new Error('試験用の 口に 入れません（作り直さない＝司さんの 手番）: ' + (error && error.message));
+  console.log('試験用の 口で ログイン');
+  return { sb, email: data.user.email, uid: data.user.id };
 }
 
 const run = async () => {
@@ -65,8 +51,8 @@ const run = async () => {
   /* ═══ 0. 安全確認 → 前回の残骸を掃除（テスト専用アカウントのみ） ═══ */
   // ★これがテスト専用アカウントである事をメールで確認してから掃除する。
   //   本番アカウントで走らせたら何も消さずに即中止する（司さんのデータを消さない最後の砦）。
-  if (email !== TEST_EMAIL) {
-    console.log('\n★中止: テスト専用アカウント(' + TEST_EMAIL + ')以外では走らせません。今のログイン: ' + email);
+  if (!試験の口か(email)) {
+    console.log('\n★中止: 試験用の 口（+タグ が 白名簿）以外では 走らせません');
     process.exit(1);
   }
   // 前回が途中で落ちた等の残骸を掃除して、毎回同じ前提から始める（何度実行しても同じ結果になる）
@@ -93,12 +79,12 @@ const run = async () => {
 
   /* ═══ 2. 自社情報 pay_org ═══ */
   ok('2. 未作成なら null（空を捏造しない）', (await sd.org.get()) === null);
-  const o1 = await sd.org.save({ yago: 'ゼロアクト', addr: '愛媛県今治市' });
+  const o1 = await sd.org.save({ yago: '見本', addr: '東京都架空区' });
   created.org.push(uid);
   ok('2. org.save が実DBに通る', o1 && o1.ok === true, JSON.stringify(o1));
-  await sd.org.save({ invoiceNo: 'T1234567890123' });
+  await sd.org.save({ invoiceNo: 'T9000000000009' });
   const org = await sd.org.get();
-  ok('2. 差分マージ（既存キーが消えない）', org && org.yago === 'ゼロアクト' && org.addr === '愛媛県今治市' && org.invoiceNo === 'T1234567890123', JSON.stringify(org));
+  ok('2. 差分マージ（既存キーが消えない）', org && org.yago === '見本' && org.addr === '東京都架空区' && org.invoiceNo === 'T9000000000009', JSON.stringify(org));
 
   /* ═══ 3. 取引先 pay_partners ═══ */
   const p1 = await sd.partners.upsert({ sort: 5, data: { name: 'A社', keisho: '御中' } });

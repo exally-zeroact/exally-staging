@@ -88,7 +88,13 @@ T('下のナビの字（.book-bn-lb）を display:none にしている所が無�
 T('★狭い幅では「絵の方」を消している★（字ではなく絵を落として場所を作る）', () => {
   const 絵を消す = ルールを集める('.hdr-ic');
   ok(絵を消す.length > 0, '狭い幅で絵を落とす作りが無い＝字が入らなくなった時に字が消される恐れ');
-  ok(絵を消す.some((s) => /max-width/.test(css.slice(0, css.indexOf(s))) || true), '');
+  /* ★どのボタンの絵を 落とすかまで 見る★
+     （2026-08-29：別のボタンの .hdr-ic を 足したら、上の3つの決まりを 消しても
+       「1つ以上 在る」で 素通りするようになっていた＝見張りが 甘くなっていた） */
+  for (const id of ['openBookBtn', 'saveBookBtn', 'bookVerBtn']) {
+    ok(絵を消す.some((s) => s.indexOf('#' + id + ' .hdr-ic') >= 0),
+      '#' + id + ' の絵を 狭い幅で 落とす決まりが 無い＝字が 入らなくなった時に 字が 消される恐れ');
+  }
 });
 
 /* ── ③ 通じない絵を単独で置いていないか（上の帯） ── */
@@ -113,14 +119,24 @@ T('★出来ていない物は 押したら理由が出る（薄いだけで黙�
   }
   ok(悪い.length === 0, '理由が出ない物: ' + 悪い.join(' ／ '));
 });
-T('★下のナビの「ハンコ」は押したら理由が出る★（スマホでは title が読めない）', () => {
-  /* ★下のナビの物を名指しで取る★（同じ「ハンコ」の字は SVG の説明にも在る＝そこを掴むと嘘の赤になる） */
-  const i = html.indexOf('class="book-bn-lb">ハンコ');
-  ok(i > 0, '下のナビに ハンコ が無い');
-  const s = html.lastIndexOf('<button', i);
-  const tag = html.slice(s, html.indexOf('>', s) + 1);
-  ok(/onclick=/.test(tag), '押せない（onclick が無い）＝薄いだけで理由が出ない: ' + tag.slice(0, 110));
-  ok(/showToast\(/.test(tag), '押しても知らせが出ない: ' + tag.slice(0, 110));
+T('★まだ出来ていない物は 理由が「字で」読める★（スマホでは title が読めない）', () => {
+  /* ★2026-08-29 に 置き場所を 変えた★
+       下のナビが 8個で ごちゃごちゃ だったので（司さん「フッターも整理しろよ」）、
+       テンプレ／電子ハンコを ★ホーム画面(hub.html)の 灰色のカード★へ 移した。
+     ★消したのでは ない★＝出来ていない事は 見える所に 残す。
+     ★title だけでは スマホで 読めない★ので、★画面に 出る字★で 理由が 読める事を 見る。 */
+  const hub = fs.readFileSync(srcPath('hub.html'), 'utf8');
+  /* ★テンプレは ここに 出さない★＝「まだ」ではなく ★消したページ★
+     （tests/hub-ui.mjs が「戻っていないか」を 見張っている）。 */
+  for (const 名 of ['電子ハンコ']) {
+    const i = hub.indexOf('>' + 名 + '<');
+    ok(i > 0, 'ホーム画面に ' + 名 + ' が 無い＝出来ていない事を 隠している');
+    const s = hub.lastIndexOf('<button', i);
+    const 中 = hub.slice(s, hub.indexOf('</button>', i));
+    ok(/(まだ出来ていません|準備中)/.test(中.replace(/title="[^"]*"/g, '')),
+      名 + ' の理由が 画面の字で 読めない（title だけになっていないか）: ' + 中.slice(0, 120));
+    ok(/disabled/.test(中) || /pointer-events\s*:\s*none/.test(中), 名 + ' が 押せてしまう');
+  }
 });
 
 /* ── ⑤ 実際の幅で測った記録が残っているか（人が忘れないため） ── */
@@ -140,34 +156,35 @@ if (SELF) {
   const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'exally-mobile-'));
   console.log('\n[self-test] わざと壊して 赤くなるかを数える（★repo は読むだけ★）');
   const BREAKS = [
-    ['★狭い幅で字を消す（元の間違いを戻す）★', (s) => s.replace(
+    ['book.html', '★狭い幅で字を消す（元の間違いを戻す）★', (s) => s.replace(
       '#openBookBtn .hdr-ic, #saveBookBtn .hdr-ic, #bookVerBtn .hdr-ic { display: none; }',
       '#openBookBtn .hdr-lb, #saveBookBtn .hdr-lb { display: none; }')],
-    ['下のナビの字を消す', (s) => s.replace(
+    ['book.html', '下のナビの字を消す', (s) => s.replace(
       '  #header { padding: 0 10px; }',
       '  #header { padding: 0 10px; } .book-bn-lb { display: none; }')],
-    ['読み込むボタンを絵だけに戻す', (s) => s.replace(
+    ['book.html', '読み込むボタンを絵だけに戻す', (s) => s.replace(
       '<span class="hdr-ic">📂</span> <span class="hdr-lb"><span class="hdr-lb-long">Excelを</span>読み込む</span>',
       '<span class="hdr-ic">📂</span>')],
-    ['書き出すボタンを絵だけに戻す', (s) => s.replace(
+    ['book.html', '書き出すボタンを絵だけに戻す', (s) => s.replace(
       '<span class="hdr-ic">💾</span> <span class="hdr-lb"><span class="hdr-lb-long">Excelに</span>書き出す</span>',
       '<span class="hdr-ic">💾</span>')],
-    ['ハンコを 薄いだけ（押せない）に戻す', (s) => s.replace(
-      '<button class="book-bn-i book-bn-notyet" onclick="showToast(\'電子ハンコは まだ出来ていません（準備中）\')">',
-      '<button class="book-bn-i book-bn-disabled">')],
-    ['ハンコを押しても何も知らせない', (s) => s.replace(
-      'onclick="showToast(\'電子ハンコは まだ出来ていません（準備中）\')"', 'onclick="void 0"')],
-    ['絵を落とす作りをやめる（字が入らなくなる）', (s) => s.replace(
+    /* ★2026-08-29：テンプレ／電子ハンコは ホーム画面(hub.html)の 灰色カードに 移した★
+       ＝壊す先も hub.html に する（book.html を 壊しても この決まりは 動かない） */
+    ['hub.html', '準備中の理由の字を 消す（薄いだけにする）', (s) => s.replace(
+      '<span class="tile-d">まだ出来ていません（準備中）</span>', '<span class="tile-d"></span>')],
+    ['hub.html', '電子ハンコを 押せるように 戻す（出来ていないのに）', (s) => s.replace(
+      'id="tile-stamp" type="button" disabled', 'id="tile-stamp" type="button"')],
+    ['book.html', '絵を落とす作りをやめる（字が入らなくなる）', (s) => s.replace(
       '#openBookBtn .hdr-ic, #saveBookBtn .hdr-ic, #bookVerBtn .hdr-ic { display: none; }', '')],
   ];
   let red = 0;
-  for (const [name, brk] of BREAKS) {
-    const orig = fs.readFileSync(path.join(ROOT, 'book.html'), 'utf8');
+  for (const [対象, name, brk] of BREAKS) {
+    const orig = fs.readFileSync(path.join(ROOT, 対象), 'utf8');
     const bad = brk(orig);
     if (bad === orig) { console.log('  ★置換できず★  ' + name); continue; }
-    const tmp = path.join(TMP, 'book.html');
+    const tmp = path.join(TMP, 対象);
     fs.writeFileSync(tmp, bad, 'utf8');
-    const env = Object.assign({}, process.env, { EXALLY_MOBILE_OVERRIDE: JSON.stringify({ 'book.html': tmp }) });
+    const env = Object.assign({}, process.env, { EXALLY_MOBILE_OVERRIDE: JSON.stringify({ [対象]: tmp }) });
     const isRed = spawnSync(process.execPath, [path.join(__dirname, 'mobile-labels.test.mjs')], { encoding: 'utf8', env }).status !== 0;
     if (isRed) { red++; console.log('  赤くなった  ' + name); }
     else console.log('  ★素通り★  ' + name);

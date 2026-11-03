@@ -1,0 +1,61 @@
+関数	式	実Excel の 答え
+# ★★材料（機械が 読む）★★ … `#材料<タブ>マス<タブ>値` の 形
+#   ★2026-09-14 に 足しました★。値は ★新しく 測った 物では ありません★＝
+#   `tests/formula-nokori.test.mjs` が ★手で 持って いた 物★を ここへ 移した だけ。
+#     const A = [[1],[4],[3],[2]] … A1:A4 ／ B = [[9],[7],[8],[6]] … B1:B4
+#     MINVERSE の [[4,7],[2,6]] … D1:E2 ／ PROB の [[0.1],[0.2],[0.3],[0.4]] … F1:F4
+#   ★訳★＝材料が 紙に 無いと、使う 道具が めいめい 手で 写す。
+#         写し間違えれば ★紙は 緑・本番は 赤★ に なる。
+#         ⇒★紙を 1か所の 正本に する★（他の 7本の 紙と 同じ 形）
+#   ★答えの 行は 1行も 触って いません★（足したのは # の行だけ）
+#材料	A1	1
+#材料	A2	4
+#材料	A3	3
+#材料	A4	2
+#材料	B1	9
+#材料	B2	7
+#材料	B3	8
+#材料	B4	6
+#材料	D1	4
+#材料	E1	7
+#材料	D2	2
+#材料	E2	6
+#材料	F1	0.1
+#材料	F2	0.2
+#材料	F3	0.3
+#材料	F4	0.4
+AREAS	=AREAS(A1:B3)	1
+AREAS	=AREAS((A1:B3,D1:D2))	2
+CELL	=CELL("row",B7)	7
+CELL	=CELL("col",C2)	3
+CELL	=CELL("address",B7)	$B$7
+CELL	=CELL("contents",A1)	1
+ERROR.TYPE	=ERROR.TYPE(1/0)	2
+ERROR.TYPE	=ERROR.TYPE(NA())	7
+ERROR.TYPE	=ERROR.TYPE(A1)	#N/A
+FINDB	=FINDB("b","abc")	2
+FINDB	=FINDB("い","あいう")	3
+SEARCHB	=SEARCHB("B","abc")	2
+SEARCHB	=SEARCHB("い","あいう")	3
+REPLACEB	=REPLACEB("abcdef",2,3,"X")	aXef
+REPLACEB	=REPLACEB("あいう",3,2,"X")	あXう
+TEXTSPLIT	=TEXTSPLIT("a,b,c",",")	a
+TEXTSPLIT	=INDEX(TEXTSPLIT("a,b,c",","),1,2)	b
+REGEXTEST	=REGEXTEST("abc123","[0-9]+")	TRUE
+REGEXTEST	=REGEXTEST("abc","[0-9]+")	FALSE
+REGEXEXTRACT	=REGEXEXTRACT("abc123","[0-9]+")	123
+REGEXREPLACE	=REGEXREPLACE("abc123","[0-9]+","#")	abc#
+SORTBY	=INDEX(SORTBY(A1:A4,B1:B4,1),1,1)	2
+SORTBY	=INDEX(SORTBY(A1:A4,B1:B4,-1),1,1)	1
+RANDARRAY	=ROWS(RANDARRAY(3,2))	3
+RANDARRAY	=COLUMNS(RANDARRAY(3,2))	2
+PERCENTRANK.INC	=PERCENTRANK.INC(A1:A4,3)	0.666
+PERCENTRANK.EXC	=PERCENTRANK.EXC(A1:A4,3)	0.6
+MUNIT	=INDEX(MUNIT(3),1,1)	1
+MUNIT	=INDEX(MUNIT(3),1,2)	0
+MINVERSE	=INDEX(MINVERSE(D1:E2),1,1)	0.6
+MINVERSE	=INDEX(MINVERSE(D1:E2),1,2)	-0.7
+PROB	=PROB(A1:A4,F1:F4,2,3)	0.7
+INFO	=INFO("numfile")	1
+INFO	=INFO("recalc")	自動
+TRIMRANGE	=SUM(TRIMRANGE(A1:A10))	10

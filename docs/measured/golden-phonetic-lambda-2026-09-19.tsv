@@ -1,0 +1,13 @@
+# ★PHONETIC と 裸の LAMBDA を 実Excel に 聞いた（㊴）★（2026-09-19）
+# ★材料★ A1=1 ／ A2=2（ふりがな 無し） ／ B1=山田
+# ★B1 の ふりがな★ ... はい ／ 読み返した 字 ... ヤマダ
+# ★どの Excel か★ ... 版 16.0 ／ build 20326
+# ★どの 貝殻か★ ... PowerShell 5.1.26100.9278
+# 番	式	答え	出る字	=(式)=0	型
+1	=PHONETIC(A1)			False	String
+2	=PHONETIC(A1:A2)			False	String
+3	=PHONETIC(B1)	ヤマダ	ヤマダ	False	String
+4	=LAMBDA(x,x+1)	-2146826238	#CALC!	-2146826273	Other
+5	=LAMBDA(x,x+1)(2)	3	3	False	Double
+6	=SUM(A1:A2)	3	3	False	Double
+# ★★押すのに かかった 秒 ... 0.48★★

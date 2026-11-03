@@ -1,0 +1,76 @@
+# ★LOGEST / TREND / GROWTH を 実Excel に 聞いた★（2026-09-09）
+#
+# ★なぜ★ LINEST が ★x 2本で 静かに 違う 答え★を 出して いた。
+#   この 3つも 同じ 土台（最小二乗）＝★同じ 穴の 見込みが 高い★
+#   ⇒★見込みで 直さない＝先に 測る★
+#
+# ★どの Excel で 打ったか★ … 版 16.0 ／ build 20326
+#
+# ★★材料（機械が 読む）★★ … `#材料<タブ>マス<タブ>値` の 形
+#材料	A1	2
+#材料	A2	4
+#材料	A3	8
+#材料	A4	16
+#材料	A5	32
+#材料	A6	64
+#材料	B1	1
+#材料	B2	2
+#材料	B3	3
+#材料	B4	4
+#材料	B5	5
+#材料	B6	6
+#材料	D1	3
+#材料	D2	7
+#材料	D3	12
+#材料	D4	20
+#材料	D5	33
+#材料	D6	54
+#材料	E1	1
+#材料	E2	2
+#材料	E3	3
+#材料	E4	4
+#材料	E5	5
+#材料	E6	6
+#材料	F1	2
+#材料	F2	1
+#材料	F3	4
+#材料	F4	3
+#材料	F5	6
+#材料	F6	5
+#材料	H1	7
+#材料	H2	8
+#
+# 関数	式	実Excel の 答え	型	窓２(=(式)=0)	何を 見て いるか
+LOGEST	=LOGEST(A1:A6,B1:B6)	2	Double	—	★x 1本★・裸
+LOGEST	=ROWS(LOGEST(A1:A6,B1:B6))	1	Double	—	表の 大きさ（ROWS）
+LOGEST	=COLUMNS(LOGEST(A1:A6,B1:B6))	2	Double	—	表の 大きさ（COLUMNS）
+LOGEST	=INDEX(LOGEST(A1:A6,B1:B6),1,1)	2	Double	—	x1本・1行1列
+LOGEST	=INDEX(LOGEST(A1:A6,B1:B6),1,2)	0.9999999999999996	Double	—	x1本・1行2列
+LOGEST	=LOGEST(D1:D6,E1:F6)	0.9695989417818497	Double	—	★★x 2本（重回帰）★★・裸
+LOGEST	=ROWS(LOGEST(D1:D6,E1:F6))	1	Double	—	★x2本★ ROWS
+LOGEST	=COLUMNS(LOGEST(D1:D6,E1:F6))	3	Double	—	★x2本★ COLUMNS
+LOGEST	=INDEX(LOGEST(D1:D6,E1:F6),1,1)	0.9695989417818497	Double	—	★x2本★ 1行1列
+LOGEST	=INDEX(LOGEST(D1:D6,E1:F6),1,2)	1.7967759164842778	Double	—	★x2本★ 1行2列
+LOGEST	=INDEX(LOGEST(D1:D6,E1:F6),1,3)	2.065801216583393	Double	—	★x2本★ 1行3列
+TREND	=TREND(A1:A6,B1:B6)	-7.714285714285715	Double	—	★x 1本★・裸
+TREND	=ROWS(TREND(A1:A6,B1:B6))	6	Double	—	表の 大きさ（ROWS）
+TREND	=COLUMNS(TREND(A1:A6,B1:B6))	1	Double	—	表の 大きさ（COLUMNS）
+TREND	=INDEX(TREND(A1:A6,B1:B6),1,1)	-7.714285714285715	Double	—	x1本・1つ目
+TREND	=INDEX(TREND(A1:A6,B1:B6),6,1)	49.71428571428572	Double	—	x1本・6つ目
+TREND	=TREND(A1:A6,B1:B6,H1:H2)	61.2	Double	—	★新しい x を 渡した★
+TREND	=INDEX(TREND(A1:A6,B1:B6,H1:H2),1,1)	61.2	Double	—	★新しい x★ 1つ目
+TREND	=INDEX(TREND(A1:A6,B1:B6,H1:H2),2,1)	72.6857142857143	Double	—	★新しい x★ 2つ目
+TREND	=TREND(D1:D6,E1:F6)	-3.2499999999999876	Double	—	★★x 2本（重回帰）★★・裸
+TREND	=INDEX(TREND(D1:D6,E1:F6),1,1)	-3.2499999999999876	Double	—	★x2本★ 1つ目
+TREND	=INDEX(TREND(D1:D6,E1:F6),6,1)	46.24999999999999	Double	—	★x2本★ 6つ目
+GROWTH	=GROWTH(A1:A6,B1:B6)	1.9999999999999991	Double	—	★x 1本★・裸
+GROWTH	=ROWS(GROWTH(A1:A6,B1:B6))	6	Double	—	表の 大きさ（ROWS）
+GROWTH	=COLUMNS(GROWTH(A1:A6,B1:B6))	1	Double	—	表の 大きさ（COLUMNS）
+GROWTH	=INDEX(GROWTH(A1:A6,B1:B6),1,1)	1.9999999999999991	Double	—	x1本・1つ目
+GROWTH	=INDEX(GROWTH(A1:A6,B1:B6),6,1)	64	Double	—	x1本・6つ目
+GROWTH	=GROWTH(A1:A6,B1:B6,H1:H2)	128.00000000000003	Double	—	★新しい x を 渡した★
+GROWTH	=INDEX(GROWTH(A1:A6,B1:B6,H1:H2),1,1)	128.00000000000003	Double	—	★新しい x★ 1つ目
+GROWTH	=INDEX(GROWTH(A1:A6,B1:B6,H1:H2),2,1)	256.00000000000006	Double	—	★新しい x★ 2つ目
+GROWTH	=GROWTH(D1:D6,E1:F6)	3.48952819965546	Double	—	★★x 2本（重回帰）★★・裸
+GROWTH	=INDEX(GROWTH(D1:D6,E1:F6),1,1)	3.48952819965546	Double	—	★x2本★ 1つ目
+GROWTH	=INDEX(GROWTH(D1:D6,E1:F6),6,1)	59.56795622772211	Double	—	★x2本★ 6つ目

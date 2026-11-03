@@ -1,0 +1,935 @@
+{
+  "note": "和暦(ge)と経過時間([h])の真値だけを取る為の物差し。答えは golden に入る（ここには書かない）",
+  "cases": [
+    {
+      "id": "TEXT_W_19000101_f0",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1900,1,1),\"g\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 g"
+    },
+    {
+      "id": "TEXT_W_19000101_f1",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1900,1,1),\"gg\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 gg"
+    },
+    {
+      "id": "TEXT_W_19000101_f2",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1900,1,1),\"ggg\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ggg"
+    },
+    {
+      "id": "TEXT_W_19000101_f3",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1900,1,1),\"e\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 e"
+    },
+    {
+      "id": "TEXT_W_19000101_f4",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1900,1,1),\"ee\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ee"
+    },
+    {
+      "id": "TEXT_W_19000101_f5",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1900,1,1),\"ge.m.d\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ge.m.d"
+    },
+    {
+      "id": "TEXT_W_19000101_f6",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1900,1,1),\"ggge年m月d日\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ggge年m月d日"
+    },
+    {
+      "id": "TEXT_W_19000101_f7",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1900,1,1),\"gggee年\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 gggee年"
+    },
+    {
+      "id": "TEXT_W_19000101_f8",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1900,1,1),\"[$-ja-JP]ggge年\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 [$-ja-JP]ggge年"
+    },
+    {
+      "id": "TEXT_W_19120729_f0",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1912,7,29),\"g\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 g"
+    },
+    {
+      "id": "TEXT_W_19120729_f1",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1912,7,29),\"gg\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 gg"
+    },
+    {
+      "id": "TEXT_W_19120729_f2",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1912,7,29),\"ggg\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ggg"
+    },
+    {
+      "id": "TEXT_W_19120729_f3",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1912,7,29),\"e\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 e"
+    },
+    {
+      "id": "TEXT_W_19120729_f4",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1912,7,29),\"ee\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ee"
+    },
+    {
+      "id": "TEXT_W_19120729_f5",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1912,7,29),\"ge.m.d\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ge.m.d"
+    },
+    {
+      "id": "TEXT_W_19120729_f6",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1912,7,29),\"ggge年m月d日\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ggge年m月d日"
+    },
+    {
+      "id": "TEXT_W_19120729_f7",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1912,7,29),\"gggee年\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 gggee年"
+    },
+    {
+      "id": "TEXT_W_19120729_f8",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1912,7,29),\"[$-ja-JP]ggge年\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 [$-ja-JP]ggge年"
+    },
+    {
+      "id": "TEXT_W_19120730_f0",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1912,7,30),\"g\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 g"
+    },
+    {
+      "id": "TEXT_W_19120730_f1",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1912,7,30),\"gg\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 gg"
+    },
+    {
+      "id": "TEXT_W_19120730_f2",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1912,7,30),\"ggg\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ggg"
+    },
+    {
+      "id": "TEXT_W_19120730_f3",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1912,7,30),\"e\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 e"
+    },
+    {
+      "id": "TEXT_W_19120730_f4",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1912,7,30),\"ee\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ee"
+    },
+    {
+      "id": "TEXT_W_19120730_f5",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1912,7,30),\"ge.m.d\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ge.m.d"
+    },
+    {
+      "id": "TEXT_W_19120730_f6",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1912,7,30),\"ggge年m月d日\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ggge年m月d日"
+    },
+    {
+      "id": "TEXT_W_19120730_f7",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1912,7,30),\"gggee年\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 gggee年"
+    },
+    {
+      "id": "TEXT_W_19120730_f8",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1912,7,30),\"[$-ja-JP]ggge年\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 [$-ja-JP]ggge年"
+    },
+    {
+      "id": "TEXT_W_19261224_f0",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1926,12,24),\"g\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 g"
+    },
+    {
+      "id": "TEXT_W_19261224_f1",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1926,12,24),\"gg\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 gg"
+    },
+    {
+      "id": "TEXT_W_19261224_f2",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1926,12,24),\"ggg\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ggg"
+    },
+    {
+      "id": "TEXT_W_19261224_f3",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1926,12,24),\"e\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 e"
+    },
+    {
+      "id": "TEXT_W_19261224_f4",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1926,12,24),\"ee\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ee"
+    },
+    {
+      "id": "TEXT_W_19261224_f5",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1926,12,24),\"ge.m.d\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ge.m.d"
+    },
+    {
+      "id": "TEXT_W_19261224_f6",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1926,12,24),\"ggge年m月d日\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ggge年m月d日"
+    },
+    {
+      "id": "TEXT_W_19261224_f7",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1926,12,24),\"gggee年\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 gggee年"
+    },
+    {
+      "id": "TEXT_W_19261224_f8",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1926,12,24),\"[$-ja-JP]ggge年\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 [$-ja-JP]ggge年"
+    },
+    {
+      "id": "TEXT_W_19261225_f0",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1926,12,25),\"g\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 g"
+    },
+    {
+      "id": "TEXT_W_19261225_f1",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1926,12,25),\"gg\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 gg"
+    },
+    {
+      "id": "TEXT_W_19261225_f2",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1926,12,25),\"ggg\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ggg"
+    },
+    {
+      "id": "TEXT_W_19261225_f3",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1926,12,25),\"e\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 e"
+    },
+    {
+      "id": "TEXT_W_19261225_f4",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1926,12,25),\"ee\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ee"
+    },
+    {
+      "id": "TEXT_W_19261225_f5",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1926,12,25),\"ge.m.d\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ge.m.d"
+    },
+    {
+      "id": "TEXT_W_19261225_f6",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1926,12,25),\"ggge年m月d日\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ggge年m月d日"
+    },
+    {
+      "id": "TEXT_W_19261225_f7",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1926,12,25),\"gggee年\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 gggee年"
+    },
+    {
+      "id": "TEXT_W_19261225_f8",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1926,12,25),\"[$-ja-JP]ggge年\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 [$-ja-JP]ggge年"
+    },
+    {
+      "id": "TEXT_W_19890107_f0",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1989,1,7),\"g\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 g"
+    },
+    {
+      "id": "TEXT_W_19890107_f1",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1989,1,7),\"gg\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 gg"
+    },
+    {
+      "id": "TEXT_W_19890107_f2",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1989,1,7),\"ggg\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ggg"
+    },
+    {
+      "id": "TEXT_W_19890107_f3",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1989,1,7),\"e\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 e"
+    },
+    {
+      "id": "TEXT_W_19890107_f4",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1989,1,7),\"ee\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ee"
+    },
+    {
+      "id": "TEXT_W_19890107_f5",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1989,1,7),\"ge.m.d\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ge.m.d"
+    },
+    {
+      "id": "TEXT_W_19890107_f6",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1989,1,7),\"ggge年m月d日\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ggge年m月d日"
+    },
+    {
+      "id": "TEXT_W_19890107_f7",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1989,1,7),\"gggee年\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 gggee年"
+    },
+    {
+      "id": "TEXT_W_19890107_f8",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1989,1,7),\"[$-ja-JP]ggge年\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 [$-ja-JP]ggge年"
+    },
+    {
+      "id": "TEXT_W_19890108_f0",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1989,1,8),\"g\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 g"
+    },
+    {
+      "id": "TEXT_W_19890108_f1",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1989,1,8),\"gg\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 gg"
+    },
+    {
+      "id": "TEXT_W_19890108_f2",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1989,1,8),\"ggg\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ggg"
+    },
+    {
+      "id": "TEXT_W_19890108_f3",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1989,1,8),\"e\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 e"
+    },
+    {
+      "id": "TEXT_W_19890108_f4",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1989,1,8),\"ee\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ee"
+    },
+    {
+      "id": "TEXT_W_19890108_f5",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1989,1,8),\"ge.m.d\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ge.m.d"
+    },
+    {
+      "id": "TEXT_W_19890108_f6",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1989,1,8),\"ggge年m月d日\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ggge年m月d日"
+    },
+    {
+      "id": "TEXT_W_19890108_f7",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1989,1,8),\"gggee年\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 gggee年"
+    },
+    {
+      "id": "TEXT_W_19890108_f8",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(1989,1,8),\"[$-ja-JP]ggge年\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 [$-ja-JP]ggge年"
+    },
+    {
+      "id": "TEXT_W_20190430_f0",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(2019,4,30),\"g\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 g"
+    },
+    {
+      "id": "TEXT_W_20190430_f1",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(2019,4,30),\"gg\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 gg"
+    },
+    {
+      "id": "TEXT_W_20190430_f2",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(2019,4,30),\"ggg\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ggg"
+    },
+    {
+      "id": "TEXT_W_20190430_f3",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(2019,4,30),\"e\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 e"
+    },
+    {
+      "id": "TEXT_W_20190430_f4",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(2019,4,30),\"ee\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ee"
+    },
+    {
+      "id": "TEXT_W_20190430_f5",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(2019,4,30),\"ge.m.d\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ge.m.d"
+    },
+    {
+      "id": "TEXT_W_20190430_f6",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(2019,4,30),\"ggge年m月d日\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ggge年m月d日"
+    },
+    {
+      "id": "TEXT_W_20190430_f7",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(2019,4,30),\"gggee年\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 gggee年"
+    },
+    {
+      "id": "TEXT_W_20190430_f8",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(2019,4,30),\"[$-ja-JP]ggge年\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 [$-ja-JP]ggge年"
+    },
+    {
+      "id": "TEXT_W_20190501_f0",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(2019,5,1),\"g\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 g"
+    },
+    {
+      "id": "TEXT_W_20190501_f1",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(2019,5,1),\"gg\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 gg"
+    },
+    {
+      "id": "TEXT_W_20190501_f2",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(2019,5,1),\"ggg\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ggg"
+    },
+    {
+      "id": "TEXT_W_20190501_f3",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(2019,5,1),\"e\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 e"
+    },
+    {
+      "id": "TEXT_W_20190501_f4",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(2019,5,1),\"ee\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ee"
+    },
+    {
+      "id": "TEXT_W_20190501_f5",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(2019,5,1),\"ge.m.d\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ge.m.d"
+    },
+    {
+      "id": "TEXT_W_20190501_f6",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(2019,5,1),\"ggge年m月d日\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ggge年m月d日"
+    },
+    {
+      "id": "TEXT_W_20190501_f7",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(2019,5,1),\"gggee年\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 gggee年"
+    },
+    {
+      "id": "TEXT_W_20190501_f8",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(2019,5,1),\"[$-ja-JP]ggge年\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 [$-ja-JP]ggge年"
+    },
+    {
+      "id": "TEXT_W_20200101_f0",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(2020,1,1),\"g\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 g"
+    },
+    {
+      "id": "TEXT_W_20200101_f1",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(2020,1,1),\"gg\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 gg"
+    },
+    {
+      "id": "TEXT_W_20200101_f2",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(2020,1,1),\"ggg\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ggg"
+    },
+    {
+      "id": "TEXT_W_20200101_f3",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(2020,1,1),\"e\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 e"
+    },
+    {
+      "id": "TEXT_W_20200101_f4",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(2020,1,1),\"ee\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ee"
+    },
+    {
+      "id": "TEXT_W_20200101_f5",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(2020,1,1),\"ge.m.d\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ge.m.d"
+    },
+    {
+      "id": "TEXT_W_20200101_f6",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(2020,1,1),\"ggge年m月d日\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ggge年m月d日"
+    },
+    {
+      "id": "TEXT_W_20200101_f7",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(2020,1,1),\"gggee年\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 gggee年"
+    },
+    {
+      "id": "TEXT_W_20200101_f8",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(2020,1,1),\"[$-ja-JP]ggge年\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 [$-ja-JP]ggge年"
+    },
+    {
+      "id": "TEXT_W_20260131_f0",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(2026,1,31),\"g\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 g"
+    },
+    {
+      "id": "TEXT_W_20260131_f1",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(2026,1,31),\"gg\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 gg"
+    },
+    {
+      "id": "TEXT_W_20260131_f2",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(2026,1,31),\"ggg\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ggg"
+    },
+    {
+      "id": "TEXT_W_20260131_f3",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(2026,1,31),\"e\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 e"
+    },
+    {
+      "id": "TEXT_W_20260131_f4",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(2026,1,31),\"ee\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ee"
+    },
+    {
+      "id": "TEXT_W_20260131_f5",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(2026,1,31),\"ge.m.d\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ge.m.d"
+    },
+    {
+      "id": "TEXT_W_20260131_f6",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(2026,1,31),\"ggge年m月d日\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 ggge年m月d日"
+    },
+    {
+      "id": "TEXT_W_20260131_f7",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(2026,1,31),\"gggee年\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 gggee年"
+    },
+    {
+      "id": "TEXT_W_20260131_f8",
+      "func": "TEXT",
+      "f": "=TEXT(DATE(2026,1,31),\"[$-ja-JP]ggge年\")",
+      "why": "和暦の真値（経営者 2026-10-02・Exally1 依頼）書式 [$-ja-JP]ggge年"
+    },
+    {
+      "id": "TEXT_K_0_f0",
+      "func": "TEXT",
+      "f": "=TEXT(0,\"[h]:mm\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 0 書式 [h]:mm"
+    },
+    {
+      "id": "TEXT_K_0_f1",
+      "func": "TEXT",
+      "f": "=TEXT(0,\"[hh]:mm\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 0 書式 [hh]:mm"
+    },
+    {
+      "id": "TEXT_K_0_f2",
+      "func": "TEXT",
+      "f": "=TEXT(0,\"[h]:mm:ss\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 0 書式 [h]:mm:ss"
+    },
+    {
+      "id": "TEXT_K_0_f3",
+      "func": "TEXT",
+      "f": "=TEXT(0,\"[m]:ss\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 0 書式 [m]:ss"
+    },
+    {
+      "id": "TEXT_K_0_f4",
+      "func": "TEXT",
+      "f": "=TEXT(0,\"[mm]:ss\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 0 書式 [mm]:ss"
+    },
+    {
+      "id": "TEXT_K_0_f5",
+      "func": "TEXT",
+      "f": "=TEXT(0,\"[s]\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 0 書式 [s]"
+    },
+    {
+      "id": "TEXT_K_0_f6",
+      "func": "TEXT",
+      "f": "=TEXT(0,\"[h]\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 0 書式 [h]"
+    },
+    {
+      "id": "TEXT_K_0_f7",
+      "func": "TEXT",
+      "f": "=TEXT(0,\"[h]:mm:ss.00\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 0 書式 [h]:mm:ss.00"
+    },
+    {
+      "id": "TEXT_K_0p5_f0",
+      "func": "TEXT",
+      "f": "=TEXT(0.5,\"[h]:mm\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 0.5 書式 [h]:mm"
+    },
+    {
+      "id": "TEXT_K_0p5_f1",
+      "func": "TEXT",
+      "f": "=TEXT(0.5,\"[hh]:mm\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 0.5 書式 [hh]:mm"
+    },
+    {
+      "id": "TEXT_K_0p5_f2",
+      "func": "TEXT",
+      "f": "=TEXT(0.5,\"[h]:mm:ss\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 0.5 書式 [h]:mm:ss"
+    },
+    {
+      "id": "TEXT_K_0p5_f3",
+      "func": "TEXT",
+      "f": "=TEXT(0.5,\"[m]:ss\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 0.5 書式 [m]:ss"
+    },
+    {
+      "id": "TEXT_K_0p5_f4",
+      "func": "TEXT",
+      "f": "=TEXT(0.5,\"[mm]:ss\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 0.5 書式 [mm]:ss"
+    },
+    {
+      "id": "TEXT_K_0p5_f5",
+      "func": "TEXT",
+      "f": "=TEXT(0.5,\"[s]\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 0.5 書式 [s]"
+    },
+    {
+      "id": "TEXT_K_0p5_f6",
+      "func": "TEXT",
+      "f": "=TEXT(0.5,\"[h]\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 0.5 書式 [h]"
+    },
+    {
+      "id": "TEXT_K_0p5_f7",
+      "func": "TEXT",
+      "f": "=TEXT(0.5,\"[h]:mm:ss.00\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 0.5 書式 [h]:mm:ss.00"
+    },
+    {
+      "id": "TEXT_K_1p5_f0",
+      "func": "TEXT",
+      "f": "=TEXT(1.5,\"[h]:mm\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 1.5 書式 [h]:mm"
+    },
+    {
+      "id": "TEXT_K_1p5_f1",
+      "func": "TEXT",
+      "f": "=TEXT(1.5,\"[hh]:mm\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 1.5 書式 [hh]:mm"
+    },
+    {
+      "id": "TEXT_K_1p5_f2",
+      "func": "TEXT",
+      "f": "=TEXT(1.5,\"[h]:mm:ss\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 1.5 書式 [h]:mm:ss"
+    },
+    {
+      "id": "TEXT_K_1p5_f3",
+      "func": "TEXT",
+      "f": "=TEXT(1.5,\"[m]:ss\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 1.5 書式 [m]:ss"
+    },
+    {
+      "id": "TEXT_K_1p5_f4",
+      "func": "TEXT",
+      "f": "=TEXT(1.5,\"[mm]:ss\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 1.5 書式 [mm]:ss"
+    },
+    {
+      "id": "TEXT_K_1p5_f5",
+      "func": "TEXT",
+      "f": "=TEXT(1.5,\"[s]\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 1.5 書式 [s]"
+    },
+    {
+      "id": "TEXT_K_1p5_f6",
+      "func": "TEXT",
+      "f": "=TEXT(1.5,\"[h]\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 1.5 書式 [h]"
+    },
+    {
+      "id": "TEXT_K_1p5_f7",
+      "func": "TEXT",
+      "f": "=TEXT(1.5,\"[h]:mm:ss.00\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 1.5 書式 [h]:mm:ss.00"
+    },
+    {
+      "id": "TEXT_K_46234_f0",
+      "func": "TEXT",
+      "f": "=TEXT(46234,\"[h]:mm\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 46234 書式 [h]:mm"
+    },
+    {
+      "id": "TEXT_K_46234_f1",
+      "func": "TEXT",
+      "f": "=TEXT(46234,\"[hh]:mm\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 46234 書式 [hh]:mm"
+    },
+    {
+      "id": "TEXT_K_46234_f2",
+      "func": "TEXT",
+      "f": "=TEXT(46234,\"[h]:mm:ss\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 46234 書式 [h]:mm:ss"
+    },
+    {
+      "id": "TEXT_K_46234_f3",
+      "func": "TEXT",
+      "f": "=TEXT(46234,\"[m]:ss\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 46234 書式 [m]:ss"
+    },
+    {
+      "id": "TEXT_K_46234_f4",
+      "func": "TEXT",
+      "f": "=TEXT(46234,\"[mm]:ss\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 46234 書式 [mm]:ss"
+    },
+    {
+      "id": "TEXT_K_46234_f5",
+      "func": "TEXT",
+      "f": "=TEXT(46234,\"[s]\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 46234 書式 [s]"
+    },
+    {
+      "id": "TEXT_K_46234_f6",
+      "func": "TEXT",
+      "f": "=TEXT(46234,\"[h]\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 46234 書式 [h]"
+    },
+    {
+      "id": "TEXT_K_46234_f7",
+      "func": "TEXT",
+      "f": "=TEXT(46234,\"[h]:mm:ss.00\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 46234 書式 [h]:mm:ss.00"
+    },
+    {
+      "id": "TEXT_K_half_sec_f0",
+      "func": "TEXT",
+      "f": "=TEXT(1/24/60*59.5/60,\"[h]:mm\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 1/24/60*59.5/60 書式 [h]:mm"
+    },
+    {
+      "id": "TEXT_K_half_sec_f1",
+      "func": "TEXT",
+      "f": "=TEXT(1/24/60*59.5/60,\"[hh]:mm\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 1/24/60*59.5/60 書式 [hh]:mm"
+    },
+    {
+      "id": "TEXT_K_half_sec_f2",
+      "func": "TEXT",
+      "f": "=TEXT(1/24/60*59.5/60,\"[h]:mm:ss\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 1/24/60*59.5/60 書式 [h]:mm:ss"
+    },
+    {
+      "id": "TEXT_K_half_sec_f3",
+      "func": "TEXT",
+      "f": "=TEXT(1/24/60*59.5/60,\"[m]:ss\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 1/24/60*59.5/60 書式 [m]:ss"
+    },
+    {
+      "id": "TEXT_K_half_sec_f4",
+      "func": "TEXT",
+      "f": "=TEXT(1/24/60*59.5/60,\"[mm]:ss\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 1/24/60*59.5/60 書式 [mm]:ss"
+    },
+    {
+      "id": "TEXT_K_half_sec_f5",
+      "func": "TEXT",
+      "f": "=TEXT(1/24/60*59.5/60,\"[s]\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 1/24/60*59.5/60 書式 [s]"
+    },
+    {
+      "id": "TEXT_K_half_sec_f6",
+      "func": "TEXT",
+      "f": "=TEXT(1/24/60*59.5/60,\"[h]\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 1/24/60*59.5/60 書式 [h]"
+    },
+    {
+      "id": "TEXT_K_half_sec_f7",
+      "func": "TEXT",
+      "f": "=TEXT(1/24/60*59.5/60,\"[h]:mm:ss.00\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 1/24/60*59.5/60 書式 [h]:mm:ss.00"
+    },
+    {
+      "id": "TEXT_K_0p999999_f0",
+      "func": "TEXT",
+      "f": "=TEXT(0.999999,\"[h]:mm\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 0.999999 書式 [h]:mm"
+    },
+    {
+      "id": "TEXT_K_0p999999_f1",
+      "func": "TEXT",
+      "f": "=TEXT(0.999999,\"[hh]:mm\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 0.999999 書式 [hh]:mm"
+    },
+    {
+      "id": "TEXT_K_0p999999_f2",
+      "func": "TEXT",
+      "f": "=TEXT(0.999999,\"[h]:mm:ss\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 0.999999 書式 [h]:mm:ss"
+    },
+    {
+      "id": "TEXT_K_0p999999_f3",
+      "func": "TEXT",
+      "f": "=TEXT(0.999999,\"[m]:ss\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 0.999999 書式 [m]:ss"
+    },
+    {
+      "id": "TEXT_K_0p999999_f4",
+      "func": "TEXT",
+      "f": "=TEXT(0.999999,\"[mm]:ss\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 0.999999 書式 [mm]:ss"
+    },
+    {
+      "id": "TEXT_K_0p999999_f5",
+      "func": "TEXT",
+      "f": "=TEXT(0.999999,\"[s]\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 0.999999 書式 [s]"
+    },
+    {
+      "id": "TEXT_K_0p999999_f6",
+      "func": "TEXT",
+      "f": "=TEXT(0.999999,\"[h]\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 0.999999 書式 [h]"
+    },
+    {
+      "id": "TEXT_K_0p999999_f7",
+      "func": "TEXT",
+      "f": "=TEXT(0.999999,\"[h]:mm:ss.00\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 0.999999 書式 [h]:mm:ss.00"
+    },
+    {
+      "id": "TEXT_K_m1p5_f0",
+      "func": "TEXT",
+      "f": "=TEXT(-1.5,\"[h]:mm\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 -1.5 書式 [h]:mm"
+    },
+    {
+      "id": "TEXT_K_m1p5_f1",
+      "func": "TEXT",
+      "f": "=TEXT(-1.5,\"[hh]:mm\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 -1.5 書式 [hh]:mm"
+    },
+    {
+      "id": "TEXT_K_m1p5_f2",
+      "func": "TEXT",
+      "f": "=TEXT(-1.5,\"[h]:mm:ss\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 -1.5 書式 [h]:mm:ss"
+    },
+    {
+      "id": "TEXT_K_m1p5_f3",
+      "func": "TEXT",
+      "f": "=TEXT(-1.5,\"[m]:ss\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 -1.5 書式 [m]:ss"
+    },
+    {
+      "id": "TEXT_K_m1p5_f4",
+      "func": "TEXT",
+      "f": "=TEXT(-1.5,\"[mm]:ss\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 -1.5 書式 [mm]:ss"
+    },
+    {
+      "id": "TEXT_K_m1p5_f5",
+      "func": "TEXT",
+      "f": "=TEXT(-1.5,\"[s]\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 -1.5 書式 [s]"
+    },
+    {
+      "id": "TEXT_K_m1p5_f6",
+      "func": "TEXT",
+      "f": "=TEXT(-1.5,\"[h]\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 -1.5 書式 [h]"
+    },
+    {
+      "id": "TEXT_K_m1p5_f7",
+      "func": "TEXT",
+      "f": "=TEXT(-1.5,\"[h]:mm:ss.00\")",
+      "why": "経過時間の真値（経営者 2026-10-02・Exally1 依頼）値 -1.5 書式 [h]:mm:ss.00"
+    }
+  ]
+}

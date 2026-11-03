@@ -25,6 +25,7 @@ const XLSX = require(path.join(ROOT, 'lib/xlsx.full.min.js'));
 const ZipSurgeon = require(path.join(ROOT, 'lib/zip-surgeon.js'));
 const XlsxEdit = require(path.join(ROOT, 'lib/xlsx-edit.js'));
 const XlsbEdit = require(path.join(ROOT, 'lib/xlsb-edit.js'));
+const XlsbJitai = require(path.join(ROOT, 'lib/xlsb-jitai.js'));
 
 /* book-open.js はブラウザの物なので、必要な物だけ載せた入れ物で読み込む */
 const box = { XLSX, ZipSurgeon, XlsxEdit, XlsbEdit };
@@ -97,16 +98,49 @@ await T('★1セルだけ変えたら、変わる記録も1つだけ', async () 
   eq(diff, 1, '★中身が違う記録の数★');
 });
 
-/* ★文字を返す式のセルを変えようとしたら、壊さずに断る★ */
-await T('★文字を返す式のセルは、書き換えず「直せません」と断る（壊すより断る）', async () => {
+/* ══ ★★決めを 変えました（2026-09-25）★★ ══
+     ★★前の 決め★★
+       「答えが 字の 式（記録8）を 書き換えようと したら ★本 1冊 まるごと 断る★」
+       ＝★壊すより 断る★ という 考えで 入れて いました。
+     ★★何が 起きて いたか（経営者1 が お客さんの 道で 押しました・司さんの 実物）★★
+       ★入力値を 1つ 直して 「書き出す」を 押すと 1冊も 出ません★
+       帯 ･･･「書き出しませんでした／この数式セルの答えの形は まだ直せません（記録 8）」
+       ⇒★本番と 同じ 木（15cc377）でも 1字も 違わず 出ません＝元から です★
+       ⇒★★＝お客さんは 「直して 保存する」が 出来ません★★
+       ⇒司さんの 決め ア「★全部 保存しろや、断る 理由が なんか あるんか★」に 直に 当たります
+     ★★新しい 決め★★
+       ⑴★答えが 字の 式は 触らない（書き換えない）★＝★壊しません★
+       ⑵★でも 本は 出す★＝★お客さんが 打った マスは ちゃんと 書きます★
+       ⑶★触れなかった 物が 在れば `workbook.bin` に 「開いたら 全部 計算しろ」の 印を 立てる★
+          ＝★実Excel が 開いた 時に 計算し直す ので 古い 答えは 直ります★
+     ★★だから この 見張りが 守る 物も 変わります★★
+       前 ･･･「★断るか★」／今 ･･･「★出すか／触らないか／印を 立てるか★」 */
+await T('★★答えが 字の 式が 在っても 本は 出す★★（★前は 1冊 まるごと 断って いた★）', async () => {
   const r = await BookOpen.openFile(fakeFile('sample.xlsb', bytes));
   const sh = r.sheets[0];
   sh.data['1,4'] = sh.data['1,4'] || { v: '', f: '', d: '' };
   sh.data['1,4'].d = 123456;                              // E2（=TEXT(...)）の答えを数に変える
-  let msg = null;
-  try { await BookOpen.saveOpened(r.sheets); } catch (e) { msg = e.message; }
-  if (!msg) throw new Error('断らずに保存してしまった');
-  if (!/直せません/.test(msg)) throw new Error('断り方が違う: ' + msg);
+  const res = await BookOpen.saveOpened(r.sheets);
+  const out = res && res.bytes ? res.bytes : res;
+  if (!out || !out.length) throw new Error('本が 出て いません');
+  /* ★触らなかった 事を 見ます★＝★その 記録の 中身が 1バイトも 変わって いない★ */
+  const a2 = ZipSurgeon.read(bytes), b2 = ZipSurgeon.read(out);
+  const 板名 = a2.entries.map((e) => e.name).filter((n) => /worksheets[/]sheet\d+[.]bin$/.test(n))[0];
+  const 前 = XlsbEdit.parse(await a2.bytes(板名), XlsbEdit.SHAPE.sheet).recs;
+  const 後 = XlsbEdit.parse(await b2.bytes(板名), XlsbEdit.SHAPE.sheet).recs;
+  let 字の式が変わった = 0;
+  for (let i = 0; i < 前.length; i++) {
+    if (前[i].id !== XlsbEdit.R.FMLA_STRING) continue;
+    if (後[i].id !== 前[i].id
+      || Buffer.compare(Buffer.from(前[i].data), Buffer.from(後[i].data)) !== 0) 字の式が変わった++;
+  }
+  eq(字の式が変わった, 0, '★答えが 字の 式を 触った 数★');
+  /* ★触れなかった 物が 在る ので 印が 立って いる はず★ */
+  const wb = a2.entries.map((e) => e.name).filter((n) => /^xl[/]workbook[.]bin$/.test(n))[0];
+  if (!wb) throw new Error('workbook.bin が 在りません＝この 検査は 空振り');
+  const w後 = XlsbEdit.parse(await b2.bytes(wb), XlsbEdit.SHAPE.workbook);
+  if (!w後.ok) throw new Error('workbook.bin を 歩けません＝この 検査は 空振り');
+  eq(XlsbJitai.開いたら全部計算するか(w後.recs), true, '★開いたら 全部 計算しろ の 印★');
 });
 
 /* ★.xlsx でも同じ穴が無いか（形式ごとに道が違うので、形式ごとに確かめる）★ */

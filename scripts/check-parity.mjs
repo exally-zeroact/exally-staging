@@ -139,7 +139,7 @@ function readAll(dir, files) {
   const m = {};
   for (const f of files) {
     const p = path.join(dir, f);
-    try { m[f] = fs.readFileSync(p, 'utf8'); } catch { /* バイナリ/欠落は中身なしとして扱う */ m[f] = ' binary-or-missing'; }
+    try { m[f] = fs.readFileSync(p, 'utf8'); } catch { /* バイナリ/欠落は中身なしとして扱う */ m[f] = '\u0000binary-or-missing'; }
   }
   return m;
 }

@@ -1,0 +1,58 @@
+﻿# ★棚㉝ の 6か所＋お金の 3通り＋日付の 関数 を 実Excel に 聞いた★
+# 取った 日 … 2026-09-15
+# ★どの Excel で 打ったか★ … 版 16.0 ／ build 20326
+# ★どの 道で 読んだか★ … .Value2（誤りは error値 として 番号から 名前に した）
+#   数は R（丸めない 書き方）で 出して います
+# ★★「うちの 答え」の 列は 入れて いません★★（混ぜると 前後の 突き合わせが 出来なく なる）
+# ★取った 道★ … docs/measured/kansuu46/toru-dkei6-kane3.ps1
+# ★2つ目の 窓★ … 答えが 0 の 行だけ `=(式)=0` の 真偽を 6列目に 入れて います
+# 札	式	実Excel の 答え	型	2つ目の窓
+#材料	A1	1	数
+#材料	A2	2	数
+#材料	A3	3	数
+#材料	A4	4	数
+#材料	A5	5	数
+#材料	B1	2	数
+#材料	B2	4	数
+#材料	B3	6	数
+#材料	B4	8	数
+#材料	B5	10	数
+#材料	D1	45292	数
+#材料	D2	46023	数
+#材料	H1	39508	数
+#材料	H2	39691	数
+#材料	H3	39569	数
+# ★★2026-09-21 追記（経営者1）── ★この 紙は `.Formula`（★昔の 道★）で 取って います★★
+#   ＝`docs/measured/kansuu46/` の 道具 21本は `Formula2` を ★1本も 使って いません★
+#   ＝`.Formula` は ★溢れません★（2026-09-19 実測）＝★暗黙の 交わりで 1マス★
+#   ⇒★範囲を 渡した 式の 答えは ★1マス目だけ★です（★間違いでは なく 足りない★）
+#   ⇒★実測（2026-09-21）★ この 紙の 範囲を 渡す 812本を `Formula2` で 打ち直すと
+#      ★昔と 同じ 809本／★違う 3本★（ISERR/ISERROR/ISNUMBER の A1:B5）／★溢れた 416本★
+#   ⇒★新しい 道の 紙★ ... docs/measured/golden-furui-kami-torinaoshi-2026-09-21.tsv
+#   ⇒★この 紙を 物差しに する 試験は ★昔の 道を 守って います★★
+02多列(かつ)・両方 合う	=DSUM(A1:B5,1,F1:G2)	2	Double	
+02多列(かつ)・片方 外れ	=DSUM(A1:B5,1,F1:G2)	0	Double	TRUE
+02多列・2列目の 見出しが 台帳に 無い	=DSUM(A1:B5,1,F1:G2)	2	Double	
+03多行(または)	=DSUM(A1:B5,1,F1:F3)	5	Double	
+04記号 大なり3	=DSUM(A1:B5,1,F1:F2)	9	Double	
+04記号 等しくない2	=DSUM(A1:B5,1,F1:F2)	12	Double	
+04記号 以上3	=DSUM(A1:B5,1,F1:F2)	12	Double	
+05field 超過(5)	=DSUM(A1:B5,5,F1:F2)	#VALUE!	error値
+05field 0	=DSUM(A1:B5,0,F1:F2)	#VALUE!	error値
+05field マイナス1	=DSUM(A1:B5,-1,F1:F2)	#VALUE!	error値
+06DPRODUCT 0件	=DPRODUCT(A1:B5,1,F1:F2)	0	Double	TRUE
+06DSUM 0件	=DSUM(A1:B5,1,F1:F2)	0	Double	TRUE
+06DCOUNT 0件	=DCOUNT(A1:B5,1,F1:F2)	0	Double	TRUE
+07DGET 0件	=DGET(A1:B5,1,F1:F2)	#VALUE!	error値
+07DGET 2件以上	=DGET(A1:B5,1,F1:F2)	#NUM!	error値
+条件の 見出しが 空	=DSUM(A1:B5,1,F1:F2)	14	Double	
+条件の マスが 空	=DSUM(A1:B5,1,F1:F2)	14	Double	
+kane マスで 渡す(ACCRINT)	=ACCRINT(H1,H2,H3,0.1,1000,2,0)	16.666666666666664	Double	
+kane 数で 渡す(ACCRINT)	=ACCRINT(39508,39691,39569,0.1,1000,2,0)	16.666666666666664	Double	
+kane DATEで 渡す(ACCRINT)	=ACCRINT(DATE(2008,3,1),DATE(2008,8,31),DATE(2008,5,1),0.1,1000,2,0)	16.666666666666664	Double	
+kane マスで 渡す(COUPNUM)	=COUPNUM(H1,H2,2,0)	1	Double	
+hidzuke YEARFRAC DATE	=YEARFRAC(DATE(2008,3,1),DATE(2008,8,31),0)	0.5	Double	
+hidzuke YEARFRAC マス	=YEARFRAC(H1,H2,0)	0.5	Double	
+hidzuke YEARFRAC 数	=YEARFRAC(39508,39691,0)	0.5	Double	
+hidzuke DATEDIF マス	=DATEDIF(H1,H2,"D")	183	Double	
+hidzuke EDATE マス	=EDATE(H1,1)	39539	Double	

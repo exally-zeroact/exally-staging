@@ -15,7 +15,9 @@
     "r19_bare_array_2026-08-02": "R19解決。素の =SORT(範囲) / =UNIQUE / =FILTER が #VALUE!(Cell range not allowed) になっていた原因は、配列を返すプラグイン関数が【出力の大きさを HyperFormula に申告していなかった】こと(arraySizeMethod)。★スパイクで実測: 申告を足すと通り、しかも隣のセルへ正しく展開(スピル)される。展開先に既にデータがある場合は HF が #SPILL! を返して既存データを守る(Excelと同じ)。版上げ・別ライブラリ・自前展開はいずれも不要だった。併せて col() が空配列で TypeError を投げていたのを修正(実Excelの =SORT(空範囲) は 0)。ケース9件を新設(素の形6件＋TRIM/DATE/EOMONTHの素の形3件)。一致 362→371。",
     "a_lite_2026-08-02": "(a-lite)実装。lib/excel-version.js を新設し、『その式は相手のExcelで動くか』を警告するようにした。★止めない・警告だけ・セル番地つき。出す場所は2つ: 式を書いた時(setCellFormula経由) と Excel書き出しの直前。①Excelにそもそも無い関数23個は【版に関係なく常時】警告(365の客でも #NAME? になるため。★こちらが本体) ②公式の版マーカーがある関数は選んだ版に連動(登録済みは14個)。★版マーカーが無い関数は『どの版にもある』扱い＝誤警告を出さない方に倒す。Mac/Onlineは365扱い。実測: Excel365ではハーネスの全373ケースで警告0件(誤警告ゼロ)。同期ガード tests/excel-version.test.mjs が、関数の本数が分類時点(412個)から変わったらCIを赤にする。★わざと表から抜く/本数をずらす の3通りで実際に赤くなることを確認済み。併せて『保存時に※版は影響しませんの1行を出す』暫定対処は廃止(役目が終わったため)。",
     "cleanup_2026-08-02": "本番の掃除。削除済み5枚の残骸12本を本番(abcc812)とstagingの両方から削除し、絶対パス3件(hub.htmlの/kyuyo/・chat.htmlの/・kyuyo/index.htmlの/)を相対に直した。★tests/no-duplicate-libs.test.mjs を新設＝同じ名前の.jsが配信物に2箇所以上あったら赤。法定データ(社保/最賃/雇用保険/所得税/賞与/割増/年末調整/住民税)は【例外を認めず】無条件で赤。★テスト先行で、掃除の前に実際に赤くなることを確認してから消した。その時 auth.js も引っかかったが js/auth.js(ハブ)と kyuyo/js/auth.js(給与)は名前が同じだけの別物なので理由つきで例外に載せた。本番の実配信で12本とも404・絶対パス0件・全アセット98件で200以外0件を確認。",
-    "wave3_p3_2026-08-02": "第3波P3。MODE/TRIMMEAN/PERCENTRANK/KURT/INTERCEPT/FORECAST(+.LINEAR)/IRR/PERMUT/PERMUTATIONA/MDETERM/GESTEP(+MODE.SNGL) を _jsSet から HFプラグインへ。★この11関数は【ケースが1件も無かった】ので真値から作った(32件・素の形と入れ子の両方)。一致 371→403 / 入れ子で壊れる式 16→5。★旧実装は IRR と KURT の答えを小数4桁で丸めていた(実測: IRR 0.1532 vs 実Excel 0.15322137877181552)。プラグインでは丸めない＝そこも直った。★xlfn-coverage と excel-version の同期ガードが両方とも発火した。実Excelに聞き直した結果、PERMUTATIONA だけ _xlfn. が要ると判明(他10個は不要)。登録関数は 412→425 に増えたので本数の記録も更新。実Excelで書き出しブック再計算 399/403(差4件は既存の file_roundtrip_known)。"
+    "wave3_p3_2026-08-02": "第3波P3。MODE/TRIMMEAN/PERCENTRANK/KURT/INTERCEPT/FORECAST(+.LINEAR)/IRR/PERMUT/PERMUTATIONA/MDETERM/GESTEP(+MODE.SNGL) を _jsSet から HFプラグインへ。★この11関数は【ケースが1件も無かった】ので真値から作った(32件・素の形と入れ子の両方)。一致 371→403 / 入れ子で壊れる式 16→5。★旧実装は IRR と KURT の答えを小数4桁で丸めていた(実測: IRR 0.1532 vs 実Excel 0.15322137877181552)。プラグインでは丸めない＝そこも直った。★xlfn-coverage と excel-version の同期ガードが両方とも発火した。実Excelに聞き直した結果、PERMUTATIONA だけ _xlfn. が要ると判明(他10個は不要)。登録関数は 412→425 に増えたので本数の記録も更新。実Excelで書き出しブック再計算 399/403(差4件は既存の file_roundtrip_known)。",
+    "wareki_keika_2026-10-02": "★台帳から TEXT_era_wareki・TEXT_elapsed_hours を外した（期限の引き直しではない・実装して一致）。lib/shoshiki.js に 和暦(g/gg/ggg/e/ee)と経過時間([h][m][s]・1/100秒・負)を足し、借り物に被せた TEXT(exally-formula.js)も その2つは台へ渡す。真値は 実Excel 16.0.20430 で 経営者が取った155本（cases/61-text-wareki-keika.json）＝153本一致。残る2本は DATE(1900,1,1) の通し番号のずれ＝区分C（R23）。golden を 20228 → 20430 に差し替え（既存420本は同一）",
+    "cleanup_2026-10-02": "★台帳から2件を外した（期限の引き直しではない）。INPUT_typed_comma（1,234→1234 n）と INPUT_typed_datelike（2026-07-31→46234 n）は compare.mjs の『入力の型』で 2件とも 一致（f0f1feb の木で実測）。直った後も台帳に残り、期限 2026-09-30 で 総なめを赤にしていた＝★台帳に載っているのに一致している物を外せと言う門が無い★（別件）"
   },
   "roots": {
     "R11_input_parse": "セルに打ち込んだ『桁区切り付きの数』『日付に見える文字』を、Excel は数値/日付に解釈するがグリッドは文字列のまま持つ",
@@ -26,7 +28,8 @@
     "R18_aggregate_scope": "★AGGREGATE は集計番号 1〜17 に対応。18/19(PERCENTILE.EXC/QUARTILE.EXC)は未対応で #VALUE! を返す＝黙って近い値を出さない。使いたくなった時に真値ケースを足してから実装する",
     "R19_bare_array_functions": "★解決済(2026-08-02)。配列を返すプラグイン関数は arraySizeMethod で出力の大きさを申告しないと、素の呼び出しが #VALUE! になる。包んだ形(=SUM(SORT(...)))だけは動くので、入れ子のケースしか無かったハーネスでは見えなかった。★再発防止: tests/xlsx-harness/bare-form.test.mjs が「素の形のケースが無い関数」を赤にする。",
     "R20_case_shape_bias": "★テストのケースは『客が最初に書く形』から作る。包んだ形・入れ子は後から足す。P1/P2で入れ子ばかり直した副作用で、ケースも入れ子ばかりになり、一番自然な書き方(=SORT(A1:A10))が壊れていることに一致362という数字では気づけなかった(R19)。見張りは bare-form.test.mjs。例外は理由必須(今は揮発性の TODAY / NOW の2つだけ)。",
-    "R22_text_format_code_scope": "★TEXT の書式コードのうち、うちが読める字の範囲。読めない字は【そのまま素通り】して字面が残る（例 ge.m.d → ge.1.31）。2026-08-10 に 曜日(aaa/aaaa/ddd/dddd)・月名(mmm/mmmm/mmmmm)・言語指定([$-411])・区画(;)・時刻の分(hh:mm の mm)・AM/PM を実Excelの真値つきで実装した。★残っているのは 和暦(g/gg/ggg/e/ee) と 経過時間([h]/[m]/[s]) の2つ。どちらも実Excelの真値をケースに入れてあるので、レポートに毎回並ぶ。",
+    "R22_text_format_code_scope": "★TEXT の書式コードのうち、うちが読める字の範囲。読めない字は【そのまま素通り】して字面が残る（例 ge.m.d → ge.1.31）。2026-08-10 に 曜日(aaa/aaaa/ddd/dddd)・月名(mmm/mmmm/mmmmm)・言語指定([$-411])・区画(;)・時刻の分(hh:mm の mm)・AM/PM を実Excelの真値つきで実装した。★残っているのは 和暦(g/gg/ggg/e/ee) と 経過時間([h]/[m]/[s]) の2つ。どちらも実Excelの真値をケースに入れてあるので、レポートに毎回並ぶ。★2026-10-02 に 2つとも実装した★（lib/shoshiki.js・実Excel 16.0.20430 の真値 155本＝cases/61-text-wareki-keika.json と全部一致。借り物に被せた TEXT も 和暦・経過のときは台へ渡す）。★まだ読めない字＝分数(?/?)・指数(E+)★",
+    "R23_serial_before_61": "★通し番号 60 以前（1900/1/1〜2/29）は 借り物(HF)の DATE が 実Excel と 1日ずれる★（実Excel には 1900/2/29 が在る）。RECIPE の決めで 区分C（ケースは serial 61 以降で作る）。書式の答えの字は合っていても 日付が1日ずれて見える。",
     "R21_duplicate_libs": "★同じ物を2箇所に置かない。特に法定データ。ルートの shakaihoken-hyo.js が kyuyo/lib/ 版と76行違っていた(古い方が残っていた)。誰も読んでいなかったので実害は出ていないが、grepして古い方を掴めば社保が静かにずれる。『最賃38県が誤値』の事故と同じ形。消すだけでなく tests/no-duplicate-libs.test.mjs で二度と生えないようにした。"
   },
   "nesting_pending": {
@@ -115,48 +118,24 @@
   },
   "diffs": [
     {
-      "id": "INPUT_typed_comma",
-      "func": "(入力)",
-      "root": "R11_input_parse",
-      "class": "A",
-      "due": "2026-09-30",
-      "money_impact": true,
-      "exally": "1,234",
-      "excel365": "1234",
-      "note": "『1,234』と打っても数値にならない=以降の合計に入らない。グリッドの入力処理(book.html)側の話なので関数プラグインでは直らない"
-    },
-    {
-      "id": "INPUT_typed_datelike",
-      "func": "(入力)",
-      "root": "R11_input_parse",
-      "class": "A",
-      "due": "2026-09-30",
-      "money_impact": false,
-      "exally": "2026-07-31",
-      "excel365": "46234",
-      "note": "『2026-07-31』と打っても日付にならない=日付計算に使えない"
-    },
-    {
-      "id": "TEXT_era_wareki",
+      "id": "TEXT_W_19000101_f5",
       "func": "TEXT",
-      "root": "R22_text_format_code_scope",
-      "class": "A",
-      "due": "2026-09-30",
+      "root": "R23_serial_before_61",
+      "class": "C",
       "money_impact": false,
-      "exally": "ge.1.31",
-      "excel365": "R8.1.31",
-      "note": "★和暦(g=R / gg=令 / ggg=令和 / e=年 / ee=2桁)は未対応。元号の切り替わり日の表が要るので、真値ケースを足してから実装する。今は書式の字がそのまま残る＝シリアル値が出るよりはマシだが、Excelとは違う"
+      "exally": "M33.1.2",
+      "excel365": "M33.1.1",
+      "note": "★書式の話ではない★。DATE(1900,1,1) の通し番号が 借り物(HF)で 2、実Excel で 1（1900/2/29 が在る Excel の仕様）。RECIPE の決め『serial 60 以前は区分C』。和暦の字そのもの（M33）は合っている"
     },
     {
-      "id": "TEXT_elapsed_hours",
+      "id": "TEXT_W_19000101_f6",
       "func": "TEXT",
-      "root": "R22_text_format_code_scope",
-      "class": "A",
-      "due": "2026-09-30",
+      "root": "R23_serial_before_61",
+      "class": "C",
       "money_impact": false,
-      "exally": "[0]:00",
-      "excel365": "1105272:00",
-      "note": "★経過時間 [h]/[m]/[s] は未対応。24時間を超える合計時間の書き方で、勤怠の合計で使われる。角括弧を書式の指示として読んでいないため [0] と出る"
+      "exally": "明治33年1月2日",
+      "excel365": "明治33年1月1日",
+      "note": "★書式の話ではない★。TEXT_W_19000101_f5 と同じ（DATE(1900,1,1) の通し番号が1日ずれる）。区分C"
     }
   ],
   "spill_note": {
@@ -185,7 +164,7 @@
   "version_scope": {
     "class": "C",
     "note": "★『版対応』が今どこまでを担保しているかの正直な線引き。聞かれた時にこの項目をそのまま見せられるように書く。",
-    "golden_source": "実Excel 365 / 16.0.20228.20158（O365HomePremRetail・x64・日本語1041・国別81・小数点'.'・桁区切り','・1900日付系）。★goldenはこの1版だけ。2026-08-10 に Excel が 16.0.20228.20124 → .20158 に上がったので全ケースを取り直した：★既存403ケースは値も表示文字(text)も1件残らず同一★（＝Excel側の答えは変わっていない）。差は新設した17ケースだけ。",
+    "golden_source": "実Excel 365 / 16.0.20430.20092（O365HomePremRetail・x64・日本語1041・国別81・小数点'.'・桁区切り','・1900日付系）。★goldenはこの1版だけ。2026-10-02 に Excel が 16.0.20228.20158 → 16.0.20430.20092 に上がっていたので -Init で取り直した（経営者）：★既存420ケースは v/t/text とも1件残らず同一★（Exally1 も数え直した）。差は新設した和暦・経過時間の155ケースだけ。古い版の golden は外した（1版だけの作り）。以下は前の版の記録：2026-08-10 に Excel が 16.0.20228.20124 → .20158 に上がったので全ケースを取り直した：★既存403ケースは値も表示文字(text)も1件残らず同一★（＝Excel側の答えは変わっていない）。差は新設した17ケースだけ。",
     "verified": [
       "この1版の実Excelが出した値と、うちのグリッドの答えが 362件中 362件一致（compare.mjs）",
       "うちが書き出した xlsx を同じ実Excelで開いて再計算し 358/362 一致（差4件は file_roundtrip_known）",

@@ -1,0 +1,108 @@
+# ★書く 前に 聞く★（2026-09-18・7回目）
+#
+# ★見込みは 聞く 前に commit 済み★ … kansuu46/nanawakume-no-an.md（9e6d5b9）
+#
+# ★字は UNICHAR で 作り、答えは コードと 文字数で 受けます★
+#   ⇒★式の 中は ASCII だけ＝化ける 所が 1つも ありません★
+#
+# ★材料★ A1:A5 = 1,2,3,4,5 ／ B1:B5 = 1,2,(=1/0),4,5 ／ C1:C5 = 1,3,5,7,9
+#
+# ★2つ目の 窓★ =(式)=0 … .Value2 は 0 で ない 値に 0 を 返す
+#
+# ★外へ 出る 6個★ … ★0件★（門で 数えました）
+#
+# ★どの Excel か★ … 版 16.0 ／ build 20326
+#
+# 訳	式	答え	出る字	=(式)=0	型
+対照1(PERMUT・紙に在る)	=PERMUT(5,2)	20	20	False	Double
+対照2(ODDL f4・紙に在る)	=ODDLPRICE(DATE(2009,3,10),DATE(2009,8,31),DATE(2008,11,30),0.045,0.05,100,4,1)	99.776476358001872	99.77648	False	Double
+対照3(ODDF・前の枠と同じ)	=ODDFPRICE(DATE(2009,3,1),DATE(2013,1,1),DATE(2009,1,1),DATE(2010,1,1),0.06,0.05,100,2,1)	103.37232293583249	103.3723	False	Double
+(1)順列 PERMUT(0,0) ★境目★	=PERMUT(0,0)	1	1	False	Double
+(1)順列 PERMUT(5,0) ★境目★	=PERMUT(5,0)	1	1	False	Double
+(1)順列 PERMUT(0,1) ★境目★	=PERMUT(0,1)	-2146826252	#NUM!	-2146826252	Other
+(1)順列 PERMUT(3,4) ★境目★	=PERMUT(3,4)	-2146826252	#NUM!	-2146826252	Other
+(1)順列 PERMUT(-1,1) ★境目★	=PERMUT(-1,1)	-2146826252	#NUM!	-2146826252	Other
+(1)順列 PERMUT(5,-1) ★境目★	=PERMUT(5,-1)	-2146826252	#NUM!	-2146826252	Other
+(1)順列 PERMUTATIONA(0,0) ★境目★	=PERMUTATIONA(0,0)	1	1	False	Double
+(1)順列 PERMUTATIONA(5,0) ★境目★	=PERMUTATIONA(5,0)	1	1	False	Double
+(1)順列 PERMUTATIONA(0,1) ★境目★	=PERMUTATIONA(0,1)	0	0	True	Double
+(1)順列 PERMUTATIONA(3,4) ★境目★	=PERMUTATIONA(3,4)	81	81	False	Double
+(1)順列 PERMUTATIONA(-1,1) ★境目★	=PERMUTATIONA(-1,1)	-2146826252	#NUM!	-2146826252	Other
+(1)順列 PERMUTATIONA(5,-1) ★境目★	=PERMUTATIONA(5,-1)	-2146826252	#NUM!	-2146826252	Other
+(2)AGGREGATE 選択0＝何も無視しない	=AGGREGATE(9,0,B1:B5)	-2146826281	#DIV/0!	-2146826281	Other
+(2)AGGREGATE 選択2＝誤りを無視	=AGGREGATE(9,2,B1:B5)	12	12	False	Double
+(2)AGGREGATE 選択6＝誤りを無視	=AGGREGATE(9,6,B1:B5)	12	12	False	Double
+(2)AGGREGATE 選択4＝何も無視しない	=AGGREGATE(9,4,B1:B5)	-2146826281	#DIV/0!	-2146826281	Other
+(2)AGGREGATE 選択7＝隠した行だけ無視	=AGGREGATE(9,7,B1:B5)	12	12	False	Double
+(2)AGGREGATE 機能1(平均)×選択6	=AGGREGATE(1,6,B1:B5)	3	3	False	Double
+(2)AGGREGATE 機能14(LARGE)＋k	=AGGREGATE(14,6,B1:B5,2)	4	4	False	Double
+(2)AGGREGATE 機能15(SMALL)＋k	=AGGREGATE(15,6,B1:B5,2)	2	2	False	Double
+(2)AGGREGATE 機能19(QUARTILE)＋k	=AGGREGATE(19,6,B1:B5,1)	1.25	1.25	False	Double
+(2)AGGREGATE ★余分な引数★(9に k)	=AGGREGATE(9,6,B1:B5,2)	-2146826273	#VALUE!	-2146826273	Other
+(2)AGGREGATE ★k が要るのに無い★(14)	=AGGREGATE(14,6,B1:B5)	-2146826273	#VALUE!	-2146826273	Other
+(2)AGGREGATE ★範囲2つ★	=AGGREGATE(9,0,A1:A5,B1:B5)	-2146826281	#DIV/0!	-2146826281	Other
+(3)XMATCH ぴたり在り(既定)	=XMATCH(5,C1:C5)	3	3	False	Double
+(3)XMATCH ぴたり無し(既定)	=XMATCH(4,C1:C5)	-2146826246	#N/A	-2146826246	Other
+(3)XMATCH 一致-1＝次に小さい	=XMATCH(4,C1:C5,-1)	2	2	False	Double
+(3)XMATCH 一致1＝次に大きい	=XMATCH(4,C1:C5,1)	3	3	False	Double
+(3)XMATCH 一致0＝ぴたりだけ	=XMATCH(4,C1:C5,0)	-2146826246	#N/A	-2146826246	Other
+(3)XMATCH 下に無い(一致-1)	=XMATCH(0,C1:C5,-1)	-2146826246	#N/A	-2146826246	Other
+(3)XMATCH 上に無い(一致1)	=XMATCH(10,C1:C5,1)	-2146826246	#N/A	-2146826246	Other
+(3)XMATCH 検索-1＝後ろから	=XMATCH(9,C1:C5,0,-1)	5	5	False	Double
+(3)XMATCH 検索2＝二分(昇順)	=XMATCH(9,C1:C5,0,2)	5	5	False	Double
+(3)XMATCH ★検索-2＝二分(降順)★	=XMATCH(9,C1:C5,0,-2)	-2146826246	#N/A	-2146826246	Other
+(3)XMATCH 一致2＝型紙だが数	=XMATCH(3,C1:C5,2)	2	2	False	Double
+(3)XMATCH ★無い一致の型(3)★	=XMATCH(4,C1:C5,3)	-2146826246	#N/A	-2146826246	Other
+(4)ASC 全角A ⇒出た字のコード	=UNICODE(ASC(UNICHAR(65313)))	65	65	False	Double
+(4)ASC 全角A ⇒何文字か	=LEN(ASC(UNICHAR(65313)))	1	1	False	Double
+(4)ASC 全角1 ⇒出た字のコード	=UNICODE(ASC(UNICHAR(65297)))	49	49	False	Double
+(4)ASC 全角1 ⇒何文字か	=LEN(ASC(UNICHAR(65297)))	1	1	False	Double
+(4)ASC 全角ア ⇒出た字のコード	=UNICODE(ASC(UNICHAR(12450)))	65393	65393	False	Double
+(4)ASC 全角ア ⇒何文字か	=LEN(ASC(UNICHAR(12450)))	1	1	False	Double
+(4)ASC ★全角ガ(濁点)★ ⇒出た字のコード	=UNICODE(ASC(UNICHAR(12460)))	65398	65398	False	Double
+(4)ASC ★全角ガ(濁点)★ ⇒何文字か	=LEN(ASC(UNICHAR(12460)))	2	2	False	Double
+(4)ASC ★全角空白★ ⇒出た字のコード	=UNICODE(ASC(UNICHAR(12288)))	32	32	False	Double
+(4)ASC ★全角空白★ ⇒何文字か	=LEN(ASC(UNICHAR(12288)))	1	1	False	Double
+(4)ASC 全角読点 ⇒出た字のコード	=UNICODE(ASC(UNICHAR(12289)))	65380	65380	False	Double
+(4)ASC 全角読点 ⇒何文字か	=LEN(ASC(UNICHAR(12289)))	1	1	False	Double
+(4)DBCS 半角A ⇒出た字のコード	=UNICODE(DBCS(UNICHAR(65)))	65313	65313	False	Double
+(4)DBCS 半角A ⇒何文字か	=LEN(DBCS(UNICHAR(65)))	1	1	False	Double
+(4)DBCS 半角1 ⇒出た字のコード	=UNICODE(DBCS(UNICHAR(49)))	65297	65297	False	Double
+(4)DBCS 半角1 ⇒何文字か	=LEN(DBCS(UNICHAR(49)))	1	1	False	Double
+(4)DBCS 半角ｱ ⇒出た字のコード	=UNICODE(DBCS(UNICHAR(65393)))	12450	12450	False	Double
+(4)DBCS 半角ｱ ⇒何文字か	=LEN(DBCS(UNICHAR(65393)))	1	1	False	Double
+(4)DBCS ★半角濁点★ ⇒出た字のコード	=UNICODE(DBCS(UNICHAR(65438)))	12443	12443	False	Double
+(4)DBCS ★半角濁点★ ⇒何文字か	=LEN(DBCS(UNICHAR(65438)))	1	1	False	Double
+(4)DBCS 半角空白 ⇒出た字のコード	=UNICODE(DBCS(UNICHAR(32)))	12288	12288	False	Double
+(4)DBCS 半角空白 ⇒何文字か	=LEN(DBCS(UNICHAR(32)))	1	1	False	Double
+(5)1つ目の区切り	=TEXTAFTER("a-b-c","-")	b-c	b-c	False	String
+(5)2つ目の区切り	=TEXTAFTER("a-b-c","-",2)	c	c	False	String
+(5)後ろから1つ目	=TEXTAFTER("a-b-c","-",-1)	c	c	False	String
+(5)区切りが無い	=TEXTAFTER("a-b-c","x")	-2146826246	#N/A	-2146826246	Other
+(5)★大小を見るか(既定)★	=TEXTAFTER("a-B-c","b")	-2146826246	#N/A	-2146826246	Other
+(5)大小を見る(1)	=TEXTAFTER("a-B-c","b",1,1)	-c	-c	False	String
+(5)BEFORE 1つ目	=TEXTBEFORE("a-b-c","-")	a	a	False	String
+(5)BEFORE 2つ目	=TEXTBEFORE("a-b-c","-",2)	a-b	a-b	False	String
+(5)BEFORE 後ろから	=TEXTBEFORE("a-b-c","-",-1)	a-b	a-b	False	String
+(5)BEFORE 区切り無い	=TEXTBEFORE("a-b-c","x")	-2146826246	#N/A	-2146826246	Other
+(5)★行き過ぎた番号(5)★	=TEXTAFTER("a-b-c","-",5)	-2146826246	#N/A	-2146826246	Other
+(5)★空の区切り★	=TEXTBEFORE("abc","")			False	String
+(6)LENB 半角3文字	=LENB("ABC")	3	3	False	Double
+(6)LENB 全角ア	=LENB(UNICHAR(12354))	2	2	False	Double
+(6)LENB 半角ｱ	=LENB(UNICHAR(65393))	1	1	False	Double
+(6)LENB 全角ア＋A	=LENB(UNICHAR(12354)&"A")	3	3	False	Double
+(6)★LEFTB 半端な1バイト(文字数)★	=LEN(LEFTB(UNICHAR(12354),1))	1	1	False	Double
+(6)★LEFTB 半端な1バイト(コード)★	=UNICODE(LEFTB(UNICHAR(12354),1))	32	32	False	Double
+(6)LEFTB 2バイト	=LEN(LEFTB(UNICHAR(12354),2))	1	1	False	Double
+(6)LEFTB 3バイト(ア＋A)	=LEN(LEFTB(UNICHAR(12354)&"A",3))	2	2	False	Double
+(6)RIGHTB 1バイト	=LEN(RIGHTB(UNICHAR(12354)&"A",1))	1	1	False	Double
+(6)MIDB 1から2	=LEN(MIDB(UNICHAR(12354)&"A",1,2))	1	1	False	Double
+(6)★MIDB 2から2(半端)★	=LEN(MIDB(UNICHAR(12354)&"A",2,2))	2	2	False	Double
+(6)LENB 空	=LENB("")	0	0	True	Double
+(7)PERCENTRANK 真ん中	=PERCENTRANK(C1:C5,5)	0.5	0.5	False	Double
+(7)PERCENTRANK 一番下	=PERCENTRANK(C1:C5,1)	0	0	True	Double
+(7)PERCENTRANK 一番上	=PERCENTRANK(C1:C5,9)	1	1	False	Double
+(7)PERCENTRANK ★間の値(有効桁)★	=PERCENTRANK(C1:C5,4)	0.375	0.375	False	Double
+(7)PERCENTRANK ★有効桁5★	=PERCENTRANK(C1:C5,4,5)	0.375	0.375	False	Double
+(7)PERCENTRANK 範囲の外	=PERCENTRANK(C1:C5,10)	-2146826246	#N/A	-2146826246	Other
+# ★★押すのに かかった 秒 … 0.35★★（★Excel が 消えるのを 待つ 時間とは 別★）

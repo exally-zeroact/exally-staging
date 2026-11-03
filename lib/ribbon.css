@@ -1,0 +1,357 @@
+/* ribbon.css — ★リボンの見た目（★うちの物★）★ 2026-08-29
+ *
+ *  ★司さん「訴えられんような見せ方で 同じように」★
+ *    ・並びと 言葉 … Excelと 同じ（人が 探せる為に 要る）
+ *    ・★絵・色・形 … 全部 うちの物★（Excelの絵は 1つも 写していない）
+ *      印は ★字★（B / I / U / 貼 / ✂ …）＝自分で 打てる物だけ
+ *      色は うちの緑（#3D9E72 / #C8ECD8 / #F0FAF4）＋本文 #333333
+ *      角は 丸く・影は 浅く＝Excelの 角ばった灰色とは 別物
+ *
+ *  ★押す所は 44px 以上★（スマホ）。タブは 横に すべる。
+ */
+
+.rb-wrap {
+  background: #F0FAF4;
+  border-bottom: 1px solid #C8ECD8;
+  font-size: 13px;
+  color: #333333;
+  user-select: none;
+}
+
+/* ── クイック アクセス（元に戻す／やり直す）──────────────
+   ★タブの帯の 中に 置く★＝別の行に すると それだけで 36px 使う（実測）。
+   Excelも タイトルの帯に 置いている。★288の 数には 入れない★ */
+.rb-q {
+  flex: 0 0 auto;
+  min-width: 34px;
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  color: #2E7D54;
+  font-size: 15px;
+  font-family: inherit;
+  cursor: pointer;
+  border-radius: 8px;
+}
+.rb-q:hover { background: #F0FAF4; }
+.rb-q:active { background: #D4EDE1; }
+.rb-sep {
+  flex: 0 0 auto;
+  width: 1px;
+  align-self: center;
+  height: 22px;
+  background: #C8ECD8;
+  margin: 0 4px;
+}
+
+/* ★元から 在る物を 置く枠★（作り直さない） */
+.rb-slot {
+  display: inline-flex;
+  align-items: center;
+  min-height: 46px;
+  padding: 0 2px;
+}
+.rb-slot > * { max-width: 68px; }
+
+/* ── タブの帯 ───────────────────────────────── */
+.rb-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  padding: 0 6px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  background: #ffffff;
+  border-bottom: 1px solid #D4EDE1;
+}
+.rb-tabs::-webkit-scrollbar { display: none; }
+
+.rb-tab {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 0;
+  background: transparent;
+  color: #333333;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  border-radius: 10px 10px 0 0;
+  white-space: nowrap;
+}
+.rb-tab:hover { background: #F0FAF4; }
+.rb-tab.on {
+  background: #F0FAF4;
+  color: #2E7D54;
+  font-weight: 700;
+  box-shadow: inset 0 -3px 0 #3D9E72;
+}
+
+.rb-fold {
+  flex: 0 0 auto;
+  margin-left: auto;
+  min-width: 44px;
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  color: #7A9A87;
+  cursor: pointer;
+  font-size: 12px;
+}
+.rb-fold:hover { color: #2E7D54; }
+
+/* ── 中身（グループが 並ぶ）──────────────────── */
+.rb-body {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  padding: 4px 6px 2px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.rb-body[hidden] { display: none; }
+
+/* ★グループは 縮めない★（2026-08-29 実ブラウザで 踏んだ）
+   flex の 既定（縮む）だと 幅35pxまで 潰れ、ボタンが 縦に 12個 積まれて
+   ★リボンだけで 高さ637px＝画面の 4分の3★に なった。
+   ⇒ ★flex: 0 0 auto で 中身の 幅を 保ち、横に すべらせる★ */
+.rb-group {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 2px 8px 0;
+  border-right: 1px solid #D4EDE1;
+}
+.rb-group:last-child { border-right: 0; }
+
+/* ★2段まで★（Excelも 3段だが、うちは 印が 大きいので 2段）
+   はみ出す物は 横へ 流れる（グループが 増える形） */
+.rb-items {
+  display: flex;
+  flex-flow: column wrap;
+  align-content: flex-start;
+  gap: 2px;
+  height: 84px;          /* 41px × 2段 + すき間（実ブラウザで 測って 詰めた） */
+  min-height: 84px;
+}
+
+.rb-gname {
+  text-align: center;
+  font-size: 10px;
+  color: #7A9A87;
+  /* ★左右に 18px★＝右下の 印（↘/▾/▼）と ★字が 重ならない★ 2026-09-03
+     （絵を 開いたら 「シートのオプショ↘」と 最後の字に 印が 重なっていた。
+       ★字の 幅と 箱の 幅が 同じ 組で 起きる＝数字には「切れ 0」と 出る★） */
+  /* ★20px＝印の 幅18 ＋ 右の 余白2★（18px だと ★2px だけ 重なった★＝実測で 決めた） */
+  padding: 2px 20px 3px;
+  white-space: nowrap;
+}
+
+/* ── 1つの部品 ─────────────────────────────── */
+.rb-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  min-width: 46px;
+  min-height: 41px;
+  padding: 2px 5px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #333333;
+  font-family: inherit;
+  font-size: 10px;
+  line-height: 1.15;
+  cursor: pointer;
+}
+.rb-item:hover { background: #ffffff; border-color: #C8ECD8; }
+.rb-item:active { background: #D4EDE1; }
+
+.rb-ico {
+  font-size: 15px;
+  line-height: 1;
+  color: #2E7D54;
+  font-weight: 700;
+}
+/* ★札は 2段まで 許す★（2026-08-30）
+   実Excel も 札を 2段で 出している。
+   ★実測★＝62pxの箱に 全角8字（アクセシビリティ）が 2段で 収まり、
+   ★帯の 高さは 112px のまま★（部品だけ 41→45px）。
+   ★語の 途中で 割らない★＝break-word と line-break:strict。 */
+.rb-lbl {
+  max-width: 62px;
+  text-align: center;
+  overflow: hidden;
+  white-space: normal;
+  line-height: 1.15;
+  word-break: normal;
+  overflow-wrap: break-word;
+  line-break: strict;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* ★まだ 作っていない箱★＝押せる物を 1つも 出さない（偽のボタンを 見せない） */
+.rb-yet {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 56px;
+  min-height: 44px;
+  font-size: 10px;
+  color: #A9C4B4;
+  font-style: normal;
+}
+.rb-group[data-empty="yet"] { opacity: .72; }
+
+/* ★付けないと 決めた箱★（2026-08-30 監査役の 決め）
+   「これから」と 書くと ★守れない 約束★に なるので
+   ★「付けません」と はっきり 書き、理由を 1行 添える★。 */
+.rb-no {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 84px;
+  min-height: 44px;
+  padding: 0 6px;
+  font-size: 10px;
+  color: #9AA4A0;
+  font-style: normal;
+  text-align: center;
+}
+.rb-no .rb-why {
+  display: block;
+  margin-top: 2px;
+  font-size: 9px;
+  font-style: normal;
+  color: #B4BDB9;
+  line-height: 1.25;
+  /* ★注意書きを 潰さない★＝flexの 中でも 折り返す。
+     ただし anywhere は ★「う／ちに」のように 語の途中で 割る★ので 使わない。 */
+  white-space: normal;
+  overflow-wrap: break-word;
+  line-break: strict;
+  word-break: normal;
+  max-width: 112px;
+}
+.rb-group[data-empty="no"] { opacity: .9; }
+
+/* ── 狭い画面 ─────────────────────────────── */
+@media (max-width: 560px) {
+  .rb-item { min-width: 44px; min-height: 44px; }
+  /* ★前は 48px だった★＝全角6字の 札が ★スマホだけ 16個 切れていた★
+     （2026-08-30 実測。デスクトップは 0個なのに スマホだけ 切れていた）
+     ★字を 少し 小さく して 幅を 広げる★＝押す所（44px）は 変えない。 */
+  .rb-lbl { max-width: 66px; font-size: 9px; }
+  .rb-gname { font-size: 9px; }
+}
+
+/* ★ルーラー（表示｜表示）★ 2026-08-30
+   紙の 尺（cm）。★実Excelを 測り直して 見つけた 組★の 1つ。 */
+#ruler-bar {
+  position: relative;
+  height: 18px;
+  background: #F7FBF9;
+  border-bottom: 1px solid #D4EDE1;
+  overflow: hidden;
+  font-size: 9px;
+  color: #6B7B74;
+}
+#ruler-bar .rl-t {
+  position: absolute;
+  top: 0;
+  width: 1px;
+  height: 5px;
+  background: #C8ECD8;
+}
+#ruler-bar .rl-t.rl-big { height: 10px; background: #9ED3B8; }
+#ruler-bar .rl-t b { position: absolute; left: 3px; top: 7px; font-weight: 400; }
+
+/* ★ナビゲーション（表示｜表示）★ */
+.nv-wrap .nv-h {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #2E7D54;
+  border-bottom: 1px solid #D4EDE1;
+  padding-bottom: 3px;
+}
+.nv-wrap .nv-r {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 32px;
+  align-items: center;
+  font-size: 14px;
+  color: #333333;
+}
+.nv-wrap .nv-m { color: #6B7B74; font-size: 12px; }
+/* ★注意書きを 潰さない★＝flex の 中でも 折り返す */
+.nv-wrap .nv-e { font-size: 12px; color: #9AA4A0; white-space: normal; overflow-wrap: anywhere; }
+
+/* ★Alt の キー（キーヒント）★ 2026-08-31
+   Excel と 同じで ★Alt を 押した 時だけ★ 小さい 札が 出る。
+   ・色は うちの 物（Excelの 灰色の 箱は 写さない）
+   ・★押す物の 上に かぶせる★＝ボタンの 大きさは 変えない（並びが ずれない）
+   ・★字は 読める 濃さ★（本文の 決まりに 合わせる） */
+.rb-item, .rb-tab { position: relative; }
+.rb-tip {
+  position: absolute;
+  top: 1px; left: 50%;
+  transform: translateX(-50%);
+  min-width: 14px;
+  padding: 0 3px;
+  font: 700 10px/14px system-ui, -apple-system, "Segoe UI", sans-serif;
+  text-align: center;
+  color: #fff;
+  background: var(--c-accent, #3D9E72);
+  border-radius: 3px;
+  box-shadow: 0 1px 2px rgba(0,0,0,.25);
+  pointer-events: none;   /* ★札は 押せない★＝下の ボタンに 当たる */
+  z-index: 5;
+}
+.rb-tab .rb-tip { top: 2px; }
+/* ★打っている 間は 押す物を 少し 落ち着かせる★＝札が 読みやすい */
+.rb-keying .rb-item .rb-lbl { opacity: .55; }
+
+
+/* ★組の 右下の ↘（起動ツール）★ 2026-08-31
+   実Excel は ほぼ 全部の 組に ↘ を 持つ（実測＝正本 26個）。
+   ★開く先の 窓は もう 在る★ので ここは ★印を 描いて つなぐ だけ★。
+   ・組の 名前の 帯（rb-gname）の ★右端★に 置く（実Excel と 同じ 場所）
+   ・★押す所は 小さすぎない★＝18px（帯が 22px なので 収まる）
+   ・★普段は 薄く★・当てると 濃く（実Excel も 目立たせない） */
+.rb-gname { position: relative; }
+.rb-launch {
+  position: absolute;
+  right: 2px; bottom: -1px;
+  width: 18px; height: 18px;
+  padding: 0; margin: 0;
+  border: 0; background: transparent;
+  color: #8AA79A;
+  font-size: 11px; line-height: 18px;
+  cursor: pointer;
+  border-radius: 3px;
+}
+.rb-launch:hover { color: var(--c-accent, #3D9E72); background: #EAF6F0; }
+.rb-launch:focus-visible { outline: 2px solid var(--c-accent, #3D9E72); outline-offset: 1px; }
+/* ★★3種類を 分ける（2026-09-03）★★
+   前は ★↘ という 1つの箱に 3種類を 混ぜていた★。実Excel では 別の物：
+     ↘ 起動ツール（組の 下端の Button・★実測 8個★）
+     ▾ その他のオプション（組の 中の メニュー・15個）
+     ▼ コンボの 開く（入力欄の 右・1個）
+   ★どれも 実Excel の 画面に 在る＝消さない。印だけ 分ける★ */
+.rb-launch-more, .rb-launch-combo { font-size: 10px; }
+/* ★親の字（1つの 箱の 中の 列）★ 2026-09-03
+   実Excel の ページ レイアウト｜シートのオプション と 同じ形＝
+   ★枠線[表示][印刷]／見出し[表示][印刷]★ を ★親の字の 下に 2列★で 並べる。
+   ★親の字が 無いと「表示」「印刷」が 2つずつ 並んで 見分けが つかない★（絵で 見つけた）。 */
+.rb-sub { display: inline-flex; flex-direction: column; align-items: flex-start; margin: 0 6px 0 0; }
+.rb-subname { font-size: 10px; color: #6B8C7D; line-height: 13px; padding: 0 2px; white-space: nowrap; }
+/* ★狭い画面では 出さない★＝組の 名前と ぶつかる（実測で 決める） */
+@media (max-width: 560px) { .rb-launch { display: none; } }

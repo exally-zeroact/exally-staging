@@ -9,6 +9,10 @@
       "destination": "/api/claude"
     },
     {
+      "source": "/api/soto",
+      "destination": "/api/soto"
+    },
+    {
       "source": "/",
       "destination": "/hub.html"
     },
@@ -24,5 +28,10 @@
       "source": "/exally-canvas-grid.html",
       "destination": "/book.html"
     }
-  ]
+  ],
+  "functions": {
+    "api/claude.js": {
+      "includeFiles": "prompt/**"
+    }
+  }
 }

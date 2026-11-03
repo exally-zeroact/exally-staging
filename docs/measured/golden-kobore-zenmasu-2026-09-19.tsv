@@ -1,0 +1,20 @@
+# ★溢れた 先の 全マスを 実Excel に 聞いた★（2026-09-19）
+# ★材料★ A1:A3 = 3/1/2 ／ B1:B3 = 10/20/30
+# ★どの Excel か★ ... 版 16.0 ／ build 20326
+# ★どの 貝殻か★ ... PowerShell 5.1.26100.9278
+# 番	式	行数	列数	並び(行は / 列は |)	型	=(式)=0 の 左上
+1	=SORT(A1:A3)	3	1	1|||| / 2|||| / 3||||	Double	False
+2	=UNIQUE(A1:A3)	3	1	3|||| / 1|||| / 2||||	Double	False
+3	=FILTER(A1:A3,A1:A3>1)	2	1	3|||| / 2||||	Double	False
+4	=SEQUENCE(3)	3	1	1|||| / 2|||| / 3||||	Double	False
+5	=SEQUENCE(2,3)	2	3	1|2|3|| / 4|5|6||	Double	False
+6	=TRANSPOSE(A1:A3)	1	3	3|1|2||	Double	False
+7	=SORTBY(A1:A3,B1:B3)	3	1	3|||| / 1|||| / 2||||	Double	False
+8	=TEXTSPLIT("a,b,c",",")	1	3	a|b|c||	String	False
+9	=MAP(A1:A3,LAMBDA(x,x*2))	3	1	6|||| / 2|||| / 4||||	Double	False
+10	=BYROW(A1:B3,LAMBDA(r,SUM(r)))	3	1	13|||| / 21|||| / 32||||	Double	False
+11	=SCAN(0,A1:A3,LAMBDA(a,c,a+c))	3	1	3|||| / 4|||| / 6||||	Double	False
+12	=MAKEARRAY(2,2,LAMBDA(r,c,r*c))	2	2	1|2||| / 2|4|||	Double	False
+13	=BYCOL(A1:B3,LAMBDA(c,SUM(c)))	1	2	6|60|||	Double	False
+14	=SUM(A1:A3)	1	1	6||||	Double	False
+# ★★押すのに かかった 秒 ... 1.79★★

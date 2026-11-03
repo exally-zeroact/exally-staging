@@ -1,0 +1,21 @@
+# ★XPath を 本物の Chrome で 押した★（2026-09-07）
+
+★外へは 1回も 出ていません（127.0.0.1 だけ）★
+
+  //b                      … 取れた 3件  ["1","2","3"]
+  //c                      … 取れた 2件  ["A","B"]
+  //c/@id                  … 取れた 2件  ["x","y"]
+  /r/d/e                   … 取れた 1件  ["ne"]
+  //d/*                    … 取れた 1件  ["ne"]
+  //c[@id='y']             … 取れた 1件  ["B"]
+  //b[1]                   … 取れた 1件  ["1"]
+  //b[last()]              … 取れた 1件  ["3"]
+  //b[position()>1]        … 取れた 2件  ["2","3"]
+  //*[name()='b']          … 取れた 3件  ["1","2","3"]
+  //*[local-name()='b']    … 取れた 3件  ["1","2","3"]
+  //e/text()               … 取れた 1件  ["ne"]
+  //zzz                    … 取れた 0件  []
+  count(//b)               … ★投げた★ Failed to execute 'evaluate' on 'Document': The result is no
+  //[                      … ★投げた★ Failed to execute 'evaluate' on 'Document': The string '//['
+
+★jsdom が 投げる `name()` は … ★本物の Chrome では 取れる★★

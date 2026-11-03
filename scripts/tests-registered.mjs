@@ -422,6 +422,14 @@ function runnerKind(src, absFile) {
       || (isQuote(first[0]) && /(^|[\s;&|])(node|npx)[\s]/.test(lit));
     if (!nodeish) continue;                                 /* ★git など 別のexe＝一覧ではない★ */
     if (pointsAtSelf(args, absFile)) { self = true; continue; } /* ★自分自身＝自己診断・一覧ではない★ */
+    /* ★見張り自身の 6つめの嘘（2026-08-31 に 実際に 踏んだ）★
+       (f) ★`node -e '一行'` を「試験の 一覧を 持つ物」と 決めていた★
+           ・select-all-statusbar.test.mjs … spawnSync(process.execPath, ['-e', 一行])
+             ＝★わざと 死なせる 書き方を 別の プロセスで 走らせているだけ★
+               （CI では 例外の 前に 機械ごと 殺されるので 親から 出した）
+           これを「一覧が読めない（未測定）」＝赤に していた。★嘘の赤★。
+       ⇒ ★`-e` / `--eval` / `-p` / `--print` は ★その場の 一行★＝一覧では ない★ */
+    if (/(^|[\s,[])['"]?--?(e|eval|p|print)\b/.test(args)) continue;
     runner = true;
   }
   if (DYN_LOAD.test(src)) runner = true;               /* 変数を渡す読み込み＝一覧を順に走らせる形 */
@@ -670,6 +678,20 @@ function run(root, label) {
     + ' ／ undefined を返す return ' + asi.length + '件');
   console.log('  ★未測定（読めない）' + unmeasured + '件★'
     + ' … 拾う範囲や 走らせる一覧が 読めない（★読めない物を「走っている」と決めない★）');
+  /* ★★何を 分母に して いるかを ★数の 隔に 書く★★（2026-09-16）
+       ★なぜ★ 2026-09-16 に 私は この 道具の 緑を 見て
+         「★試験の 登録も 自動で 通りました（登録漏れ 0件）★」と 報告しました。
+       ★だが この 道具は ★playwright の 一覧★だけを 見て おり
+         ★`tests/run.js` の FILES（総なめの 名簿）は 見て いません★。
+       ⇒★★`xlfn-morenashi.test.mjs` は どこからも 呼ばれて いなかったのに
+           この 道具は 緑を 返しました★★＝★別の 物を 数えた 緑★
+       ⇒★★次に 見る 人が すぐ 気づく よう ★分母を 出します★★
+       ★`tests/run.js` の 方は ★`tests/souname-meibo.test.mjs` が 見ます★ */
+  console.log('  ★何を 見たか★ … この 道具が 見たのは ★上の 「拾う範囲」だけ★です');
+  console.log('    ★見て いない 物★ … `tests/run.js` の 名簿（FILES）'
+    + '／`.github/workflows/*.yml` が 直に 呼ぶ 物');
+  console.log('    ⇒★そちらは `tests/souname-meibo.test.mjs` が 見ます★'
+    + '（2026-09-16 に ★ここを 間違えて 嘘の 報告を しました★）');
   /* ★読めない物を「走っている」と決めない★＝未測定は 緑にせず 赤で出す */
   unreadable.forEach((u) => console.log('  ★拾う範囲が読めません（未測定）★ ' + u
     + ' … 一覧で書き直すか、この見張りに読める形にしてください'));

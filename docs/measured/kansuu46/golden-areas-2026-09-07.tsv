@@ -1,0 +1,51 @@
+# ★実Excel に 打たせた AREAS の 答え★
+# 取った 日 … 2026-09-07
+# ★どの Excel で 打ったか★ … 版 16.0 ／ build 20326
+# ★置いた 中身★ Sheet1 の A1:I9 に 数（行*10+列）／二枚目!A1=7
+# ★名前★ ひとつ = Sheet1!$B$2:$D$4 ／ とびとび = Sheet1!$B$2:$D$4,Sheet1!$F$6:$I$9
+# ★式は K1 に 打った★（数を 置いた 所と 重ならない 場所）
+# 関数	式	実Excel の 答え	型
+# ★★2026-09-21 追記（経営者1）── ★この 紙は `.Formula`（★昔の 道★）で 取って います★★
+#   ＝`docs/measured/kansuu46/` の 道具 21本は `Formula2` を ★1本も 使って いません★
+#   ＝`.Formula` は ★溢れません★（2026-09-19 実測）＝★暗黙の 交わりで 1マス★
+#   ⇒★範囲を 渡した 式の 答えは ★1マス目だけ★です（★間違いでは なく 足りない★）
+#   ⇒★実測（2026-09-21）★ この 紙の 範囲を 渡す 812本を `Formula2` で 打ち直すと
+#      ★昔と 同じ 809本／★違う 3本★（ISERR/ISERROR/ISNUMBER の A1:B5）／★溢れた 416本★
+#   ⇒★新しい 道の 紙★ ... docs/measured/golden-furui-kami-torinaoshi-2026-09-21.tsv
+#   ⇒★この 紙を 物差しに する 試験は ★昔の 道を 守って います★★
+AREAS	=AREAS(B2:D4)	1	Double
+AREAS	=AREAS(A1)	1	Double
+AREAS	=AREAS(A:A)	1	Double
+AREAS	=AREAS(1:1)	1	Double
+AREAS	=AREAS(A:C)	1	Double
+AREAS	=AREAS(1:3)	1	Double
+AREAS	=AREAS((B2:D4,E5))	2	Double
+AREAS	=AREAS((B2:D4,E5,F6:I9))	3	Double
+AREAS	=AREAS((A1,A2,A3,A4))	4	Double
+AREAS	=AREAS((A1:A2,A2:A3))	2	Double
+AREAS	=AREAS((A:A,C:C))	2	Double
+AREAS	=AREAS((A1,A1))	2	Double
+AREAS	=AREAS(B2:D4 C3:E5)	1	Double
+AREAS	=AREAS(B2:D4 A1)	#NULL!	error値
+AREAS	=AREAS((B2:D4 C3:E5,A1))	2	Double
+AREAS	=AREAS(ひとつ)	1	Double
+AREAS	=AREAS(とびとび)	2	Double
+AREAS	=AREAS((ひとつ,A1))	2	Double
+AREAS	=AREAS(二枚目!A1:B2)	1	Double
+AREAS	=AREAS((Sheet1!A1,二枚目!A1))	#VALUE!	error値
+AREAS	=AREAS((二枚目!A1,二枚目!C3))	2	Double
+AREAS	=AREAS(INDEX(A1:C3,1,1))	1	Double
+AREAS	=AREAS(INDEX(A1:C3,,1))	1	Double
+AREAS	=AREAS(OFFSET(A1,0,0,2,2))	1	Double
+AREAS	=AREAS(CHOOSE(1,A1:B2,C1:D2))	1	Double
+AREAS	=AREAS(CHOOSE(2,A1:B2,C1:D2))	1	Double
+AREAS	=AREAS(INDIRECT("A1:B2"))	1	Double
+AREAS	=AREAS(A1:INDEX(A1:C3,2,1))	1	Double
+AREAS	=AREAS("A1")	★打てない★ Exception from HRESULT: 0x800A03EC	error
+AREAS	=AREAS(5)	★打てない★ Exception from HRESULT: 0x800A03EC	error
+AREAS	=AREAS(TRUE)	★打てない★ Exception from HRESULT: 0x800A03EC	error
+AREAS	=AREAS("")	★打てない★ Exception from HRESULT: 0x800A03EC	error
+AREAS	=AREAS(1/0)	★打てない★ Exception from HRESULT: 0x800A03EC	error
+AREAS	=SUM(AREAS((A1,A2)),1)	3	Double
+AREAS	=IF(AREAS((A1,A2))=2,"ふたつ","ちがう")	ふたつ	String
+AREAS	=AREAS((A1,A2))+AREAS(B2:D4)	3	Double

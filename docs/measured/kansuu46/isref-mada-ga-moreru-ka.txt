@@ -1,0 +1,34 @@
+# ★作り物の 名前（ISREF.MADA）が お客さんの 外へ 漏れないか★（2026-09-07）
+
+★外へは 1回も 出ていません（127.0.0.1 だけ）★
+★押し方★ マスは 本物の マウス／式は 数式バー／書き出しは 本物の マウスで ボタン
+
+  ★①数式バーに 出る 字★
+    打った =ISREF(INDEX(A1:B2,1,1))  →  出た =ISREF(INDEX(A1:B2,1,1))
+    打った =ISREF(INDIRECT("A1"))  →  出た =ISREF(INDIRECT("A1"))
+    打った =IF(ISREF(SUM(A1:A2)),1,2)  →  出た =IF(ISREF(SUM(A1:A2)),1,2)
+    打った =ISREF(A1)  →  出た =ISREF(A1)
+  ok   ★①数式バーが 元の 式の まま（作り物の 名前が 出ない）★
+
+  ★③画面が 持っている 式と 出た 答え★
+    式 =ISREF(INDEX(A1:B2,1,1))  →  画面 "#NAME?"
+    式 =ISREF(INDIRECT("A1"))  →  画面 "#NAME?"
+    式 =IF(ISREF(SUM(A1:A2)),1,2)  →  画面 "#NAME?"
+    式 =ISREF(A1)  →  画面 "TRUE"
+  ok   ★③控えに 作り物の 名前が 無い★
+  ok   ★★まだ 出せない 形は #NAME? に なっている（黙って 逆の 答えを 出していない）★★
+  ok   ★出せる 形（=ISREF(A1)）は TRUE のまま★
+  ok   ★「Excelに書き出す」を 本物の マウスで 押せた★
+  ok   ★書き出した ファイルを 受け取れた★
+
+  ★②書き出した .xlsx の 中の 式（4本）★
+    Sheet1!D1  =ISREF(INDEX(A1:B2,1,1))
+    Sheet1!D2  =ISREF(INDIRECT("A1"))
+    Sheet1!D3  =IF(ISREF(SUM(A1:A2)),1,2)
+    Sheet1!D4  =ISREF(A1)
+  ok   ★★書き出した .xlsx に 作り物の 名前が 1つも 無い★★
+  ok   ★書き出した .xlsx に 打った 式が 残っている（空では ない）★
+  ok   ★★ファイルの 生の バイトにも 作り物の 名前が 無い★★
+    ★ファイルの 大きさ … 16195バイト★
+
+isref-mada: 9 緑 / 0 赤

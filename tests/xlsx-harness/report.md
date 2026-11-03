@@ -1,7 +1,7 @@
 # 版対応 検証ハーネス レポート
 
-- 生成日: 2026-08-28
-- 真値: **O365HomePremRetail 16.0.20228.20158** (x64 / Current Channel)
+- この紙は **総なめのたびに作り直されます**（取った日は git の commit が覚えています）
+- 真値: **O365HomePremRetail 16.0.20430.20092** (x64 / Current Channel)
 - ロケール: UI=1041 / 国=81 / 小数点='.' 桁区切り=',' / 日付システム=1900
 - 計算経路: **book.html の setCellFormula(本番と同じ)**。生の HyperFormula ではない。
 
@@ -12,12 +12,12 @@
 
 | 判定 | 件数 |
 |---|---|
-| 一致 | 418 |
+| 一致 | 613 |
 | 不一致(既知) | 2 |
 | 不一致(新規) | 0 |
 | 未検証 | 0 |
 | 揮発性 | 2 |
-| **合計** | 422 |
+| **合計** | 617 |
 
 ※ 「未検証」は緑ではない。その版の真値がまだ無い、という意味。
 
@@ -25,7 +25,7 @@
 
 | 版 | 状態 |
 |---|---|
-| Excel 365 (16.0.20228.20158) | **真値**（このリポジトリの基準） |
+| Excel 365 (16.0.20430.20092) | **真値**（このリポジトリの基準） |
 | LibreOffice | **未検証**（goldenが無い。CIの別ジョブで生成する） |
 | Excel 2016 / 2019 / Mac | **未検証**（実機が無い。golden/RECIPE.md の手順でその環境で1回走らせれば埋まる） |
 
@@ -35,7 +35,7 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 
 | ケース | 式 | 見方 | 期待 | 実際 | 判定 |
 |---|---|---|---|---|---|
-| TODAY_serial | `=TODAY()*1` | 実行時点の日付シリアルと一致するか | 46262 | 46262 | OK |
+| TODAY_serial | `=TODAY()*1` | 実行時点の日付シリアルと一致するか | (今日の 値) | (今日の 値) | OK |
 | NOW_int_is_today | `=INT(NOW())-TODAY()` | NOWの整数部がTODAYと一致するか | 0 | 0 | OK |
 
 ## 不一致（新規）＝赤
@@ -46,8 +46,8 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 
 | 区分 | 関数 | ケース | 式 | Exally | Excel真値 | 中身と期限 |
 |---|---|---|---|---|---|---|
-| A | TEXT | TEXT_era_wareki | `=TEXT(F1,"ge.m.d")` | ge.1.31 | R8.1.31 | ★和暦(g=R / gg=令 / ggg=令和 / e=年 / ee=2桁)は未対応。元号の切り替わり日の表が要るので、真値ケースを足してから実装する。今は書式の字がそのまま残る＝シリアル値が出るよりはマシだが、Excelとは違う / 期限 2026-09-30 |
-| A | TEXT | TEXT_elapsed_hours | `=TEXT(F1,"[h]:mm")` | [0]:00 | 1105272:00 | ★経過時間 [h]/[m]/[s] は未対応。24時間を超える合計時間の書き方で、勤怠の合計で使われる。角括弧を書式の指示として読んでいないため [0] と出る / 期限 2026-09-30 |
+| C | TEXT | TEXT_W_19000101_f5 | `=TEXT(DATE(1900,1,1),"ge.m.d")` | M33.1.2 | M33.1.1 | ★書式の話ではない★。DATE(1900,1,1) の通し番号が 借り物(HF)で 2、実Excel で 1（1900/2/29 が在る Excel の仕様）。RECIPE の決め『serial 60 以前は区分C』。和暦の字そのもの（M33）は合っている |
+| C | TEXT | TEXT_W_19000101_f6 | `=TEXT(DATE(1900,1,1),"ggge年m月d日")` | 明治33年1月2日 | 明治33年1月1日 | ★書式の話ではない★。TEXT_W_19000101_f5 と同じ（DATE(1900,1,1) の通し番号が1日ずれる）。区分C |
 
 ## 入力の型が保たれるか（別枠）
 
@@ -57,8 +57,8 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 | ケース | 打ち込んだ値 | Exally | Excel(標準書式セル) | Excel型 | 判定 | 中身 |
 |---|---|---|---|---|---|---|
 | INPUT_typed_0007 | `0007` | 7 | 7 | n | 一致 |  |
-| INPUT_typed_comma | `1,234` | 1234 | 1234 | n | 一致 | 『1,234』と打っても数値にならない=以降の合計に入らない。グリッドの入力処理(book.html)側の話なので関数プラグインでは直らない |
-| INPUT_typed_datelike | `2026-07-31` | 46234 | 46234 | n | 一致 | 『2026-07-31』と打っても日付にならない=日付計算に使えない |
+| INPUT_typed_comma | `1,234` | 1234 | 1234 | n | 一致 |  |
+| INPUT_typed_datelike | `2026-07-31` | 46234 | 46234 | n | 一致 |  |
 | INPUT_typed_code | `007-1234` | 007-1234 | 007-1234 | s | 一致 |  |
 
 ## ★独自層が生HFより悪くしていないか
@@ -71,7 +71,7 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 ## 経路の固定（将来 生HF に落ちたら気付くための錠）
 
 - 独自層(_jsComputeFormula)が答えたケース: **0件**
-- 生HFと本番経路で答えが違うケース: **227件** … この差が消えたら「素通りに落ちた」ということ
+- 生HFと本番経路で答えが違うケース: **388件** … この差が消えたら「素通りに落ちた」ということ
 - 独自層の入口: {"jsSetCount":1,"entryPoints":1,"pluginRegistered":true,"pluginCount":43}（1つだけであること）
 
 ## 全ケース
@@ -173,15 +173,15 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 | IFNA | IFNA_na | `=IFNA(NA(),"なし")` | なし | なし | 未検証 | なし | 一致 |  |
 | IFNA | IFNA_div0_passes | `=IFERROR(IFNA(1/0,"なし"),"div0が素通り")` | div0が素通り | div0が素通り | 未検証 | div0が素通り | 一致 |  |
 | IFNA | IFNA_ok | `=IFNA(A1,"なし")` | 1000 | 1000 | 未検証 | 1000 | 一致 |  |
-| AND | AND_all_true | `=AND(A1>0,A2>0)` | true | TRUE | 未検証 | TRUE | 一致 |  |
-| AND | AND_one_false | `=AND(A1>0,A3>0)` | false | FALSE | 未検証 | FALSE | 一致 |  |
-| AND | AND_cellbool | `=AND(H1,H1)` | true | TRUE | 未検証 | TRUE | 一致 |  |
-| OR | OR_one_true | `=OR(A3>0,A1>0)` | true | TRUE | 未検証 | TRUE | 一致 |  |
-| OR | OR_all_false | `=OR(A3>0,A8>0)` | false | FALSE | 未検証 | FALSE | 一致 |  |
-| OR | OR_cellbool | `=OR(H2,H1)` | true | TRUE | 未検証 | TRUE | 一致 |  |
-| NOT | NOT_true | `=NOT(TRUE)` | false | FALSE | 未検証 | #NAME? | 一致 |  |
-| NOT | NOT_cell | `=NOT(H2)` | true | TRUE | 未検証 | TRUE | 一致 |  |
-| NOT | NOT_expr | `=NOT(A1>A2)` | true | TRUE | 未検証 | TRUE | 一致 |  |
+| AND | AND_all_true | `=AND(A1>0,A2>0)` | TRUE | TRUE | 未検証 | TRUE | 一致 |  |
+| AND | AND_one_false | `=AND(A1>0,A3>0)` | FALSE | FALSE | 未検証 | FALSE | 一致 |  |
+| AND | AND_cellbool | `=AND(H1,H1)` | TRUE | TRUE | 未検証 | TRUE | 一致 |  |
+| OR | OR_one_true | `=OR(A3>0,A1>0)` | TRUE | TRUE | 未検証 | TRUE | 一致 |  |
+| OR | OR_all_false | `=OR(A3>0,A8>0)` | FALSE | FALSE | 未検証 | FALSE | 一致 |  |
+| OR | OR_cellbool | `=OR(H2,H1)` | TRUE | TRUE | 未検証 | TRUE | 一致 |  |
+| NOT | NOT_true | `=NOT(TRUE)` | FALSE | FALSE | 未検証 | #NAME? | 一致 |  |
+| NOT | NOT_cell | `=NOT(H2)` | TRUE | TRUE | 未検証 | TRUE | 一致 |  |
+| NOT | NOT_expr | `=NOT(A1>A2)` | TRUE | TRUE | 未検証 | TRUE | 一致 |  |
 | AND | LOGIC_combo | `=IF(AND(OR(A1>0,NOT(TRUE)),A3<0),"y","n")` | y | y | 未検証 | #NAME? | 一致 |  |
 | NOT | LOGIC_bool_to_num | `=(A1>0)*1+(A3>0)*1` | 1 | 1 | 未検証 | 1 | 一致 |  |
 | VLOOKUP | VLOOKUP_exact | `=VLOOKUP(20,C1:E6,3,FALSE)` | 400 | 400 | 未検証 | #NAME? | 一致 |  |
@@ -191,10 +191,10 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 | VLOOKUP | VLOOKUP_col2 | `=VLOOKUP(50,C1:E6,2,FALSE)` | B | B | 未検証 | #NAME? | 一致 |  |
 | VLOOKUP | VLOOKUP_text_key | `=VLOOKUP("C",D1:E6,2,FALSE)` | 400 | 400 | 未検証 | #NAME? | 一致 |  |
 | VLOOKUP | VLOOKUP_badcol | `=IFERROR(VLOOKUP(20,C1:E6,9,FALSE),"ERR")` | ERR | ERR | 未検証 | ERR | 一致 |  |
-| XLOOKUP | XLOOKUP_basic | `=XLOOKUP(20,C1:C6,E1:E6)` | 400 | 400 | 未検証 | #NAME? | 一致 |  |
-| XLOOKUP | XLOOKUP_notfound | `=XLOOKUP(999,C1:C6,E1:E6,"なし")` | なし | なし | 未検証 | #NAME? | 一致 |  |
-| XLOOKUP | XLOOKUP_text | `=XLOOKUP("C",D1:D6,E1:E6,"なし")` | 400 | 400 | 未検証 | #NAME? | 一致 |  |
-| XLOOKUP | XLOOKUP_first_dup | `=XLOOKUP("A",D1:D6,E1:E6,"なし")` | 100 | 100 | 未検証 | #NAME? | 一致 |  |
+| XLOOKUP | XLOOKUP_basic | `=XLOOKUP(20,C1:C6,E1:E6)` | 400 | 400 | 未検証 | 400 | 一致 |  |
+| XLOOKUP | XLOOKUP_notfound | `=XLOOKUP(999,C1:C6,E1:E6,"なし")` | なし | なし | 未検証 | なし | 一致 |  |
+| XLOOKUP | XLOOKUP_text | `=XLOOKUP("C",D1:D6,E1:E6,"なし")` | 400 | 400 | 未検証 | 400 | 一致 |  |
+| XLOOKUP | XLOOKUP_first_dup | `=XLOOKUP("A",D1:D6,E1:E6,"なし")` | 100 | 100 | 未検証 | 100 | 一致 |  |
 | XLOOKUP | XLOOKUP_no_default | `=IFERROR(XLOOKUP(999,C1:C6,E1:E6),"NA")` | NA | NA | 未検証 | NA | 一致 |  |
 | INDEX | INDEX_row | `=INDEX(E1:E6,4)` | 400 | 400 | 未検証 | 400 | 一致 |  |
 | INDEX | INDEX_2d | `=INDEX(C1:E6,4,3)` | 400 | 400 | 未検証 | 400 | 一致 |  |
@@ -205,7 +205,7 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 | MATCH | MATCH_approx_asc | `=MATCH(30,C1:C6,1)` | 4 | 4 | 未検証 | 4 | 一致 |  |
 | MATCH | MATCH_text | `=MATCH("C",D1:D6,0)` | 4 | 4 | 未検証 | 4 | 一致 |  |
 | MATCH | MATCH_wildcard | `=MATCH("りん*",B1:B8,0)` | 1 | 1 | 未検証 | #N/A | 一致 |  |
-| XLOOKUP | XLOOKUP_nested | `=ROUND(XLOOKUP(20,C1:C6,E1:E6),0)` | 400 | 400 | 未検証 | #NAME? | 一致 |  |
+| XLOOKUP | XLOOKUP_nested | `=ROUND(XLOOKUP(20,C1:C6,E1:E6),0)` | 400 | 400 | 未検証 | 400 | 一致 |  |
 | MATCH | MATCH_nested_wild | `=INDEX(E1:E6,MATCH("りん*",B1:B8,0))` | 100 | 100 | 未検証 | #N/A | 一致 |  |
 | INDEX | INDEX_MATCH_combo | `=INDEX(E1:E6,MATCH(20,C1:C6,0))` | 400 | 400 | 未検証 | 400 | 一致 |  |
 | INDEX | INDEX_MATCH_text | `=INDEX(E1:E6,MATCH("C",D1:D6,0))` | 400 | 400 | 未検証 | 400 | 一致 |  |
@@ -285,10 +285,10 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 | TRIM | TRIM_pad | `="["&TRIM(B4)&"]"` | [pad] | [pad] | 未検証 | [pad] | 一致 |  |
 | TRIM | TRIM_inner | `="["&TRIM(B8)&"]"` | [山田 太郎] | [山田 太郎] | 未検証 | [山田 太郎] | 一致 |  |
 | TRIM | TRIM_none | `="["&TRIM(B3)&"]"` | [apple] | [apple] | 未検証 | [apple] | 一致 |  |
-| VALUE | VALUE_num_text | `=VALUE(B6)` | 7 | 7 | 未検証 | #NAME? | 一致 |  |
+| VALUE | VALUE_num_text | `=VALUE(B6)` | 7 | 7 | 未検証 | 7 | 一致 |  |
 | VALUE | VALUE_comma | `=IFERROR(VALUE(B7),"NA")` | 1234 | 1234 | 未検証 | NA | 一致 |  |
 | VALUE | VALUE_bad | `=IFERROR(VALUE(B1),"NA")` | NA | NA | 未検証 | NA | 一致 |  |
-| VALUE | VALUE_zero_text | `=VALUE(G3)` | 0 | 0 | 未検証 | #NAME? | 一致 |  |
+| VALUE | VALUE_zero_text | `=VALUE(G3)` | 0 | 0 | 未検証 | 0 | 一致 |  |
 | TEXT | TEXT_pct_zero | `=TEXT(0.5,"0%")` | 50% | 50% | 未検証 | 1% | 一致 |  |
 | TEXT | TEXT_dec_round | `=TEXT(2.675,"0.00")` | 2.68 | 2.68 | 未検証 | 2.67 | 一致 |  |
 | TEXT | TEXT_neg_number | `=TEXT(-1234.5,"#,##0")` | -1,235 | -1,235 | 未検証 | -1235,##0 | 一致 |  |
@@ -297,7 +297,7 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 | VALUE | VALUE_empty | `=IFERROR(VALUE(""),"NA")` | NA | NA | 未検証 | NA | 一致 |  |
 | VALUE | VALUE_nested_calc | `=IFERROR(VALUE(B7)+1,"NA")` | 1235 | 1235 | 未検証 | NA | 一致 |  |
 | TEXTJOIN | TEXTJOIN_nested_len | `=LEN(TEXTJOIN(",",TRUE,D1:D3))` | 5 | 5 | 未検証 | #NAME? | 一致 |  |
-| VALUE | VALUE_nested_sum | `=SUM(VALUE(B7),1)` | 1235 | 1235 | 未検証 | #NAME? | 一致 |  |
+| VALUE | VALUE_nested_sum | `=SUM(VALUE(B7),1)` | 1235 | 1235 | 未検証 | #VALUE! | 一致 |  |
 | TEXT | TEXT_nested_concat | `="["&TEXT(A2,"#,##0")&"]"` | [2,500] | [2,500] | 未検証 | [2500,##0] | 一致 |  |
 | TEXTJOIN | TEXTJOIN_skip | `=TEXTJOIN("\|",TRUE,B1:B3)` | りんご\|みかん\|apple | りんご\|みかん\|apple | 未検証 | #NAME? | 一致 |  |
 | TEXTJOIN | TEXTJOIN_delim_comma | `=TEXTJOIN(",",TRUE,"a","b")` | a,b | a,b | 未検証 | #NAME? | 一致 |  |
@@ -321,26 +321,221 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 | TEXT | TEXT_date_and_time | `=TEXT(46053.5,"m/d h:mm")` | 1/31 12:00 | 1/31 12:00 | 未検証 | 1/31 12:00 | 一致 |  |
 | TEXT | TEXT_time_ampm | `=TEXT(0.75,"h:mm AM/PM")` | 6:00 PM | 6:00 PM | 未検証 | 6:00 PM | 一致 |  |
 | TEXT | TEXT_weekday_nested | `=LEN(TEXT(F1,"aaaa"))` | 3 | 3 | 未検証 | 4 | 一致 |  |
-| TEXT | TEXT_era_wareki | `=TEXT(F1,"ge.m.d")` | ge.1.31 | R8.1.31 | 未検証 | ge.1.31 | 不一致(既知) | A |
-| TEXT | TEXT_elapsed_hours | `=TEXT(F1,"[h]:mm")` | [0]:00 | 1105272:00 | 未検証 | [0]:00 | 不一致(既知) | A |
-| SORT | SORT_bare | `=SORT(E1:E6)` | 100 | 100 | 未検証 | #NAME? | 一致 |  |
-| UNIQUE | UNIQUE_bare | `=UNIQUE(D1:D6)` | A | A | 未検証 | #NAME? | 一致 |  |
+| TEXT | TEXT_era_wareki | `=TEXT(F1,"ge.m.d")` | R8.1.31 | R8.1.31 | 未検証 | ge.1.31 | 一致 |  |
+| TEXT | TEXT_elapsed_hours | `=TEXT(F1,"[h]:mm")` | 1105272:00 | 1105272:00 | 未検証 | [0]:00 | 一致 |  |
+| TEXT | TEXT_W_19000101_f0 | `=TEXT(DATE(1900,1,1),"g")` | M | M | 未検証 | g | 一致 |  |
+| TEXT | TEXT_W_19000101_f1 | `=TEXT(DATE(1900,1,1),"gg")` | 明 | 明 | 未検証 | gg | 一致 |  |
+| TEXT | TEXT_W_19000101_f2 | `=TEXT(DATE(1900,1,1),"ggg")` | 明治 | 明治 | 未検証 | ggg | 一致 |  |
+| TEXT | TEXT_W_19000101_f3 | `=TEXT(DATE(1900,1,1),"e")` | 33 | 33 | 未検証 | e | 一致 |  |
+| TEXT | TEXT_W_19000101_f4 | `=TEXT(DATE(1900,1,1),"ee")` | 33 | 33 | 未検証 | ee | 一致 |  |
+| TEXT | TEXT_W_19000101_f5 | `=TEXT(DATE(1900,1,1),"ge.m.d")` | M33.1.2 | M33.1.1 | 未検証 | ge.1.1 | 不一致(既知) | C |
+| TEXT | TEXT_W_19000101_f6 | `=TEXT(DATE(1900,1,1),"ggge年m月d日")` | 明治33年1月2日 | 明治33年1月1日 | 未検証 | ggge年1月1日 | 不一致(既知) | C |
+| TEXT | TEXT_W_19000101_f7 | `=TEXT(DATE(1900,1,1),"gggee年")` | 明治33年 | 明治33年 | 未検証 | gggee年 | 一致 |  |
+| TEXT | TEXT_W_19000101_f8 | `=TEXT(DATE(1900,1,1),"[$-ja-JP]ggge年")` | 明治33年 | 明治33年 | 未検証 | [$-ja-JP]ggge年 | 一致 |  |
+| TEXT | TEXT_W_19120729_f0 | `=TEXT(DATE(1912,7,29),"g")` | M | M | 未検証 | g | 一致 |  |
+| TEXT | TEXT_W_19120729_f1 | `=TEXT(DATE(1912,7,29),"gg")` | 明 | 明 | 未検証 | gg | 一致 |  |
+| TEXT | TEXT_W_19120729_f2 | `=TEXT(DATE(1912,7,29),"ggg")` | 明治 | 明治 | 未検証 | ggg | 一致 |  |
+| TEXT | TEXT_W_19120729_f3 | `=TEXT(DATE(1912,7,29),"e")` | 45 | 45 | 未検証 | e | 一致 |  |
+| TEXT | TEXT_W_19120729_f4 | `=TEXT(DATE(1912,7,29),"ee")` | 45 | 45 | 未検証 | ee | 一致 |  |
+| TEXT | TEXT_W_19120729_f5 | `=TEXT(DATE(1912,7,29),"ge.m.d")` | M45.7.29 | M45.7.29 | 未検証 | ge.7.29 | 一致 |  |
+| TEXT | TEXT_W_19120729_f6 | `=TEXT(DATE(1912,7,29),"ggge年m月d日")` | 明治45年7月29日 | 明治45年7月29日 | 未検証 | ggge年7月29日 | 一致 |  |
+| TEXT | TEXT_W_19120729_f7 | `=TEXT(DATE(1912,7,29),"gggee年")` | 明治45年 | 明治45年 | 未検証 | gggee年 | 一致 |  |
+| TEXT | TEXT_W_19120729_f8 | `=TEXT(DATE(1912,7,29),"[$-ja-JP]ggge年")` | 明治45年 | 明治45年 | 未検証 | [$-ja-JP]ggge年 | 一致 |  |
+| TEXT | TEXT_W_19120730_f0 | `=TEXT(DATE(1912,7,30),"g")` | T | T | 未検証 | g | 一致 |  |
+| TEXT | TEXT_W_19120730_f1 | `=TEXT(DATE(1912,7,30),"gg")` | 大 | 大 | 未検証 | gg | 一致 |  |
+| TEXT | TEXT_W_19120730_f2 | `=TEXT(DATE(1912,7,30),"ggg")` | 大正 | 大正 | 未検証 | ggg | 一致 |  |
+| TEXT | TEXT_W_19120730_f3 | `=TEXT(DATE(1912,7,30),"e")` | 1 | 1 | 未検証 | e | 一致 |  |
+| TEXT | TEXT_W_19120730_f4 | `=TEXT(DATE(1912,7,30),"ee")` | 01 | 01 | 未検証 | ee | 一致 |  |
+| TEXT | TEXT_W_19120730_f5 | `=TEXT(DATE(1912,7,30),"ge.m.d")` | T1.7.30 | T1.7.30 | 未検証 | ge.7.30 | 一致 |  |
+| TEXT | TEXT_W_19120730_f6 | `=TEXT(DATE(1912,7,30),"ggge年m月d日")` | 大正1年7月30日 | 大正1年7月30日 | 未検証 | ggge年7月30日 | 一致 |  |
+| TEXT | TEXT_W_19120730_f7 | `=TEXT(DATE(1912,7,30),"gggee年")` | 大正01年 | 大正01年 | 未検証 | gggee年 | 一致 |  |
+| TEXT | TEXT_W_19120730_f8 | `=TEXT(DATE(1912,7,30),"[$-ja-JP]ggge年")` | 大正1年 | 大正1年 | 未検証 | [$-ja-JP]ggge年 | 一致 |  |
+| TEXT | TEXT_W_19261224_f0 | `=TEXT(DATE(1926,12,24),"g")` | T | T | 未検証 | g | 一致 |  |
+| TEXT | TEXT_W_19261224_f1 | `=TEXT(DATE(1926,12,24),"gg")` | 大 | 大 | 未検証 | gg | 一致 |  |
+| TEXT | TEXT_W_19261224_f2 | `=TEXT(DATE(1926,12,24),"ggg")` | 大正 | 大正 | 未検証 | ggg | 一致 |  |
+| TEXT | TEXT_W_19261224_f3 | `=TEXT(DATE(1926,12,24),"e")` | 15 | 15 | 未検証 | e | 一致 |  |
+| TEXT | TEXT_W_19261224_f4 | `=TEXT(DATE(1926,12,24),"ee")` | 15 | 15 | 未検証 | ee | 一致 |  |
+| TEXT | TEXT_W_19261224_f5 | `=TEXT(DATE(1926,12,24),"ge.m.d")` | T15.12.24 | T15.12.24 | 未検証 | ge.12.24 | 一致 |  |
+| TEXT | TEXT_W_19261224_f6 | `=TEXT(DATE(1926,12,24),"ggge年m月d日")` | 大正15年12月24日 | 大正15年12月24日 | 未検証 | ggge年12月24日 | 一致 |  |
+| TEXT | TEXT_W_19261224_f7 | `=TEXT(DATE(1926,12,24),"gggee年")` | 大正15年 | 大正15年 | 未検証 | gggee年 | 一致 |  |
+| TEXT | TEXT_W_19261224_f8 | `=TEXT(DATE(1926,12,24),"[$-ja-JP]ggge年")` | 大正15年 | 大正15年 | 未検証 | [$-ja-JP]ggge年 | 一致 |  |
+| TEXT | TEXT_W_19261225_f0 | `=TEXT(DATE(1926,12,25),"g")` | S | S | 未検証 | g | 一致 |  |
+| TEXT | TEXT_W_19261225_f1 | `=TEXT(DATE(1926,12,25),"gg")` | 昭 | 昭 | 未検証 | gg | 一致 |  |
+| TEXT | TEXT_W_19261225_f2 | `=TEXT(DATE(1926,12,25),"ggg")` | 昭和 | 昭和 | 未検証 | ggg | 一致 |  |
+| TEXT | TEXT_W_19261225_f3 | `=TEXT(DATE(1926,12,25),"e")` | 1 | 1 | 未検証 | e | 一致 |  |
+| TEXT | TEXT_W_19261225_f4 | `=TEXT(DATE(1926,12,25),"ee")` | 01 | 01 | 未検証 | ee | 一致 |  |
+| TEXT | TEXT_W_19261225_f5 | `=TEXT(DATE(1926,12,25),"ge.m.d")` | S1.12.25 | S1.12.25 | 未検証 | ge.12.25 | 一致 |  |
+| TEXT | TEXT_W_19261225_f6 | `=TEXT(DATE(1926,12,25),"ggge年m月d日")` | 昭和1年12月25日 | 昭和1年12月25日 | 未検証 | ggge年12月25日 | 一致 |  |
+| TEXT | TEXT_W_19261225_f7 | `=TEXT(DATE(1926,12,25),"gggee年")` | 昭和01年 | 昭和01年 | 未検証 | gggee年 | 一致 |  |
+| TEXT | TEXT_W_19261225_f8 | `=TEXT(DATE(1926,12,25),"[$-ja-JP]ggge年")` | 昭和1年 | 昭和1年 | 未検証 | [$-ja-JP]ggge年 | 一致 |  |
+| TEXT | TEXT_W_19890107_f0 | `=TEXT(DATE(1989,1,7),"g")` | S | S | 未検証 | g | 一致 |  |
+| TEXT | TEXT_W_19890107_f1 | `=TEXT(DATE(1989,1,7),"gg")` | 昭 | 昭 | 未検証 | gg | 一致 |  |
+| TEXT | TEXT_W_19890107_f2 | `=TEXT(DATE(1989,1,7),"ggg")` | 昭和 | 昭和 | 未検証 | ggg | 一致 |  |
+| TEXT | TEXT_W_19890107_f3 | `=TEXT(DATE(1989,1,7),"e")` | 64 | 64 | 未検証 | e | 一致 |  |
+| TEXT | TEXT_W_19890107_f4 | `=TEXT(DATE(1989,1,7),"ee")` | 64 | 64 | 未検証 | ee | 一致 |  |
+| TEXT | TEXT_W_19890107_f5 | `=TEXT(DATE(1989,1,7),"ge.m.d")` | S64.1.7 | S64.1.7 | 未検証 | ge.1.7 | 一致 |  |
+| TEXT | TEXT_W_19890107_f6 | `=TEXT(DATE(1989,1,7),"ggge年m月d日")` | 昭和64年1月7日 | 昭和64年1月7日 | 未検証 | ggge年1月7日 | 一致 |  |
+| TEXT | TEXT_W_19890107_f7 | `=TEXT(DATE(1989,1,7),"gggee年")` | 昭和64年 | 昭和64年 | 未検証 | gggee年 | 一致 |  |
+| TEXT | TEXT_W_19890107_f8 | `=TEXT(DATE(1989,1,7),"[$-ja-JP]ggge年")` | 昭和64年 | 昭和64年 | 未検証 | [$-ja-JP]ggge年 | 一致 |  |
+| TEXT | TEXT_W_19890108_f0 | `=TEXT(DATE(1989,1,8),"g")` | H | H | 未検証 | g | 一致 |  |
+| TEXT | TEXT_W_19890108_f1 | `=TEXT(DATE(1989,1,8),"gg")` | 平 | 平 | 未検証 | gg | 一致 |  |
+| TEXT | TEXT_W_19890108_f2 | `=TEXT(DATE(1989,1,8),"ggg")` | 平成 | 平成 | 未検証 | ggg | 一致 |  |
+| TEXT | TEXT_W_19890108_f3 | `=TEXT(DATE(1989,1,8),"e")` | 1 | 1 | 未検証 | e | 一致 |  |
+| TEXT | TEXT_W_19890108_f4 | `=TEXT(DATE(1989,1,8),"ee")` | 01 | 01 | 未検証 | ee | 一致 |  |
+| TEXT | TEXT_W_19890108_f5 | `=TEXT(DATE(1989,1,8),"ge.m.d")` | H1.1.8 | H1.1.8 | 未検証 | ge.1.8 | 一致 |  |
+| TEXT | TEXT_W_19890108_f6 | `=TEXT(DATE(1989,1,8),"ggge年m月d日")` | 平成1年1月8日 | 平成1年1月8日 | 未検証 | ggge年1月8日 | 一致 |  |
+| TEXT | TEXT_W_19890108_f7 | `=TEXT(DATE(1989,1,8),"gggee年")` | 平成01年 | 平成01年 | 未検証 | gggee年 | 一致 |  |
+| TEXT | TEXT_W_19890108_f8 | `=TEXT(DATE(1989,1,8),"[$-ja-JP]ggge年")` | 平成1年 | 平成1年 | 未検証 | [$-ja-JP]ggge年 | 一致 |  |
+| TEXT | TEXT_W_20190430_f0 | `=TEXT(DATE(2019,4,30),"g")` | H | H | 未検証 | g | 一致 |  |
+| TEXT | TEXT_W_20190430_f1 | `=TEXT(DATE(2019,4,30),"gg")` | 平 | 平 | 未検証 | gg | 一致 |  |
+| TEXT | TEXT_W_20190430_f2 | `=TEXT(DATE(2019,4,30),"ggg")` | 平成 | 平成 | 未検証 | ggg | 一致 |  |
+| TEXT | TEXT_W_20190430_f3 | `=TEXT(DATE(2019,4,30),"e")` | 31 | 31 | 未検証 | e | 一致 |  |
+| TEXT | TEXT_W_20190430_f4 | `=TEXT(DATE(2019,4,30),"ee")` | 31 | 31 | 未検証 | ee | 一致 |  |
+| TEXT | TEXT_W_20190430_f5 | `=TEXT(DATE(2019,4,30),"ge.m.d")` | H31.4.30 | H31.4.30 | 未検証 | ge.4.30 | 一致 |  |
+| TEXT | TEXT_W_20190430_f6 | `=TEXT(DATE(2019,4,30),"ggge年m月d日")` | 平成31年4月30日 | 平成31年4月30日 | 未検証 | ggge年4月30日 | 一致 |  |
+| TEXT | TEXT_W_20190430_f7 | `=TEXT(DATE(2019,4,30),"gggee年")` | 平成31年 | 平成31年 | 未検証 | gggee年 | 一致 |  |
+| TEXT | TEXT_W_20190430_f8 | `=TEXT(DATE(2019,4,30),"[$-ja-JP]ggge年")` | 平成31年 | 平成31年 | 未検証 | [$-ja-JP]ggge年 | 一致 |  |
+| TEXT | TEXT_W_20190501_f0 | `=TEXT(DATE(2019,5,1),"g")` | R | R | 未検証 | g | 一致 |  |
+| TEXT | TEXT_W_20190501_f1 | `=TEXT(DATE(2019,5,1),"gg")` | 令 | 令 | 未検証 | gg | 一致 |  |
+| TEXT | TEXT_W_20190501_f2 | `=TEXT(DATE(2019,5,1),"ggg")` | 令和 | 令和 | 未検証 | ggg | 一致 |  |
+| TEXT | TEXT_W_20190501_f3 | `=TEXT(DATE(2019,5,1),"e")` | 1 | 1 | 未検証 | e | 一致 |  |
+| TEXT | TEXT_W_20190501_f4 | `=TEXT(DATE(2019,5,1),"ee")` | 01 | 01 | 未検証 | ee | 一致 |  |
+| TEXT | TEXT_W_20190501_f5 | `=TEXT(DATE(2019,5,1),"ge.m.d")` | R1.5.1 | R1.5.1 | 未検証 | ge.5.1 | 一致 |  |
+| TEXT | TEXT_W_20190501_f6 | `=TEXT(DATE(2019,5,1),"ggge年m月d日")` | 令和1年5月1日 | 令和1年5月1日 | 未検証 | ggge年5月1日 | 一致 |  |
+| TEXT | TEXT_W_20190501_f7 | `=TEXT(DATE(2019,5,1),"gggee年")` | 令和01年 | 令和01年 | 未検証 | gggee年 | 一致 |  |
+| TEXT | TEXT_W_20190501_f8 | `=TEXT(DATE(2019,5,1),"[$-ja-JP]ggge年")` | 令和1年 | 令和1年 | 未検証 | [$-ja-JP]ggge年 | 一致 |  |
+| TEXT | TEXT_W_20200101_f0 | `=TEXT(DATE(2020,1,1),"g")` | R | R | 未検証 | g | 一致 |  |
+| TEXT | TEXT_W_20200101_f1 | `=TEXT(DATE(2020,1,1),"gg")` | 令 | 令 | 未検証 | gg | 一致 |  |
+| TEXT | TEXT_W_20200101_f2 | `=TEXT(DATE(2020,1,1),"ggg")` | 令和 | 令和 | 未検証 | ggg | 一致 |  |
+| TEXT | TEXT_W_20200101_f3 | `=TEXT(DATE(2020,1,1),"e")` | 2 | 2 | 未検証 | e | 一致 |  |
+| TEXT | TEXT_W_20200101_f4 | `=TEXT(DATE(2020,1,1),"ee")` | 02 | 02 | 未検証 | ee | 一致 |  |
+| TEXT | TEXT_W_20200101_f5 | `=TEXT(DATE(2020,1,1),"ge.m.d")` | R2.1.1 | R2.1.1 | 未検証 | ge.1.1 | 一致 |  |
+| TEXT | TEXT_W_20200101_f6 | `=TEXT(DATE(2020,1,1),"ggge年m月d日")` | 令和2年1月1日 | 令和2年1月1日 | 未検証 | ggge年1月1日 | 一致 |  |
+| TEXT | TEXT_W_20200101_f7 | `=TEXT(DATE(2020,1,1),"gggee年")` | 令和02年 | 令和02年 | 未検証 | gggee年 | 一致 |  |
+| TEXT | TEXT_W_20200101_f8 | `=TEXT(DATE(2020,1,1),"[$-ja-JP]ggge年")` | 令和2年 | 令和2年 | 未検証 | [$-ja-JP]ggge年 | 一致 |  |
+| TEXT | TEXT_W_20260131_f0 | `=TEXT(DATE(2026,1,31),"g")` | R | R | 未検証 | g | 一致 |  |
+| TEXT | TEXT_W_20260131_f1 | `=TEXT(DATE(2026,1,31),"gg")` | 令 | 令 | 未検証 | gg | 一致 |  |
+| TEXT | TEXT_W_20260131_f2 | `=TEXT(DATE(2026,1,31),"ggg")` | 令和 | 令和 | 未検証 | ggg | 一致 |  |
+| TEXT | TEXT_W_20260131_f3 | `=TEXT(DATE(2026,1,31),"e")` | 8 | 8 | 未検証 | e | 一致 |  |
+| TEXT | TEXT_W_20260131_f4 | `=TEXT(DATE(2026,1,31),"ee")` | 08 | 08 | 未検証 | ee | 一致 |  |
+| TEXT | TEXT_W_20260131_f5 | `=TEXT(DATE(2026,1,31),"ge.m.d")` | R8.1.31 | R8.1.31 | 未検証 | ge.1.31 | 一致 |  |
+| TEXT | TEXT_W_20260131_f6 | `=TEXT(DATE(2026,1,31),"ggge年m月d日")` | 令和8年1月31日 | 令和8年1月31日 | 未検証 | ggge年1月31日 | 一致 |  |
+| TEXT | TEXT_W_20260131_f7 | `=TEXT(DATE(2026,1,31),"gggee年")` | 令和08年 | 令和08年 | 未検証 | gggee年 | 一致 |  |
+| TEXT | TEXT_W_20260131_f8 | `=TEXT(DATE(2026,1,31),"[$-ja-JP]ggge年")` | 令和8年 | 令和8年 | 未検証 | [$-ja-JP]ggge年 | 一致 |  |
+| TEXT | TEXT_K_0_f0 | `=TEXT(0,"[h]:mm")` | 0:00 | 0:00 | 未検証 | [0]:00 | 一致 |  |
+| TEXT | TEXT_K_0_f1 | `=TEXT(0,"[hh]:mm")` | 00:00 | 00:00 | 未検証 | 00:00 | 一致 |  |
+| TEXT | TEXT_K_0_f2 | `=TEXT(0,"[h]:mm:ss")` | 0:00:00 | 0:00:00 | 未検証 | [0]:00:00 | 一致 |  |
+| TEXT | TEXT_K_0_f3 | `=TEXT(0,"[m]:ss")` | 0:00 | 0:00 | 未検証 | [12]:00 | 一致 |  |
+| TEXT | TEXT_K_0_f4 | `=TEXT(0,"[mm]:ss")` | 00:00 | 00:00 | 未検証 | 00:00 | 一致 |  |
+| TEXT | TEXT_K_0_f5 | `=TEXT(0,"[s]")` | 0 | 0 | 未検証 | [0] | 一致 |  |
+| TEXT | TEXT_K_0_f6 | `=TEXT(0,"[h]")` | 0 | 0 | 未検証 | [0] | 一致 |  |
+| TEXT | TEXT_K_0_f7 | `=TEXT(0,"[h]:mm:ss.00")` | 0:00:00.00 | 0:00:00.00 | 未検証 | [0]:00:00 | 一致 |  |
+| TEXT | TEXT_K_0p5_f0 | `=TEXT(0.5,"[h]:mm")` | 12:00 | 12:00 | 未検証 | [12]:00 | 一致 |  |
+| TEXT | TEXT_K_0p5_f1 | `=TEXT(0.5,"[hh]:mm")` | 12:00 | 12:00 | 未検証 | 12:00 | 一致 |  |
+| TEXT | TEXT_K_0p5_f2 | `=TEXT(0.5,"[h]:mm:ss")` | 12:00:00 | 12:00:00 | 未検証 | [12]:00:00 | 一致 |  |
+| TEXT | TEXT_K_0p5_f3 | `=TEXT(0.5,"[m]:ss")` | 720:00 | 720:00 | 未検証 | [12]:00 | 一致 |  |
+| TEXT | TEXT_K_0p5_f4 | `=TEXT(0.5,"[mm]:ss")` | 720:00 | 720:00 | 未検証 | 720:00 | 一致 |  |
+| TEXT | TEXT_K_0p5_f5 | `=TEXT(0.5,"[s]")` | 43200 | 43200 | 未検証 | [0] | 一致 |  |
+| TEXT | TEXT_K_0p5_f6 | `=TEXT(0.5,"[h]")` | 12 | 12 | 未検証 | [12] | 一致 |  |
+| TEXT | TEXT_K_0p5_f7 | `=TEXT(0.5,"[h]:mm:ss.00")` | 12:00:00.00 | 12:00:00.00 | 未検証 | [12]:00:00 | 一致 |  |
+| TEXT | TEXT_K_1p5_f0 | `=TEXT(1.5,"[h]:mm")` | 36:00 | 36:00 | 未検証 | [12]:00 | 一致 |  |
+| TEXT | TEXT_K_1p5_f1 | `=TEXT(1.5,"[hh]:mm")` | 36:00 | 36:00 | 未検証 | 36:00 | 一致 |  |
+| TEXT | TEXT_K_1p5_f2 | `=TEXT(1.5,"[h]:mm:ss")` | 36:00:00 | 36:00:00 | 未検証 | [12]:00:00 | 一致 |  |
+| TEXT | TEXT_K_1p5_f3 | `=TEXT(1.5,"[m]:ss")` | 2160:00 | 2160:00 | 未検証 | [12]:00 | 一致 |  |
+| TEXT | TEXT_K_1p5_f4 | `=TEXT(1.5,"[mm]:ss")` | 2160:00 | 2160:00 | 未検証 | 2160:00 | 一致 |  |
+| TEXT | TEXT_K_1p5_f5 | `=TEXT(1.5,"[s]")` | 129600 | 129600 | 未検証 | [0] | 一致 |  |
+| TEXT | TEXT_K_1p5_f6 | `=TEXT(1.5,"[h]")` | 36 | 36 | 未検証 | [12] | 一致 |  |
+| TEXT | TEXT_K_1p5_f7 | `=TEXT(1.5,"[h]:mm:ss.00")` | 36:00:00.00 | 36:00:00.00 | 未検証 | [12]:00:00 | 一致 |  |
+| TEXT | TEXT_K_46234_f0 | `=TEXT(46234,"[h]:mm")` | 1109616:00 | 1109616:00 | 未検証 | [0]:00 | 一致 |  |
+| TEXT | TEXT_K_46234_f1 | `=TEXT(46234,"[hh]:mm")` | 1109616:00 | 1109616:00 | 未検証 | 1109616:00 | 一致 |  |
+| TEXT | TEXT_K_46234_f2 | `=TEXT(46234,"[h]:mm:ss")` | 1109616:00:00 | 1109616:00:00 | 未検証 | [0]:00:00 | 一致 |  |
+| TEXT | TEXT_K_46234_f3 | `=TEXT(46234,"[m]:ss")` | 66576960:00 | 66576960:00 | 未検証 | [7]:00 | 一致 |  |
+| TEXT | TEXT_K_46234_f4 | `=TEXT(46234,"[mm]:ss")` | 66576960:00 | 66576960:00 | 未検証 | 66576960:00 | 一致 |  |
+| TEXT | TEXT_K_46234_f5 | `=TEXT(46234,"[s]")` | 3994617600 | 3994617600 | 未検証 | [0] | 一致 |  |
+| TEXT | TEXT_K_46234_f6 | `=TEXT(46234,"[h]")` | 1109616 | 1109616 | 未検証 | [0] | 一致 |  |
+| TEXT | TEXT_K_46234_f7 | `=TEXT(46234,"[h]:mm:ss.00")` | 1109616:00:00.00 | 1109616:00:00.00 | 未検証 | [0]:00:00 | 一致 |  |
+| TEXT | TEXT_K_half_sec_f0 | `=TEXT(1/24/60*59.5/60,"[h]:mm")` | 0:00 | 0:00 | 未検証 | [0]:00 | 一致 |  |
+| TEXT | TEXT_K_half_sec_f1 | `=TEXT(1/24/60*59.5/60,"[hh]:mm")` | 00:00 | 00:00 | 未検証 | 00:00 | 一致 |  |
+| TEXT | TEXT_K_half_sec_f2 | `=TEXT(1/24/60*59.5/60,"[h]:mm:ss")` | 0:00:59 | 0:00:59 | 未検証 | [0]:00:59 | 一致 |  |
+| TEXT | TEXT_K_half_sec_f3 | `=TEXT(1/24/60*59.5/60,"[m]:ss")` | 0:59 | 0:59 | 未検証 | [12]:59 | 一致 |  |
+| TEXT | TEXT_K_half_sec_f4 | `=TEXT(1/24/60*59.5/60,"[mm]:ss")` | 00:59 | 00:59 | 未検証 | 00:59 | 一致 |  |
+| TEXT | TEXT_K_half_sec_f5 | `=TEXT(1/24/60*59.5/60,"[s]")` | 59 | 59 | 未検証 | [59] | 一致 |  |
+| TEXT | TEXT_K_half_sec_f6 | `=TEXT(1/24/60*59.5/60,"[h]")` | 0 | 0 | 未検証 | [0] | 一致 |  |
+| TEXT | TEXT_K_half_sec_f7 | `=TEXT(1/24/60*59.5/60,"[h]:mm:ss.00")` | 0:00:59.50 | 0:00:59.50 | 未検証 | [0]:00:59.5 | 一致 |  |
+| TEXT | TEXT_K_0p999999_f0 | `=TEXT(0.999999,"[h]:mm")` | 24:00 | 24:00 | 未検証 | [23]:59 | 一致 |  |
+| TEXT | TEXT_K_0p999999_f1 | `=TEXT(0.999999,"[hh]:mm")` | 24:00 | 24:00 | 未検証 | 23:59 | 一致 |  |
+| TEXT | TEXT_K_0p999999_f2 | `=TEXT(0.999999,"[h]:mm:ss")` | 24:00:00 | 24:00:00 | 未検証 | [23]:59:59 | 一致 |  |
+| TEXT | TEXT_K_0p999999_f3 | `=TEXT(0.999999,"[m]:ss")` | 1440:00 | 1440:00 | 未検証 | [12]:59 | 一致 |  |
+| TEXT | TEXT_K_0p999999_f4 | `=TEXT(0.999999,"[mm]:ss")` | 1440:00 | 1440:00 | 未検証 | 1439:59 | 一致 |  |
+| TEXT | TEXT_K_0p999999_f5 | `=TEXT(0.999999,"[s]")` | 86400 | 86400 | 未検証 | [59] | 一致 |  |
+| TEXT | TEXT_K_0p999999_f6 | `=TEXT(0.999999,"[h]")` | 24 | 24 | 未検証 | [23] | 一致 |  |
+| TEXT | TEXT_K_0p999999_f7 | `=TEXT(0.999999,"[h]:mm:ss.00")` | 23:59:59.91 | 23:59:59.91 | 未検証 | [23]:59:59.91 | 一致 |  |
+| TEXT | TEXT_K_m1p5_f0 | `=TEXT(-1.5,"[h]:mm")` | #VALUE! | #VALUE! | 未検証 | [-12]:00 | 一致 |  |
+| TEXT | TEXT_K_m1p5_f1 | `=TEXT(-1.5,"[hh]:mm")` | #VALUE! | #VALUE! | 未検証 | -36:00 | 一致 |  |
+| TEXT | TEXT_K_m1p5_f2 | `=TEXT(-1.5,"[h]:mm:ss")` | #VALUE! | #VALUE! | 未検証 | [-12]:00:00 | 一致 |  |
+| TEXT | TEXT_K_m1p5_f3 | `=TEXT(-1.5,"[m]:ss")` | #VALUE! | #VALUE! | 未検証 | [12]:00 | 一致 |  |
+| TEXT | TEXT_K_m1p5_f4 | `=TEXT(-1.5,"[mm]:ss")` | #VALUE! | #VALUE! | 未検証 | -2160:00 | 一致 |  |
+| TEXT | TEXT_K_m1p5_f5 | `=TEXT(-1.5,"[s]")` | -129600 | -129600 | 未検証 | [0] | 一致 |  |
+| TEXT | TEXT_K_m1p5_f6 | `=TEXT(-1.5,"[h]")` | -36 | -36 | 未検証 | [-12] | 一致 |  |
+| TEXT | TEXT_K_m1p5_f7 | `=TEXT(-1.5,"[h]:mm:ss.00")` | #VALUE! | #VALUE! | 未検証 | [-12]:00:00 | 一致 |  |
+| TEXT | TEXT_E_1em7_f0 | `=TEXT(1E-7,"[h]:mm:ss")` | 0:00:00 | 0:00:00 | 未検証 | #ERROR | 一致 |  |
+| TEXT | TEXT_E_1em7_f1 | `=TEXT(1E-7,"[h]:mm:ss.00")` | 0:00:00.01 | 0:00:00.01 | 未検証 | #ERROR | 一致 |  |
+| TEXT | TEXT_E_1em7_f2 | `=TEXT(1E-7,"[s]")` | 0 | 0 | 未検証 | #ERROR | 一致 |  |
+| TEXT | TEXT_E_1em7_f3 | `=TEXT(1E-7,"ge.m.d")` | M33.1.0 | M33.1.0 | 未検証 | #ERROR | 一致 |  |
+| TEXT | TEXT_E_m555em17_f0 | `=TEXT(-5.55E-17,"[h]:mm:ss")` | #VALUE! | #VALUE! | 未検証 | #ERROR | 一致 |  |
+| TEXT | TEXT_E_m555em17_f1 | `=TEXT(-5.55E-17,"[h]:mm:ss.00")` | #VALUE! | #VALUE! | 未検証 | #ERROR | 一致 |  |
+| TEXT | TEXT_E_m555em17_f2 | `=TEXT(-5.55E-17,"[s]")` | -0 | -0 | 未検証 | #ERROR | 一致 |  |
+| TEXT | TEXT_E_m555em17_f3 | `=TEXT(-5.55E-17,"ge.m.d")` | #VALUE! | #VALUE! | 未検証 | #ERROR | 一致 |  |
+| TEXT | TEXT_E_1ep21_f0 | `=TEXT(1E+21,"[h]:mm:ss")` | #VALUE! | #VALUE! | 未検証 | #ERROR | 一致 |  |
+| TEXT | TEXT_E_1ep21_f1 | `=TEXT(1E+21,"[h]:mm:ss.00")` | #VALUE! | #VALUE! | 未検証 | #ERROR | 一致 |  |
+| TEXT | TEXT_E_1ep21_f2 | `=TEXT(1E+21,"[s]")` | 86400000000000000000000000 | 86400000000000000000000000 | 未検証 | #ERROR | 一致 |  |
+| TEXT | TEXT_E_1ep21_f3 | `=TEXT(1E+21,"ge.m.d")` | #VALUE! | #VALUE! | 未検証 | #ERROR | 一致 |  |
+| TEXT | TEXT_E_hashuu_f0 | `=TEXT(0.1+0.2-0.3,"[h]:mm:ss")` | 0:00:00 | 0:00:00 | 未検証 | [0]:00:00 | 一致 |  |
+| TEXT | TEXT_E_hashuu_f1 | `=TEXT(0.1+0.2-0.3,"[h]:mm:ss.00")` | 0:00:00.00 | 0:00:00.00 | 未検証 | [0]:00:00 | 一致 |  |
+| TEXT | TEXT_E_hashuu_f2 | `=TEXT(0.1+0.2-0.3,"[s]")` | 0 | 0 | 未検証 | [0] | 一致 |  |
+| TEXT | TEXT_E_hashuu_f3 | `=TEXT(0.1+0.2-0.3,"ge.m.d")` | M33.1.0 | M33.1.0 | 未検証 | ge.12.30 | 一致 |  |
+| TEXT | TEXT_B_2958465_f0 | `=TEXT(2958465,"ge.m.d")` | R7981.12.31 | R7981.12.31 | 未検証 | ge.12.31 | 一致 |  |
+| TEXT | TEXT_B_2958465_f1 | `=TEXT(2958465,"ggge年m月d日")` | 令和7981年12月31日 | 令和7981年12月31日 | 未検証 | ggge年12月31日 | 一致 |  |
+| TEXT | TEXT_B_2958465_f2 | `=TEXT(2958465,"[h]:mm:ss")` | 71003160:00:00 | 71003160:00:00 | 未検証 | [0]:00:00 | 一致 |  |
+| TEXT | TEXT_B_2958465_f3 | `=TEXT(2958465,"[h]")` | 71003160 | 71003160 | 未検証 | [0] | 一致 |  |
+| TEXT | TEXT_B_2958465_f4 | `=TEXT(2958465,"[s]")` | 255611376000 | 255611376000 | 未検証 | [0] | 一致 |  |
+| TEXT | TEXT_B_2958465_f5 | `=TEXT(2958465,"yyyy/m/d")` | 9999/12/31 | 9999/12/31 | 未検証 | 9999/12/31 | 一致 |  |
+| TEXT | TEXT_B_2958465p99999_f0 | `=TEXT(2958465.99999,"ge.m.d")` | R7981.12.31 | R7981.12.31 | 未検証 | ge.12.31 | 一致 |  |
+| TEXT | TEXT_B_2958465p99999_f1 | `=TEXT(2958465.99999,"ggge年m月d日")` | 令和7981年12月31日 | 令和7981年12月31日 | 未検証 | ggge年12月31日 | 一致 |  |
+| TEXT | TEXT_B_2958465p99999_f2 | `=TEXT(2958465.99999,"[h]:mm:ss")` | 71003183:59:59 | 71003183:59:59 | 未検証 | [23]:59:59 | 一致 |  |
+| TEXT | TEXT_B_2958465p99999_f3 | `=TEXT(2958465.99999,"[h]")` | 71003183 | 71003183 | 未検証 | [23] | 一致 |  |
+| TEXT | TEXT_B_2958465p99999_f4 | `=TEXT(2958465.99999,"[s]")` | 255611462399 | 255611462399 | 未検証 | [59] | 一致 |  |
+| TEXT | TEXT_B_2958465p99999_f5 | `=TEXT(2958465.99999,"yyyy/m/d")` | 9999/12/31 | 9999/12/31 | 未検証 | 9999/12/31 | 一致 |  |
+| TEXT | TEXT_B_2958466_f0 | `=TEXT(2958466,"ge.m.d")` | #VALUE! | #VALUE! | 未検証 | ge.1.1 | 一致 |  |
+| TEXT | TEXT_B_2958466_f1 | `=TEXT(2958466,"ggge年m月d日")` | #VALUE! | #VALUE! | 未検証 | ggge年1月1日 | 一致 |  |
+| TEXT | TEXT_B_2958466_f2 | `=TEXT(2958466,"[h]:mm:ss")` | #VALUE! | #VALUE! | 未検証 | [0]:00:00 | 一致 |  |
+| TEXT | TEXT_B_2958466_f3 | `=TEXT(2958466,"[h]")` | 71003184 | 71003184 | 未検証 | [0] | 一致 |  |
+| TEXT | TEXT_B_2958466_f4 | `=TEXT(2958466,"[s]")` | 255611462400 | 255611462400 | 未検証 | [0] | 一致 |  |
+| TEXT | TEXT_B_2958466_f5 | `=TEXT(2958466,"yyyy/m/d")` | #VALUE! | #VALUE! | 未検証 | 10000/1/1 | 一致 |  |
+| TEXT | TEXT_B_2958466p5_f0 | `=TEXT(2958466.5,"ge.m.d")` | #VALUE! | #VALUE! | 未検証 | ge.1.1 | 一致 |  |
+| TEXT | TEXT_B_2958466p5_f1 | `=TEXT(2958466.5,"ggge年m月d日")` | #VALUE! | #VALUE! | 未検証 | ggge年1月1日 | 一致 |  |
+| TEXT | TEXT_B_2958466p5_f2 | `=TEXT(2958466.5,"[h]:mm:ss")` | #VALUE! | #VALUE! | 未検証 | [12]:00:00 | 一致 |  |
+| TEXT | TEXT_B_2958466p5_f3 | `=TEXT(2958466.5,"[h]")` | 71003196 | 71003196 | 未検証 | [12] | 一致 |  |
+| TEXT | TEXT_B_2958466p5_f4 | `=TEXT(2958466.5,"[s]")` | 255611505600 | 255611505600 | 未検証 | [0] | 一致 |  |
+| TEXT | TEXT_B_2958466p5_f5 | `=TEXT(2958466.5,"yyyy/m/d")` | #VALUE! | #VALUE! | 未検証 | 10000/1/1 | 一致 |  |
+| SORT | SORT_bare | `=SORT(E1:E6)` | 100 | 100 | 未検証 | 100 | 一致 |  |
+| UNIQUE | UNIQUE_bare | `=UNIQUE(D1:D6)` | A | A | 未検証 | A | 一致 |  |
 | FILTER | FILTER_bare | `=FILTER(E1:E6,D1:D6="A")` | 100 | 100 | 未検証 | 100 | 一致 |  |
-| SORT | SORT_empty | `=SORT(Z1:Z3)` | 0 | 0 | 未検証 | #NAME? | 一致 |  |
-| UNIQUE | UNIQUE_empty | `=UNIQUE(Z1:Z3)` | 0 | 0 | 未検証 | #NAME? | 一致 |  |
+| SORT | SORT_empty | `=SORT(Z1:Z3)` | 0 | 0 | 未検証 | (null) | 一致 |  |
+| UNIQUE | UNIQUE_empty | `=UNIQUE(Z1:Z3)` | 0 | 0 | 未検証 | (null) | 一致 |  |
 | FILTER | FILTER_nomatch | `=IFERROR(FILTER(E1:E6,E1:E6>9999),"NA")` | NA | NA | 未検証 | NA | 一致 |  |
-| SORT | SORT_nested_sum | `=SUM(SORT(E1:E6))` | 2100 | 2100 | 未検証 | #NAME? | 一致 |  |
-| SORT | SORT_nested_index2 | `=INDEX(SORT(E1:E6,1,-1),2)` | 500 | 500 | 未検証 | #NAME? | 一致 |  |
-| UNIQUE | UNIQUE_nested_sum | `=SUM(UNIQUE(E1:E6))` | 2100 | 2100 | 未検証 | #NAME? | 一致 |  |
+| SORT | SORT_nested_sum | `=SUM(SORT(E1:E6))` | 2100 | 2100 | 未検証 | 2100 | 一致 |  |
+| SORT | SORT_nested_index2 | `=INDEX(SORT(E1:E6,1,-1),2)` | 500 | 500 | 未検証 | 500 | 一致 |  |
+| UNIQUE | UNIQUE_nested_sum | `=SUM(UNIQUE(E1:E6))` | 2100 | 2100 | 未検証 | 2100 | 一致 |  |
 | UNIQUE | UNIQUE_nested_count | `=COUNT(UNIQUE(D1:D6))` | 0 | 0 | 未検証 | 0 | 一致 |  |
 | FILTER | FILTER_nested_count | `=COUNT(FILTER(E1:E6,D1:D6="A"))` | 3 | 3 | 未検証 | 3 | 一致 |  |
 | SORT | SORT_asc_join | `=TEXTJOIN(",",TRUE,SORT(E1:E6))` | 100,200,300,400,500,600 | 100,200,300,400,500,600 | 未検証 | #NAME? | 一致 |  |
 | SORT | SORT_desc_join | `=TEXTJOIN(",",TRUE,SORT(E1:E6,1,-1))` | 600,500,400,300,200,100 | 600,500,400,300,200,100 | 未検証 | #NAME? | 一致 |  |
-| SORT | SORT_first | `=INDEX(SORT(E1:E6,1,-1),1)` | 600 | 600 | 未検証 | #NAME? | 一致 |  |
+| SORT | SORT_first | `=INDEX(SORT(E1:E6,1,-1),1)` | 600 | 600 | 未検証 | 600 | 一致 |  |
 | SORT | SORT_text | `=TEXTJOIN(",",TRUE,SORT(D1:D6))` | A,A,A,B,B,C | A,A,A,B,B,C | 未検証 | #NAME? | 一致 |  |
-| SORT | SORT_count | `=COUNTA(SORT(E1:E6))` | 6 | 6 | 未検証 | 1 | 一致 |  |
+| SORT | SORT_count | `=COUNTA(SORT(E1:E6))` | 6 | 6 | 未検証 | 6 | 一致 |  |
 | UNIQUE | UNIQUE_join | `=TEXTJOIN(",",TRUE,UNIQUE(D1:D6))` | A,B,C | A,B,C | 未検証 | #NAME? | 一致 |  |
-| UNIQUE | UNIQUE_count | `=COUNTA(UNIQUE(D1:D6))` | 3 | 3 | 未検証 | 1 | 一致 |  |
+| UNIQUE | UNIQUE_count | `=COUNTA(UNIQUE(D1:D6))` | 3 | 3 | 未検証 | 3 | 一致 |  |
 | UNIQUE | UNIQUE_nums | `=TEXTJOIN(",",TRUE,UNIQUE(E1:E6))` | 100,200,300,400,500,600 | 100,200,300,400,500,600 | 未検証 | #NAME? | 一致 |  |
 | UNIQUE | UNIQUE_all_same | `=COUNTA(UNIQUE(D1:D1))` | 1 | 1 | 未検証 | 1 | 一致 |  |
 | FILTER | FILTER_sum | `=SUM(FILTER(E1:E6,D1:D6="A"))` | 1000 | 1000 | 未検証 | 1000 | 一致 |  |
@@ -484,9 +679,9 @@ TODAY / NOW は毎回答えが変わるため **golden突合の対象外**。固
 | FORECAST | FORECAST_bare | `=FORECAST(30,E1:E6,C1:C6)` | 345.59228650137743 | 345.59228650137743 | 未検証 | #NAME? | 一致 |  |
 | FORECAST.LINEAR | FORECAST_linear | `=FORECAST.LINEAR(30,E1:E6,C1:C6)` | 345.59228650137743 | 345.59228650137743 | 未検証 | #NAME? | 一致 |  |
 | FORECAST | FORECAST_nested | `=ROUND(FORECAST(30,E1:E6,C1:C6),2)` | 345.59 | 345.59 | 未検証 | #NAME? | 一致 |  |
-| IRR | IRR_bare | `=IRR(J1:J5)` | 0.15322137877181535 | 0.15322137877181552 | 未検証 | #NAME? | 一致 |  |
-| IRR | IRR_guess | `=IRR(J1:J5,0.2)` | 0.15322137877181524 | 0.15322137876909325 | 未検証 | #NAME? | 一致 |  |
-| IRR | IRR_nested | `=ROUND(IRR(J1:J5)*100,2)` | 15.32 | 15.32 | 未検証 | #NAME? | 一致 |  |
+| IRR | IRR_bare | `=IRR(J1:J5)` | 0.15322137877181535 | 0.15322137877181552 | 未検証 | 0.15322137877 | 一致 |  |
+| IRR | IRR_guess | `=IRR(J1:J5,0.2)` | 0.15322137877181524 | 0.15322137876909325 | 未検証 | 0.15322137877 | 一致 |  |
+| IRR | IRR_nested | `=ROUND(IRR(J1:J5)*100,2)` | 15.32 | 15.32 | 未検証 | 15.32 | 一致 |  |
 | PERMUT | PERMUT_bare | `=PERMUT(6,3)` | 120 | 120 | 未検証 | #NAME? | 一致 |  |
 | PERMUT | PERMUT_k0 | `=PERMUT(6,0)` | 1 | 1 | 未検証 | #NAME? | 一致 |  |
 | PERMUT | PERMUT_nested | `=PERMUT(6,3)/6` | 20 | 20 | 未検証 | #NAME? | 一致 |  |

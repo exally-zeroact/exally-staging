@@ -1,0 +1,33 @@
+# 実Excel 16.0 の ★バックステージ（ファイルタブ）★ 2026-08-30
+# 取り方: UI Automation（新規ブック・保存なし・読むだけ）
+# ★最近使ったファイルの 名前と 個人名は 載せない★（お客さんの 物なので）
+# 列: 種類 / 名前
+Button	ヘルプ
+Button	閉じる
+ListItem	戻る
+ListItem	ホーム
+ListItem	新規
+ListItem	開く
+ListItem	共有
+ListItem	情報
+ListItem	上書き保存
+ListItem	名前を付けて保存
+ListItem	印刷
+ListItem	エクスポート
+ListItem	閉じる
+ListItem	アカウント
+Text	こんばんは
+Group	ホーム
+Group	新規
+Button	地域を表示または非表示にする
+Hyperlink	その他のテンプレート
+ListItem	空白のブック
+ListItem	履歴書
+ListItem	Excel へようこそ
+ListItem	数式のチュートリアル
+ListItem	ピボットテーブル入門
+ListItem	月間個人予算
+Group	開く
+Button	最近使ったアイテム
+Button	お気に入り
+Button	自分と共有

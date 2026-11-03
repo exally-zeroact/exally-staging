@@ -42,14 +42,6 @@ export const ALLOWED = {
     '★環境の分かれ目そのもの★。本番repo=本番倉庫 / stagingのrepo=DB-test。向き先を持つのはここだけ',
   'tests/dbtest-seed.mjs':
     'DB-testに固定した手動ツール。本番refは「そこに向いていたら即中止」の見張りとして持っている',
-  'tests/pages-hosting.test.mjs':
-    'わざと本番refを混ぜた作り物を通して、Pages配信の見張りが赤くなることを確かめる検査（staging専用）',
-  'kyuyo/scripts/pull-statutory.mjs':
-    '法定データ(最低賃金・保険料率)は★本番の中央倉庫が正★。テスト側から読んでも本番を見るのが設計',
-  'kyuyo/scripts/verify-statutory.mjs': '同上（法定データは本番中央が正）',
-  'kyuyo/scripts/check-source-urls.mjs': '同上（法定データは本番中央が正）',
-  'scripts/seikyu-sql-guard.mjs':
-    '★請求書の設計図を倉庫に当てる前の門番★。本番refは「そこへ向いていたら即中止」の拒否リストとして持つ（tests/dbtest-seed.mjs と同じ理由）。請求書の道具は全部ここから借りる＝出どころは1つ',
   'scripts/check-warehouse-pointers.mjs':
     '★6か所×全アプリの向き先を数える見張り★。本番とテストの両方のrefを「正解」として持たないと、何とも突き合わせられない',
 };
@@ -180,9 +172,16 @@ T('★許可リストの各行に理由が書いてある', () => {
   }
 });
 T('★許可リストが現実から離れていない（消えたファイルが残っていない）', () => {
-  // pages-hosting のように片方のrepoにしか無い物があるので「5本以上が実在」で見る
+  /* ★2026-09-05★ 給与(kyuyo/)が Exally から 出て行き、許可リストの 3本も 一緒に 消えた
+       （pull-statutory / verify-statutory / check-source-urls＝どれも 給与側の 道具）
+     ★前は「5本以上が 実在」で 見ていた★＝★数の 決め打ち★
+     ⇒★数では なく「★死んだ 名前が 残っていない★」を 見る★
+       ＝許可リストに 書いてあるのに ★ファイルが 無い★物が 在れば 赤
+     ⇒★これなら repo が 減っても 増えても 正しく 鳴る★ */
+  const 死んだ = Object.keys(ALLOWED).filter((f) => !fs.existsSync(path.join(ROOT, f)));
+  if (死んだ.length) throw new Error('★許可リストに 在るのに ファイルが 無い: ' + 死んだ.join(', '));
   const alive = Object.keys(ALLOWED).filter((f) => fs.existsSync(path.join(ROOT, f)));
-  if (alive.length < 5) throw new Error('実在するのは ' + alive.length + '本だけ: ' + alive.join(', '));
+  if (!alive.length) throw new Error('★許可リストが 空＝この 検査が 空振り★');
 });
 T('検査が空振りしていない（実際にファイルを読み、倉庫を1つ以上見つけている）', () => {
   if (Object.keys(files).length < 50) throw new Error('読めたファイルが少なすぎます: ' + Object.keys(files).length);

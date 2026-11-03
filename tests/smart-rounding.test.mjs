@@ -129,7 +129,14 @@ T('★答えが「文字」で来ても丸めて見せる（recalcSheet は文�
 });
 T('★描く所は fmtForDisplay を通している（書式つきのセルも救われる）', () => {
   if (!/function fmtForDisplay/.test(html)) throw new Error('book.html に fmtForDisplay が無い');
-  if (!/var display = fmtForDisplay\(raw, cell\.numFmt\);/.test(html)) {
+  /* ★2026-09-11 … 幅も 渡すように なったので 形で 探します★
+     （★字を 決め打ちで 探すと 直した 時に 空振りする★＝今日 3回 踏んだ） */
+  /* ★★2026-09-11 … 字面から 中身の 検査に 変えました★★
+     文字を 返す 式（TEXT など）を そのまま 出す 為に
+       `var display = _答えは字か(cell) ? String(raw) : fmtForDisplay(raw, cell.numFmt, ...)`
+     に なりました。★守る 中身は 同じ★＝★描く 所は fmtForDisplay を 通る★
+     ⇒★字を 決め打ちで 探すと 直した 時に 空振りする★（この 注記の 通りに なりました） */
+  if (!/var display\s*=[^;]*fmtForDisplay\(raw, cell\.numFmt/.test(html)) {
     throw new Error('★描く所で fmtForDisplay を通していない★\n'
       + '   applyNumFmt は Excel の書式をほとんど知らない。司さんの実物では\n'
       + '   ★書式つき 6,568セルが全部 素通り★していた（"#,##0_ " も "General" も知らない）。\n'
@@ -137,7 +144,10 @@ T('★描く所は fmtForDisplay を通している（書式つきのセルも�
   }
   //  順番が命: ①ファイルの書式器 → ②applyNumFmt → ③15桁に丸める
   const body = html.slice(html.indexOf('function fmtForDisplay'));
-  const i1 = body.indexOf('XLSX.SSF.format'), i2 = body.indexOf('applyNumFmt('), i3 = body.indexOf('forDisplay(raw)');
+  /* ★2026-09-11 … `forDisplay(raw)` に 枠が 増えて `forDisplay(raw, 枠)` に なりました★
+     ⇒★役目（順番を 見る）は そのまま／探す 字だけ 形に した★ */
+  const i1 = body.indexOf('XLSX.SSF.format'), i2 = body.indexOf('applyNumFmt(');
+  const m3 = /return forDisplay\(raw/.exec(body); const i3 = m3 ? m3.index : -1;
   if (!(i1 > 0 && i2 > i1 && i3 > i2)) throw new Error('順番が違う（書式器→applyNumFmt→15桁 の順で落とすこと）');
   if (body.slice(0, 900).indexOf('/^-?\\d+(\\.\\d+)?$/') < 0) {
     throw new Error('★裸の数字だけに使う歯止めが無い★（"1/21" を数に戻すと 1/1 になる）');

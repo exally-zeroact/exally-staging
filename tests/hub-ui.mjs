@@ -37,13 +37,13 @@ ok(H, '__EXALLY_TEST 露出(hub.js の init 成功)');
 
 /* ── 偽のデータ層(SuiteDataと同じ形の返り) ── */
 const db = {
-  org: { yago: '株式会社ゼロアクト', addr: '愛媛県今治市1-2-3', tel: '0898-00-0000', invoiceNo: 'T1234567890123', businesses: ['代行', '空調'] },
+  org: { yago: '株式会社見本', addr: '東京都架空区見本台1-2-3', tel: '090-0000-0000', invoiceNo: 'T9000000000009', businesses: ['代行', '空調'] },
   employees: [
     { id: 'e1', sort: 0, name: '山田 太郎', employmentType: '従業員', business: '空調', data: {} },
     { id: 'e2', sort: 1, name: '鈴木 花子', employmentType: '業務委託', business: '代行', data: {} },
     { id: 'e3', sort: 2, name: '佐藤 次郎', employmentType: '従業員', business: '', data: {} }
   ],
-  partners: [{ id: 'pt_a', sort: 0, data: { name: '○○建設株式会社', keisho: '御中', addr: '松山市1-1', invoiceNo: '' } }],
+  partners: [{ id: 'pt_a', sort: 0, data: { name: '○○建設株式会社', keisho: '御中', addr: '架空区見本台1-1', invoiceNo: '' } }],
   ledger: [
     { id: 'l1', employeeId: 'e2', ymd: '2026-07-01', data: { uriage: 4200, minutes: 90, business: '代行' } },
     { id: 'l2', employeeId: 'e2', ymd: '2026-07-01', data: { uriage: 3800, minutes: 75 } },
@@ -100,46 +100,45 @@ T('0. ★中身(.app)は最初 hidden＝未ログインで画面を見せない'
 doc.getElementById('app').hidden = false;   // 以降はログイン済みとして描画を見る
 
 /* ═══ 1. ハブ ═══ */
-T('1. ハブが出る・タイルは6つ(給与/請求書/日次台帳/集計/共有データ/表)', () => {
+T('1. ハブが出る・押せるタイルは4つ(日次台帳/集計/共有データ/表)＋準備中1つ', () => {
+  /* ★2026-08-29★ ブックの下の帯が 8個で ごちゃごちゃ だったので（司さん「整理しろ」）
+     ★電子ハンコを ここへ 移した★＝★消したのでは ない★（灰色＋理由で 見える所に 残す）。
+     ★テンプレは 移していない★＝あれは「まだ」ではなく ★消したページ★（下の見張りが 戻りを 止める）。 */
   ok(doc.getElementById('scr-hub').classList.contains('active'), 'ハブが表示されていない');
-  ok(doc.querySelectorAll('#scr-hub .tile').length === 6, 'タイル数=' + doc.querySelectorAll('#scr-hub .tile').length);
+  const 全部 = [...doc.querySelectorAll('#scr-hub .tile')];
+  const 押せる = 全部.filter((e) => !e.disabled);
+  const 準備中 = 全部.filter((e) => e.disabled);
+  /* ★2026-09-05★ 給与(kyuyo/)を Exally から 外した（給与は Rakunally）＝★タイルは 4つ★
+     ⇒★数を 下げた のは ゆるめでは ない★：★給与の タイルが 戻っていない事★を 下で 別に 見る */
+  ok(押せる.length === 4, '押せるタイル数=' + 押せる.length);
+  ok(準備中.length === 1, '準備中のタイル数=' + 準備中.length + '（電子ハンコ）');
+  for (const e of 準備中) {
+    ok(/まだ出来ていません|準備中/.test(e.textContent), '準備中の理由が 画面の字で 読めない: ' + e.textContent.slice(0, 40));
+  }
 });
-// 2026-08-01 統合: 給与は別サイト(payslip-app-olive)ではなく【同一オリジンの kyuyo/】になった。
-//   同一オリジンであることが「ログイン1回で両方使える」の条件そのものなので、そこを見張る。
-// ★2026-08-01 staging: href は【相対】であること。ここは GitHub Pages のサブパス配信
-//   (https://exally-zeroact.github.io/exally-staging/)なので、'/kyuyo/' と書くと
-//   github.io の直下を指してしまい 404 になる。相対なら本番(ルート配信)でも同じ場所を指す＝両方で正しい。
-//   機械での見張りは tests/no-absolute-paths.test.mjs（配信物全体）。ここは意味(同一オリジン)を見る。
-T('1. ★給与タイルは同一オリジンの kyuyo/ へ繋がる(別サイトへ飛ばさない・相対)', () => {
-  const a = doc.getElementById('tile-payslip');
-  ok(a, '給与タイルが無い');
-  ok(a.tagName === 'A', 'リンクでない');
-  ok(a.getAttribute('href') === 'kyuyo/', 'href=' + a.getAttribute('href') + ' (相対 kyuyo/ であること)');
-  ok(!/^https?:/.test(a.getAttribute('href')), '外部URLになっている(別オリジン=ログインが分かれる)');
-  ok(!a.getAttribute('target'), '別タブで開く指定が残っている(同一サイト内なので不要)');
+/* ★2026-09-05★ 給与(kyuyo/)を Exally から 外した（司さん「何のための Rakunally なんど」）。
+   ★前は「給与タイルが 同一オリジンの /kyuyo/ へ 繋がるか」を 見ていた★
+   ⇒★今は 逆＝★給与が 戻っていない事★を 見る★
+     ・タイルが 復活していない
+     ・kyuyo/ を 指す リンクが 1つも 無い
+   ★消した物が 黙って 戻るのを 止める★（前に テンプレで 同じ 見張りを 作った 型） */
+T('1. ★給与は Exally に 戻っていない（Rakunally へ 出した）', () => {
+  ok(!doc.getElementById('tile-payslip'), '★給与タイルが 戻っている★');
+  const 給与へ = [...doc.querySelectorAll('#scr-hub a[href]')]
+    .filter((e) => /kyuyo/.test(e.getAttribute('href') || ''));
+  ok(給与へ.length === 0, '★kyuyo/ を 指す リンクが 在る: ' + 給与へ.length + '本★');
+  const 字 = doc.getElementById('scr-hub').textContent;
+  ok(字.indexOf('明細の作成') < 0, '★給与の 字が 残っている★');
 });
-// 2026-08-01 統合: 請求書/見積の旧ページは削除した。無い物は見せない＝タイルも消す。
-//   「消したページへのリンクが戻ってくる」＝404を配るので、逆向きに見張る。
+
 T('1. ★削除した旧ページ(請求書/見積/旧トップ/テンプレ)へのリンクがハブに無い', () => {
   const html = doc.getElementById('scr-hub').innerHTML;
   ['seikyusyo.html', 'mitsumoriyo.html', 'home.html', 'template.html', 'kyuuryoumeisai.html'].forEach(f => {
-    ok(!new RegExp(f.replace('.', '\.')).test(html), 'ハブに ' + f + ' へのリンクが残っている');
+    ok(!new RegExp(f.replace(/\./g, '\\.')  /* ★'\.' は 素の '.' に なる★＝逃がせていなかった
+       （bookXhtml にも 当たっていた／2026-08-30 監査役） */).test(html), 'ハブに ' + f + ' へのリンクが残っている');
   });
+  ok(!doc.getElementById('tile-seikyu'), '請求書タイルが残っている');
   ok(!doc.getElementById('tile-mitsumori'), '見積タイルが残っている');
-});
-// 2026-08-10: 請求書は【中身のある新しいアプリ seikyu/】として戻ってきた。
-//   上の検査は「消した旧ページ(seikyusyo.html)へのリンク」を見ているので、そのまま生きている。
-//   ここでは新しい方が、同一オリジンの相対リンクで繋がっているかを見る。
-T('1. ★請求書タイルは同一オリジンの seikyu/ へ繋がる(相対)', () => {
-  const a = doc.getElementById('tile-seikyu');
-  ok(a, '請求書タイルが無い');
-  ok(a.tagName === 'A', 'リンクでない');
-  ok(a.getAttribute('href') === 'seikyu/', 'href=' + a.getAttribute('href') + ' (相対 seikyu/ であること)');
-  ok(!/^https?:/.test(a.getAttribute('href')), '外部URLになっている(別オリジン=ログインが分かれる)');
-  ok(!a.getAttribute('target'), '別タブで開く指定が残っている(同一サイト内なので不要)');
-  const d = a.querySelector('.tile-d');
-  ok(d && d.textContent.trim().length > 0, '説明が無い');
-  ok(d.textContent.length <= 30, '説明が長すぎる(薄くの原則): ' + d.textContent);
 });
 T('1. ★撤去したお試し画面(chat.html)へのタイルは無い', () => {
   ok(!/chat.html/.test(doc.getElementById('scr-hub').innerHTML), 'ハブから chat.html へ行ける');
@@ -173,8 +172,8 @@ T('1. 日次台帳を押すと台帳が開く', () => {
 /* ═══ 2. 共有データ: 会社 ═══ */
 T('2. 会社の情報がクラウドの値で埋まっている', () => {
   H.show('scr-data');
-  ok(doc.getElementById('org-yago').value === '株式会社ゼロアクト', 'yago=' + doc.getElementById('org-yago').value);
-  ok(doc.getElementById('org-invoice').value === 'T1234567890123');
+  ok(doc.getElementById('org-yago').value === '株式会社見本', 'yago=' + doc.getElementById('org-yago').value);
+  ok(doc.getElementById('org-invoice').value === 'T9000000000009');
 });
 T('2. 事業のチップが出る', () => {
   const chips = doc.querySelectorAll('#org-biz-chips .chip');

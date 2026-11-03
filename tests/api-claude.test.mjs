@@ -14,17 +14,23 @@
  *
  * 使い方: node tests/api-claude.test.mjs
  */
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { 注記を外す } from '../scripts/lib/chuki.mjs';
+import { 倉庫の行を拾う, 読めなければ止まる } from '../scripts/lib/statutory-soko.mjs';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const require_ = createRequire(import.meta.url);
 
 if (!process.env.ANTHROPIC_API_KEY) process.env.ANTHROPIC_API_KEY = 'test-dummy-key';
 const handler = require_(path.join(ROOT, 'api/claude.js'));
-const build = handler.__buildStatutoryPrompt;
+/* ★2026-09-05★ 法定の数値は ★倉庫(Supabase statutory)から 拾う★ ようにした（司さん）。
+   ⇒ この 検査も ★本物の 倉庫を 読んで★ 前置きを 組み立てる＝★客が 見る 数字と 同じ 所★。
+   ⇒ 読めなければ ★緑に しない★（終了の印 2＝検査が 走っていない／コードの赤ではない）。 */
+const 倉庫の行 = 読めなければ止まる(await 倉庫の行を拾う(), 'api-claude の 基準数値の検査');
+const build = (ym) => handler.__buildStatutoryPrompt(ym, 倉庫の行);
 
 let pass = 0, fail = 0;
 const T = (n, fn) => { try { fn(); pass++; console.log('  ✓ ' + n); } catch (e) { fail++; console.log('  ✗ ' + n + ' — ' + (e && e.message)); } };
@@ -70,6 +76,186 @@ T('★「今日」で組み立てても NaN / undefined が混ざらない', () 
 T('検査が空振りしていない（テスト用の窓が実際に生えている）', () => {
   if (typeof build !== 'function') throw new Error('__buildStatutoryPrompt が無い');
   if (typeof handler !== 'function') throw new Error('api/claude.js が関数を export していない（Vercelが呼べない）');
+});
+
+/* ── ★倉庫が 読めなかった 時に AI へ 何と 言うか★（甲・2026-09-05 指示役）──────
+ *  ★黙って 数字を 抜くのが 一番 危ない★＝AI は 自分の おぼえている 率を 書いてしまう。
+ *  ⇒ 数字の 代わりに ★「今 出せない・推測で 書くな」★ を 必ず 入れる。 */
+const 取れない = handler.__法定が取れない時;
+
+T('★倉庫が 読めない時＝数字を 1つも 出さない', () => {
+  const s = handler.__buildStatutoryPrompt('2026-08', null);
+  if (new RegExp('\\d+\\.\\d+\\s*[%％]').test(s)) throw new Error('率の 数字が 残っています:' + s);
+  for (const 悪い of ['4.925', '9.15', '0.50%', '10%（標準）']) {
+    if (s.indexOf(悪い) >= 0) throw new Error('数字が 出ています: ' + 悪い);
+  }
+});
+
+T('★倉庫が 読めない時＝AI に「数字を答えるな・推測で書くな」と 言う', () => {
+  const s = handler.__buildStatutoryPrompt('2026-08', null);
+  for (const 要る of ['取り出せませんでした', '数字を答えず', '推測した率を 答えに書かないこと']) {
+    if (s.indexOf(要る) < 0) throw new Error('言っていない: ' + 要る + '\n' + s);
+  }
+  if (s !== 取れない) throw new Error('★別の 文が 出ている★');
+});
+
+T('★半分だけ 取れた時も 出さない（欠けた表が 一番 危ない）', () => {
+  /* 消費税だけ 取れて 社保・雇用が 無い＝★消費税だけ 書いて しまわないか★ */
+  const 半分 = [{ kind: 'shouhizei', year: 2019, data: { hyojun: 0.1, keigen: 0.08 } }];
+  const s = handler.__buildStatutoryPrompt('2026-08', 半分);
+  if (s !== 取れない) throw new Error('★半分の 表を 出しています★:' + s);
+});
+
+/* ★★会議(2026-09-05)の 穴 D★★
+   設計書は「最低賃金・労災率・源泉は 倉庫から」と 書いてあったのに、
+   ★実際に 読んでいたのは 健保・厚年・雇用・消費税の 4つだけ★
+   ⇒★AIは 最低賃金も 労災率も 源泉も ★記憶から 書いていた★
+   ⇒★しかも 見張りは「4つ 取れれば 緑」だったので 効かなかった★
+   ★直し★ … 表は 大きい（47都道府県／54業種）ので ★前置きに 貼らない★。
+             ★在るか と 年度だけ 出し、数字は 言わせない★。 */
+T('★★最低賃金・労災率・源泉は「数字を 言うな」と 書いてある★★', () => {
+  const 行 = [
+    { kind: 'shakaihoken', year: 2026, data: { kenko_total: { tokyo: 0.0991 }, kosei_total: 0.183 } },
+    { kind: 'koyo', year: 2026, data: { ippan: 0.0055 } },
+    { kind: 'shouhizei', year: 2019, data: { hyojun: 0.1, keigen: 0.08 } },
+    { kind: 'saitei_chingin', year: 2025, data: {} },
+    { kind: 'rousai_ritsu', year: 2024, data: {} },
+  ];
+  const s = handler.__buildStatutoryPrompt('2026-08', 行);
+  for (const 要る of ['最低賃金', '金額を 言わない', '都道府県か★を 聞く',
+    '労災保険率', '率を 言わない', '源泉徴収', '倉庫に 入っていない']) {
+    if (s.indexOf(要る) < 0) throw new Error('言っていない: ' + 要る + '\n' + s);
+  }
+});
+
+T('★★源泉の 率を 前置きに 書いていない（10.21% を 埋めない）★★', () => {
+  const 行 = [
+    { kind: 'shakaihoken', year: 2026, data: { kenko_total: { tokyo: 0.0991 }, kosei_total: 0.183 } },
+    { kind: 'koyo', year: 2026, data: { ippan: 0.0055 } },
+    { kind: 'shouhizei', year: 2019, data: { hyojun: 0.1, keigen: 0.08 } },
+  ];
+  const s = handler.__buildStatutoryPrompt('2026-08', 行);
+  /* ★10.21 は「書くな」の 例として 出るだけ★＝★率として 並んでいたら 赤★ */
+  if (/10\.21\s*[%％]（?(源泉|報酬)/.test(s)) throw new Error('★源泉の 率を 埋めています★');
+});
+
+T('★倉庫に 最低賃金の 行が 無くても 消費税まで 消さない（行き過ぎない）', () => {
+  const 行 = [
+    { kind: 'shakaihoken', year: 2026, data: { kenko_total: { tokyo: 0.0991 }, kosei_total: 0.183 } },
+    { kind: 'koyo', year: 2026, data: { ippan: 0.0055 } },
+    { kind: 'shouhizei', year: 2019, data: { hyojun: 0.1, keigen: 0.08 } },
+  ];
+  const s = handler.__buildStatutoryPrompt('2026-08', 行);
+  if (s.indexOf('10%（標準）') < 0) throw new Error('★消費税まで 消しています★');
+  if (s.indexOf('取れませんでした') < 0) throw new Error('★取れなかった事を 言っていない★');
+});
+
+T('★★倉庫から 拾う kind に 最低賃金と 労災率が 入っている★★', () => {
+  /* ★前置きの 文だけ 直しても、拾っていなければ 年度が 出せない★
+     ＝★字と 動きの 両方を 見る★ */
+  const src = fs.readFileSync(path.join(ROOT, 'api/claude.js'), 'utf8');
+  for (const k of ['kind.eq.saitei_chingin', 'kind.eq.rousai_ritsu']) {
+    if (src.indexOf(k) < 0) throw new Error('★倉庫から 拾っていない★: ' + k);
+  }
+});
+
+T('★倉庫の 数字を 変えたら 前置きも 変わる（倉庫を 本当に 見ている）', () => {
+  /* ★これが 無いと「たまたま 同じ 数字」で 緑に なる★＝倉庫を 見ていない事に 気付けない */
+  const 偽 = [
+    { kind: 'shakaihoken', year: 2026, data: { kenko_total: { tokyo: 0.12 }, kosei_total: 0.2 } },
+    { kind: 'koyo', year: 2026, data: { ippan: 0.007 } },
+    { kind: 'shouhizei', year: 2019, data: { hyojun: 0.15, keigen: 0.09 } },
+  ];
+  const s = handler.__buildStatutoryPrompt('2026-08', 偽);
+  for (const 要る of ['6.000%', '10.00%', '0.70%', '15%（標準）/ 9%（軽減）']) {
+    if (s.indexOf(要る) < 0) throw new Error('倉庫の 値が 使われていない: ' + 要る + '\n' + s);
+  }
+});
+
+T('★消費税は「その kind の 一番 新しい 行」を 取る（2019 と 決め打ちしない）', () => {
+  /* ★倉庫に 新しい 施行年が 増えた時、古い 行を 読み続けると★
+     ★数字は 出るので 誰も 気づかない★＝2026-09-05 指示役の 指摘。 */
+  const 行 = [
+    { kind: 'shakaihoken', year: 2026, data: { kenko_total: { tokyo: 0.0985 }, kosei_total: 0.183 } },
+    { kind: 'koyo', year: 2026, data: { ippan: 0.005 } },
+    { kind: 'shouhizei', year: 2019, data: { hyojun: 0.10, keigen: 0.08 } },
+    { kind: 'shouhizei', year: 2027, data: { hyojun: 0.12, keigen: 0.09 } },
+  ];
+  const s = handler.__buildStatutoryPrompt('2026-08', 行);
+  if (s.indexOf('消費税: 12%（標準）/ 9%（軽減）') < 0) {
+    throw new Error('★新しい 行を 見ていない（古い 2019 を 読んでいる）★:' + s);
+  }
+});
+
+T('★社保・雇用は 逆に「先の年」を 使わない（対象月の 年度で 選ぶ）', () => {
+  const 行 = [
+    { kind: 'shakaihoken', year: 2025, data: { kenko_total: { tokyo: 0.0991 }, kosei_total: 0.183 } },
+    { kind: 'shakaihoken', year: 2030, data: { kenko_total: { tokyo: 0.5 }, kosei_total: 0.9 } },
+    { kind: 'koyo', year: 2025, data: { ippan: 0.0055 } },
+    { kind: 'koyo', year: 2030, data: { ippan: 0.9 } },
+    { kind: 'shouhizei', year: 2019, data: { hyojun: 0.10, keigen: 0.08 } },
+  ];
+  const s = handler.__buildStatutoryPrompt('2025-08', 行);
+  if (s.indexOf('4.955%') < 0 || s.indexOf('0.55%') < 0) {
+    throw new Error('★対象月の 年度を 使っていない★:' + s);
+  }
+});
+
+/* ── ★AI が 作った 表を 捨てていないか★（2026-09-05 指示役の 裁定「丙」）──────
+ *  ★前は★ サーバが 表を 本文から 抜いて `tsv` に 入れ、★画面は `tsv` を 読まなかった★
+ *          ⇒ 表は 捨てられ、★丸ごと 表の 時は 本文が 空★ ⇒「AIから 空の返事が来ました」
+ *  ★今は★ ★印の 行だけ 外して 中身は 本文に 残す★（tsv の 欄は そのまま） */
+const 分ける答え = handler.__答えを分ける;
+const 印START = '--- TSV_START ---';
+const 印END = '--- TSV_END ---';
+const 表だけ = 印START + "\n" + '商品' + "\t" + '単価' + "\n" + '鉛筆' + "\t" + '100' + "\n" + 印END;
+const 本文と表 = '合計はこれだよ。' + "\n" + "\n" + 表だけ + "\n" + "\n" + '貼り付け後に幅を調整してね。';
+
+T('★丙①：印の行が 客の 字に 出ていない', () => {
+  for (const [な, v] of [['丸ごと表', 表だけ], ['本文＋表', 本文と表]]) {
+    const r = 分ける答え(v);
+    if (r.text.indexOf('TSV_START') >= 0 || r.text.indexOf('TSV_END') >= 0) {
+      throw new Error(な + ': 印が 客の 字に 残っています: ' + JSON.stringify(r.text));
+    }
+  }
+});
+
+T('★丙②：表の 中身は 1字も 消えていない', () => {
+  const r = 分ける答え(本文と表);
+  for (const 要る of ['商品', '単価', '鉛筆', '100', '合計はこれだよ。', '貼り付け後に幅を調整してね。']) {
+    if (r.text.indexOf(要る) < 0) throw new Error('本文から 消えた: ' + 要る + ' → ' + JSON.stringify(r.text));
+  }
+  /* ★タブが 残っている事★＝これが 無いと Excel に 貼っても 列が 分かれない */
+  if (r.text.indexOf("\t") < 0) throw new Error('★タブが 消えている＝貼っても 列が 分かれない★');
+});
+
+T('★★丙③：丸ごと 表の 時に「空の返事」に ならない★★', () => {
+  /* ★これが 一番 大事★＝前は ここで text が 空に なり、
+     画面(lib/ai-reason.js:76-80)が「AIから 空の返事が来ました」と 言っていた。 */
+  const r = 分ける答え(表だけ);
+  if (!r.text) throw new Error('★本文が 空＝画面は「空の返事」と 言う（表は 出来ているのに）★');
+  if (r.text.indexOf('鉛筆') < 0) throw new Error('本文に 表が 入っていない');
+});
+
+T('★丙④：tsv の 欄は 今までどおり 埋まる（消していない＝甲で 使う）', () => {
+  const r = 分ける答え(本文と表);
+  if (!r.tsv) throw new Error('★tsv が 空＝欄を 消してしまった★');
+  if (r.tsv.indexOf('鉛筆') < 0) throw new Error('tsv の 中身が ちがう: ' + JSON.stringify(r.tsv));
+});
+
+T('★丙⑤：表が 無い答え・空の答えは 今までどおり', () => {
+  const a = 分ける答え('ふつうの答えだよ。');
+  if (a.text !== 'ふつうの答えだよ。' || a.tsv !== '') throw new Error('表なしの 答えを 変えた: ' + JSON.stringify(a));
+  const b = 分ける答え('');
+  if (b.text !== '' || b.tsv !== '') throw new Error('★空は 空のまま★でなければ ならない: ' + JSON.stringify(b));
+  const c = 分ける答え(null);
+  if (c.text !== '' || c.tsv !== '') throw new Error('null で 落ちる: ' + JSON.stringify(c));
+});
+
+T('★丙⑥：表が 2つ 在っても 印は 全部 消える', () => {
+  const 二つ = 表だけ + "\n" + 'つづき' + "\n" + 表だけ;
+  const r = 分ける答え(二つ);
+  if (/TSV_(START|END)/.test(r.text)) throw new Error('2つ目の 印が 残った: ' + JSON.stringify(r.text));
 });
 
 /* ── ★失敗した時に 何を返すか（2026-08-22）★ ──────────────────────────
@@ -508,8 +694,13 @@ if (process.argv.includes('--self-test')) {
       (t) => t.replace("        content: [{ type: 'text', text: 最後.content, cache_control: { type: 'ephemeral' } }],", "        content: [{ type: 'text', text: 最後.content, cache_control: { type: 'ephemeral', ttl: '1h' } }],"),
       async (h) => { const p = await 捕まえる2(h, [{ role: 'user', content: 'a' }]); const m = p.messages.find((x) => Array.isArray(x.content)); return !m.content[0].cache_control.ttl; }],
     ['★①に 今の日時を混ぜる（毎回 置き直し＝2倍を毎回 払う）★',
-      (t) => t.replace('  const 共通 = SYSTEM_PROMPT_BASE + buildStatutoryPrompt();',
-        '  const 共通 = SYSTEM_PROMPT_BASE + buildStatutoryPrompt() + new Date().toISOString();'),
+      /* ★2026-09-05★ 前置きを prompt/*.md へ 出したので 組み立ての 字が 変わった。
+         ★書き換える 元の 字が ずれると『置換できず』＝赤★（この 検査は それを 言った）。
+         ⇒★合図は 短く★＝`const 共通 = 中身だけ(` まで。
+         ★実際に この 日 踏んだ★＝kansuu.md の 人向け注記（日付）が 前置きに 入り、
+         この 検査が 赤に なった（★①は 置いたまま 使い回す 所＝毎回 置き直しに なる★）。 */
+      (t) => t.replace('const 共通 = 中身だけ(',
+        'const 共通 = new Date().toISOString() + 中身だけ('),
       /* ★2回 呼んで比べる形だと 同じミリ秒に入って 素通りする（実際に素通りした）★
          ⇒ ★日付の形が混ざっていないか★ を見る（いつ走らせても 同じ答えになる） */
       async (h) => { const a = await 捕まえる2(h); return !/\d{4}-\d{2}-\d{2}/.test(a.system[0].text); }],
@@ -529,6 +720,17 @@ if (process.argv.includes('--self-test')) {
       (t) => t.replace("    return res.status(k.status).json({ error: k.合言葉, text: '', tsv: '' });",
         "    return res.status(k.status).json({ error: k.合言葉, text: 'VercelのEnvironment VariablesにANTHROPIC_API_KEYを設定してください。', tsv: '' });"),
       async (h) => (await 押す(h, 鍵err)).body.text === ''],
+    /* ★丙：表を 捨てる 昔の 形に 戻したら 赤に なるか★（2026-09-05）
+       ★これが 無いと、誰かが 元に 戻しても 誰も 気づきません★（約5か月 気づかなかった） */
+    ['★AI が 作った 表を 本文から 捨てる（昔の 形に 戻す）★',
+      (t) => t.replace("全.replace(印, '')", "(塊 ? 全.replace(塊[0], '') : 全)"),
+      async (h) => {
+        const f = h.__答えを分ける;
+        if (typeof f !== 'function') return false;
+        /* ★丸ごと 表★の 時に 本文が 空に ならない事＝昔の 形に 戻すと 空に なる */
+        const 表だけ2 = ['--- TSV_START ---', '鉛筆', '--- TSV_END ---'].join("\n");
+        return !!f(表だけ2).text;
+      }],
   ];
   /* ★壊した版の記録は 検査の画面に出さない★（毎回そこで受け取って捨てる） */
   let 拾った = [];

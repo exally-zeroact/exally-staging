@@ -1,0 +1,28 @@
+# ★行/列を 入れたり 消したりした時、式が どう 追従するか★（2026-09-13）
+#
+# ★借り物を 自作で 外す 為★＝ここが 借り物の 中で 一番 手が 込んでいる所
+#
+# ★材料★ A1=1 A2=2 A3=3 A4=4 / B1=10 B2=20 / C1=100
+# ★式は E5 に 置く★（挿入で E5 自身も 動く事が 在るので 追って 読む）
+#
+# ★どの Excel か★ … 版 16.0 / build 20326
+#
+# ★型★と★本当にゼロか★も 取って います（「0」を 1つの 窓だけで 取らない）
+# 置いた式	わざ	後の式	後のマス	出る字	型	本当にゼロか	何を 見て いるか
+=A2+1	Rows(2).Insert	=A3+1	E6	3	Number	—	★指す先の 上に 行を 入れる（A2→A3 に なるか）★
+=A2+1	Rows(3).Insert	=A2+1	E6	3	Number	—	指す先の 下に 入れる（変わらないはず）
+=A2+1	Rows(2).Delete	=#REF!+1	E4	#REF!	Number	—	★指す先を 消す（#REF! に なるか）★
+=A3+1	Rows(2).Delete	=A2+1	E4	4	Number	—	指す先の 上を 消す（A3→A2 に なるか）
+=$A$2+1	Rows(2).Insert	=$A$3+1	E6	3	Number	—	★絶対参照も 追従するか★
+=SUM(A1:A3)	Rows(2).Insert	=SUM(A1:A4)	E6	6	Number	—	★四角の 途中に 入れる（A1:A4 に 広がるか）★
+=SUM(A2:A4)	Rows(2).Insert	=SUM(A3:A5)	E6	9	Number	—	★四角の 先頭に 入れる（A3:A5 か A2:A5 か）★
+=SUM(A1:A3)	Rows(4).Insert	=SUM(A1:A3)	E6	6	Number	—	四角の 下に 入れる（変わらないはず）
+=SUM(A1:A3)	Rows(2).Delete	=SUM(A1:A2)	E4	4	Number	—	★四角の 中を 消す（A1:A2 に 縮むか）★
+=SUM(A2:A2)	Rows(2).Delete	=SUM(#REF!)	E4	#REF!	Number	—	★四角が 丸ごと 消える（#REF! か）★
+=A2+1	Columns(1).Insert	=B2+1	F5	3	Number	—	★左に 列を 入れる（A2→B2 か）★
+=B2+1	Columns(1).Insert	=C2+1	F5	21	Number	—	列を 入れる（B2→C2 か）
+=B2+1	Columns(2).Delete	=#REF!+1	D5	#REF!	Number	—	★指す列を 消す（#REF! か）★
+=SUM(A1:C1)	Columns(2).Insert	=SUM(A1:D1)	F5	111	Number	—	★横の 四角の 途中に 列を 入れる★
+=A1+A2	Rows(1).Insert	=A2+A3	E6	3	Number	—	★式 自身が 下に ずれる時★
+=A$2+1	Rows(2).Insert	=A$3+1	E6	3	Number	—	★行だけ 絶対★
+=$A2+1	Rows(2).Insert	=$A3+1	E6	3	Number	—	★列だけ 絶対★

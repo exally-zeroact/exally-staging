@@ -1,8 +1,4 @@
 {
-  "kyuyo/tests/exally-login.test.mjs": {
-    "why": "★このツリーでは対象の機能が無い★（メール確認ONのsignup分岐は payslip-app のテスト線だけに在り、本番の js/exally-login.js には意図的に未展開）＝走らせても成立しない",
-    "back": "本番のログインに その分岐を入れた日"
-  },
   "tests/live-roundtrip.mjs": {
     "why": "★本物のSupabaseへ実接続する（鍵が要る・CIには鍵も網も無い）★",
     "back": "CI に テスト用の鍵を置いた日"
@@ -32,8 +28,13 @@
     "why": "試験ではなく ★LibreOffice が吐いた csv を真値に直す道具★（LibreOffice が要る）",
     "back": "CI に LibreOffice を置いた日"
   },
-  "seikyu/tests/live-seikyu.mjs": {
-    "why": "★本物のSupabase(DB-test)へ実接続する（鍵が要る・CIには鍵も網も無い）★",
-    "back": "CI に テスト用の鍵を置いた日"
+  "tests/hozon-de-kieru.test.mjs": {
+    "why": "★わざと 赤のまま★＝『うちで 足したシートは 書き出すと 消える』を 実測で 固定した 物。直っていないので 走らせると CI が 赤に なる（★出来ていない事を 隠さない／でも 赤を 常態に しない★）",
+    "back": "zip へ 足す 直しが 入って ★緑に なった 日★（それまでは 手で `node tests/hozon-de-kieru.test.mjs`）"
+  },
+  "tests/zairyou.mjs": {
+    "kind": "tool",
+    "why": "★紙の 材料（#材料 の 行）を 読んで 表に 置く 部品★。突き合わせの 道具と 試験が 読む（★試験では ない★）。材料の 読み方を 道具ごとに 書くと、材料の 無い 紙で ★空の 表★を 押して ★偽の 負け★が 出る（2026-09-14 に PRODUCT で 実際に 起きた）ので 1か所に 切り出した。どの 関数が 中身を 見るか（CELL は 第1引数で 変わる）の 表も ここに 在る。",
+    "back": "★この 部品が 試験に なった 日★（今は 部品＝走らせる 物が 無い）"
   }
 }

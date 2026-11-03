@@ -1,0 +1,465 @@
+# 実Excel 16.0 の ★キーの 割り当て（Alt の 順番・ショートカット）★ 2026-08-30
+# 取り方: UI Automation の AccessKey / AcceleratorKey（新規ブック・保存なし・読むだけ）
+# 列: タブ / 部品 / AccessKey(Altの順) / AcceleratorKey(Ctrl等) / 説明の1行目
+ホーム	ファイル タブ	Alt, F		
+ホーム	ホーム	Alt, H		
+ホーム	挿入	Alt, N		
+ホーム	描画	Alt, J I		
+ホーム	ページ レイアウト	Alt, P		
+ホーム	数式	Alt, M		
+ホーム	データ	Alt, A		
+ホーム	校閲	Alt, R		
+ホーム	表示	Alt, W		
+ホーム	自動化	Alt, U		
+ホーム	開発	Alt, L		
+ホーム	ヘルプ	Alt, Y		
+ホーム	コメント	Alt, Z C		
+ホーム	共有	Alt, Z S		
+ホーム	貼り付け	Alt, H, V		
+ホーム	その他のオプション	Alt, H, V		
+ホーム	切り取り	Alt, H, X	Ctrl+X	
+ホーム	コピー	Alt, H, C		
+ホーム	その他のオプション	Alt, H, C		
+ホーム	書式のコピー/貼り付け	Alt, H, F P		
+ホーム	Office クリップボード...	Alt, H, F O		
+ホーム	フォント	Alt, H, F F		
+ホーム	フォント	Alt, H, F F		
+ホーム	フォント サイズ	Alt, H, F S		
+ホーム	フォント サイズ	Alt, H, F S		
+ホーム	フォント サイズの拡大	Alt, H, F G		
+ホーム	フォント サイズの縮小	Alt, H, F K		
+ホーム	太字	Alt, H, 1	Ctrl+B	
+ホーム	斜体	Alt, H, 2	Ctrl+I	
+ホーム	下線	Alt, H, 3		
+ホーム	その他のオプション	Alt, H, 3		
+ホーム	罫線	Alt, H, B		
+ホーム	その他のオプション	Alt, H, B		
+ホーム	塗りつぶしの色	Alt, H, H		
+ホーム	その他のオプション	Alt, H, H		
+ホーム	フォントの色	Alt, H, F C		
+ホーム	その他のオプション	Alt, H, F C		
+ホーム	ふりがなの表示	Alt, H, G		
+ホーム	その他のオプション	Alt, H, G		
+ホーム	セルのフォントの設定	Alt, H, F N	Ctrl+Shift+F	
+ホーム	上揃え	Alt, H, A T		
+ホーム	上下中央揃え	Alt, H, A M		
+ホーム	下揃え	Alt, H, A B		
+ホーム	方向	Alt, H, F Q		
+ホーム	左揃え	Alt, H, A L		
+ホーム	中央揃え	Alt, H, A C		
+ホーム	右揃え	Alt, H, A R		
+ホーム	インデントを減らす	Alt, H, 5		
+ホーム	インデントを増やす	Alt, H, 6		
+ホーム	折り返して全体を表示する	Alt, H, W		
+ホーム	セルを結合して中央揃え	Alt, H, M		
+ホーム	その他のオプション	Alt, H, M		
+ホーム	セルの配置の設定	Alt, H, F A		
+ホーム	数値の書式	Alt, H, N		
+ホーム	数値の書式	Alt, H, N		
+ホーム	通貨表示形式	Alt, H, A N		
+ホーム	その他のオプション	Alt, H, A N		
+ホーム	パーセント スタイル	Alt, H, P	Ctrl+Shift+%	
+ホーム	桁区切りスタイル	Alt, H, K		
+ホーム	小数点以下の表示桁数を増やす	Alt, H, 0		
+ホーム	小数点以下の表示桁数を減らす	Alt, H, 9		
+ホーム	セルの書式設定	Alt, H, F M		
+ホーム	条件付き書式	Alt, H, L		
+ホーム	テーブルとして書式設定	Alt, H, T		
+ホーム	セルのスタイル	Alt, H, J		
+ホーム	挿入	Alt, H, I		
+ホーム	その他のオプション	Alt, H, I		
+ホーム	削除	Alt, H, D		
+ホーム	その他のオプション	Alt, H, D		
+ホーム	書式	Alt, H, O		
+ホーム	オート SUM	Alt, H, U		
+ホーム	合計	Alt+=		
+ホーム	その他のオプション	Alt, H, U		
+ホーム	フィル	Alt, H, F I		
+ホーム	クリア	Alt, H, E		
+ホーム	並べ替えとフィルター	Alt, H, S		
+ホーム	検索と選択	Alt, H, F D		
+ホーム	アドイン 	Alt, H, Y 1		
+ホーム	Claude	Alt, H, Y 2		
+ホーム	リボンの表示オプション	Alt, Z R		
+挿入	ファイル タブ	Alt, F		
+挿入	ホーム	Alt, H		
+挿入	挿入	Alt, N		
+挿入	描画	Alt, J I		
+挿入	ページ レイアウト	Alt, P		
+挿入	数式	Alt, M		
+挿入	データ	Alt, A		
+挿入	校閲	Alt, R		
+挿入	表示	Alt, W		
+挿入	自動化	Alt, U		
+挿入	開発	Alt, L		
+挿入	ヘルプ	Alt, Y		
+挿入	コメント	Alt, Z C		
+挿入	共有	Alt, Z S		
+挿入	ピボットテーブル	Alt, N, V		
+挿入	その他のオプション	Alt, N, V		
+挿入	おすすめピボットテーブル	Alt, N, S P		
+挿入	テーブル	Alt, N, T	Ctrl+T	
+挿入	フォーム	Alt, N, F R		
+挿入	画像	Alt, N, P		
+挿入	図形	Alt, N, S H		
+挿入	アイコン	Alt, N, N S		
+挿入	3D モデル	Alt, N, S 3		
+挿入	その他のオプション	Alt, N, S 3		
+挿入	SmartArt...	Alt, N, M 1		
+挿入	スクリーンショット	Alt, N, S C		
+挿入	チェック ボックス	Alt, N, C B		
+挿入	おすすめグラフ	Alt, N, R		
+挿入	縦棒/横棒グラフの挿入	Alt, N, C 1		
+挿入	折れ線/面グラフの挿入	Alt, N, N 1		
+挿入	円またはドーナツ グラフの挿入	Alt, N, Q		
+挿入	階層構造グラフの挿入	Alt, N, H I		
+挿入	統計グラフの挿入	Alt, N, S A		
+挿入	散布図 (X, Y) またはバブル チャートの挿入	Alt, N, D		
+挿入	ウォーターフォール図、じょうごグラフ、株価チャート、等高線グラフ、レーダー チャートの挿入	Alt, N, I 1		
+挿入	複合グラフの挿入	Alt, N, S D		
+挿入	マップ	Alt, N, M 2		
+挿入	ピボットグラフ	Alt, N, S Z		
+挿入	その他のオプション	Alt, N, S Z		
+挿入	おすすめグラフ	Alt, N, K		
+挿入	折れ線	Alt, N, S L		
+挿入	縦棒	Alt, N, S O		
+挿入	勝敗	Alt, N, S W		
+挿入	スライサー...	Alt, N, S F		
+挿入	タイムライン	Alt, N, S T		
+挿入	リンク	Alt, N, I 2		
+挿入	その他のオプション	Alt, N, I 2		
+挿入	コメント	Alt, N, C M		
+挿入	テキスト	Alt, N, Z T		
+挿入	数式	Alt, N, E		
+挿入	その他のオプション	Alt, N, E		
+挿入	記号と特殊文字...	Alt, N, U		
+挿入	リボンの表示オプション	Alt, Z R		
+描画	ファイル タブ	Alt, F		
+描画	ホーム	Alt, H		
+描画	挿入	Alt, N		
+描画	描画	Alt, J I		
+描画	ページ レイアウト	Alt, P		
+描画	数式	Alt, M		
+描画	データ	Alt, A		
+描画	校閲	Alt, R		
+描画	表示	Alt, W		
+描画	自動化	Alt, U		
+描画	開発	Alt, L		
+描画	ヘルプ	Alt, Y		
+描画	コメント	Alt, Z C		
+描画	共有	Alt, Z S		
+描画	元に戻せません	Alt, J I, A Z	Ctrl+Z	
+描画	繰り返しできません	Alt, J I, R	Ctrl+Y	
+描画	選択: インク、図形、テキスト領域などのオブジェクトを選びます。これは特に、テキストの背後にあるオブジェクトを操作するときに使うと便利です。	Alt, J I, G		
+描画	なげなわ選択: インクを選択して図形を描画します。図形内のすべてのインクストロークが選択されます。	Alt, J I, G		
+描画	消しゴム: ページに描画したインクを消しゴムで消します。	Alt, J I, G		
+描画	ペン: 黒、0.35 mm	Alt, J I, G		
+描画	ペン: 赤、0.35 mm	Alt, J I, G		
+描画	鉛筆書き: 灰色、0.5 mm	Alt, J I, G		
+描画	蛍光ペン: 黄, 6mm、テキストに位置を合わせる: オフ	Alt, J I, G		
+描画	万年筆: 濃い青、1 mm	Alt, J I, G		
+描画	ブラシ ペン: 緑、1 mm	Alt, J I, G		
+描画	アクション ペン: アクション ペンを使用して、手書きでデータを入力します。	Alt, J I, G		
+描画	追加	Alt, J I, A 1		
+描画	インクを図形に変換	Alt, J I, H		
+描画	インクを数式に変換	Alt, J I, M ​		
+描画	イ‍ン‍ク‍の再生	Alt, J I, K		
+描画	インクのヘルプ	Alt, J I, I		
+描画	リボンの表示オプション	Alt, Z R		
+ページ レイアウト	ファイル タブ	Alt, F		
+ページ レイアウト	ホーム	Alt, H		
+ページ レイアウト	挿入	Alt, N		
+ページ レイアウト	描画	Alt, J I		
+ページ レイアウト	ページ レイアウト	Alt, P		
+ページ レイアウト	数式	Alt, M		
+ページ レイアウト	データ	Alt, A		
+ページ レイアウト	校閲	Alt, R		
+ページ レイアウト	表示	Alt, W		
+ページ レイアウト	自動化	Alt, U		
+ページ レイアウト	開発	Alt, L		
+ページ レイアウト	ヘルプ	Alt, Y		
+ページ レイアウト	コメント	Alt, Z C		
+ページ レイアウト	共有	Alt, Z S		
+ページ レイアウト	テーマ	Alt, P, T H		
+ページ レイアウト	配色	Alt, P, T C		
+ページ レイアウト	フォント	Alt, P, T F		
+ページ レイアウト	効果	Alt, P, T E		
+ページ レイアウト	余白	Alt, P, M		
+ページ レイアウト	印刷の向き	Alt, P, O		
+ページ レイアウト	サイズ	Alt, P, S Z		
+ページ レイアウト	印刷範囲	Alt, P, R		
+ページ レイアウト	改ページ	Alt, P, B		
+ページ レイアウト	背景...	Alt, P, G		
+ページ レイアウト	印刷タイトル	Alt, P, I		
+ページ レイアウト	ページ設定	Alt, P, S P		
+ページ レイアウト	横:	Alt, P, W		
+ページ レイアウト	横:	Alt, P, W		
+ページ レイアウト	縦:	Alt, P, H		
+ページ レイアウト	縦:	Alt, P, H		
+ページ レイアウト	ページ設定	Alt, P, S P		
+ページ レイアウト	表示	Alt, P, Y, V G		
+ページ レイアウト	印刷	Alt, P, Y, P G		
+ページ レイアウト	表示	Alt, P, Y, V H		
+ページ レイアウト	印刷	Alt, P, Y, P H		
+ページ レイアウト	シートのオプション	Alt, P, S O		
+ページ レイアウト	前面へ移動	Alt, P, A F		
+ページ レイアウト	その他のオプション	Alt, P, A F		
+ページ レイアウト	背面へ移動	Alt, P, A E		
+ページ レイアウト	その他のオプション	Alt, P, A E		
+ページ レイアウト	オブジェクトの選択と表示...	Alt, P, A P		
+ページ レイアウト	配置	Alt, P, A A		
+ページ レイアウト	グループ化	Alt, P, A G		
+ページ レイアウト	回転	Alt, P, A Y		
+ページ レイアウト	リボンの表示オプション	Alt, Z R		
+数式	ファイル タブ	Alt, F		
+数式	ホーム	Alt, H		
+数式	挿入	Alt, N		
+数式	描画	Alt, J I		
+数式	ページ レイアウト	Alt, P		
+数式	数式	Alt, M		
+数式	データ	Alt, A		
+数式	校閲	Alt, R		
+数式	表示	Alt, W		
+数式	自動化	Alt, U		
+数式	開発	Alt, L		
+数式	ヘルプ	Alt, Y		
+数式	コメント	Alt, Z C		
+数式	共有	Alt, Z S		
+数式	関数の挿入...	Alt, M, F		
+数式	オート SUM	Alt, M, U		
+数式	合計	Alt+=		
+数式	その他のオプション	Alt, M, U		
+数式	最近使った関数	Alt, M, R		
+数式	財務	Alt, M, I 1		
+数式	論理	Alt, M, L		
+数式	文字列操作	Alt, M, T		
+数式	日付/時刻	Alt, M, E		
+数式	検索/行列	Alt, M, O		
+数式	数学/三角	Alt, M, G		
+数式	その他の関数	Alt, M, Q		
+数式	Python の挿入	Alt, M, I 2		
+数式	リセット	Alt, M, Y R		
+数式	その他のオプション	Alt, M, Y R		
+数式	エディター	Alt, M, Y E		
+数式	初期化	Alt, M, Y I		
+数式	名前の管理	Alt, M, N	Ctrl+F3	
+数式	名前の定義	Alt, M, M		
+数式	その他のオプション	Alt, M, M		
+数式	数式で使用	Alt, M, S		
+数式	選択範囲から作成...	Alt, M, C	Ctrl+Shift+F3	
+数式	参照元のトレース	Alt, M, P		
+数式	参照先のトレース	Alt, M, D		
+数式	トレース矢印の削除	Alt, M, A		
+数式	その他のオプション	Alt, M, A		
+数式	数式の表示	Alt, M, H	Ctrl+Shift+`	
+数式	エラー チェック...	Alt, M, K		
+数式	その他のオプション	Alt, M, K		
+数式	数式の検証	Alt, M, V		
+数式	ウォッチ ウィンドウ	Alt, M, W		
+数式	計算方法の設定	Alt, M, X		
+数式	再計算実行	Alt, M, B		
+数式	シート再計算	Alt, M, J		
+数式	リボンの表示オプション	Alt, Z R		
+データ	ファイル タブ	Alt, F		
+データ	ホーム	Alt, H		
+データ	挿入	Alt, N		
+データ	描画	Alt, J I		
+データ	ページ レイアウト	Alt, P		
+データ	数式	Alt, M		
+データ	データ	Alt, A		
+データ	校閲	Alt, R		
+データ	表示	Alt, W		
+データ	自動化	Alt, U		
+データ	開発	Alt, L		
+データ	ヘルプ	Alt, Y		
+データ	コメント	Alt, Z C		
+データ	共有	Alt, Z S		
+データ	データの取得	Alt, A, P N		
+データ	テキストまたは CSV から	Alt, A, F T		
+データ	Web から	Alt, A, F W		
+データ	テーブルまたは範囲から	Alt, A, P T		
+データ	画像から	Alt, A, 画		
+データ	最近使ったソース	Alt, A, P R		
+データ	既存の接続	Alt, A, X		
+データ	すべて更新	Alt, A, R		
+データ	その他のオプション	Alt, A, R		
+データ	クエリと接続	Alt, A, O		
+データ	プロパティ	Alt, A, P 1		
+データ	ブックのリンク	Alt, A, K		
+データ	データの種類	Alt, A, D 1		
+データ	昇順	Alt, A, S A		
+データ	降順	Alt, A, S D		
+データ	並べ替え...	Alt, A, S S		
+データ	フィルター	Alt, A, T	Ctrl+Shift+L	
+データ	クリア	Alt, A, C		
+データ	再適用	Alt, A, Y	Ctrl+Alt+L	
+データ	詳細設定...	Alt, A, Q		
+データ	区切り位置...	Alt, A, E		
+データ	フラッシュ フィル	Alt, A, F F	Ctrl+E	
+データ	重複の削除	Alt, A, M		
+データ	データの入力規則...	Alt, A, V		
+データ	その他のオプション	Alt, A, V		
+データ	統合...	Alt, A, N		
+データ	データ モデル	Alt, A, D M		
+データ	データ分析	Alt, A, F E		
+データ	What-If 分析	Alt, A, W		
+データ	予測シート	Alt, A, F C		
+データ	アウトライン	Alt, A, Z O		
+データ	リボンの表示オプション	Alt, Z R		
+校閲	ファイル タブ	Alt, F		
+校閲	ホーム	Alt, H		
+校閲	挿入	Alt, N		
+校閲	描画	Alt, J I		
+校閲	ページ レイアウト	Alt, P		
+校閲	数式	Alt, M		
+校閲	データ	Alt, A		
+校閲	校閲	Alt, R		
+校閲	表示	Alt, W		
+校閲	自動化	Alt, U		
+校閲	開発	Alt, L		
+校閲	ヘルプ	Alt, Y		
+校閲	コメント	Alt, Z C		
+校閲	共有	Alt, Z S		
+校閲	スペル チェック...	Alt, R, S		
+校閲	類義語辞典...	Alt, R, E		
+校閲	ブックの統計情報	Alt, R, B		
+校閲	パフォーマンスをチェック	Alt, R, K		
+校閲	アクセシビリティ チェック	Alt, R, A		
+校閲	その他のオプション	Alt, R, A		
+校閲	翻訳	Alt, R, L		
+校閲	変更内容を表示	Alt, R, G		
+校閲	新しいコメント	Alt, R, C		
+校閲	削除	Alt, R, D		
+校閲	前のコメント	Alt, R, V		
+校閲	次のコメント	Alt, R, N		
+校閲	コメントの表示	Alt, R, H 1		
+校閲	メモ	Alt, R, T		
+校閲	シートの保護...	Alt, R, P S		
+校閲	ブックの保護...	Alt, R, P W		
+校閲	範囲の編集を許可する	Alt, R, U 1		
+校閲	ブックの共有を解除	Alt, R, U 2		
+校閲	インクを非表示にする	Alt, R, H 2		
+校閲	その他のオプション	Alt, R, H 2		
+校閲	リボンの表示オプション	Alt, Z R		
+表示	ファイル タブ	Alt, F		
+表示	ホーム	Alt, H		
+表示	挿入	Alt, N		
+表示	描画	Alt, J I		
+表示	ページ レイアウト	Alt, P		
+表示	数式	Alt, M		
+表示	データ	Alt, A		
+表示	校閲	Alt, R		
+表示	表示	Alt, W		
+表示	自動化	Alt, U		
+表示	開発	Alt, L		
+表示	ヘルプ	Alt, Y		
+表示	コメント	Alt, Z C		
+表示	共有	Alt, Z S		
+表示	シート ビューの切り替え	Alt, W, V C		
+表示	シート ビューの切り替え	Alt, W, V C		
+表示	保持	Alt, W, V K		
+表示	終了	Alt, W, V E		
+表示	新規	Alt, W, V N		
+表示	オプション	Alt, W, V O		
+表示	標準	Alt, W, L		
+表示	改ページ プレビュー	Alt, W, I		
+表示	ページ レイアウト	Alt, W, P		
+表示	ユーザー設定のビュー...	Alt, W, C		
+表示	ナビゲーション	Alt, W, K		
+表示	ルーラー	Alt, W, R		
+表示	目盛線	Alt, W, V G		
+表示	数式バー	Alt, W, V F		
+表示	見出し	Alt, W, V H		
+表示	データ型アイコン 	Alt, W, Y		
+表示	セルにフォーカス	Alt, W, E		
+表示	その他のオプション	Alt, W, E		
+表示	ズーム...	Alt, W, Q		
+表示	100%	Alt, W, J		
+表示	選択範囲に合わせて拡大/縮小	Alt, W, G		
+表示	新しいウィンドウを開く	Alt, W, N		
+表示	整列	Alt, W, A		
+表示	ウィンドウ枠の固定	Alt, W, F		
+表示	分割	Alt, W, S		
+表示	表示しない	Alt, W, H		
+表示	再表示...	Alt, W, U		
+表示	並べて比較	Alt, W, B		
+表示	同時にスクロール	Alt, W, V S		
+表示	ウィンドウの位置を元に戻す	Alt, W, T		
+表示	ウィンドウの切り替え	Alt, W, W		
+表示	マクロ	Alt, W, M		
+表示	マクロの表示	Alt+F8		
+表示	その他のオプション	Alt, W, M		
+表示	リボンの表示オプション	Alt, Z R		
+自動化	ファイル タブ	Alt, F		
+自動化	ホーム	Alt, H		
+自動化	挿入	Alt, N		
+自動化	描画	Alt, J I		
+自動化	ページ レイアウト	Alt, P		
+自動化	数式	Alt, M		
+自動化	データ	Alt, A		
+自動化	校閲	Alt, R		
+自動化	表示	Alt, W		
+自動化	自動化	Alt, U		
+自動化	開発	Alt, L		
+自動化	ヘルプ	Alt, Y		
+自動化	コメント	Alt, Z C		
+自動化	共有	Alt, Z S		
+自動化	新しいスクリプト	Alt, U, N		
+自動化	スクリプトの表示	Alt, U, V		
+自動化	Office スクリプト	Alt, U, M		
+自動化	リボンの表示オプション	Alt, Z R		
+開発	ファイル タブ	Alt, F		
+開発	ホーム	Alt, H		
+開発	挿入	Alt, N		
+開発	描画	Alt, J I		
+開発	ページ レイアウト	Alt, P		
+開発	数式	Alt, M		
+開発	データ	Alt, A		
+開発	校閲	Alt, R		
+開発	表示	Alt, W		
+開発	自動化	Alt, U		
+開発	開発	Alt, L		
+開発	ヘルプ	Alt, Y		
+開発	コメント	Alt, Z C		
+開発	共有	Alt, Z S		
+開発	Visual Basic	Alt, L, V		
+開発	マクロ	Alt, L, P M		
+開発	マクロの記録...	Alt, L, R		
+開発	相対参照で記録	Alt, L, U		
+開発	マクロのセキュリティ	Alt, L, A S		
+開発	アドイン	Alt, L, A 1		
+開発	Excel アドイン...	Alt, L, H		
+開発	COM アドイン...	Alt, L, J		
+開発	挿入	Alt, L, I		
+開発	デザイン モード	Alt, L, D M		
+開発	プロパティ	Alt, L, L		
+開発	コードの表示	Alt, L, C		
+開発	ダイアログの実行	Alt, L, N		
+開発	ソース...	Alt, L, X		
+開発	対応付けのプロパティ	Alt, L, O		
+開発	拡張パック	Alt, L, S		
+開発	データの更新	Alt, L, F		
+開発	インポート	Alt, L, T		
+開発	エクスポート	Alt, L, E		
+開発	リボンの表示オプション	Alt, Z R		
+ヘルプ	ファイル タブ	Alt, F		
+ヘルプ	ホーム	Alt, H		
+ヘルプ	挿入	Alt, N		
+ヘルプ	描画	Alt, J I		
+ヘルプ	ページ レイアウト	Alt, P		
+ヘルプ	数式	Alt, M		
+ヘルプ	データ	Alt, A		
+ヘルプ	校閲	Alt, R		
+ヘルプ	表示	Alt, W		
+ヘルプ	自動化	Alt, U		
+ヘルプ	開発	Alt, L		
+ヘルプ	ヘルプ	Alt, Y		
+ヘルプ	コメント	Alt, Z C		
+ヘルプ	共有	Alt, Z S		
+ヘルプ	ヘルプ	Alt, Y, H		
+ヘルプ	サポートへのお問い合わせ...	Alt, Y, C		
+ヘルプ	フィードバック	Alt, Y, K		
+ヘルプ	トレーニングを表示	Alt, Y, S		
+ヘルプ	新機能ガイド	Alt, Y, W		
+ヘルプ	Excel モバイル アプリの入手	Alt, Y, G		
+ヘルプ	リボンの表示オプション	Alt, Z R		

@@ -1,0 +1,187 @@
+# ★LINEST が 何を 返すか 実Excel に 全部 聞いた★（2026-09-09・2件目）
+#
+# ★なぜ★ うちは 裸の =LINEST(範囲,範囲) だけ 拾い ★傾き 1つ★しか 返して いない
+#   ⇒ =INDEX(LINEST(…),1,1) は ★#NAME?★＝★在るように 見えて 実は 無い★
+#   ⇒★直す 前に 実Excel が 本当は 何を 返すかを 測る★
+#
+# ★どの Excel で 打ったか★ … 版 16.0 ／ build 20326
+# ★物差し★ 表は =INDEX(式,行,列) で 1つずつ（★溢れさせない★）
+#           行数・列数は ROWS/COLUMNS で ★別に 聞く★（見た目で 数えない）
+#           『0』が 出たら ★=(式)=0 と 型★で 疑う
+#
+# ★★材料（機械が 読む）★★ … `#材料<タブ>マス<タブ>値` の 形
+#材料	A1	100
+#材料	B1	1
+#材料	A2	120
+#材料	B2	2
+#材料	A3	140
+#材料	B3	3
+#材料	A4	160
+#材料	B4	4
+#材料	A5	180
+#材料	B5	5
+#材料	D1	2.7
+#材料	E1	1
+#材料	D2	5.1
+#材料	E2	2
+#材料	D3	6.9
+#材料	E3	3
+#材料	D4	9.4
+#材料	E4	4
+#材料	D5	11.2
+#材料	E5	5
+#材料	G1	10
+#材料	H1	1
+#材料	I1	2
+#材料	G2	14
+#材料	H2	2
+#材料	I2	1
+#材料	G3	21
+#材料	H3	3
+#材料	I3	4
+#材料	G4	25
+#材料	H4	4
+#材料	I4	3
+#材料	G5	33
+#材料	H5	5
+#材料	I5	6
+#材料	G6	38
+#材料	H6	6
+#材料	I6	5
+#材料	K1	3
+#材料	L1	1
+#材料	K2	7
+#材料	L2	2
+#材料	N1	100
+#材料	N2	1
+#材料	O1	120
+#材料	O2	2
+#材料	P1	140
+#材料	P2	3
+#材料	Q1	160
+#材料	Q2	4
+#材料	R1	180
+#材料	R2	5
+#材料	S1	200
+#材料	S2	6
+#
+# 組	式	実Excel の 答え	型	窓２(=(式)=0)	何の 場所
+x1本・きれい	=LINEST(A1:A5,B1:B5)	19.999999999999993	Double	—	裸（★うちが 拾う 形★）
+x1本・きれい	=ROWS(LINEST(A1:A5,B1:B5))	1	Double	—	表の 大きさ（ROWS）
+x1本・きれい	=COLUMNS(LINEST(A1:A5,B1:B5))	2	Double	—	表の 大きさ（COLUMNS）
+x1本・きれい	=ROWS(LINEST(A1:A5,B1:B5,TRUE,TRUE))	5	Double	—	表の 大きさ（ROWS）
+x1本・きれい	=COLUMNS(LINEST(A1:A5,B1:B5,TRUE,TRUE))	2	Double	—	表の 大きさ（COLUMNS）
+x1本・きれい	=ROWS(LINEST(A1:A5,B1:B5,TRUE,FALSE))	1	Double	—	表の 大きさ（ROWS）
+x1本・きれい	=COLUMNS(LINEST(A1:A5,B1:B5,TRUE,FALSE))	2	Double	—	表の 大きさ（COLUMNS）
+x1本・きれい	=ROWS(LINEST(A1:A5,B1:B5,FALSE,TRUE))	5	Double	—	表の 大きさ（ROWS）
+x1本・きれい	=COLUMNS(LINEST(A1:A5,B1:B5,FALSE,TRUE))	2	Double	—	表の 大きさ（COLUMNS）
+x1本・きれい	=ROWS(LINEST(A1:A5,B1:B5,FALSE,FALSE))	1	Double	—	表の 大きさ（ROWS）
+x1本・きれい	=COLUMNS(LINEST(A1:A5,B1:B5,FALSE,FALSE))	2	Double	—	表の 大きさ（COLUMNS）
+x1本・きれい	=INDEX(LINEST(A1:A5,B1:B5,TRUE,TRUE),1,1)	19.999999999999993	Double	—	補正TRUE の 1行1列
+x1本・きれい	=INDEX(LINEST(A1:A5,B1:B5,TRUE,TRUE),1,2)	80.00000000000003	Double	—	補正TRUE の 1行2列
+x1本・きれい	=INDEX(LINEST(A1:A5,B1:B5,TRUE,TRUE),2,1)	1.8630587706705477E-15	Double	—	補正TRUE の 2行1列
+x1本・きれい	=INDEX(LINEST(A1:A5,B1:B5,TRUE,TRUE),2,2)	6.1790669046949934E-15	Double	—	補正TRUE の 2行2列
+x1本・きれい	=INDEX(LINEST(A1:A5,B1:B5,TRUE,TRUE),3,1)	1	Double	—	補正TRUE の 3行1列
+x1本・きれい	=INDEX(LINEST(A1:A5,B1:B5,TRUE,TRUE),3,2)	5.891509130072236E-15	Double	—	補正TRUE の 3行2列
+x1本・きれい	=INDEX(LINEST(A1:A5,B1:B5,TRUE,TRUE),4,1)	1.1524096365711176E+32	Double	—	補正TRUE の 4行1列
+x1本・きれい	=INDEX(LINEST(A1:A5,B1:B5,TRUE,TRUE),4,2)	3	Double	—	補正TRUE の 4行2列
+x1本・きれい	=INDEX(LINEST(A1:A5,B1:B5,TRUE,TRUE),5,1)	4000	Double	—	補正TRUE の 5行1列
+x1本・きれい	=INDEX(LINEST(A1:A5,B1:B5,TRUE,TRUE),5,2)	1.0412963948917356E-28	Double	—	補正TRUE の 5行2列
+x1本・きれい	=INDEX(LINEST(A1:A5,B1:B5),1,1)	19.999999999999993	Double	—	既定の 1行1列
+x1本・きれい	=INDEX(LINEST(A1:A5,B1:B5),1,2)	80.00000000000003	Double	—	既定の 1行2列
+x1本・きれい	=INDEX(LINEST(A1:A5,B1:B5,TRUE,TRUE),6,1)	#REF!	Error	—	★表の 外を 指した（境目）★
+x1本・きれい	=INDEX(LINEST(A1:A5,B1:B5,TRUE,TRUE),1,9)	#REF!	Error	—	★表の 外を 指した（境目）★
+x1本・きれい	=INDEX(LINEST(A1:A5,B1:B5,TRUE,TRUE),0,1)	19.999999999999993	Double	—	★表の 外を 指した（境目）★
+x1本・きれい	=INDEX(LINEST(A1:A5,B1:B5,TRUE,TRUE),1,0)	19.999999999999993	Double	—	★表の 外を 指した（境目）★
+x1本・端数	=LINEST(D1:D5,E1:E5)	2.1299999999999994	Double	—	裸（★うちが 拾う 形★）
+x1本・端数	=ROWS(LINEST(D1:D5,E1:E5))	1	Double	—	表の 大きさ（ROWS）
+x1本・端数	=COLUMNS(LINEST(D1:D5,E1:E5))	2	Double	—	表の 大きさ（COLUMNS）
+x1本・端数	=ROWS(LINEST(D1:D5,E1:E5,TRUE,TRUE))	5	Double	—	表の 大きさ（ROWS）
+x1本・端数	=COLUMNS(LINEST(D1:D5,E1:E5,TRUE,TRUE))	2	Double	—	表の 大きさ（COLUMNS）
+x1本・端数	=ROWS(LINEST(D1:D5,E1:E5,TRUE,FALSE))	1	Double	—	表の 大きさ（ROWS）
+x1本・端数	=COLUMNS(LINEST(D1:D5,E1:E5,TRUE,FALSE))	2	Double	—	表の 大きさ（COLUMNS）
+x1本・端数	=ROWS(LINEST(D1:D5,E1:E5,FALSE,TRUE))	5	Double	—	表の 大きさ（ROWS）
+x1本・端数	=COLUMNS(LINEST(D1:D5,E1:E5,FALSE,TRUE))	2	Double	—	表の 大きさ（COLUMNS）
+x1本・端数	=ROWS(LINEST(D1:D5,E1:E5,FALSE,FALSE))	1	Double	—	表の 大きさ（ROWS）
+x1本・端数	=COLUMNS(LINEST(D1:D5,E1:E5,FALSE,FALSE))	2	Double	—	表の 大きさ（COLUMNS）
+x1本・端数	=INDEX(LINEST(D1:D5,E1:E5,TRUE,TRUE),1,1)	2.1299999999999994	Double	—	補正TRUE の 1行1列
+x1本・端数	=INDEX(LINEST(D1:D5,E1:E5,TRUE,TRUE),1,2)	0.6700000000000008	Double	—	補正TRUE の 1行2列
+x1本・端数	=INDEX(LINEST(D1:D5,E1:E5,TRUE,TRUE),2,1)	0.06403124237432867	Double	—	補正TRUE の 2行1列
+x1本・端数	=INDEX(LINEST(D1:D5,E1:E5,TRUE,TRUE),2,2)	0.2123676058159536	Double	—	補正TRUE の 2行2列
+x1本・端数	=INDEX(LINEST(D1:D5,E1:E5,TRUE,TRUE),3,1)	0.9972962279082037	Double	—	補正TRUE の 3行1列
+x1本・端数	=INDEX(LINEST(D1:D5,E1:E5,TRUE,TRUE),3,2)	0.2024845673131664	Double	—	補正TRUE の 3行2列
+x1本・端数	=INDEX(LINEST(D1:D5,E1:E5,TRUE,TRUE),4,1)	1106.5609756097501	Double	—	補正TRUE の 4行1列
+x1本・端数	=INDEX(LINEST(D1:D5,E1:E5,TRUE,TRUE),4,2)	3	Double	—	補正TRUE の 4行2列
+x1本・端数	=INDEX(LINEST(D1:D5,E1:E5,TRUE,TRUE),5,1)	45.369	Double	—	補正TRUE の 5行1列
+x1本・端数	=INDEX(LINEST(D1:D5,E1:E5,TRUE,TRUE),5,2)	0.12300000000000066	Double	—	補正TRUE の 5行2列
+x1本・端数	=INDEX(LINEST(D1:D5,E1:E5),1,1)	2.1299999999999994	Double	—	既定の 1行1列
+x1本・端数	=INDEX(LINEST(D1:D5,E1:E5),1,2)	0.6700000000000008	Double	—	既定の 1行2列
+x1本・端数	=INDEX(LINEST(D1:D5,E1:E5,TRUE,TRUE),6,1)	#REF!	Error	—	★表の 外を 指した（境目）★
+x1本・端数	=INDEX(LINEST(D1:D5,E1:E5,TRUE,TRUE),1,9)	#REF!	Error	—	★表の 外を 指した（境目）★
+x1本・端数	=INDEX(LINEST(D1:D5,E1:E5,TRUE,TRUE),0,1)	2.1299999999999994	Double	—	★表の 外を 指した（境目）★
+x1本・端数	=INDEX(LINEST(D1:D5,E1:E5,TRUE,TRUE),1,0)	2.1299999999999994	Double	—	★表の 外を 指した（境目）★
+★x2本（重回帰）★	=LINEST(G1:G6,H1:I6)	0.7708333333333329	Double	—	裸（★うちが 拾う 形★）
+★x2本（重回帰）★	=ROWS(LINEST(G1:G6,H1:I6))	1	Double	—	表の 大きさ（ROWS）
+★x2本（重回帰）★	=COLUMNS(LINEST(G1:G6,H1:I6))	3	Double	—	表の 大きさ（COLUMNS）
+★x2本（重回帰）★	=ROWS(LINEST(G1:G6,H1:I6,TRUE,TRUE))	5	Double	—	表の 大きさ（ROWS）
+★x2本（重回帰）★	=COLUMNS(LINEST(G1:G6,H1:I6,TRUE,TRUE))	3	Double	—	表の 大きさ（COLUMNS）
+★x2本（重回帰）★	=ROWS(LINEST(G1:G6,H1:I6,TRUE,FALSE))	1	Double	—	表の 大きさ（ROWS）
+★x2本（重回帰）★	=COLUMNS(LINEST(G1:G6,H1:I6,TRUE,FALSE))	3	Double	—	表の 大きさ（COLUMNS）
+★x2本（重回帰）★	=ROWS(LINEST(G1:G6,H1:I6,FALSE,TRUE))	5	Double	—	表の 大きさ（ROWS）
+★x2本（重回帰）★	=COLUMNS(LINEST(G1:G6,H1:I6,FALSE,TRUE))	3	Double	—	表の 大きさ（COLUMNS）
+★x2本（重回帰）★	=ROWS(LINEST(G1:G6,H1:I6,FALSE,FALSE))	1	Double	—	表の 大きさ（ROWS）
+★x2本（重回帰）★	=COLUMNS(LINEST(G1:G6,H1:I6,FALSE,FALSE))	3	Double	—	表の 大きさ（COLUMNS）
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6,TRUE,TRUE),1,1)	0.7708333333333329	Double	—	補正TRUE の 1行1列
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6,TRUE,TRUE),1,2)	5.104166666666667	Double	—	補正TRUE の 1行2列
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6,TRUE,TRUE),1,3)	2.937499999999999	Double	—	補正TRUE の 1行3列
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6,TRUE,TRUE),2,1)	0.2565687944709887	Double	—	補正TRUE の 2行1列
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6,TRUE,TRUE),2,2)	0.2565687944709887	Double	—	補正TRUE の 2行2列
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6,TRUE,TRUE),2,3)	0.5802248526473426	Double	—	補正TRUE の 2行3列
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6,TRUE,TRUE),3,1)	0.9981370020063055	Double	—	補正TRUE の 3行1列
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6,TRUE,TRUE),3,2)	0.6009252125773321	Double	—	補正TRUE の 3行2列
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6,TRUE,TRUE),3,3)	#N/A	Error	—	補正TRUE の 3行3列
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6,TRUE,TRUE),4,1)	803.6538461538445	Double	—	補正TRUE の 4行1列
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6,TRUE,TRUE),4,2)	3	Double	—	補正TRUE の 4行2列
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6,TRUE,TRUE),4,3)	#N/A	Error	—	補正TRUE の 4行3列
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6,TRUE,TRUE),5,1)	580.4166666666666	Double	—	補正TRUE の 5行1列
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6,TRUE,TRUE),5,2)	1.0833333333333355	Double	—	補正TRUE の 5行2列
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6,TRUE,TRUE),5,3)	#N/A	Error	—	補正TRUE の 5行3列
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6),1,1)	0.7708333333333329	Double	—	既定の 1行1列
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6),1,2)	5.104166666666667	Double	—	既定の 1行2列
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6),1,3)	2.937499999999999	Double	—	既定の 1行3列
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6,TRUE,TRUE),6,1)	#REF!	Error	—	★表の 外を 指した（境目）★
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6,TRUE,TRUE),1,9)	#REF!	Error	—	★表の 外を 指した（境目）★
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6,TRUE,TRUE),0,1)	0.7708333333333329	Double	—	★表の 外を 指した（境目）★
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6,TRUE,TRUE),1,0)	0.7708333333333329	Double	—	★表の 外を 指した（境目）★
+★点が 2つだけ★	=LINEST(K1:K2,L1:L2)	4	Double	—	裸（★うちが 拾う 形★）
+★点が 2つだけ★	=ROWS(LINEST(K1:K2,L1:L2))	1	Double	—	表の 大きさ（ROWS）
+★点が 2つだけ★	=COLUMNS(LINEST(K1:K2,L1:L2))	2	Double	—	表の 大きさ（COLUMNS）
+★点が 2つだけ★	=ROWS(LINEST(K1:K2,L1:L2,TRUE,TRUE))	5	Double	—	表の 大きさ（ROWS）
+★点が 2つだけ★	=COLUMNS(LINEST(K1:K2,L1:L2,TRUE,TRUE))	2	Double	—	表の 大きさ（COLUMNS）
+★点が 2つだけ★	=ROWS(LINEST(K1:K2,L1:L2,TRUE,FALSE))	1	Double	—	表の 大きさ（ROWS）
+★点が 2つだけ★	=COLUMNS(LINEST(K1:K2,L1:L2,TRUE,FALSE))	2	Double	—	表の 大きさ（COLUMNS）
+★点が 2つだけ★	=ROWS(LINEST(K1:K2,L1:L2,FALSE,TRUE))	5	Double	—	表の 大きさ（ROWS）
+★点が 2つだけ★	=COLUMNS(LINEST(K1:K2,L1:L2,FALSE,TRUE))	2	Double	—	表の 大きさ（COLUMNS）
+★点が 2つだけ★	=ROWS(LINEST(K1:K2,L1:L2,FALSE,FALSE))	1	Double	—	表の 大きさ（ROWS）
+★点が 2つだけ★	=COLUMNS(LINEST(K1:K2,L1:L2,FALSE,FALSE))	2	Double	—	表の 大きさ（COLUMNS）
+★点が 2つだけ★	=INDEX(LINEST(K1:K2,L1:L2,TRUE,TRUE),1,1)	4	Double	—	補正TRUE の 1行1列
+★点が 2つだけ★	=INDEX(LINEST(K1:K2,L1:L2,TRUE,TRUE),1,2)	-1	Double	—	補正TRUE の 1行2列
+★点が 2つだけ★	=INDEX(LINEST(K1:K2,L1:L2,TRUE,TRUE),2,1)	0	Number	TRUE	補正TRUE の 2行1列
+★点が 2つだけ★	=INDEX(LINEST(K1:K2,L1:L2,TRUE,TRUE),2,2)	0	Number	TRUE	補正TRUE の 2行2列
+★点が 2つだけ★	=INDEX(LINEST(K1:K2,L1:L2,TRUE,TRUE),3,1)	1	Double	—	補正TRUE の 3行1列
+★点が 2つだけ★	=INDEX(LINEST(K1:K2,L1:L2,TRUE,TRUE),3,2)	0	Number	TRUE	補正TRUE の 3行2列
+★点が 2つだけ★	=INDEX(LINEST(K1:K2,L1:L2,TRUE,TRUE),4,1)	#NUM!	Error	—	補正TRUE の 4行1列
+★点が 2つだけ★	=INDEX(LINEST(K1:K2,L1:L2,TRUE,TRUE),4,2)	0	Number	TRUE	補正TRUE の 4行2列
+★点が 2つだけ★	=INDEX(LINEST(K1:K2,L1:L2,TRUE,TRUE),5,1)	8	Double	—	補正TRUE の 5行1列
+★点が 2つだけ★	=INDEX(LINEST(K1:K2,L1:L2,TRUE,TRUE),5,2)	0	Number	TRUE	補正TRUE の 5行2列
+★点が 2つだけ★	=INDEX(LINEST(K1:K2,L1:L2),1,1)	4	Double	—	既定の 1行1列
+★点が 2つだけ★	=INDEX(LINEST(K1:K2,L1:L2),1,2)	-1	Double	—	既定の 1行2列
+★点が 2つだけ★	=INDEX(LINEST(K1:K2,L1:L2,TRUE,TRUE),6,1)	#REF!	Error	—	★表の 外を 指した（境目）★
+★点が 2つだけ★	=INDEX(LINEST(K1:K2,L1:L2,TRUE,TRUE),1,9)	#REF!	Error	—	★表の 外を 指した（境目）★
+★点が 2つだけ★	=INDEX(LINEST(K1:K2,L1:L2,TRUE,TRUE),0,1)	4	Double	—	★表の 外を 指した（境目）★
+★点が 2つだけ★	=INDEX(LINEST(K1:K2,L1:L2,TRUE,TRUE),1,0)	4	Double	—	★表の 外を 指した（境目）★
+★横1行★	=LINEST(N1:S1,N2:S2)	20.000000000000004	Double	—	★横1行（x も 1本）★
+★横1行★	=ROWS(LINEST(N1:S1,N2:S2))	1	Double	—	★横1行（x も 1本）★
+★横1行★	=COLUMNS(LINEST(N1:S1,N2:S2))	2	Double	—	★横1行（x も 1本）★
+★横1行★	=INDEX(LINEST(N1:S1,N2:S2),1,1)	20.000000000000004	Double	—	★横1行（x も 1本）★
+★横1行★	=INDEX(LINEST(N1:S1,N2:S2),1,2)	79.99999999999999	Double	—	★横1行（x も 1本）★

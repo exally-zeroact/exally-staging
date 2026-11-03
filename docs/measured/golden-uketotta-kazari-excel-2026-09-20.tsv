@@ -1,0 +1,59 @@
+# ★飾り入りの ファイルを 往復させた 物を 実Excel に 開かせた★（㊽）（2026-09-20）
+# ★開いた 物★ ... C:\Users\zeroa\AppData\Local\Temp\exally-uketotta-kazari.xlsx（9740 バイト）
+# ★読むだけ★（保存して いません）
+# ★★2026-09-21 追記 ── この 紙が 測ったのは 「画面」では ありません★★
+#   ＝実Excel に 開かせて ★ファイルの 中に 残って いるか★を 読んだ 物です。
+#   ⇒★「消えて いない」と「見えて いる」は 別です★
+#     （Exally の 画面に 出て いるかは この 紙では 1つも 分かりません）
+#   ⇒画面まで 届くかは ★`golden-kazari-gamen-made-2026-09-21.tsv`★ を 見て ください。
+# ★どの Excel か★ ... 版 16.0 ／ build 20326
+# ★どの 貝殻か★ ... PowerShell 5.1.26100.9278
+# ★お客さんが した 事★ ... A1 を 3 ⇒ 42 に した ★だけ★（式は 1つも 触って いない）
+# ★包みの 中の 字★ ... styles.xml 4402B ／ drawing1.xml 1495B ★とも 元と 同じ★（Exally1 の 実測）
+#
+# ★★①飾り★★（★待つ 数は 材料を 作った 時に 読み返した 数★）
+# 見た物	待つ	出た	判じ
+罫線(A1 左) LineStyle	1	1	ok
+罫線(B2 下) Weight	4	4	ok
+塗り(B1) Color	65535	65535	ok
+字(A1) Bold	True	True	ok
+字(A1) Color	255	255	ok
+繋げたマス(A5)	True	True	ok
+図形の数	1	1	ok
+A列の幅	30	30	ok
+C1 の式	=SEQUENCE(3)	=SEQUENCE(3)	ok
+B1 の式	=SUM(A1:A3)	=SUM(A1:A3)	ok
+A1 の値	43.25	43.25	ok
+A1(客が直した)	42	42	ok
+表示の形(B1)	# を 含む	#,##0	ok
+表示の形(A3)	% を 含む	0.0%	ok
+図形の名	hanko	hanko	ok
+# ★★欠け 0個★★
+#
+# ★★②マスの 中身★★
+# マス	値	出る字	式	型	溢れの一部か
+A1	42	42	42	Double	False
+A2	1	1	1	Double	False
+A3	0.25	25.0%	0.25	Double	False
+B1	43.25	43	=SUM(A1:A3)	Double	False
+C1	1	1	=SEQUENCE(3)	Double	False
+C2	2	2		Double	False
+C3	3	3		Double	False
+C4	(kara)			(kara)	False
+A5	kazari no tame no musubi	kazari no tame no musubi	kazari no tame no musubi	String	False
+D1	abc	abc	abc	String	False
+E1	abc!	abc!	=D1&"!"	String	False
+#
+# ★★2つ目の 窓★★（★上の 読みの 後に 打って います★）
+# マス	値	型	=(マス)=0
+A1	42	Double	False
+A2	1	Double	False
+A3	0.25	Double	False
+B1	43.25	Double	False
+C1	1	Double	False
+C2	2	Double	False
+C3	3	Double	False
+C4	(kara)	(kara)	True
+A5	kazari no tame no musubi	String	False
+D1	abc	String	False
+E1	abc!	String	False

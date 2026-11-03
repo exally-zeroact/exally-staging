@@ -1,0 +1,94 @@
+# ★実Excel に 打たせた CELL の 答え（5回目・日付/時刻の 合図を 詰める）★
+# 取った 日 … 2026-09-07
+# ★どの Excel で 打ったか★ … 版 16.0 ／ build 20326
+# ★A列に 45293.5（2024/1/2 12:00）を 置いて 表示形式だけ 変えた★
+# 関数	式	実Excel の 答え	どんな 場面か
+# ★★2026-09-21 追記（経営者1）── ★この 紙は `.Formula`（★昔の 道★）で 取って います★★
+#   ＝`docs/measured/kansuu46/` の 道具 21本は `Formula2` を ★1本も 使って いません★
+#   ＝`.Formula` は ★溢れません★（2026-09-19 実測）＝★暗黙の 交わりで 1マス★
+#   ⇒★範囲を 渡した 式の 答えは ★1マス目だけ★です（★間違いでは なく 足りない★）
+#   ⇒★実測（2026-09-21）★ この 紙の 範囲を 渡す 812本を `Formula2` で 打ち直すと
+#      ★昔と 同じ 809本／★違う 3本★（ISERR/ISERROR/ISNUMBER の A1:B5）／★溢れた 416本★
+#   ⇒★新しい 道の 紙★ ... docs/measured/golden-furui-kami-torinaoshi-2026-09-21.tsv
+#   ⇒★この 紙を 物差しに する 試験は ★昔の 道を 守って います★★
+CELL	=CELL("format",A1)	G	表示形式 yyyy（実際に 付いた 形 yyyy）
+CELL	=CELL("color",A1)	0	表示形式 yyyy（実際に 付いた 形 yyyy）
+CELL	=CELL("parentheses",A1)	0	表示形式 yyyy（実際に 付いた 形 yyyy）
+CELL	=CELL("format",A2)	G	表示形式 yy（実際に 付いた 形 yy）
+CELL	=CELL("color",A2)	0	表示形式 yy（実際に 付いた 形 yy）
+CELL	=CELL("parentheses",A2)	0	表示形式 yy（実際に 付いた 形 yy）
+CELL	=CELL("format",A3)	G	表示形式 mmm（実際に 付いた 形 mmm）
+CELL	=CELL("color",A3)	0	表示形式 mmm（実際に 付いた 形 mmm）
+CELL	=CELL("parentheses",A3)	0	表示形式 mmm（実際に 付いた 形 mmm）
+CELL	=CELL("format",A4)	G	表示形式 mmmm（実際に 付いた 形 mmmm）
+CELL	=CELL("color",A4)	0	表示形式 mmmm（実際に 付いた 形 mmmm）
+CELL	=CELL("parentheses",A4)	0	表示形式 mmmm（実際に 付いた 形 mmmm）
+CELL	=CELL("format",A5)	G	表示形式 dd（実際に 付いた 形 dd）
+CELL	=CELL("color",A5)	0	表示形式 dd（実際に 付いた 形 dd）
+CELL	=CELL("parentheses",A5)	0	表示形式 dd（実際に 付いた 形 dd）
+CELL	=CELL("format",A6)	G	表示形式 d（実際に 付いた 形 d）
+CELL	=CELL("color",A6)	0	表示形式 d（実際に 付いた 形 d）
+CELL	=CELL("parentheses",A6)	0	表示形式 d（実際に 付いた 形 d）
+CELL	=CELL("format",A7)	G	表示形式 aaa（実際に 付いた 形 aaa）
+CELL	=CELL("color",A7)	0	表示形式 aaa（実際に 付いた 形 aaa）
+CELL	=CELL("parentheses",A7)	0	表示形式 aaa（実際に 付いた 形 aaa）
+CELL	=CELL("format",A8)	G	表示形式 aaaa（実際に 付いた 形 aaaa）
+CELL	=CELL("color",A8)	0	表示形式 aaaa（実際に 付いた 形 aaaa）
+CELL	=CELL("parentheses",A8)	0	表示形式 aaaa（実際に 付いた 形 aaaa）
+CELL	=CELL("format",A9)	G	表示形式 ss（実際に 付いた 形 ss）
+CELL	=CELL("color",A9)	0	表示形式 ss（実際に 付いた 形 ss）
+CELL	=CELL("parentheses",A9)	0	表示形式 ss（実際に 付いた 形 ss）
+CELL	=CELL("format",A10)	G	表示形式 mm:ss（実際に 付いた 形 mm:ss）
+CELL	=CELL("color",A10)	0	表示形式 mm:ss（実際に 付いた 形 mm:ss）
+CELL	=CELL("parentheses",A10)	0	表示形式 mm:ss（実際に 付いた 形 mm:ss）
+CELL	=CELL("format",A11)	G	表示形式 h（実際に 付いた 形 h）
+CELL	=CELL("color",A11)	0	表示形式 h（実際に 付いた 形 h）
+CELL	=CELL("parentheses",A11)	0	表示形式 h（実際に 付いた 形 h）
+CELL	=CELL("format",A12)	G	表示形式 [h]:mm（実際に 付いた 形 [h]:mm）
+CELL	=CELL("color",A12)	0	表示形式 [h]:mm（実際に 付いた 形 [h]:mm）
+CELL	=CELL("parentheses",A12)	0	表示形式 [h]:mm（実際に 付いた 形 [h]:mm）
+CELL	=CELL("format",A13)	G	表示形式 [mm]:ss（実際に 付いた 形 [mm]:ss）
+CELL	=CELL("color",A13)	0	表示形式 [mm]:ss（実際に 付いた 形 [mm]:ss）
+CELL	=CELL("parentheses",A13)	0	表示形式 [mm]:ss（実際に 付いた 形 [mm]:ss）
+CELL	=CELL("format",A14)	D2	表示形式 yyyy/m（実際に 付いた 形 yyyy/m）
+CELL	=CELL("color",A14)	0	表示形式 yyyy/m（実際に 付いた 形 yyyy/m）
+CELL	=CELL("parentheses",A14)	0	表示形式 yyyy/m（実際に 付いた 形 yyyy/m）
+CELL	=CELL("format",A15)	D2	表示形式 yyyy"年"m"月"（実際に 付いた 形 yyyy"年"m"月"）
+CELL	=CELL("color",A15)	0	表示形式 yyyy"年"m"月"（実際に 付いた 形 yyyy"年"m"月"）
+CELL	=CELL("parentheses",A15)	0	表示形式 yyyy"年"m"月"（実際に 付いた 形 yyyy"年"m"月"）
+CELL	=CELL("format",A16)	D1	表示形式 d-mmm-yyyy（実際に 付いた 形 d-mmm-yyyy）
+CELL	=CELL("color",A16)	0	表示形式 d-mmm-yyyy（実際に 付いた 形 d-mmm-yyyy）
+CELL	=CELL("parentheses",A16)	0	表示形式 d-mmm-yyyy（実際に 付いた 形 d-mmm-yyyy）
+CELL	=CELL("format",A17)	D1	表示形式 yyyy/m/d h:mm:ss（実際に 付いた 形 yyyy/m/d h:mm:ss）
+CELL	=CELL("color",A17)	0	表示形式 yyyy/m/d h:mm:ss（実際に 付いた 形 yyyy/m/d h:mm:ss）
+CELL	=CELL("parentheses",A17)	0	表示形式 yyyy/m/d h:mm:ss（実際に 付いた 形 yyyy/m/d h:mm:ss）
+CELL	=CELL("format",A18)	D1	表示形式 m/d/yy（実際に 付いた 形 m/d/yy）
+CELL	=CELL("color",A18)	0	表示形式 m/d/yy（実際に 付いた 形 m/d/yy）
+CELL	=CELL("parentheses",A18)	0	表示形式 m/d/yy（実際に 付いた 形 m/d/yy）
+CELL	=CELL("format",A19)	D1	表示形式 mm/dd/yy（実際に 付いた 形 mm/dd/yy）
+CELL	=CELL("color",A19)	0	表示形式 mm/dd/yy（実際に 付いた 形 mm/dd/yy）
+CELL	=CELL("parentheses",A19)	0	表示形式 mm/dd/yy（実際に 付いた 形 mm/dd/yy）
+CELL	=CELL("format",A20)	D1	表示形式 dd/mm/yy（実際に 付いた 形 dd/mm/yy）
+CELL	=CELL("color",A20)	0	表示形式 dd/mm/yy（実際に 付いた 形 dd/mm/yy）
+CELL	=CELL("parentheses",A20)	0	表示形式 dd/mm/yy（実際に 付いた 形 dd/mm/yy）
+CELL	=CELL("format",A21)	D1	表示形式 yy/m/d（実際に 付いた 形 yy/m/d）
+CELL	=CELL("color",A21)	0	表示形式 yy/m/d（実際に 付いた 形 yy/m/d）
+CELL	=CELL("parentheses",A21)	0	表示形式 yy/m/d（実際に 付いた 形 yy/m/d）
+CELL	=CELL("format",A22)	F2	表示形式 0.00_ （実際に 付いた 形 0.00_ ）
+CELL	=CELL("color",A22)	0	表示形式 0.00_ （実際に 付いた 形 0.00_ ）
+CELL	=CELL("parentheses",A22)	0	表示形式 0.00_ （実際に 付いた 形 0.00_ ）
+CELL	=CELL("format",A23)	,0	表示形式 #,##0"円"（実際に 付いた 形 #,##0"円"）
+CELL	=CELL("color",A23)	0	表示形式 #,##0"円"（実際に 付いた 形 #,##0"円"）
+CELL	=CELL("parentheses",A23)	0	表示形式 #,##0"円"（実際に 付いた 形 #,##0"円"）
+CELL	=CELL("format",A24)	,0	表示形式 "("#,##0")"（実際に 付いた 形 "("#,##0")"）
+CELL	=CELL("color",A24)	0	表示形式 "("#,##0")"（実際に 付いた 形 "("#,##0")"）
+CELL	=CELL("parentheses",A24)	0	表示形式 "("#,##0")"（実際に 付いた 形 "("#,##0")"）
+CELL	=CELL("format",A25)	F0	表示形式 0"個"（実際に 付いた 形 0"個"）
+CELL	=CELL("color",A25)	0	表示形式 0"個"（実際に 付いた 形 0"個"）
+CELL	=CELL("parentheses",A25)	0	表示形式 0"個"（実際に 付いた 形 0"個"）
+CELL	=CELL("format",A26)	F0	表示形式 [>100]0;[<=100]0.00（実際に 付いた 形 [>100]0;[<=100]0.00）
+CELL	=CELL("color",A26)	0	表示形式 [>100]0;[<=100]0.00（実際に 付いた 形 [>100]0;[<=100]0.00）
+CELL	=CELL("parentheses",A26)	0	表示形式 [>100]0;[<=100]0.00（実際に 付いた 形 [>100]0;[<=100]0.00）
+CELL	=CELL("format",A27)	,0	表示形式 _-* #,##0_-;-* #,##0_-;_-* "-"_-;_-@_-（実際に 付いた 形 _-* #,##0_-;-* #,##0_-;_-* "-"_-;_-@_-）
+CELL	=CELL("color",A27)	0	表示形式 _-* #,##0_-;-* #,##0_-;_-* "-"_-;_-@_-（実際に 付いた 形 _-* #,##0_-;-* #,##0_-;_-* "-"_-;_-@_-）
+CELL	=CELL("parentheses",A27)	0	表示形式 _-* #,##0_-;-* #,##0_-;_-* "-"_-;_-@_-（実際に 付いた 形 _-* #,##0_-;-* #,##0_-;_-* "-"_-;_-@_-）

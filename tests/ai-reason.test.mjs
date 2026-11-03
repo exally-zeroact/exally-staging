@@ -134,6 +134,22 @@ const 組 = [
   ['ネット切れ', { status: null, ネット切れ: true, 本番か: true }, G4['ネット切れ']],
   ['空の返事 200', { status: 200, 中身: '', 本番か: true }, G4['200だが 中身が空']],
 ];
+
+/* ── ★うちの 支度が 足りない時に AIのせいに しない★（2026-09-05 指示役）──────
+ *  ★前★ … prompt/*.md が 読めない ⇒ 500 ⇒ ★「AI側で 失敗しました」★＝★嘘★
+ *  ⇒ お客さんも 管理者も ★AI を 疑い、誰も うちを 見ない★
+ *  ★後★ … 合言葉 `shitaku_tarinai` ⇒「うちの 支度が 足りませんでした」 */
+T('★500 でも 合言葉が 在れば「うちの 支度」と 言う（AIのせいに しない）', () => {
+  const r = win.AiReason.読む({ status: 500, 理由: 'shitaku_tarinai', 中身: '', 本番か: true });
+  if (r.ok) throw new Error('ok を 返しています');
+  if (r.言葉.indexOf('うちの 支度') < 0) throw new Error('うちの 落ち度だと 言っていない: ' + r.言葉);
+  if (r.言葉.indexOf('AI側') >= 0) throw new Error('★AIのせいに しています★: ' + r.言葉);
+});
+
+T('★合言葉が 無い 500 は 今までどおり AI側★（作りを 変えていない）', () => {
+  const r = win.AiReason.読む({ status: 500, 理由: '', 中身: '', 本番か: true });
+  if (r.言葉.indexOf('AI側') < 0) throw new Error('今までの 言葉が 変わっています: ' + r.言葉);
+});
 for (const [名, 入れる, 期待] of 組) {
   T('★' + 名 + ' … 理由と 次の一手を 出す★', () => {
     const r = win.AiReason.読む(入れる);

@@ -1,0 +1,25 @@
+# 保存した PC の 道（xl/workbook.xml の x15ac:absPath の url）を 空に した 13本（2026-10-11・scripts/sakusha-mihon.mjs）
+# 替えたのは workbook.xml の その 字だけ。ほかの 部品 141個は 圧縮の バイトまで 同じ（照らした）。紙に 書いて ある 前の sha は 測った 時の 物として 残す。
+ファイル	前の sha256 頭16	前の大きさ	今の sha256 頭16	今の大きさ
+docs/measured/excel-kara-2026-09-11.xlsx	178252ba78e3be1c	10514	5ad44cde9cf8b308	10441
+docs/measured/hashira-haba-2026-09-11.xlsx	186ebc3298c7b9e1	8747	70a0efd1295ae8a2	8675
+docs/measured/xlfn-shirabe.xlsx	51f65fa3b0eb53d2	9271	e26132805960cb81	9199
+docs/measured/xlfn-zenbu.xlsx	6e4fa67da9c291fb	15806	4a4ed876319257a9	15736
+tests/fixtures/bahttext-sample.xlsx	fe081ce1e46521e4	9856	bee94b376b7d878e	9788
+tests/fixtures/book-open-sample.xlsx	2b7c7433ec378aef	10503	988148198e785371	10430
+tests/fixtures/hyou-no-soto-sample.xlsx	0193258180aff073	11207	3c224d52f5c60c4b	11132
+tests/fixtures/hyou-no-soto-soto-sample.xlsx	a0ab299927e69f86	10273	5ff732b0f72cd4ae	10197
+tests/fixtures/kazari-graph.xlsx	f9acca3f2cef5c91	13379	b0780dd33ef50eb4	13312
+tests/fixtures/kazari-hiraku3.xlsx	80369ed3c35497d4	11705	affd42e9f5c6de9d	11639
+tests/fixtures/ketsugou-2026-09-11.xlsx	9112ea629ca29003	9115	199d1a44b2e063dd	9044
+tests/fixtures/kumikomi-38-2026-09-11.xlsx	203530844b7b0907	8758	23a02ac5a22b4301	8688
+tests/fixtures/table-refs-sample.xlsx	a3c6ee1326e36cd9	12159	76cfe4cc91cfbb2d	12018
+# 2026-10-11 夜：xlsb 8本の xl/workbook.bin の 記録 BrtAbsPath15（0x817）も 空に した（ほかの 記録 330 は 同じ・ほかの 部品 126 は 圧縮の バイトまで 同じ）
+tests/fixtures/book-open-sample.xlsb	0257016f05147f68	9737	32f4a623621c326b	9661
+tests/fixtures/cross-sheet-sample.xlsb	f3b88387f9fd0b32	12448	a2a89237316e1fc8	12368
+tests/fixtures/hyou-no-soto-sample.xlsb	352fcbea2efac6be	9325	c916145bda4a705d	9250
+tests/fixtures/ita2mai-irekae.xlsb	a59f6091ef70833e	10850	acdca1da6d442cb9	10796
+tests/fixtures/ita2mai.xlsb	bed578440cecb936	10846	d18f873285928461	10792
+tests/fixtures/jitai-2026-09-11.xlsb	3a6c4fdb2a77b130	9235	1ab96d20dc2b6a06	9163
+tests/fixtures/kazari-hiraku3.xlsb	72ad4954b29a6567	10112	e415477971644054	10046
+tests/fixtures/table-refs-sample.xlsb	21346e731eb3a594	10666	52e6d470fe1dcb44	10498

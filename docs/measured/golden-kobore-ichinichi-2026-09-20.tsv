@@ -1,0 +1,32 @@
+# ★溢れの 一生を 実Excel に 聞いた★（㊵）（2026-09-20）
+# ★台本★ 毎回 D1 に =SEQUENCE(3) を 打つ（D1:D3 = 1/2/3）⇒ その後 1つ 手を 加える
+# ★どの Excel か★ ... 版 16.0 ／ build 20326
+# ★どの 貝殻か★ ... PowerShell 5.1.26100.9278
+# 番	手	マス	値	出る字	式	溢れの一部か	=(D1)=0	型
+1	nani mo shinai (taishou)	D1	1	1	=SEQUENCE(3)	False	False	Double
+1	nani mo shinai (taishou)	D2	2	2		False	False	Double
+1	nani mo shinai (taishou)	D3	3	3		False	False	Double
+1	nani mo shinai (taishou)	D4	(kara)			False	False	(kara)
+1	nani mo shinai (taishou)	D5	(kara)			False	False	(kara)
+2	atama D1 wo kesu	D1	(kara)			False	True	(kara)
+2	atama D1 wo kesu	D2	(kara)			False	True	(kara)
+2	atama D1 wo kesu	D3	(kara)			False	True	(kara)
+2	atama D1 wo kesu	D4	(kara)			False	True	(kara)
+2	atama D1 wo kesu	D5	(kara)			False	True	(kara)
+3	koboresaki D2 ni ji wo utsu	D1	-2146826243	#スピル!	=SEQUENCE(3)	False	-2146826243	Other
+3	koboresaki D2 ni ji wo utsu	D2	jama	jama	jama	False	-2146826243	String
+3	koboresaki D2 ni ji wo utsu	D3	(kara)			False	-2146826243	(kara)
+3	koboresaki D2 ni ji wo utsu	D4	(kara)			False	-2146826243	(kara)
+3	koboresaki D2 ni ji wo utsu	D5	(kara)			False	-2146826243	(kara)
+4	koboresaki D2 wo kesu	D1	1	1	=SEQUENCE(3)	False	False	Double
+4	koboresaki D2 wo kesu	D2	2	2		False	False	Double
+4	koboresaki D2 wo kesu	D3	3	3		False	False	Double
+4	koboresaki D2 wo kesu	D4	(kara)			False	False	(kara)
+4	koboresaki D2 wo kesu	D5	(kara)			False	False	(kara)
+5	atama wo betsu no shiki ni	D1	1	1	=SEQUENCE(2)	False	False	Double
+5	atama wo betsu no shiki ni	D2	2	2		False	False	Double
+5	atama wo betsu no shiki ni	D3	(kara)			False	False	(kara)
+5	atama wo betsu no shiki ni	D4	(kara)			False	False	(kara)
+5	atama wo betsu no shiki ni	D5	(kara)			False	False	(kara)
+# ★★押すのに かかった 秒 ... 0.37★★
+# ★保存した★ ... C:\Users\zeroa\AppData\Local\Temp\kobore-ichinichi.xlsx（★中の 形は 別の 道具で 読みます★）

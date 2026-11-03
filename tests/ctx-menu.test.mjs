@@ -14,7 +14,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
@@ -178,33 +178,141 @@ T('★出すたびに 一番上から見せる（前に動かした所が残ら�
   ok(html.indexOf('m.scrollTop = 0;') >= 0, '★前に動かした位置が残る＝上の項目が見えない★');
 });
 
-/* ── ④ ★大事な物が 上に居る（増やしたら赤）★ ── */
-T('★並べ替え・絞り込み・固定・印刷・入力の決まりが 上から12番目までに在る★', () => {
+/* ── ④ ★大事な物が 上に居る（増やしたら赤）★ ──
+ *
+ *  ★2026-08-31 に 数え方を 変えた（理由を 残す）★
+ *    右クリックを ★実Excel の 中身★に 合わせて 25個 → ★37個★に した。
+ *    平らに 並べたら 高さ1,193px で 画面(884px)に 入らず スクロールに なった
+ *    ので、司さんの 決まり「★ごちゃごちゃに ならないよう ドロップダウンでも
+ *    いいから 綺麗に★」に 従って ★組（子メニュー）★に した。
+ *    ⇒ 押す物の 印が `onclick="..."` から ★data-ctx="働きの名前"★ に 変わった。
+ *    ★2026-08-21 の 事故の 守りは そのまま★＝
+ *      大事な5つ（並べ替え・絞り込み・固定・印刷・入力の決まり）は
+ *      ★上の段の 8番目までに 居る★（組の 中でも よい＝1回 当てれば 出る）。
+ */
+/* ★中身は「開いた時」に 作る★＝数える前に 1回 開く（2026-08-31）
+   ＝開く前に 数えると ★0個★に なり「落とした」と 誤報する。 */
+T('★右クリックを 開くと 中身が 作られる★', () => {
+  ok(typeof win.showCtxMenu === 'function', 'showCtxMenu が 無い');
+  win.sel(0, 0, 0, 0);
+  win.showCtxMenu(10, 10);
+  const n = doc.querySelectorAll('#ctx-menu .ctx-item').length;
+  ok(n > 0, '★開いても 中身が 0個★');
+});
+
+/* ★前から 在った 物の 正本★（lib/ctx-menu.js が 持つ） */
+const 前からの物 = (await import(
+  pathToFileURL(path.join(ROOT, 'lib/ctx-menu.js')).href)).default.前からの物;
+
+const 上の段 = () => {
   const m = doc.getElementById('ctx-menu');
-  const 全部 = [...m.querySelectorAll('.ctx-item')];
-  const 押す物 = 全部.map((e) => (e.getAttribute('onclick') || '').trim());
-  for (const 名 of 上に居る物['並び']) {
-    const i = 押す物.indexOf(名);
-    ok(i >= 0, '★' + 名 + ' がメニューに無い★');
-    ok(i < 12, '★' + 名 + ' が ' + (i + 1) + '番目まで沈んだ（上に物を足しすぎ）★');
+  return [...m.children].filter((e) => e.classList && e.classList.contains('ctx-item'));
+};
+const どこに居る = (act) => {
+  const 段 = 上の段();
+  for (let i = 0; i < 段.length; i++) {
+    if (段[i].getAttribute('data-ctx') === act) return i;
+    if (段[i].querySelector('[data-ctx="' + act + '"]')) return i;   /* 組の中 */
   }
-});
-T('★先頭は 並べ替え（真ん中に埋もれていない）★', () => {
-  const 先頭 = (doc.querySelector('#ctx-menu .ctx-item') || {}).getAttribute
-    ? doc.querySelector('#ctx-menu .ctx-item').getAttribute('onclick') : '';
-  eq(先頭, "sortRange('asc')", '★先頭が 並べ替えでない★');
-});
-T('★作った7つは 全部 メニューに在る（1つでも欠けたら 客の手に届かない）★', () => {
-  const 押す物 = [...doc.querySelectorAll('#ctx-menu .ctx-item')].map((e) => (e.getAttribute('onclick') || '').trim());
-  for (const 名 of ["sortRange('asc')", "sortRange('desc')", 'filterByValue()', 'freezePanes()', 'printSheet()', 'openValid()']) {
-    ok(押す物.indexOf(名) >= 0, '★' + 名 + ' が無い★');
+  return -1;
+};
+/* ★★2026-08-31：見張りを ★Excel と 同じか★ で 見る 形に 直した★★
+ *
+ *  司さん「おれは 最初から ★Excelと 同じように 見せろ★って 言わんかったか？」
+ *
+ *  ★私の 間違い（3回）★
+ *    ① 37個 全部を 組（▸）に まとめ、前からの 17個を 2段に 落とした
+ *    ② 差し戻す時に ★うちの 並び★（2026-08-21 の 事故直し）で 平らに 並べた
+ *    ③ 見張りまで ★うちの 決め事★（大事な5つを 上から9番目まで）を 見ていた
+ *
+ *  ⇒ ★★見るのは「実Excel の 並びと 同じか」★★
+ *    2026-08-21 の 事故（大事な物が 届かない）は
+ *    ★MenuPlace の 総当たり★（この 上の ①②）が すでに 見ている。
+ *    ★並びまで うちの 都合で 決めない★。
+ */
+
+/* ★実Excel の セルメニューの 並び★（docs/excel-commandbars-2026-08-30.tsv の Cell・実測） */
+const Excelの並び = [
+  'ctxCut',        /* 切り取り(T) */
+  'ctxCopy',       /* コピー(C) */
+  'ctxPaste',      /* 貼り付け(P) */
+  'ctxPasteValue', /* 形式を選択して貼り付け(S)... */
+  /* ★2026-09-03★＝★どちらへ 詰めるかを 聞く 窓★に した（司さん「Excelと 同じ」）
+     ⇒ 呼ぶ先は 2つとも 同じ 手（引数で 分ける）＝★挿入／削除の 順は そのまま★ */
+  '挿入の窓を開く',   /* 挿入(I)... */
+  '削除の窓を開く',   /* 削除(D)... */
+  'ctxDelete',     /* 数式と値のクリア(N) */
+  'フィルター',     /* フィルター(E)   ★Excel も ▸★ */
+  '並べ替え',       /* 並べ替え(O)     ★Excel も ▸★ */
+  '新しいコメント',      /* コメントの挿入(M) */
+  'コメントを消す',      /* コメントの削除(M) */
+  'コメントの表示',      /* コメントの表示/非表示(O) */
+  'ctxFormat',     /* セルの書式設定(F)... */
+  'リンク',              /* ハイパーリンク(H)... */
+  'ハイパーリンクを削除',
+];
+
+T('★★実Excel の 並び そのままに 出ている★★', () => {
+  const 段 = 上の段();
+  /* 上の段の 名前か 働きで 引く */
+  /* ★組の 見出しは data-ctx を 持たない★（押しても 何も 起きない 行だから）
+     ⇒ 字で 引く。★絵文字は 落とす★（字だけで 見る） */
+  const 印 = 段.map((e) => {
+    const a = e.getAttribute('data-ctx');
+    if (a) return a;
+    return e.childNodes[0].textContent.trim().replace(/^\S+\s*/, '');
+  });
+  let 前 = -1;
+  for (const 物 of Excelの並び) {
+    const i = 印.indexOf(物);
+    ok(i >= 0, '★' + 物 + ' がメニューに無い★：' + 印.join(' / '));
+    ok(i > 前, '★' + 物 + ' が Excel の 順より 前に 出ている（' + i + ' ≦ ' + 前 + '）★');
+    前 = i;
   }
 });
 
+T('★Excel が ▸ に している 2つ（フィルター／並べ替え）だけ 組★', () => {
+  const 組 = [...doc.querySelectorAll('#ctx-menu .ctx-sub')]
+    .map((e) => e.childNodes[0].textContent.trim());
+  eq(組.length, 2, '★組の 数★：' + 組.join(' / '));
+  ok(組.indexOf('🔽 フィルター') >= 0 || 組.some((x) => x.indexOf('フィルター') >= 0), 'フィルターが 組でない');
+  ok(組.some((x) => x.indexOf('並べ替え') >= 0), '並べ替えが 組でない');
+});
+
+T('★うちにしか 無い 物は 一番 下（Excel の 並びを 崩さない）★', () => {
+  const 段 = 上の段();
+  const 印 = 段.map((e) => e.getAttribute('data-ctx') || '');
+  const うちだけ = ['freezePanes', 'printSheet', 'openCondFormat', 'openValid', 'explainCell'];
+  const Excel最後 = 印.indexOf('ハイパーリンクを削除') >= 0
+    ? 印.indexOf('ハイパーリンクを削除') : 印.indexOf('ctxFormat');
+  for (const a of うちだけ) {
+    const i = 印.indexOf(a);
+    ok(i >= 0, '★' + a + ' が無い★');
+    ok(i > Excel最後, '★' + a + ' が Excel の 物より 上に 居る★');
+  }
+});
+
+T('★名前は Excel の 字（長い 説明を 付けない）★', () => {
+  const 長い = 上の段()
+    .map((e) => e.childNodes[0].textContent.trim())
+    .filter((t) => t.replace(/^\S+\s*/, '').length > 12);
+  eq(長い.length, 0, '★長すぎる 名前★：' + 長い.join(' / '));
+});
+
 /* ── ⑤ 前からある物を 押し直す ── */
-T('★前からある物：メニューの項目を 1つも落としていない（25個）★', () => {
-  const n = [...doc.querySelectorAll('#ctx-menu .ctx-item')].length;
-  eq(n, 25, '★並べ替えた時に 項目を落とした★');   /* 2026-08-22 条件付き書式を足して 24→25 */
+T('★押す物を 1つも 落としていない（★37個★・2026-08-21は 25個）★', () => {
+  /* ★組の 見出し（▸）は 数えない★＝押しても 何も 起きない 行だから。
+     ★これを 数えると 中身を 3個 消しても 緑のままだった★（2026-08-31 実測）。
+     押せる 物には data-ctx（働きの名前）が 付いている。 */
+  const n = [...doc.querySelectorAll('#ctx-menu .ctx-item[data-ctx]')]
+    .filter((e) => e.getAttribute('data-ctx')).length;
+  ok(n >= 37, '★' + n + '個しか 無い＝実Excel の 中身を 落とした★');
+});
+T('★元の 画面が 探している id が 全部 在る★', () => {
+  for (const id of ['ctx-valid-list', 'ctx-bad-cells', 'ctx-clear-filter',
+    'ctx-unfreeze', 'ctx-unhide-row', 'ctx-unhide-col']) {
+    ok(doc.getElementById(id), '★' + id + ' が 無い＝右クリックを 開いた 途端に 落ちる★');
+  }
 });
 T('★前からある物：右クリックを出して 閉じられる★', () => {
   win.sel(0, 0, 0, 0);
@@ -243,22 +351,59 @@ if (SELF) {
       (s) => s.replace("    if (p.left < 0) return { ok: false, why: '左端が画面の外（' + p.left + 'px）' };", '')],
     ['lib/menu-place.js', '★手が届くかの判定を 素通りさせる（右端）★',
       (s) => s.replace("    if (p.left + Math.min(o.w, o.winW) > o.winW) return { ok: false, why: '右端が画面の外' };", '')],
+    /* ★#ctx-menu の 中の 1行だけ 消す★
+       （ただ 'overflow-y:auto;' と 書くと ★別の 場所の 1つ目★が 消えて
+         この 検査は 素通りする。2026-08-31 実際に 踏んだ） */
     ['book.html', '★メニューを 中で動かせなくする（overflow-y を消す）★',
-      (s) => s.replace('overflow-y:auto;\n-webkit-overflow-scrolling:touch;', '')],
+      (s) => {
+        const i = s.indexOf('#ctx-menu {');
+        const j = s.indexOf('}', i);
+        return s.slice(0, i) + s.slice(i, j).replace('overflow-y:auto;', '') + s.slice(j);
+      }],
     ['book.html', '★測る前に 高さの上限を外さない（中身の高さが取れない）★',
       (s) => s.replace("  m.style.maxHeight=''; m.style.left='0px'; m.style.top='0px';", "  m.style.left='0px'; m.style.top='0px';")],
+    /* ★2026-09-03 に 直した★＝`m.scrollTop = 0;` が ★2か所★に なった
+       （一覧が 長い時に 1行へ 切り替えた 後の 置き直し）。
+       ★1か所だけ 消しても もう1か所が 残って 素通りに なった★ ⇒ ★全部 消す★ */
     ['book.html', '★出すたびに 一番上へ戻さない（前の位置が残る）★',
-      (s) => s.replace('  m.scrollTop = 0;\n', '')],
+      (s) => s.split('m.scrollTop = 0;').join('/*消した*/')],
     ['book.html', '★上限を付けない（画面より高いまま出す）★',
       (s) => s.replace("  m.style.maxHeight = 置く.maxHeight ? (置く.maxHeight+'px') : '';", '')],
-    ['book.html', '★大事な物の上に 物を足す（並べ替えが 沈む）★',
-      (s) => s.replace('  <div id="ctx-valid-list"></div>',
-        '  <div id="ctx-valid-list"></div>\n' + Array.from({ length: 12 },
-          (_, i) => '  <div class="ctx-item" onclick="ctxCopy()">ふえた' + i + '</div>').join('\n'))],
-    ['book.html', '★並べ替えを メニューから外す（客の手に届かない）★',
-      (s) => s.replace('  <div class="ctx-item" onclick="sortRange(\'asc\')">', '  <div class="ctx-item" onclick="ctxCopy()">')],
-    ['book.html', '★印刷を メニューから外す★',
-      (s) => s.replace('onclick="printSheet()"', 'onclick="ctxCopy()"')],
+    /* ★2026-08-31 に 印を 直した★＝中身の 正本が 画面から lib/ctx-menu.js へ 移った。
+       ★壊す 先も 一緒に 移す★（印が 古いままだと ★素通り★＝見張りが 眠る）。 */
+    /* ★★2026-08-31：★Excel の 並びを 崩したら 赤★ に 直した★★
+       前は ★うちの 決め事★（大事な5つを 上に）を 壊していた。
+       今 見るのは ★実Excel と 同じ 並びか★。 */
+    ['lib/ctx-menu.js', '★Excel の 順を 入れ替える（コピーを 一番 下へ）★',
+      (s) => s.replace(
+        "    { 印: '📋', 名: 'コピー',   画面: 'ctxCopy',  鍵: 'Ctrl+C', Excel: 'コピー(C)' },",
+        "")
+        .replace("    { 印: '🤖', 名: 'AIに解説させる'",
+          "    { 印: '📋', 名: 'コピー', 画面: 'ctxCopy', 鍵: 'Ctrl+C', Excel: 'コピー(C)' },"
+          + String.fromCharCode(10) + "    { 印: '🤖', 名: 'AIに解説させる'")],
+    ['lib/ctx-menu.js', '★Excel が 平らに している 物を 組（▸）に 落とす★',
+      (s) => s.replace(
+        "    { 印: '🎨', 名: 'セルの書式設定', 画面: 'ctxFormat', Excel: 'セルの書式設定(F)...' },",
+        "    { 印: '🎨', 名: '書式', 子: ["
+        + "{ 印: '🎨', 名: 'セルの書式設定', 画面: 'ctxFormat' }] },")],
+    ['lib/ctx-menu.js', '★Excel の 物を メニューから 外す（切り取り）★',
+      (s) => s.replace("画面: 'ctxCut'", "画面: 'ctxCopy'")],
+    ['lib/ctx-menu.js', '★名前に 長い 説明を 足す（Excel と 別物に なる）★',
+      (s) => s.replace("名: 'セルの書式設定'",
+        "名: 'セルの書式設定（字の 色や 大きさ・罫線・塗りを まとめて 決める）'")],
+    ['lib/ctx-menu.js', '★うちだけの 物を Excel の 物より 上に 出す★',
+      (s) => s.replace("    { 印: '✂️', 名: '切り取り'",
+        "    { 印: '🤖', 名: 'AIに解説させる', 画面: 'explainCell' },"
+        + String.fromCharCode(10) + "    { 印: '✂️', 名: '切り取り'")],
+
+    ['lib/ctx-menu.js', '★元の 画面が 探している id を 消す（開いた途端に 落ちる）★',
+      (s) => s.replace("id: 'ctx-unhide-row',", '')],
+    ['lib/ctx-menu.js', '★実Excel の 中身を 落とす（コメント 3つを 消す）★',
+      (s) => s.split("リボン: '新しいコメント'").join("リボン: '在るわけない'")
+        .split("リボン: 'コメントを消す'").join("リボン: '在るわけない'")
+        .split("リボン: 'コメントの表示'").join("リボン: '在るわけない'")],
+    ['book.html', '★中身を 画面に 直に 書き戻す（部品を 使わない）★',
+      (s) => s.replace('window.CtxMenu.出す(', 'window.__無い.出す(')],
   ];
   let red = 0;
   for (const [rel, name, brk] of BREAKS) {

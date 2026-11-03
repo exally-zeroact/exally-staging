@@ -145,9 +145,18 @@ if (!fs.existsSync(実物)) {
   const ZipSurgeon = require_(path.join(ROOT, 'lib/zip-surgeon.js'));
   const TableRefs = require_(path.join(ROOT, 'lib/table-refs.js'));
   const bytes = new Uint8Array(fs.readFileSync(実物));
-  T('★実物のバイト数が ゴールデンと同じ（別のファイルを見ていない）★', () => {
-    eq(bytes.length, GOLDEN.本.バイト);
-  });
+  /* ★★2026-09-04 に 変えた（司さんの 指摘）★★
+     ★前★ … 実物の ★バイト数★が 台帳と 同じか を 見ていた
+     ★何が 起きたか★ … 司さんが 1日に 3回 保存した（09:36 / 09:55 / 10:08）
+                        ＝★中身が 良くなった 時でも 毎回 赤★
+                        ＝★司さんの せいでは なく 見張りの 作りが 悪い★
+     ★今★ … ★数そのものは 見ない。壊れていたら 必ず 崩れる「辻褄」を 見る★
+              ①ライブラリの 数 ＝ 素朴なやり方の 数（2通りが 合う）
+              ②#REF! を 持つ 式 ＝ 包まれた ＋ 包まれていない（1本残らず 説明できる）
+              ⇒★この 2つは 司さんが 触っても 変わらない★／★取りこぼしが 出た瞬間に 崩れる★
+     ★数は 記録として 出す（緑・赤の 判定には 使わない）★＝★0件と 未測定を 混ぜない★ */
+  console.log('       … 実物 ' + bytes.length.toLocaleString() + 'バイト'
+    + '（台帳を 書いた日は ' + GOLDEN.本.バイト.toLocaleString() + 'バイト）');
   const wb = XLSX.read(bytes, { type: 'array', cellFormula: true });
   const rr = await TableRefs.resolve(bytes, 'xlsb', wb, ZipSurgeon);
   const fixes = (rr && rr.fixes) || {};
@@ -161,16 +170,10 @@ if (!fs.existsSync(実物)) {
     return { name, data };
   });
   const r = Shindan.調べる(sheets);
-  T('★実物で 122本 見つける（ゴールデンと一致）★', () => {
-    eq(r.式の本数, GOLDEN.本.式の本数);
-    eq(r.のべ, GOLDEN.本.のべ);
-  });
-  T('★出たシートも 一致（散らばっていない）★', () => {
-    const bys = {};
-    for (const x of r.見つけた) bys[x.シート] = (bys[x.シート] || 0) + 1;
-    eq(JSON.stringify(bys), JSON.stringify(GOLDEN.本.シート別));
-  });
-  T('★もう1通りの数え方でも 同じ（自分の答えで閉じない）★', () => {
+  /* ★数は 記録★（司さんが 触るたび 動く物を 赤の 種に しない） */
+  console.log('       … 隠れた #REF! ' + r.式の本数 + '本（のべ ' + r.のべ + '）'
+    + '／台帳を 書いた日は ' + GOLDEN.本.式の本数 + '本');
+  T('★見つけた 物は 1つも 取りこぼさない（数え方を 2通り 合わせる）★', () => {
     let 素朴 = 0;
     for (const sh of sheets) {
       for (const rc of Object.keys(sh.data)) {
@@ -178,7 +181,27 @@ if (!fs.existsSync(実物)) {
         if (f && f.charAt(0) === '=' && /IFERROR|IFNA/i.test(f) && /#REF!/.test(f)) 素朴++;
       }
     }
-    eq(素朴, GOLDEN.本.素朴なやり方でも, '★2通りの数が 違う（どちらかが 嘘）★');
+    eq(r.式の本数, 素朴, '★2通りの数が 違う（どちらかが 嘘）★');
+  });
+  T('★#REF! を 持つ 式が 1本残らず 説明できる（包まれた ＋ 包まれていない）★', () => {
+    let 全部 = 0, 包まれず = 0;
+    for (const sh of sheets) {
+      for (const rc of Object.keys(sh.data)) {
+        const f = sh.data[rc].f;
+        if (!f || f.charAt(0) !== '=' || !/#REF!/.test(f)) continue;
+        全部++;
+        if (!/IFERROR|IFNA/i.test(f)) 包まれず++;
+      }
+    }
+    console.log('       … #REF! を 持つ 式 ' + 全部 + '本 ＝ 包まれた ' + r.式の本数
+      + ' ＋ 包まれていない ' + 包まれず);
+    eq(r.式の本数 + 包まれず, 全部, '★足して 合わない＝取りこぼしが 在る★');
+  });
+  T('★出たシートが 散らばっていない（1枚に まとまっている）★', () => {
+    const bys = {};
+    for (const x of r.見つけた) bys[x.シート] = (bys[x.シート] || 0) + 1;
+    console.log('       … ' + JSON.stringify(bys));
+    ok(Object.keys(bys).length <= 1, '★別の シートにも 出た＝台帳を 読み直すこと★');
   });
   T('★競合が見つけられる数（Excel自身がエラー）とは 別物★', () => {
     let e = 0;
@@ -186,7 +209,8 @@ if (!fs.existsSync(実物)) {
       const ws = wb.Sheets[nm] || {};
       for (const k of Object.keys(ws)) { if (k[0] !== '!' && ws[k].t === 'e') e++; }
     }
-    eq(e, GOLDEN.本.Excel自身がエラーのセル);
+    console.log('       … Excel自身がエラーの セル ' + e + '個（台帳を 書いた日は '
+      + GOLDEN.本.Excel自身がエラーのセル + '個）');
     ok(r.式の本数 > e, '★診断の数が エラーの数以下＝新しく見つけた物が無い★');
   });
   T('★実際に 合計が黙って小さくなっている所を 数える（この診断の値打ち）★', () => {
@@ -204,8 +228,9 @@ if (!fs.existsSync(実物)) {
       const 何行 = 隠れ.filter((x) => x.r >= Math.min(a.r, b.r) && x.r <= Math.max(a.r, b.r) && x.c >= Math.min(a.c, b.c) && x.c <= Math.max(a.c, b.c)).length;
       if (何行) 出.push({ セル: Shindan.セルの名(rc), 何行: 何行, いまの値: 計算.data[rc].v });
     }
-    eq(JSON.stringify(出), JSON.stringify(GOLDEN.本.黙って小さくなっている合計),
-      '★実物の合計の壊れ方が 変わった（数え直すこと）★');
+    ok(出.length > 0, '★1つも 出ない＝この 試験が 空振りしている★');
+    for (const x of 出) ok(x.いまの値 === 0 || x.いまの値 === '' || x.いまの値 === null || x.いまの値 === undefined,
+      '★' + x.セル + ' は ' + JSON.stringify(x.いまの値) + '＝隠れた行が 在るのに 0 で ない★');
     console.log('       … ' + 出.map((x) => x.セル + '=' + JSON.stringify(x.いまの値) + '（' + x.何行 + '行が空）').join(' / '));
   });
   T('★速い（0円・AIを1回も呼ばない）★', () => {

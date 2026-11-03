@@ -1,0 +1,74 @@
+# ★誤りの 型（t="str" と t="e"）を 実Excel に 開かせて 比べた★（㊻）（2026-09-20）
+# ★読むだけ★（保存して いません）／★開けるのは 字で 書いた 2本だけ★
+# ★どの Excel か★ ... 版 16.0 ／ build 20326
+# ★どの 貝殻か★ ... PowerShell 5.1.26100.9278
+#
+# ═══ ★★kou(t=str・今のまま)★★ ... exally-ayamari-mae.xlsx（16159 バイト）═══
+# ★★①開いた 瞬間★★（★まだ 何も 打って いません★）
+# 札	マス	値	出る字	式	型
+kou(t=str・今のまま)	A1	-2146826281	#DIV/0!	=1/0	Other
+kou(t=str・今のまま)	A2	-2146826246	#N/A	=NA()	Other
+kou(t=str・今のまま)	A3	-2146826259	#NAME?	=ZZZ()	Other
+kou(t=str・今のまま)	A4	-2146826273	#VALUE!	=1+"a"	Other
+kou(t=str・今のまま)	A5	-2146826252	#NUM!	=SQRT(-1)	Other
+kou(t=str・今のまま)	A6	3	3	=SUM(1,2)	Double
+# ★★②F9（CalculateFull）の 後★★
+kou(t=str・今のまま)	A1	-2146826281	#DIV/0!	=1/0	Other
+kou(t=str・今のまま)	A2	-2146826246	#N/A	=NA()	Other
+kou(t=str・今のまま)	A3	-2146826259	#NAME?	=ZZZ()	Other
+kou(t=str・今のまま)	A4	-2146826273	#VALUE!	=1+"a"	Other
+kou(t=str・今のまま)	A5	-2146826252	#NUM!	=SQRT(-1)	Other
+kou(t=str・今のまま)	A6	3	3	=SUM(1,2)	Double
+# ★CalculateFull★ ... ok ／ ★①と ②は 同じ★（＝開いた 瞬間の 見た目では ない）
+# ★★③ISERROR / ISTEXT / ISNUMBER で 直に 訊く★★
+# 札	マス	ISERROR	ISTEXT	ISNUMBER	窓に入っている式(3つ)
+kou(t=str・今のまま)	A1	True	False	False	=ISERROR(A1) / =ISTEXT(A1) / =ISNUMBER(A1)
+kou(t=str・今のまま)	A2	True	False	False	=ISERROR(A2) / =ISTEXT(A2) / =ISNUMBER(A2)
+kou(t=str・今のまま)	A3	True	False	False	=ISERROR(A3) / =ISTEXT(A3) / =ISNUMBER(A3)
+kou(t=str・今のまま)	A4	True	False	False	=ISERROR(A4) / =ISTEXT(A4) / =ISNUMBER(A4)
+kou(t=str・今のまま)	A5	True	False	False	=ISERROR(A5) / =ISTEXT(A5) / =ISNUMBER(A5)
+kou(t=str・今のまま)	A6	False	False	True	=ISERROR(A6) / =ISTEXT(A6) / =ISNUMBER(A6)
+#
+# ★★2つ目の 窓★★（★上の 読みの 後に 打って います★）
+# マス	値	型	=(マス)=0
+A1	-2146826281	Other	-2146826281
+A2	-2146826246	Other	-2146826246
+A3	-2146826259	Other	-2146826259
+A4	-2146826273	Other	-2146826273
+A5	-2146826252	Other	-2146826252
+A6	3	Double	False
+#
+# ═══ ★★otsu(t=e・直した物)★★ ... exally-ayamari-ato.xlsx（16149 バイト）═══
+# ★★①開いた 瞬間★★（★まだ 何も 打って いません★）
+# 札	マス	値	出る字	式	型
+otsu(t=e・直した物)	A1	-2146826281	#DIV/0!	=1/0	Other
+otsu(t=e・直した物)	A2	-2146826246	#N/A	=NA()	Other
+otsu(t=e・直した物)	A3	-2146826259	#NAME?	=ZZZ()	Other
+otsu(t=e・直した物)	A4	-2146826273	#VALUE!	=1+"a"	Other
+otsu(t=e・直した物)	A5	-2146826252	#NUM!	=SQRT(-1)	Other
+otsu(t=e・直した物)	A6	3	3	=SUM(1,2)	Double
+# ★★②F9（CalculateFull）の 後★★
+otsu(t=e・直した物)	A1	-2146826281	#DIV/0!	=1/0	Other
+otsu(t=e・直した物)	A2	-2146826246	#N/A	=NA()	Other
+otsu(t=e・直した物)	A3	-2146826259	#NAME?	=ZZZ()	Other
+otsu(t=e・直した物)	A4	-2146826273	#VALUE!	=1+"a"	Other
+otsu(t=e・直した物)	A5	-2146826252	#NUM!	=SQRT(-1)	Other
+otsu(t=e・直した物)	A6	3	3	=SUM(1,2)	Double
+# ★CalculateFull★ ... ok ／ ★①と ②は 同じ★（＝開いた 瞬間の 見た目では ない）
+# ★★③ISERROR / ISTEXT / ISNUMBER で 直に 訊く★★
+# 札	マス	ISERROR	ISTEXT	ISNUMBER	窓に入っている式(3つ)
+otsu(t=e・直した物)	A1	True	False	False	=ISERROR(A1) / =ISTEXT(A1) / =ISNUMBER(A1)
+otsu(t=e・直した物)	A2	True	False	False	=ISERROR(A2) / =ISTEXT(A2) / =ISNUMBER(A2)
+otsu(t=e・直した物)	A3	True	False	False	=ISERROR(A3) / =ISTEXT(A3) / =ISNUMBER(A3)
+otsu(t=e・直した物)	A4	True	False	False	=ISERROR(A4) / =ISTEXT(A4) / =ISNUMBER(A4)
+otsu(t=e・直した物)	A5	True	False	False	=ISERROR(A5) / =ISTEXT(A5) / =ISNUMBER(A5)
+otsu(t=e・直した物)	A6	False	False	True	=ISERROR(A6) / =ISTEXT(A6) / =ISNUMBER(A6)
+#
+# ★★2つ目の 窓★★（★上の 読みの 後に 打って います★）
+# マス	値	型	=(マス)=0
+A1	-2146826281	Other	-2146826281
+A2	-2146826246	Other	-2146826246
+A3	-2146826259	Other	-2146826259
+A4	-2146826273	Other	-2146826273
+A5	-2146826252	Other	-2146826252
+A6	3	Double	False

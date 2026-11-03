@@ -1,0 +1,29 @@
+# ★実Excel に 打たせた CELL の 答え（6回目・残りの あいまいな 形）★
+# 取った 日 … 2026-09-07
+# ★どの Excel で 打ったか★ … 版 16.0 ／ build 20326
+# ★A列に 45293.5（2024/1/2 12:00）を 置いて 表示形式だけ 変えた★
+# 関数	式	実Excel の 答え	どんな 場面か
+# ★★2026-09-21 追記（経営者1）── ★この 紙は `.Formula`（★昔の 道★）で 取って います★★
+#   ＝`docs/measured/kansuu46/` の 道具 21本は `Formula2` を ★1本も 使って いません★
+#   ＝`.Formula` は ★溢れません★（2026-09-19 実測）＝★暗黙の 交わりで 1マス★
+#   ⇒★範囲を 渡した 式の 答えは ★1マス目だけ★です（★間違いでは なく 足りない★）
+#   ⇒★実測（2026-09-21）★ この 紙の 範囲を 渡す 812本を `Formula2` で 打ち直すと
+#      ★昔と 同じ 809本／★違う 3本★（ISERR/ISERROR/ISNUMBER の A1:B5）／★溢れた 416本★
+#   ⇒★新しい 道の 紙★ ... docs/measured/golden-furui-kami-torinaoshi-2026-09-21.tsv
+#   ⇒★この 紙を 物差しに する 試験は ★昔の 道を 守って います★★
+CELL	=CELL("format",A1)	G	表示形式 yyyy/d（実際に 付いた 形 yyyy/d）
+CELL	=CELL("format",A2)	G	表示形式 yyyy"年"d"日"（実際に 付いた 形 yyyy"年"d"日"）
+CELL	=CELL("format",A3)	G	表示形式 d"日"yyyy"年"（実際に 付いた 形 d"日"yyyy"年"）
+CELL	=CELL("format",A4)	D1	表示形式 yyyy/m/d;@（実際に 付いた 形 yyyy/m/d;@）
+CELL	=CELL("format",A5)	D1	表示形式 yyyy/m/d;;（実際に 付いた 形 yyyy/m/d;;）
+CELL	=CELL("format",A6)	D3	表示形式 m/d;@（実際に 付いた 形 m/d;@）
+CELL	=CELL("format",A7)	G	表示形式 h:ss（実際に 付いた 形 h:ss）
+CELL	=CELL("format",A8)	G	表示形式 h AM/PM（実際に 付いた 形 h AM/PM）
+CELL	=CELL("format",A9)	D8	表示形式 h:mm:ss.0（実際に 付いた 形 h:mm:ss.0）
+CELL	=CELL("format",A10)	G	表示形式 mm:ss.0（実際に 付いた 形 mm:ss.0）
+CELL	=CELL("format",A11)	D1	表示形式 yyyy/m/d h:mm AM/PM（実際に 付いた 形 yyyy/m/d h:mm AM/PM）
+CELL	=CELL("format",A12)	D1	表示形式 m/d/yy h:mm（実際に 付いた 形 m/d/yy h:mm）
+CELL	=CELL("format",A13)	D1	表示形式 mmm d, yyyy（実際に 付いた 形 mmm d, yyyy）
+CELL	=CELL("format",A14)	D3	表示形式 mmmm d（実際に 付いた 形 mmmm d）
+CELL	=CELL("format",A15)	D2	表示形式 yyyy-mm（実際に 付いた 形 yyyy-mm）
+CELL	=CELL("format",A16)	D2	表示形式 mmm yyyy（実際に 付いた 形 mmm yyyy）

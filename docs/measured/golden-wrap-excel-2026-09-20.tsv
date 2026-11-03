@@ -1,0 +1,131 @@
+# ★WRAPROWS / WRAPCOLS を 裸で 書き出した 物を 実Excel に 開かせた★（53）（2026-09-20）
+# ★読むだけ★（保存して いません）／★開けるのは 字で 書いた 2本だけ★
+# ★どの Excel か★ ... 版 16.0 ／ build 20326
+# ★どの 貝殻か★ ... PowerShell 5.1.26100.9278
+# ★生の 字★ C1 `WRAPROWS(A1:A6,3)`（裸・ref=C1:E2）／C5 `WRAPCOLS(A1:A6,3)`（裸・ref=C5:D7）
+# ★対照★   G1 `_xlfn.SEQUENCE(3)`（付く）／I1 `TRANSPOSE(A1:A3)`（裸が 正しい）／A10 `SUM(A1:A6)`
+# ★実Excel 自身は★ `_xlfn.WRAPROWS` と 書きます（51・52 で 実測）
+#
+# ═══ ★★mae(hadaka)★★ ... exally-kakidashi-wrap.xlsx（16705 バイト）═══
+#
+# ★★①開いた 瞬間★★（★まだ 何も 打って いません★）
+# マス	値	出る字	式	型	溢れの一部か
+C1	-2146826259	#NAME?	=WRAPROWS(A1:A6,3)	Other	False
+D1	(kara)			(kara)	False
+E1	(kara)			(kara)	False
+C2	(kara)			(kara)	False
+D2	(kara)			(kara)	False
+E2	(kara)			(kara)	False
+F1	(kara)			(kara)	False
+C5	-2146826259	#NAME?	=WRAPCOLS(A1:A6,3)	Other	False
+D5	(kara)			(kara)	False
+C6	(kara)			(kara)	False
+D6	(kara)			(kara)	False
+C7	(kara)			(kara)	False
+D7	(kara)			(kara)	False
+C8	(kara)			(kara)	False
+G1	1	1	=SEQUENCE(3)	Double	False
+G2	2	2		Double	False
+G3	3	3		Double	False
+G4	(kara)			(kara)	False
+I1	1	1	=TRANSPOSE(A1:A3)	Double	False
+J1	2	2		Double	False
+K1	3	3		Double	False
+L1	(kara)			(kara)	False
+A10	21	21	=SUM(A1:A6)	Double	False
+#
+# ★★②ISERROR / ISTEXT / ISNUMBER★★（★ここから 計算し直しが 起きます★）
+# マス	ISERROR	ISTEXT	ISNUMBER	窓に入っている式(3つ)
+C1	True	False	False	=ISERROR(C1) / =ISTEXT(C1) / =ISNUMBER(C1)
+C5	True	False	False	=ISERROR(C5) / =ISTEXT(C5) / =ISNUMBER(C5)
+G1	False	False	True	=ISERROR(G1) / =ISTEXT(G1) / =ISNUMBER(G1)
+I1	False	False	True	=ISERROR(I1) / =ISTEXT(I1) / =ISNUMBER(I1)
+A10	False	False	True	=ISERROR(A10) / =ISTEXT(A10) / =ISNUMBER(A10)
+#
+# ★★2つ目の 窓★★（★上の 読みの 後に 打って います★）
+# マス	値	型	=(マス)=0
+C1	-2146826259	Other	-2146826259
+D1	(kara)	(kara)	True
+E1	(kara)	(kara)	True
+C2	(kara)	(kara)	True
+D2	(kara)	(kara)	True
+E2	(kara)	(kara)	True
+F1	(kara)	(kara)	True
+C5	-2146826259	Other	-2146826259
+D5	(kara)	(kara)	True
+C6	(kara)	(kara)	True
+D6	(kara)	(kara)	True
+C7	(kara)	(kara)	True
+D7	(kara)	(kara)	True
+C8	(kara)	(kara)	True
+G1	1	Double	False
+G2	2	Double	False
+G3	3	Double	False
+G4	(kara)	(kara)	True
+I1	1	Double	False
+J1	2	Double	False
+K1	3	Double	False
+L1	(kara)	(kara)	True
+A10	21	Double	False
+#
+# ═══ ★★ato(_xlfn.)★★ ... exally-kakidashi-wrap2.xlsx（16717 バイト）═══
+#
+# ★★①開いた 瞬間★★（★まだ 何も 打って いません★）
+# マス	値	出る字	式	型	溢れの一部か
+C1	1	1	=WRAPROWS(A1:A6,3)	Double	False
+D1	2	2		Double	False
+E1	3	3		Double	False
+C2	4	4		Double	False
+D2	5	5		Double	False
+E2	6	6		Double	False
+F1	(kara)			(kara)	False
+C5	1	1	=WRAPCOLS(A1:A6,3)	Double	False
+D5	4	4		Double	False
+C6	2	2		Double	False
+D6	5	5		Double	False
+C7	3	3		Double	False
+D7	6	6		Double	False
+C8	(kara)			(kara)	False
+G1	1	1	=SEQUENCE(3)	Double	False
+G2	2	2		Double	False
+G3	3	3		Double	False
+G4	(kara)			(kara)	False
+I1	1	1	=TRANSPOSE(A1:A3)	Double	False
+J1	2	2		Double	False
+K1	3	3		Double	False
+L1	(kara)			(kara)	False
+A10	21	21	=SUM(A1:A6)	Double	False
+#
+# ★★②ISERROR / ISTEXT / ISNUMBER★★（★ここから 計算し直しが 起きます★）
+# マス	ISERROR	ISTEXT	ISNUMBER	窓に入っている式(3つ)
+C1	False	False	True	=ISERROR(C1) / =ISTEXT(C1) / =ISNUMBER(C1)
+C5	False	False	True	=ISERROR(C5) / =ISTEXT(C5) / =ISNUMBER(C5)
+G1	False	False	True	=ISERROR(G1) / =ISTEXT(G1) / =ISNUMBER(G1)
+I1	False	False	True	=ISERROR(I1) / =ISTEXT(I1) / =ISNUMBER(I1)
+A10	False	False	True	=ISERROR(A10) / =ISTEXT(A10) / =ISNUMBER(A10)
+#
+# ★★2つ目の 窓★★（★上の 読みの 後に 打って います★）
+# マス	値	型	=(マス)=0
+C1	1	Double	False
+D1	2	Double	False
+E1	3	Double	False
+C2	4	Double	False
+D2	5	Double	False
+E2	6	Double	False
+F1	(kara)	(kara)	True
+C5	1	Double	False
+D5	4	Double	False
+C6	2	Double	False
+D6	5	Double	False
+C7	3	Double	False
+D7	6	Double	False
+C8	(kara)	(kara)	True
+G1	1	Double	False
+G2	2	Double	False
+G3	3	Double	False
+G4	(kara)	(kara)	True
+I1	1	Double	False
+J1	2	Double	False
+K1	3	Double	False
+L1	(kara)	(kara)	True
+A10	21	Double	False

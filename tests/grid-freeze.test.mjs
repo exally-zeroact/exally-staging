@@ -86,9 +86,15 @@ T('★画面が立ち上がっていて freezePanes と _renderPass が在る', 
   ok(typeof win._doRender === 'function', '_doRender が無い');
 });
 T('★右クリックの中に 固定と 固定をやめる が在る（押す口が在る）', () => {
-  const items = [...doc.querySelectorAll('.ctx-item')].map((e) => e.getAttribute('onclick') || '');
-  ok(items.some((x) => x.startsWith('freezePanes()')), '固定の口が無い');
-  ok(items.some((x) => x.startsWith('unfreezePanes()')), '固定をやめる口が無い');
+  /* ★2026-08-31：右クリックの 中身が ★開いた時に 作る★ 形に なった★
+     （実 Excel の 1,384命令に 合わせて 25→37個。組（★）に した）
+     ⇒ ★開いてから 探す★。印は onclick ではなく data-ctx。 */
+  win.sel(0, 0, 0, 0);
+  win.showCtxMenu(10, 10);
+  const items = [...doc.querySelectorAll('#ctx-menu .ctx-item')]
+    .map((e) => e.getAttribute('data-ctx') || '');
+  ok(items.indexOf('freezePanes') >= 0, '固定の口が無い：' + items.join(' / '));
+  ok(items.indexOf('unfreezePanes') >= 0, '固定をやめる口が無い');
 });
 
 /* ── ① どこで固定されるか（実測どおり） ── */
@@ -285,7 +291,10 @@ if (SELF) {
   const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'exally-freeze-'));
   console.log('\n[self-test] わざと壊して 赤くなるかを数える（★repo は読むだけ★）');
   const BREAKS = [
-    ['book.html', '右クリックの 固定を消す', (s) => s.replace('<div class="ctx-item" onclick="freezePanes()">🧊 ここで固定（選んだセルの 上と左）</div>', '')],
+    /* ★2026-08-31：右クリックの 中身の 正本が 画面から lib/ctx-menu.js へ 移った★
+       ★壊す 先も 一緒に 移す★（印が 古いままだと ★素通り★＝見張りが 眠る） */
+    ['lib/ctx-menu.js', '右クリックの 固定を消す',
+      (s) => s.replace("画面: 'freezePanes'", "画面: 'ctxCopy'")],
     ['book.html', '★A1 でも固定してしまう★（真似ても合わない物を真似る）', (s) => s.replace("  if(selR1 === 0 && selC1 === 0){\n    showToast('A1 では固定できません（固定したい行の1つ下・列の1つ右を選んでね）');\n    return;\n  }", '')],
     ['book.html', '固定する行を 1つ ずらす', (s) => s.replace('  sh.freezeRow = selR1;                    /* 選んだセルの ★上の行★ を固定 */', '  sh.freezeRow = selR1 + 1;')],
     ['book.html', '固定する列を 1つ ずらす', (s) => s.replace('  sh.freezeCol = selC1;                    /* 選んだセルの ★左の列★ を固定 */', '  sh.freezeCol = selC1 + 1;')],

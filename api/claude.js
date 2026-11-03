@@ -1,12 +1,17 @@
 const Anthropic = require('@anthropic-ai/sdk');
-// ★法定の数値は kyuyo/lib/ の本体を読む（写しを作らない）。
-//   2026-08-02: リポジトリ直下に写しを置いていて、掃除でそれを消した時にここが
-//   MODULE_NOT_FOUND になり /api/claude が毎回500（＝チャットが全部落ちた）。
-//   本体を直接読めば、消しても場所が変わっても同じ所を指す。
-//   参照が生きているかは tests/refs-resolve.test.mjs がCIで見張っている。
-const SHAKAIHOKEN_HYO = require('../kyuyo/lib/shakaihoken-hyo.js');
-const KOYO_HOKEN      = require('../kyuyo/lib/koyo-hoken.js');
-const SHOUHIZEI_RITSU = require('../kyuyo/lib/shouhizei-ritsu.js');
+const https = require('node:https');
+/* ★法定の数値は「倉庫」から拾う。★Exally の中に 写しを 置かない★（2026-09-05 司さん）★
+ *   司さん「金関係のこと聞かれたりAIが入力する時だけSupabaseの共有から拾うやないんか」
+ *
+ *  ★倉庫★ = Supabase `public.statutory`（★全アプリ 共通・anon で 読める★）
+ *            給与(Rakunally)も 同じ 行を 読む＝★法が 変わった時に 直す所が 1つ★
+ *
+ *  ★ここまでの 経緯（同じ穴を 3回 掘らない為に 残す）★
+ *    2026-08-02 … repo直下に 写しを 置き、掃除で 消して MODULE_NOT_FOUND＝/api/claude が毎回500
+ *    2026-09-05 … 給与アプリ(kyuyo/)ごと Exally から 外した。
+ *                 ★その時 私は 3本の lib を Exally の lib/ へ 移そうとした＝写しを 残す向き★
+ *                 ⇒ 司さんに 止められた。★倉庫から 拾うのが 元からの 設計★。
+ */
 
 /* ★let にしてある理由★＝下の __setClient（テスト用の窓）から 偽のAIに差し替えて、
    ★失敗した時に本当に何を返すか★を機械で押すため。本番では 1ミリも挙動が変わらない。 */
@@ -26,207 +31,327 @@ const VERSION_MAP = {
   'excel_none':   { name: 'Excel持ってない',   group: 'exally_only' }
 };
 
-// ===== Exally未対応関数リスト =====
-const EXALLY_UNSUPPORTED = {
-  // 完全未対応（構造上Exally内で動作不可）
-  full: [
-    'RTD',
-    'CUBEMEMBER', 'CUBEVALUE', 'CUBESET', 'CUBESETCOUNT',
-    'CUBEMEMBERPROPERTY', 'CUBERANKEDMEMBER', 'CUBEKPIMEMBER',
-    'WEBSERVICE', 'FILTERXML', 'GETPIVOTDATA'
-  ],
-  // まだ未対応（将来実装予定）
-  pending: [
-    'GROUPBY', 'PIVOTBY',
-    'VSTACK', 'HSTACK', 'TOCOL', 'TOROW',
-    'CHOOSEROWS', 'CHOOSECOLS',
-    'TEXTSPLIT', 'TEXTBEFORE', 'TEXTAFTER'
-  ]
-};
+/* ★使えない関数の 一覧は prompt/kansuu.md へ 出しました（2026-09-05）★
+   ★手で 書かない★＝`node scripts/make-prompt.mjs` が lib/formula-extra.js の
+   台帳から 作る。★手書きの 22個は 17個 間違っていた★（実測）。 */
 
 // ===== バージョン情報取得（デフォルトexcel_365） =====
 function getVersionInfo(versionKey) {
   return VERSION_MAP[versionKey] || VERSION_MAP['excel_365'];
 }
 
-// ===== 共通ベースプロンプト =====
-const SYSTEM_PROMPT_BASE = `あなたはExally（エクサリー）というExcel完全代替SaaSのAI助手です。
-Exallyは日本の中小企業・個人事業主向けに作られた「Excelそのものになる」サービスで、
-Excel関数500件超に対応した自作グリッド（ブック）・チャット型AI・テンプレート自動生成を備えています。
-ユーザーはExally内だけで書類を完成させられます（Excelに戻らなくていい）。
-ExcelがPCに無いユーザーでも全機能が使えます。
-Excelバージョン別（365/2024/2021/2019/2016/Mac/Online/なし）に合わせた最適な回答をします。
+/* ★SYSTEM_PROMPT_BASE は prompt/base.md へ 出しました（2026-09-05 司さん）★
+   ここに べた書きすると 台帳と 二重に なり、★片方だけ 古くなる★。
+   ★実際に 起きた★＝手書きの『使えない関数』22個のうち ★17個が 間違い★。 */
 
-【回答ルール・絶対厳守】
-- 常に日本語で回答する
-- 回答は簡潔に・冗長な説明は禁止
-- 前置き・長い解説・余計な注意書きは禁止
-- ##・###などのMarkdown見出しは絶対に使わない
-- |（縦棒）を使ったMarkdownテーブルは絶対に使わない
-- 箇条書きの多用禁止
-- 関数・数式は必ずExcelで動く形式（=で始まる）で提示する
-- 数式を本文中に書く場合は必ずバッククォート（\`）で囲む
-- セル結合の提案は禁止
-- 語尾は「〜だよ」「〜してみて」調で短く
-- 結論を最初に書いてから必要なら一言補足する
-- 表やテンプレートを作る場合は必ずTSV形式でも出力する
+/* ══ ★AIの 頭は prompt/ の ファイルから 読む★（2026-09-05 司さん）══════════
+ *
+ *  ★司さん★「★AIの構造は ファイルにして 更新できるような 設計に しとけよ★」
+ *
+ *  ★なぜ（実測で 起きていた 事）★
+ *    前は この ファイルの 中に ★べた書き★だった。
+ *    ⇒ 台帳（`lib/formula-extra.js` の 数える()）と ★二重管理★
+ *    ⇒★手書きの「使えない関数」22個のうち 17個が 間違い★
+ *        ・足してあるのに「使えない」…★4個★（TOCOL/TOROW/CHOOSEROWS/CHOOSECOLS）
+ *        ・動かないのに 1つも 教えていない…★13個★（LAMBDA/LET/MAP/REDUCE/…）
+ *    ⇒ しかも `latest` の 決まりは ★「LET・LAMBDA等を 積極的に 提案」★
+ *       ＝★AIが 動かない 式を 勧めていた★
+ *
+ *  ★読めなかったら 500 で 落とす★
+ *    ★黙って 前置き 無しで 答えるのが 一番 危ない★＝法定の 時と 同じ 型。
+ *    ★合言葉は `shitaku_tarinai`★＝画面は「★うちの 支度が 足りません★」と 出す。
+ *    （★`ai_shippai` に しては いけない★＝「AI側の 問題です」は ★嘘★。
+ *      客も 管理者も AI を 疑い、★誰も うちを 見ない★＝2026-09-05 指示役）
+ *
+ *  ★Vercel に 載せる★
+ *    `vercel.json` の `functions.includeFiles` で `prompt/**` を 入れる。
+ *    ★効いたかは 配信して 初めて 分かる★＝Preview で 1回 叩いて 確かめる。
+ */
+const 前置きの部屋 = require('path').join(__dirname, '..', 'prompt');
+let _前置き = null;
 
-【数式の返答フォーマット・絶対厳守】
-数式を説明するときは必ず以下の順番で返答する：
+/** ★prompt/ を 読む（1回だけ・読めなければ 投げる）★ */
+function 前置きを読む() {
+  if (_前置き) return _前置き;
+  const fs = require('fs'), path = require('path');
+  /* ★2026-09-06 に 2本 足した★＝kiite-ageru.md（聞く順）と nayami.md（客の 悩み）
+     ★prompt/README.md に「入れる」と 書いてあったのに ★存在しなかった★★
+     ＝会議で 決めた「聞いてあげる」は ★AIに 1文字も 渡っていなかった★ */
+  const 要る = ['base.md', 'kansuu.md', 'kyoutsuu.md', 'version.md',
+    'kiite-ageru.md', 'nayami.md'];
+  const 出 = {};
+  const 欠け = [];
+  for (const f of 要る) {
+    try {
+      const t = fs.readFileSync(path.join(前置きの部屋, f), 'utf8');
+      if (!t || !t.trim()) { 欠け.push(f + '（空）'); continue; }
+      出[f] = t;
+    } catch (e) { 欠け.push(f + '（' + (e.code || 'よめない') + '）'); }
+  }
+  if (欠け.length) {
+    /* ★1本でも 欠けたら 止める★＝★前置きが 半分の AI は 嘘を 言う★ */
+    const err = new Error('prompt が 読めません: ' + 欠け.join(' / '));
+    err.支度足りない = true;
+    throw err;
+  }
+  _前置き = 出;
+  return 出;
+}
 
-①1行目：1文で結論（何ができるかだけ）
+/** ```で 囲った 中身だけ 取り出す（囲いが 無ければ そのまま） */
+function 中身だけ(md) {
+  const m = /```\r?\n([\s\S]*?)\r?\n```/.exec(md);
+  return (m ? m[1] : md).trim();
+}
 
-②各引数を絵文字で説明（必ず以下の順番・色を守る）
-🔵 A2 → （第1引数の説明）
-🟠 B1:D20 → （第2引数の説明）
-🟣 2 → （第3引数の説明）
-🟢 FALSE → （第4引数の説明）
+/** 版ごとの 決まり（version.md の `## <group>` を 取る） */
+function 版の決まり(md, group) {
+  const re = new RegExp('##\\s*' + group + '\\s*\\r?\\n+```\\r?\\n([\\s\\S]*?)\\r?\\n```');
+  const m = re.exec(md);
+  return m ? m[1].trim() : '';
+}
 
-③最後に数式をコードブロック（バッククォート3つ）で提示
-例：
-\`\`\`
-=VLOOKUP(A2, Sheet2!$A:$C, 2, FALSE)
-\`\`\`
+/* ══ ★AI の 答えを「本文」と「表」に 分ける★ ══════════════════════════════
+ *
+ *  ★2026-09-05 まで こう だった★
+ *      const text = fullText.replace(tsvMatch[0], '').trim();   // ★表を 本文から 消す★
+ *      return { text, tsv };
+ *    ⇒ 画面（book.html:16986）は `d.text` しか 読まない＝★`d.tsv` を 読む 所は
+ *      repo 全体で ★0か所★★（履歴でも 一度も 無い＝★消したのでは なく 最初から 片側だけ★）
+ *    ⇒★AI が 表を 作る たび、サーバが 抜いて、誰も 受け取らず、捨てていた★
+ *    ⇒★答えが 丸ごと 表だった 時は text が 空★ ⇒ 画面は「AIから 空の返事が来ました」
+ *      ＝★出来ていたのに「空」と 言う★
+ *    ★api/claude.js が 生まれた 日（2026-03-28 5481820）から 約5か月★
+ *
+ *  ★直し（2026-09-05 指示役の 裁定「丙」）★
+ *      ★印の 行（--- TSV_START --- / --- TSV_END ---）だけ 外し、★中身は 本文に 残す★★
+ *      ★`tsv` の 欄は そのまま 残す★（消さない＝画面に 表として 貼る「甲」で 使う）
+ *      ★前置きは 触らない★（AI には 今までどおり 表を 出させる）
+ *
+ *  ★やらなかった 事と その 訳★
+ *      ・前置きから TSV を やめる … ★却下★（元の 狙いを 消す／記録が 無い＝消してよい 証拠も 無い）
+ *      ・表として 画面に 貼る …… ★機能なので 司さん待ち★
+ *
+ *  ★知っておく 事（正直に）★
+ *      本文は `\n` を `<br>` に して 出すだけ（book.html formatAIText）＝
+ *      ★タブは HTML で 潰れる＝列が そろって 見えない★。
+ *      ただし ★字としては タブが 残る★ので ★選んで Excel に 貼れば 列は 分かれる★。
+ *      ★見た目まで 直すのは「甲」★。
+ */
+function 答えを分ける(fullText) {
+  const 全 = String(fullText == null ? '' : fullText);
+  /* ★tsv は 今までどおり 最初の 塊を 取る★（欄を 消さない＝甲で 使う） */
+  const 塊 = 全.match(/---[ \t]*TSV_START[ \t]*---\r?\n([\s\S]+?)\r?\n---[ \t]*TSV_END[ \t]*---/);
+  const tsv = 塊 ? 塊[1].trim() : '';
+  /* ★印の 行だけ 消す★（★中身は 1字も 消さない★）。塊が 2つ以上でも 全部 消す。 */
+  const 印 = /^[ \t]*---[ \t]*TSV_(?:START|END)[ \t]*---[ \t]*\r?\n?/gm;
+  const text = 全.replace(印, '').replace(/\n{3,}/g, '\n\n').trim();
+  return { text, tsv };
+}
 
-- 日本語プレースホルダー（検索値・範囲・列番号など）は絶対に使わない
-- 必ず実際のセル参照（A2・B1:D20・$A:$C等）を使う
-- SUMIFは🔵範囲 🟠条件 🟣合計範囲 の3色
-- IFは🔵条件 🟠真の値 🟣偽の値 の3色
-- IFERRORは🔵数式 🟠エラー時の値 の2色
+/* ══ ★法定の基準数値＝倉庫(Supabase public.statutory)から 拾う★ ═══════════════
+ *  ★AI が 使うのは 4つだけ★／★どの 行から 来るか★（乙・2026-09-05 指示役）
+ *    健康保険料率（東京）… kind='shakaihoken'  year=★社保年度(3月起算)★  data.kenko_total.tokyo
+ *                          ★倉庫の値は 労使合計★ ⇒ 従業員負担 = ÷2
+ *    厚生年金保険料率     … kind='shakaihoken'  year=同上                data.kosei_total
+ *                          ★同じく 労使合計★     ⇒ 従業員負担 = ÷2
+ *    雇用保険料率（一般） … kind='koyo'         year=★労働保険年度(4月起算)★ data.ippan
+ *                          ★これは 最初から 従業員(労働者)負担★＝÷2 しない
+ *    消費税（標準/軽減）  … kind='shouhizei'    year=★その kind の 一番 新しい 行★  data.hyojun / data.keigen
+ *                          ★2019 と 決め打ちしない★＝倉庫の year は「施行年」で、
+ *                          税率が 変われば ★新しい year の 行が 増える★。決め打つと
+ *                          ★増えても 2019 を 読み続け、数字は 出るので 誰も 気づかない★。
+ *                          ★2019 は「消費税が 今の形に なった 年」＝年度では ない★
+ *  ★台帳の year は 種類ごとに 意味が ちがう★（社保年度／労働保険年度／施行年）＝上の通り。
+ *
+ *  ★年度は 呼ばれる たびに 選び直す★＝関数が 温まったまま 年を またいでも 古い率を 返さない。
+ *  ★行そのものは 10分だけ 手元に 置く★（法は 10分で 変わらない／毎回 倉庫を 叩くと AI が 遅くなる）
+ *    ＝★repo に 置く 写しとは 別物★（配ってもいないし、次に 冷えたら 消える）
+ *
+ *  ★拾えなかった 時は 数字を 出さない★（甲・2026-09-05 指示役）
+ *    ★黙って 抜くのが 一番 危ない★＝AI は 自分の 記憶の 率を 書いてしまう。
+ *    ⇒ 数字の 代わりに ★「今 出せない・推測で 書くな」と AI に 言う★。
+ */
+const 倉庫の行の寿命ミリ秒 = 10 * 60 * 1000;
+let _法定の行 = null, _法定を取った時 = 0;
 
-【TSV出力ルール・絶対厳守】
-- 表・テンプレートを作る場合は、本文の説明の後に必ず以下の形式で出力する：
+/** 共有の倉庫の口（★anon で読める 全アプリ共通の棚★＝サーバの鍵は要らない） */
+/* ★js/supa-config.js を 読む 所は 1つだけ★（2026-09-05）
+   ＝前は ★同じ 注記外しが この ファイルに 2つ★在った。片方だけ 直すと 静かに ずれる。
+   ★注記を外してから 読む★＝注記の中の URL を 本物と 読まない。
+   （tests/ の 見張りは scripts/lib/chuki.mjs を 使うが、ここは Vercel が 読む
+     CommonJS なので ESM を 取り込めない＝この ファイルの 中で 1つに 寄せる） */
+function supaConfigの中身() {
+  const fs = require('fs'), path = require('path');
+  return fs.readFileSync(path.join(__dirname, '..', 'js', 'supa-config.js'), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, ' ');
+}
 
---- TSV_START ---
-（ここにタブ区切りのデータ）
---- TSV_END ---
+let _共有の口 = undefined;
+function 共有の口() {
+  if (_共有の口 !== undefined) return _共有の口;
+  _共有の口 = null;
+  try {
+    const src = supaConfigの中身();
+    const u = /https:\/\/[a-z0-9]+\.supabase\.co/.exec(src);
+    const k = /['"](ey[A-Za-z0-9_.-]{40,}|sb_publishable_[A-Za-z0-9_-]{20,})['"]/.exec(src);
+    if (u && k) _共有の口 = { url: u[0], key: k[1] };
+  } catch (e) { _共有の口 = null; }
+  return _共有の口;
+}
 
-- TSVのセル区切りは必ずタブ文字（\\t）を使う・縦棒（|）は絶対に使わない
-- TSVの数式セルはExcelで動く形式（=SUM(B2:B10) など）で記載する
-- セル幅・書式は貼り付け後に手動調整が必要な旨を末尾に添える`;
+/** 倉庫から 3種類の行を 拾う。★取れなければ null★（前の値で ごまかさない）
+ *  ★fetch を 使わない★＝undici が 線を 繋いだまま 残し、process.exit と ぶつかって
+ *    ★node ごと 落ちる（Assertion failed: UV_HANDLE_CLOSING / src\win\async.c:76）★
+ *    ＝2026-09-05 実測（tests/api-claude は 49本 全部 緑なのに 終了の印 127）。
+ *    ⇒ node:https で 取り、★agent:false で 線を 毎回 閉じる★。Vercel でも 同じに 動く。 */
+function 倉庫を取る(u, key, ミリ秒) {
+  return new Promise((resolve) => {
+    let 済み = false;
+    const 終わり = (v) => { if (!済み) { 済み = true; resolve(v); } };
+    let req;
+    try {
+      req = https.get(u, { agent: false, headers: { apikey: key, Authorization: 'Bearer ' + key } }, (res) => {
+        if (res.statusCode !== 200) { res.resume(); return 終わり(null); }
+        let buf = '';
+        res.setEncoding('utf8');
+        res.on('data', (c) => { buf += c; });
+        res.on('end', () => { try { 終わり(JSON.parse(buf)); } catch (e) { 終わり(null); } });
+        res.on('error', () => 終わり(null));
+      });
+    } catch (e) { return 終わり(null); }
+    req.setTimeout(ミリ秒, () => { req.destroy(); 終わり(null); });   /* ★AI を 待たせ続けない★ */
+    req.on('error', () => 終わり(null));
+  });
+}
 
-// ===== 税務・給与の基準数値（kyuyo/lib の本体から・年度は対象月で自己選択） =====
-//  ・健保/介護は社保年度（3月起算）、雇用保険は労働保険年度（4月起算）で切り替わる。
-//  ・呼び出しの【たびに】組み立てる＝年度をまたいでも古い値を返さない
-//    （関数が温まったまま年度が変わる、を避ける）。
-function buildStatutoryPrompt(ymArg) {
-  const ym = ymArg || new Date().toISOString().slice(0, 7);  // 'YYYY-MM'
-  const kenko = SHAKAIHOKEN_HYO.getKenko('tokyo', ym);       // {jugyoin, nendo}
-  const koyoYear = KOYO_HOKEN.employYearOfYm(ym);
-  const koyoRate = KOYO_HOKEN.employRate('ippan', koyoYear);
-  const koyoNendo = '令和' + (koyoYear - 2018) + '年度';
+async function 法定を倉庫から拾う(いま) {
+  const now = いま || Date.now();
+  if (_法定の行 && (now - _法定を取った時) < 倉庫の行の寿命ミリ秒) return _法定の行;
+  const 口 = 共有の口();
+  if (!口) return null;
+  const u = 口.url + '/rest/v1/statutory?select=kind,year,data'
+    /* ★2026-09-06 に 2つ 足した★＝saitei_chingin（最低賃金）と rousai_ritsu（労災率）
+       ★会議(09-05)の 穴 D★＝設計書は「倉庫から」と 書いてあったのに
+       ★読んでいたのは 4つだけ★ ⇒ AIは この 2つを ★記憶から 書いていた★
+       ★表は 前置きに 貼らない★（47都道府県／54業種＝毎回 置き賃）
+       ⇒★「在る／年度」だけ 書いて ★数字は 言わせない★★ */
+    + '&or=(kind.eq.shakaihoken,kind.eq.koyo,kind.eq.shouhizei,'
+    + 'kind.eq.saitei_chingin,kind.eq.rousai_ritsu)';
+  const 行 = await 倉庫を取る(u, 口.key, 4000);
+  if (!Array.isArray(行) || !行.length) return null;
+  _法定の行 = 行; _法定を取った時 = now;
+  return 行;
+}
+
+/* 年度の 決まり（★数値では なく 暦の 決まり★＝法定の数字では ない）
+ *   社保年度 … 3月起算（2026-02 は 令和7年度・2026-03 から 令和8年度）
+ *   労働保険年度 … 4月起算（2026-03 は 令和7年度・2026-04 から 令和8年度） */
+function 社保年度(ym) { const y = +String(ym).slice(0, 4), m = +String(ym).slice(5, 7); return m >= 3 ? y : y - 1; }
+function 労働保険年度(ym) { const y = +String(ym).slice(0, 4), m = +String(ym).slice(5, 7); return m >= 4 ? y : y - 1; }
+function 令和(y) { return '令和' + (y - 2018) + '年度'; }
+
+/** その年度の 行を 選ぶ。★無ければ 手前の 一番 新しい 年★（先の年は 使わない） */
+function その年度の行(行たち, kind, year) {
+  const 候補 = (行たち || []).filter((r) => r.kind === kind && typeof r.year === 'number');
+  if (!候補.length) return null;
+  const 以下 = 候補.filter((r) => r.year <= year).sort((a, b) => b.year - a.year);
+  if (以下.length) return 以下[0];
+  return 候補.sort((a, b) => a.year - b.year)[0];   /* 全部 先の年＝一番 手前を 使う */
+}
+
+/* ★拾えなかった 時に AI へ 言う 事★（甲）＝★数字を 書かせない★ */
+const 法定が取れない時 = `
+
+【税務・給与計算の基準数値】
+- ★今この場で 法定の数値（保険料率・税率）を取り出せませんでした★
+- 保険料率・税率・税額をたずねられたら、★数字を答えず★「今この数字を出せないので、少し時間をおいてもう一度きいてください」と伝えること
+- ★おぼえている率・推測した率を 答えに書かないこと★（古い率で計算すると 給与も税額もまちがう）
+- 率を使わない説明（数式の作り方・表の組み立て方）は これまでどおり答えてよい`;
+
+/**
+ * 法定の基準数値の 前置きを 組み立てる。
+ *   行たち … 法定を倉庫から拾う() の 返り（★null なら 数字を 出さない★）
+ *   ymArg  … 対象月 'YYYY-MM'（省略＝今日）
+ */
+/** その kind の ★一番 新しい 年の 行★（施行年で 持っている 種類＝消費税 など） */
+function そのkindの一番新しい行(行たち, kind) {
+  const 候補 = (行たち || []).filter((r) => r.kind === kind && typeof r.year === 'number');
+  if (!候補.length) return null;
+  return 候補.sort((a, b) => b.year - a.year)[0];
+}
+
+function buildStatutoryPrompt(ymArg, 行たち) {
+  const ym = ymArg || new Date().toISOString().slice(0, 7);
+  const 社保 = その年度の行(行たち, 'shakaihoken', 社保年度(ym));
+  const 雇用 = その年度の行(行たち, 'koyo', 労働保険年度(ym));
+  /* ★消費税は「年度」では なく「施行年」★＝対象月から 選ぶ 物では ない。
+     ⇒★その kind の 一番 新しい 行★を 取る（★2019 と 書かない★）。 */
+  const 消費 = そのkindの一番新しい行(行たち, 'shouhizei');
+  const 健保合計 = 社保 && 社保.data && 社保.data.kenko_total && 社保.data.kenko_total.tokyo;
+  const 厚年合計 = 社保 && 社保.data && 社保.data.kosei_total;
+  const 雇用率 = 雇用 && 雇用.data && 雇用.data.ippan;
+  const 標準 = 消費 && 消費.data && 消費.data.hyojun;
+  const 軽減 = 消費 && 消費.data && 消費.data.keigen;
+  /* ★1つでも 欠けたら 全部 出さない★＝半分だけの 表は 一番 危ない */
+  /* ★最低賃金・労災率は ★表が 大きい★（47都道府県／54業種）＝前置きに 貼らない★
+     ⇒★在るか どうかと 年度だけ★ 前置きに 出し、★数字は 言わせない★
+     ⇒★1行でも 欠けたら 全部 出さない★＝半分だけの 表は 一番 危ない（下と 同じ 決まり） */
+  const 最賃 = そのkindの一番新しい行(行たち, 'saitei_chingin');
+  const 労災 = そのkindの一番新しい行(行たち, 'rousai_ritsu');
+  /* ★ここは 数字では なく「在るか／年度」だけ★＝欠けても 消費税まで 消すのは 行き過ぎ
+     ⇒★取れなければ「取れませんでした」と 書いて ★同じく 数字を 言わせない★★
+     （★半分の 表を 出さない★の 決まりは ★数字を 出す 5つ★に かかる） */
+  const 最賃の年度 = 最賃 && 最賃.year ? 令和(最賃.year) : '★倉庫から 取れませんでした★';
+  const 労災の年度 = 労災 && 労災.year ? 令和(労災.year) : '★倉庫から 取れませんでした★';
+  const 揃った = [健保合計, 厚年合計, 雇用率, 標準, 軽減].every((v) => typeof v === 'number' && isFinite(v));
+  if (!揃った) return 法定が取れない時;
   return `
 
 【税務・給与計算の基準数値】
-- 健康保険料率（東京）: ${(kenko.jugyoin * 100).toFixed(3)}%（従業員負担・労使折半・${kenko.nendo}）
-- 厚生年金保険料率: ${(SHAKAIHOKEN_HYO.KOSEI_NENKIN_RITSU_JUGYOIN * 100).toFixed(2)}%（従業員負担・労使折半・全国一律）
-- 雇用保険料率: ${(koyoRate * 100).toFixed(2)}%（従業員負担・一般の事業・${koyoNendo}）
-- 消費税: ${(SHOUHIZEI_RITSU.hyojun * 100).toFixed(0)}%（標準）/ ${(SHOUHIZEI_RITSU.keigen * 100).toFixed(0)}%（軽減）`;
+- 健康保険料率（東京）: ${(健保合計 / 2 * 100).toFixed(3)}%（従業員負担・労使折半・${令和(社保.year)}）
+- 厚生年金保険料率: ${(厚年合計 / 2 * 100).toFixed(2)}%（従業員負担・労使折半・全国一律）
+- 雇用保険料率: ${(雇用率 * 100).toFixed(2)}%（従業員負担・一般の事業・${令和(雇用.year)}）
+- 消費税: ${(標準 * 100).toFixed(0)}%（標準）/ ${(軽減 * 100).toFixed(0)}%（軽減）
+
+【★数字を 言っては いけない 物★】
+- ★最低賃金★ … 倉庫（${最賃の年度}）に 在るが ★都道府県ごとに 違う★。
+  ⇒ ★金額を 言わない★。まず ★どの 都道府県か★を 聞く。
+  ⇒ 聞いた上でも ★この 前置きには 表が 無い★ので、
+    「その 県の 額は こちらで 出します」と 言い、★自分の 記憶から 書かない★。
+- ★労災保険率★ … 倉庫（${労災の年度}）に 在るが ★事業の 種類ごとに 違う★。
+  ⇒ ★率を 言わない★。まず ★何の 事業か★を 聞く。
+- ★源泉徴収の 率・税額★ … ★倉庫に 入っていない★。
+  ⇒ ★率も 税額も 言わない★（10.21% などを 記憶から 書かない）。
+  ⇒「国税庁の 表に 当てる 必要が あるので、うちでは 数字を 出しません」と 言う。
+- 上の どれも ★率を 使わない 説明（表の 組み立て方・数式）は これまでどおり 答えてよい★。`;
 }
 
 // ===== 動的プロンプト生成 =====
-function buildDynamicPrompt(versionInfo) {
-  const group = versionInfo.group;
-  const name = versionInfo.name;
-
-  // グループ別の回答ルール
-  let groupRule = '';
-
-  if (group === 'latest') {
-    groupRule = `
-【ユーザーのExcel環境】
-使用中のExcel：${name}（最新バージョン）
-
-【回答ルール】
-- XLOOKUP・スピル関数（FILTER/SORT/UNIQUE等）・LET・LAMBDA等の最新関数を積極的に提案する
-- 「Exally内でも同じ数式が動くよ」程度の短い補足でOK（詳細対比は不要）
-- 基本関数（SUM/AVERAGE等）では補足不要`;
-  }
-  else if (group === 'newer') {
-    groupRule = `
-【ユーザーのExcel環境】
-使用中のExcel：${name}
-
-【回答ルール】
-- XLOOKUP等の新関数は使えるので積極提案
-- 動的配列関数（FILTER/SORT等）は一部対応・使用時は注記を添える
-- 「Exally内ならもっと便利な方法もあるよ」程度の補足を時々添える`;
-  }
-  else if (group === 'older') {
-    groupRule = `
-【ユーザーのExcel環境】
-使用中のExcel：${name}（旧バージョン）
-
-【回答ルール】
-- メイン回答は古いExcelで動く関数（VLOOKUP・ネストIF・配列数式・CONCATENATE等）を使う
-- XLOOKUP・FILTER・SORT・UNIQUE・LET・LAMBDA等は使わない
-- 必ず「💡 Exally内なら〜」を併記する（以下の対比がある場合）：
-  - VLOOKUP → XLOOKUP
-  - ネストIF → IFS/SWITCH
-  - 配列数式（Ctrl+Shift+Enter） → FILTER/SORT/UNIQUE
-  - CONCATENATE → TEXTJOIN/CONCAT
-- 併記フォーマット：
-  💡 Exally内なら 〇〇 がもっと便利
-  🔵🟠🟣🟢 で引数を色分けして説明
-  \`\`\`代替数式\`\`\`
-  ※違いを3点以内で示す
-- 基本関数（SUM/AVERAGE/COUNT等）は併記不要`;
-  }
-  else if (group === 'online') {
-    groupRule = `
-【ユーザーのExcel環境】
-使用中のExcel：${name}（機能制限あり）
-
-【回答ルール】
-- Excel Onlineは一部機能に制限があるので基本関数を中心に提案
-- 複雑な機能は「Excelデスクトップでお試し」と補足
-- 「💡 Exally内ならもっと便利に使えるよ」を時々併記`;
-  }
-  else if (group === 'exally_only') {
-    groupRule = `
-【ユーザーのExcel環境】
-使用中のExcel：${name}（Exally内完結）
-
-【回答ルール】
-- XLOOKUP・スピル関数・LET・LAMBDA等の最新関数を積極的に使用
-- 「AIに話しかけてセルに書き込み」機能を時々案内
-- Excelへの配慮は不要・Exallyの全機能を活かした回答をする`;
-  }
-
-  // 全グループ共通ルール
-  const commonRule = `
-
-【全グループ共通ルール】
-1. ユーザーが「動かない」「エラーが出る」「#NAME?」「#VALUE!」「#REF!」「古いExcel」「使えない」「対応してない」と反応してきたら、古いExcelで動く数式に切り替えて回答する
-2. 切り替え時は一言添える：「もしかしてExcel 2019以前？古い版でも動く書き方を提案するね」
-3. 適切なタイミングで「設定画面でExcelバージョンを変更できるよ」を案内する
-
-【Exally未対応関数の扱い】
-
-完全未対応（Exally内で構造上動かない）：
-${EXALLY_UNSUPPORTED.full.join(', ')}
-
-まだ未対応（将来実装予定）：
-${EXALLY_UNSUPPORTED.pending.join(', ')}
-
-これらの関数について質問されたら：
-1. Excelでの使い方を通常通り🔵🟠🟣🟢の色分けで説明する
-2. ⚠️ を付けて「Exally内ではこの関数は動かないよ」と明記する
-3. 💡 で代替手段を色分けで提案する（SUMIFS/FILTER/UNIQUE/INDEX等の対応関数で同じ結果を出す方法）
-4. 将来対応予定なら「※Exally内で対応予定」を添える（具体的な時期は書かない）
-`;
-
-  return SYSTEM_PROMPT_BASE + buildStatutoryPrompt() + groupRule + commonRule;
+function buildDynamicPrompt(versionInfo, 法定の行) {
+  const 部品 = buildPromptParts(versionInfo, 法定の行);
+  return 部品.共通 + 部品.版ごと;
 }
 
 /* ★前置きを「置いたまま使い回す」ために 2つに分ける（2026-08-22）★
    ・前半＝★どの版の人にも同じ★（作りの説明＋法定の基準数値）＝ここを置いたままにする
    ・後半＝★版ごとに変わる★（Excel 365 / 2016 / 持っていない …）＝置き場所の後ろに回す
    ★変わる物を前に置くと 毎回 置き直しになって 逆に高くなる★（一次情報の決まり） */
-function buildPromptParts(versionInfo) {
-  const 共通 = SYSTEM_PROMPT_BASE + buildStatutoryPrompt();
-  const 全部 = buildDynamicPrompt(versionInfo);
-  const 版ごと = 全部.slice(共通.length);
+function buildPromptParts(versionInfo, 法定の行) {
+  const P = 前置きを読む();                       /* ★読めなければ 投げる★ */
+  /* ★``` の 中だけ 渡す★＝人向けの 注記（作り方・日付）を AIへ 送らない。
+     ★①は 置いたまま 使い回す 所★なので、日付が 混ざると ★毎回 置き直し＝毎回 置き賃★。
+     ⇒ 実際に 踏んだ（2026-09-05）＝`tests/api-claude.test.mjs` の
+       「①に 毎回変わる物が 混ざっていない」が 赤に なった。 */
+  /* ★聞く順と 悩みは ★版で 変わらない★＝①（置いたまま 使い回す 所）に 入れる★
+     ⇒ 変わる物を 前に 置くと 毎回 置き直し＝毎回 置き賃（一次情報の 決まり） */
+  const 共通 = 中身だけ(P['base.md'])
+    + '\n\n' + 中身だけ(P['kansuu.md'])
+    + '\n\n' + 中身だけ(P['nayami.md'])
+    + '\n\n' + 中身だけ(P['kiite-ageru.md'])
+    + buildStatutoryPrompt(null, 法定の行);
+  const 版ごと = '\n' + 版の決まり(P['version.md'], versionInfo.group)
+    + '\n' + 中身だけ(P['kyoutsuu.md']);
   return { 共通, 版ごと };
 }
 
@@ -244,8 +369,13 @@ function buildPromptParts(versionInfo) {
      ＝ ★1回で 会社が傾く額を 出せる作り★だった（1回の上限は 字数しか見ていなかった）。
    ★数字は ここ1か所だけ★（散らすと 直す時に 必ず 片方が残る）
    ★止めた時も 必ず 記録を残す★（止まった事が 見えないと 誰も気づけない） */
+/* ★回数と 字数は lib/ai-genkai.js の 1か所から 読む★（2026-09-05）
+   ＝ここに 書いてある「数字は ここ1か所だけ」を ★掘る側も 含めて★ 本当にした。
+   （前は 掘る数だけ lib/horu.js に 在り、15回 叩いて 10回で 止まっていた） */
+const AI限界 = require('../lib/ai-genkai.js').限界;
+
 const 事故止め = {
-  分の回数: 10,          // ★1分に10回（人ごと）★
+  分の回数: AI限界.分の回数,          // ★1分に10回（人ごと）★
   分の窓ミリ秒: 60 * 1000,
   日の回数: 100,         // ★1日に100回（人ごと）★
   日の窓ミリ秒: 24 * 60 * 60 * 1000,
@@ -273,11 +403,7 @@ let _repoの倉庫 = undefined;
 function repoの倉庫() {
   if (_repoの倉庫 !== undefined) return _repoの倉庫;
   try {
-    const fs = require('fs');
-    const path = require('path');
-    const src = fs.readFileSync(path.join(__dirname, '..', 'js', 'supa-config.js'), 'utf8')
-      /* ★注記を外してから読む★（注記の中の URL を 本物と読まない） */
-      .replace(/\/\*[\s\S]*?\*\//g, ' ');
+    const src = supaConfigの中身();
     const m = /https:\/\/([a-z0-9]+)\.supabase\.co/.exec(src);
     _repoの倉庫 = m ? m[1] : null;
   } catch (e) { _repoの倉庫 = null; }
@@ -594,7 +720,10 @@ module.exports = async (req, res) => {
 
     // バージョンに応じた動的プロンプトを構築
     const versionInfo = getVersionInfo(excelVersion);
-    const dynamicPrompt = buildDynamicPrompt(versionInfo);
+    /* ★法定の数字は 押された その時に 倉庫から 拾う★（司さん 2026-09-05）
+       ★取れなければ null★＝下の 前置きが「数字を出すな」に 切り替わる */
+    const 法定の行 = await 法定を倉庫から拾う();
+    const dynamicPrompt = buildDynamicPrompt(versionInfo, 法定の行);
 
     /* ★置いたまま使い回す（prompt caching）★ 2026-08-22
        なぜ … 会話40件(20往復)を ★毎回まるごと送り直していた★＝1回 平均 約4円。
@@ -603,7 +732,7 @@ module.exports = async (req, res) => {
               ★印は最大4か所★／★読み直し 0.1倍・置く時 1.25倍（5分もつ）★＝一次情報。
               ★Sonnet 4.6 は 1,024トークン未満だと 黙って置かれない★ので 前置きは1つに束ねる。
        ★客の画面は 1文字も変えていない（我慢も 上限も していない）★ */
-    const 部品 = buildPromptParts(versionInfo);
+    const 部品 = buildPromptParts(versionInfo, 法定の行);
     /* ★①の共通の所だけ 1時間もつ置き方にする（2026-08-22 指示役の 1-b）★
        なぜ … 5分の置き方は ★2回目から★ 安くなる仕掛け。
               ★5分 空けて 1回だけ押して終わる人★は 毎回が「1回目」＝★ずっと +25%★。
@@ -686,11 +815,8 @@ module.exports = async (req, res) => {
       .map(block => block.text)
       .join('');
 
-    const tsvMatch = fullText.match(/---\s*TSV_START\s*---\n([\s\S]+?)\n---\s*TSV_END\s*---/);
-    const tsv = tsvMatch ? tsvMatch[1].trim() : '';
-    const text = tsvMatch ? fullText.replace(tsvMatch[0], '').trim() : fullText;
-
-    return res.status(200).json({ text, tsv });
+    const 分け = 答えを分ける(fullText);
+    return res.status(200).json({ text: 分け.text, tsv: 分け.tsv });
 
   } catch (err) {
     console.error('Claude API error:', err);
@@ -751,6 +877,10 @@ function 見出しを読む(h) {
 function 失敗を分ける(err) {
   const msg = (err && err.message) || '';
   const st = err && err.status;
+  /* ★うちの 支度が 足りない（prompt/ が 読めない）★（2026-09-05 指示役）
+     ★一番 先に 見る★＝後ろに 置くと ai_shippai に 落ちて ★「AI側の 問題です」と 嘘を 言う★。
+     ⇒ 客も 管理者も AI を 疑い ★誰も うちを 見ない★。 */
+  if (err && err.支度足りない) return { status: 500, 合言葉: 'shitaku_tarinai' };
   if (/credit balance/i.test(msg) || /insufficient[_ ]?quota/i.test(msg)) return { status: 402, 合言葉: 'zandaka' };
   if (st === 401 || st === 403 || /api[ _-]?key/i.test(msg)) return { status: 401, 合言葉: 'kagi' };
   if (st === 429) return { status: 429, 合言葉: 'komiai' };
@@ -766,6 +896,9 @@ function 失敗を分ける(err) {
 //   なぜ要るか: 基準数値が黙って NaN / undefined になっても、画面は普通に出てしまう。
 //   機械が数値そのものを見るための口。
 module.exports.__buildStatutoryPrompt = buildStatutoryPrompt;
+module.exports.__答えを分ける = 答えを分ける;
+module.exports.__法定を倉庫から拾う = 法定を倉庫から拾う;
+module.exports.__法定が取れない時 = 法定が取れない時;
 /* ★失敗した時に 本当に何を返すかを 機械が押すための窓★
    （本番は module.exports を 関数として呼ぶだけなので 挙動は変わらない） */
 module.exports.__失敗を分ける = 失敗を分ける;

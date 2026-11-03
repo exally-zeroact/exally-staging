@@ -2,3 +2,14 @@
 node_modules
 tests/xlsx-harness/tmp/
 tests/xlsx-harness/golden/pending-*.json
+
+# ★司さんの実物から 取った 紙は repo に 入れない★（2026-09-11）
+#   取引先の 名前・金額が 入って います。
+#   道具（docs/measured/toru-jitsubutsu-deruji.ps1 ／ osu-jitsubutsu-deruji.mjs）は
+#   手元で 走らせて 手元で 見ます＝★紙は 置いて いきません★
+docs/measured/golden-jitsubutsu-*.tsv
+.wakete-kiroku.json
+
+# ★python が 勝手に 作る 物★（2026-09-18・git add -A で 入って しまった）
+__pycache__/
+*.pyc

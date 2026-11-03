@@ -152,7 +152,10 @@ T('★連続コピー(オートフィル)も数を日付にしない', () => {
 T('★★setCell を実際に動かす（打つたびに例外が出ないこと）★★', () => {
   const src = fs.readFileSync(path.join(ROOT, 'book.html'), 'utf8');
   /* ★_typedNumFmt を足した（E3: 1,234 に #,##0 を当てる）。足さないと『打つと例外』になる★ */
-  const names = ['dateSerial', 'parseDateStr', 'parseDate', 'dateFmtForFormula', '_typedNumFmt', 'toHFVal', 'setCell'];
+  /* ★`_計算を始める` を 足した（2026-09-25）★
+       ＝開いた 直後の 計算を 止めた ので、★最初の 1打ちで 計算を 始め直します★
+       ＝★偽物を 置かずに 本物を 取り出します★（置くと 消えた 日に 気づけない） */
+  const names = ['dateSerial', 'parseDateStr', 'parseDate', 'dateFmtForFormula', '_typedNumFmt', 'toHFVal', '_計算を始める', 'setCell'];
   const body = names.map(n => grab(n)).join('\n');
   // setCell が触る外の物だけを最小限そろえる（HFやcanvasは使わない）
   const harness = `
@@ -161,6 +164,8 @@ T('★★setCell を実際に動かす（打つたびに例外が出ないこと
     /* ★2026-08-18 追加: 最初の1直しの前に全シートの控えを取る仕掛け。
        ここは「打っても例外が出ないか」を見る所なので、外の物は最小限そろえる。 */
     var _baselineTaken=false, _editedCells={};
+    /* ★『計算を始める』が 見る 旗（本物と 同じ 名・同じ 初めの 値）★ */
+    var _開いた直後は計算しない=false;
     var BookOpen={ isOpened:function(){ return false; } };
     function loadSheetIntoEngine(){}
     function _hfSid(){ return 0; }

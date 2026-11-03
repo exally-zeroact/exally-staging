@@ -1,0 +1,127 @@
+/* ★指数の 見た目の 紙を ★うちの 本番の 道★で 押して 突き合わせる★（2026-09-10）
+ *
+ *  ★正★ … `golden-shisuu-mitame-2026-09-10.tsv`（実Excel の 実測・99本）
+ *
+ *  ★★押す 道★★
+ *    画面に 字を 描くのは `drawText` → `fmtForDisplay(raw, cell.numFmt)` → `forDisplay(raw)`
+ *    ⇒★書式が 無い マス（General）は `forDisplay` が そのまま 画面の 字★
+ *    ⇒★だから `forDisplay` を ★book.html から 切り出して★ 押す★
+ *      （★写しを 置かない★＝写しは 本番と ずれる）
+ *
+ *  ★★この 台の 数は 画面の 数では ありません★★
+ *    ★jsdom も ブラウザも 使って いません★＝`forDisplay` の 戻り字を 見て いるだけ
+ *    ⇒ 実際に ★描かれた 絵★を 言いたい時は ★ブラウザで 押す★
+ *
+ *  ★材料は 紙から 読む★（★手で 写さない★）
+ *  ★数だけで 済ませない★＝★出た 字を 並べて 出す★
+ *
+ *  ★★区切りに 逃がし（バックスラッシュ）も 空白も 使いません★★
+ *    2026-09-10 … ここに 書いた 区切りが ★生の NUL（1バイト）に 化けて いました★
+ *    ⇒ git が 絵 扱いに して ★差分が 見えなく なる★（見張り nul-nashi が 捕まえた）
+ *    ⇒★09-07 に 同じ型を 3回 踏んで 決め事に した 物の 4回目★
+ *    ⇒★決め事どおり『字そのものを 書かない』＝ふつうの `@` に した★
+ *
+ *  使い方: node docs/measured/osu-shisuu-mitame.mjs
+ */
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+const 紙 = path.join(ROOT, 'docs/measured/golden-shisuu-mitame-2026-09-10.tsv');
+const 出す先 = path.join(ROOT, 'docs/measured/golden-shisuu-mitame-awase-2026-09-10.tsv');
+
+/* ══ ★本番の `forDisplay` を book.html から 切り出す（★写しを 置かない★）★ ══ */
+function 切り出す(名) {
+  const s = fs.readFileSync(path.join(ROOT, 'book.html'), 'utf-8');
+  const 頭 = s.indexOf('function ' + 名 + '(');
+  if (頭 < 0) throw new Error('★book.html に ' + 名 + ' が 無い★');
+  const 開き = s.indexOf('{', 頭);
+  let 深さ = 0, i = 開き;
+  for (; i < s.length; i++) {
+    if (s[i] === '{') 深さ++;
+    else if (s[i] === '}') { 深さ--; if (深さ === 0) break; }
+  }
+  if (深さ !== 0) throw new Error('★' + 名 + ' の 閉じが 見つからない★');
+  return s.slice(頭, i + 1);
+}
+/* ★本番の 段を まとめて 切り出す（★写しを 置かない★）★
+   ★つなぎ目に 逃がし（バックスラッシュ n）を 使いません★
+   ＝2026-09-07/10 に ★heredoc で 生の 改行に 化ける★のを 3回 踏んだ
+   ⇒ JS は `function a(){} function b(){}` を 1行に 並べて よい */
+const 本 = fs.readFileSync(path.join(ROOT, 'book.html'), 'utf-8');
+const 枠の行 = /var GEN_枠 = (\d+);/.exec(本);
+if (!枠の行) throw new Error('★book.html に GEN_枠 が 無い★');
+const GEN_枠 = Number(枠の行[1]);
+const 段たち = ['_指数の字数', '_平らな十進', 'excelGeneral', 'forDisplay'];
+const forDisplay = new Function(
+  段たち.map((名) => 切り出す(名)).join(' ')
+  + ' var GEN_枠 = ' + GEN_枠 + '; return forDisplay;'
+)();
+
+/* ══ ★材料を 紙から 読む★ ══ */
+const 生 = fs.readFileSync(紙, 'utf-8').split(/\r?\n/);
+const 材料 = [];
+const 幅たち = [];
+for (const l of 生) {
+  if (l.startsWith('#材料\t')) { const c = l.split('\t'); 材料.push({ 札: c[1], s: c[2] }); }
+  else if (l.startsWith('#幅\t')) 幅たち.push(...l.split('\t')[1].split(',').map(Number));
+}
+if (!材料.length) { console.error('★材料が 1本も 読めなかった★'); process.exit(2); }
+if (!幅たち.length) { console.error('★幅が 読めなかった★'); process.exit(2); }
+
+/* ══ ★実Excel の 答えを 紙から 読む★（札+字+幅 → 出る字） ══ */
+const 実 = new Map();
+for (const l of 生) {
+  if (!l || l.startsWith('#')) continue;
+  const c = l.split('\t');
+  if (c.length < 5) continue;
+  実.set(c[1] + '@' + c[2], { 字: c[3], 中: c[4] });
+}
+
+/* ══ ★押す★ ══ */
+const 行 = [];
+行.push('# ★指数の 見た目を うちの 本番の 道で 押して 突き合わせた★（2026-09-10）');
+行.push('#');
+行.push('# ★正★ golden-shisuu-mitame-2026-09-10.tsv（実Excel の 実測）');
+行.push('# ★押す 道★ `book.html` の `forDisplay` を ★切り出して★ 押す（★写しを 置かない★）');
+行.push('# ★★この 台の 数は 画面の 数では ありません★★＝★絵は ブラウザで 押す★');
+行.push('# ★材料は 紙から 読んだ★（' + 材料.length + '本）★手で 写して いません★');
+行.push('#');
+行.push('# ★★うちは 列の 幅を 見て いません★★＝どの 幅でも 同じ 字を 出す');
+行.push('#   ⇒ 実Excel は ★幅で 出方が 変わる★ので ★幅ごとに 並べる★');
+行.push('#');
+行.push(['# 札', '打った 字', '幅', '実Excel', 'うち', '判じ'].join('\t'));
+
+let 合った = 0, 違う = 0;
+const 実物 = [];
+for (const m of 材料) {
+  const n = Number(m.s);
+  const うち = String(forDisplay(n));
+  for (const w of 幅たち) {
+    const e = 実.get(m.s + '@' + String(w));
+    if (!e) { console.error('★紙に 無い … ' + m.s + ' 幅' + w + '★'); process.exit(2); }
+    const 同じ = (e.字 === うち);
+    if (同じ) 合った++; else { 違う++; 実物.push({ s: m.s, w, 実: e.字, 内: うち }); }
+    行.push([m.札, m.s, String(w), e.字, うち, 同じ ? '合った' : '★違う★'].join('\t'));
+  }
+}
+
+行.push('#');
+行.push('# ★★締め★★ 全 ' + (合った + 違う) + '本');
+行.push('#   合った ……………… ' + 合った);
+行.push('#   ★違う★ …………… ' + 違う);
+行.push('#   ―― 足すと ' + (合った + 違う) + ' ／ 全 ' + (合った + 違う) + '本');
+
+fs.writeFileSync(出す先, 行.join('\n') + '\n', 'utf-8');
+
+console.log('');
+console.log('★★締め★★ 全 ' + (合った + 違う) + '本 ／ 合った ' + 合った + ' ／ ★違う ' + 違う + '★');
+console.log('');
+console.log('★合わない 物の 実物（★数だけで 済ませない＝出た 字を 並べる★）★');
+console.log('  ' + '打った 字'.padEnd(26) + '幅'.padEnd(7) + '実Excel'.padEnd(16) + 'うち');
+for (const r of 実物) {
+  console.log('  ' + r.s.padEnd(26) + String(r.w).padEnd(7) + r.実.padEnd(16) + r.内);
+}
+console.log('');
+console.log('★書いた … ' + 出す先 + '★');

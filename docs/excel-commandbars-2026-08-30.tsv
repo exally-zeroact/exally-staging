@@ -1,0 +1,4673 @@
+# 実Excel 16.0 の ★CommandBars（右クリックの メニュー ほか）★ 2026-08-30
+# 取り方: Application.CommandBars を 全部 歩く（新規ブック・保存なし・読むだけ）
+# 列: バーの名前 / 親の道 / 命令 / Type / Id
+Worksheet Menu Bar		ファイル​​(F)	10	30002
+Worksheet Menu Bar	/ファイル​​(F)	新規作成​​(N)...	1	18
+Worksheet Menu Bar	/ファイル​​(F)	開く(O)...	1	23
+Worksheet Menu Bar	/ファイル​​(F)	閉じる​​(C)	1	106
+Worksheet Menu Bar	/ファイル​​(F)	上書き​​保存(S)	1	3
+Worksheet Menu Bar	/ファイル​​(F)	名前を付けて​​保存(A)...	1	748
+Worksheet Menu Bar	/ファイル​​(F)	単一 Web ​​ページ (*.mht)	1	3823
+Worksheet Menu Bar	/ファイル​​(F)	作業状態の​​保存(W)...	1	846
+Worksheet Menu Bar	/ファイル​​(F)	ファイル検索(H)...	1	5905
+Worksheet Menu Bar	/ファイル​​(F)	アクセス​​許可(M)...	1	7994
+Worksheet Menu Bar	/ファイル​​(F)	アクセス許可(M)	10	31308
+Worksheet Menu Bar	/ファイル​​(F)/アクセス許可(M)	アクセス​​制限なし(U)	1	7990
+Worksheet Menu Bar	/ファイル​​(F)/アクセス許可(M)	アクセス​​制限あり(R)	1	7991
+Worksheet Menu Bar	/ファイル​​(F)/アクセス許可(M)	資格情報の​​管理(M)	1	10014
+Worksheet Menu Bar	/ファイル​​(F)	チェック​​アウト(E)	1	6127
+Worksheet Menu Bar	/ファイル​​(F)	チェック​​イン(E)...	1	6128
+Worksheet Menu Bar	/ファイル​​(F)	バージョン​​履歴(R)...	1	7799
+Worksheet Menu Bar	/ファイル​​(F)	ブラウザーで​​プレビュー(B)	1	3655
+Worksheet Menu Bar	/ファイル​​(F)	ページ​​設定(U)...	1	247
+Worksheet Menu Bar	/ファイル​​(F)	印刷範囲(T)	10	30255
+Worksheet Menu Bar	/ファイル​​(F)/印刷範囲(T)	印刷範囲の​​設定(S)	1	364
+Worksheet Menu Bar	/ファイル​​(F)/印刷範囲(T)	印刷範囲の​​クリア(C)	1	1584
+Worksheet Menu Bar	/ファイル​​(F)	印刷​​プレビュー(V)	1	109
+Worksheet Menu Bar	/ファイル​​(F)	印刷(P)...	1	4
+Worksheet Menu Bar	/ファイル​​(F)	送信(D)	10	30095
+Worksheet Menu Bar	/ファイル​​(F)/送信(D)	メールの​​宛先(M)	1	3738
+Worksheet Menu Bar	/ファイル​​(F)/送信(D)	校閲結果の​​返信(S)...	1	6139
+Worksheet Menu Bar	/ファイル​​(F)/送信(D)	メールの宛先 (校閲用)(C)...	1	5958
+Worksheet Menu Bar	/ファイル​​(F)/送信(D)	メールの宛先 ​​(添付ファイル)(A)...	1	2188
+Worksheet Menu Bar	/ファイル​​(F)/送信(D)	Exchange​​フォルダー(E)...	1	938
+Worksheet Menu Bar	/ファイル​​(F)/送信(D)	オンライン会議の参加者(O)	1	3728
+Worksheet Menu Bar	/ファイル​​(F)/送信(D)	インターネット FAX サービス​​を使用する宛先(X)...	1	7392
+Worksheet Menu Bar	/ファイル​​(F)	プロパティ​​(I)	1	750
+Worksheet Menu Bar	/ファイル​​(F)	最近使用した​​ファイル名(R)	1	12547
+Worksheet Menu Bar	/ファイル​​(F)	最近使用した​​ファイル名(R)	1	831
+Worksheet Menu Bar	/ファイル​​(F)	サインアウト​​(T)	1	5950
+Worksheet Menu Bar	/ファイル​​(F)	Excel の終了(X)	1	752
+Worksheet Menu Bar		編集(E)	10	30003
+Worksheet Menu Bar	/編集(E)	元に戻せません(U)	1	128
+Worksheet Menu Bar	/編集(E)	繰り返しできません(R)	1	37
+Worksheet Menu Bar	/編集(E)	切り取り​​(T)	1	21
+Worksheet Menu Bar	/編集(E)	コピー​​(C)	1	19
+Worksheet Menu Bar	/編集(E)	Office ​​クリップボード(B)...	1	809
+Worksheet Menu Bar	/編集(E)	貼り付け(P)	1	22
+Worksheet Menu Bar	/編集(E)	形式を選択して​​貼り付け(S)...	1	755
+Worksheet Menu Bar	/編集(E)	ハイパーリンクとして​​貼り付け(H)	1	2787
+Worksheet Menu Bar	/編集(E)	フィル(I)	10	30020
+Worksheet Menu Bar	/編集(E)/フィル(I)	下方向へ​​コピー(D)	1	372
+Worksheet Menu Bar	/編集(E)/フィル(I)	右方向へ​​コピー(R)	1	371
+Worksheet Menu Bar	/編集(E)/フィル(I)	上方向へ​​コピー(U)	1	867
+Worksheet Menu Bar	/編集(E)/フィル(I)	左方向へ​​コピー(L)	1	868
+Worksheet Menu Bar	/編集(E)/フィル(I)	作業グループへ​​コピー(A)...	1	869
+Worksheet Menu Bar	/編集(E)/フィル(I)	連続データの​​作成(S)...	1	870
+Worksheet Menu Bar	/編集(E)/フィル(I)	文字の​​割付(J)	1	871
+Worksheet Menu Bar	/編集(E)	クリア​​(A)	10	30021
+Worksheet Menu Bar	/編集(E)/クリア​​(A)	すべて(A)	1	1964
+Worksheet Menu Bar	/編集(E)/クリア​​(A)	書式(F)	1	872
+Worksheet Menu Bar	/編集(E)/クリア​​(A)	数式と値​​(C)	1	873
+Worksheet Menu Bar	/編集(E)/クリア​​(A)	コメント​​(M)	1	874
+Worksheet Menu Bar	/編集(E)/クリア​​(A)	コメントとメモをクリア(M)	1	33727
+Worksheet Menu Bar	/編集(E)/クリア​​(A)	ハイパーリンク​​(H)	1	2955
+Worksheet Menu Bar	/編集(E)/クリア​​(A)	ブックのクリーンアップ(W)	1	33882
+Worksheet Menu Bar	/編集(E)/クリア​​(A)	ハイパーリンク​​の削除(R)	1	16486
+Worksheet Menu Bar	/編集(E)	削除(D)...	1	478
+Worksheet Menu Bar	/編集(E)	シートの削除(L)	1	847
+Worksheet Menu Bar	/編集(E)	シートの​​移動またはコピー(M)...	1	848
+Worksheet Menu Bar	/編集(E)	検索​​(F)...	1	1849
+Worksheet Menu Bar	/編集(E)	置換​​(E)...	1	313
+Worksheet Menu Bar	/編集(E)	ジャンプ​​(G)...	1	757
+Worksheet Menu Bar	/編集(E)	リンクの​​設定(K)...	1	759
+Worksheet Menu Bar	/編集(E)	オブジェクト(O)	1	961
+Worksheet Menu Bar	/編集(E)	オブジェクト(O)	10	30019
+Worksheet Menu Bar	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+Worksheet Menu Bar	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+Worksheet Menu Bar	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+Worksheet Menu Bar	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+Worksheet Menu Bar	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+Worksheet Menu Bar	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+Worksheet Menu Bar	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+Worksheet Menu Bar	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+Worksheet Menu Bar	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+Worksheet Menu Bar	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+Worksheet Menu Bar	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+Worksheet Menu Bar	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+Worksheet Menu Bar	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+Worksheet Menu Bar	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+Worksheet Menu Bar	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+Worksheet Menu Bar	/編集(E)/オブジェクト(O)	変換​​(V)...	1	1967
+Worksheet Menu Bar	/編集(E)/オブジェクト(O)	Office Math に変換(N)	1	33423
+Worksheet Menu Bar		表示(V)	10	30004
+Worksheet Menu Bar	/表示(V)	標準​​(N)	1	723
+Worksheet Menu Bar	/表示(V)	改ページ プレビュー(P)	1	724
+Worksheet Menu Bar	/表示(V)	作業​​ウィンドウ(K)	1	5746
+Worksheet Menu Bar	/表示(V)	ツール バー(T)	10	30045
+Worksheet Menu Bar	/表示(V)/ツール バー(T)	標準	1	761
+Worksheet Menu Bar	/表示(V)/ツール バー(T)	書式設定	1	761
+Worksheet Menu Bar	/表示(V)/ツール バー(T)	Visual Basic	1	761
+Worksheet Menu Bar	/表示(V)/ツール バー(T)	Web	1	761
+Worksheet Menu Bar	/表示(V)/ツール バー(T)	ウォッチ ウィンドウ	1	761
+Worksheet Menu Bar	/表示(V)/ツール バー(T)	オンライン コンテンツ	1	761
+Worksheet Menu Bar	/表示(V)/ツール バー(T)	クエリと接続	1	761
+Worksheet Menu Bar	/表示(V)/ツール バー(T)	グラフ	1	761
+Worksheet Menu Bar	/表示(V)/ツール バー(T)	コントロール ツールボックス	1	761
+Worksheet Menu Bar	/表示(V)/ツール バー(T)	スマート検索	1	761
+Worksheet Menu Bar	/表示(V)/ツール バー(T)	チェック/コメント	1	761
+Worksheet Menu Bar	/表示(V)/ツール バー(T)	データ カタログ検索	1	761
+Worksheet Menu Bar	/表示(V)/ツール バー(T)	データ選択ウィザード	1	761
+Worksheet Menu Bar	/表示(V)/ツール バー(T)	ピボットテーブル	1	761
+Worksheet Menu Bar	/表示(V)/ツール バー(T)	ファイルから挿入	1	761
+Worksheet Menu Bar	/表示(V)/ツール バー(T)	フォーム	1	761
+Worksheet Menu Bar	/表示(V)/ツール バー(T)	ブック クエリ	1	761
+Worksheet Menu Bar	/表示(V)/ツール バー(T)	ヘルプ	1	761
+Worksheet Menu Bar	/表示(V)/ツール バー(T)	リサーチ ツール	1	761
+Worksheet Menu Bar	/表示(V)/ツール バー(T)	リスト	1	761
+Worksheet Menu Bar	/表示(V)/ツール バー(T)	ワークシート分析	1	761
+Worksheet Menu Bar	/表示(V)/ツール バー(T)	ワードアート	1	761
+Worksheet Menu Bar	/表示(V)/ツール バー(T)	外部データ	1	761
+Worksheet Menu Bar	/表示(V)/ツール バー(T)	共有クエリ	1	761
+Worksheet Menu Bar	/表示(V)/ツール バー(T)	罫線	1	761
+Worksheet Menu Bar	/表示(V)/ツール バー(T)	最新の情報に更新	1	761
+Worksheet Menu Bar	/表示(V)/ツール バー(T)	図	1	761
+Worksheet Menu Bar	/表示(V)/ツール バー(T)	図形描画	1	761
+Worksheet Menu Bar	/表示(V)/ツール バー(T)	読み上げ	1	761
+Worksheet Menu Bar	/表示(V)/ツール バー(T)	保護	1	761
+Worksheet Menu Bar	/表示(V)	数式バー(F)	1	849
+Worksheet Menu Bar	/表示(V)	ステータス ​​バー(S)	1	850
+Worksheet Menu Bar	/表示(V)	ヘッダーとフッター(H)...	1	762
+Worksheet Menu Bar	/表示(V)	コメント​​(C)	1	1594
+Worksheet Menu Bar	/表示(V)	ユーザー設定​​のビュー(V)...	1	950
+Worksheet Menu Bar	/表示(V)	全画面​​表示(U)	1	178
+Worksheet Menu Bar	/表示(V)	ズーム​​(Z)...	1	925
+Worksheet Menu Bar		挿入(I)	10	30005
+Worksheet Menu Bar	/挿入(I)	セルの​​挿入(E)...	1	295
+Worksheet Menu Bar	/挿入(I)	行(R)	1	296
+Worksheet Menu Bar	/挿入(I)	列(C)	1	297
+Worksheet Menu Bar	/挿入(I)	ワークシート​​(W)	1	852
+Worksheet Menu Bar	/挿入(I)	グラフ(H)...	1	1957
+Worksheet Menu Bar	/挿入(I)	記号と​​特殊文字(S)...	1	308
+Worksheet Menu Bar	/挿入(I)	改ページ​​(B)	1	509
+Worksheet Menu Bar	/挿入(I)	すべての改ページ​​を解除(A)	1	1585
+Worksheet Menu Bar	/挿入(I)	関数​​(F)...	1	385
+Worksheet Menu Bar	/挿入(I)	名前(N)	10	30023
+Worksheet Menu Bar	/挿入(I)/名前(N)	定義(D)...	1	878
+Worksheet Menu Bar	/挿入(I)/名前(N)	貼り付け​​(P)...	1	879
+Worksheet Menu Bar	/挿入(I)/名前(N)	作成​​(C)...	1	880
+Worksheet Menu Bar	/挿入(I)/名前(N)	引用​​(A)...	1	881
+Worksheet Menu Bar	/挿入(I)	新しいコメント(M)	1	1589
+Worksheet Menu Bar	/挿入(I)	インク注釈​​(A)	1	9071
+Worksheet Menu Bar	/挿入(I)	図(P)	10	30180
+Worksheet Menu Bar	/挿入(I)/図(P)	オンライン​​画像(O)...	1	20868
+Worksheet Menu Bar	/挿入(I)/図(P)	クリップ ​​アート(C)...	1	682
+Worksheet Menu Bar	/挿入(I)/図(P)	ファイルから(F)...	1	2619
+Worksheet Menu Bar	/挿入(I)/図(P)	スキャナー​​またはカメラから(S)...	1	1764
+Worksheet Menu Bar	/挿入(I)/図(P)	インク描画と​​書き込み(D)	1	9405
+Worksheet Menu Bar	/挿入(I)/図(P)	オートシェイプ(A)	1	2630
+Worksheet Menu Bar	/挿入(I)/図(P)	ワードアート​​(W)...	1	1031
+Worksheet Menu Bar	/挿入(I)/図(P)	組織図​​(O)	1	702
+Worksheet Menu Bar	/挿入(I)	図表​​(G)...	1	1032
+Worksheet Menu Bar	/挿入(I)	オブジェクト​​(O)...	1	546
+Worksheet Menu Bar	/挿入(I)	ハイパーリンク(I)...	1	1576
+Worksheet Menu Bar		書式(O)	10	30006
+Worksheet Menu Bar	/書式(O)	セル(E)...	1	855
+Worksheet Menu Bar	/書式(O)	行(R)	10	30024
+Worksheet Menu Bar	/書式(O)/行(R)	高さ(E)...	1	541
+Worksheet Menu Bar	/書式(O)/行(R)	自動調整​​(A)	1	882
+Worksheet Menu Bar	/書式(O)/行(R)	非表示​​(H)	1	883
+Worksheet Menu Bar	/書式(O)/行(R)	再表示​​(U)	1	884
+Worksheet Menu Bar	/書式(O)	列(C)	10	30025
+Worksheet Menu Bar	/書式(O)/列(C)	幅(W)...	1	542
+Worksheet Menu Bar	/書式(O)/列(C)	選択範囲に​​合わせる(A)	1	885
+Worksheet Menu Bar	/書式(O)/列(C)	非表示​​(H)	1	886
+Worksheet Menu Bar	/書式(O)/列(C)	再表示​​(U)	1	887
+Worksheet Menu Bar	/書式(O)/列(C)	標準の幅​​(S)...	1	888
+Worksheet Menu Bar	/書式(O)	シート(H)	10	30026
+Worksheet Menu Bar	/書式(O)/シート(H)	名前の変更(R)	1	889
+Worksheet Menu Bar	/書式(O)/シート(H)	非表示​​(H)	1	890
+Worksheet Menu Bar	/書式(O)/シート(H)	再表示(U)...	1	891
+Worksheet Menu Bar	/書式(O)/シート(H)	背景​​(B)...	1	952
+Worksheet Menu Bar	/書式(O)/シート(H)	シート見出しの色(T)...	1	5747
+Worksheet Menu Bar	/書式(O)	オート ​​フォーマット(A)...	1	786
+Worksheet Menu Bar	/書式(O)	条件付き書式(D)...	1	3058
+Worksheet Menu Bar	/書式(O)	スタイル​​(S)...	1	254
+Worksheet Menu Bar	/書式(O)	ふりがな(T)	10	30136
+Worksheet Menu Bar	/書式(O)/ふりがな(T)	ふりがなの​​編集(E)	1	1611
+Worksheet Menu Bar	/書式(O)/ふりがな(T)	ふりがなの​​設定(T)...	1	1613
+Worksheet Menu Bar	/書式(O)/ふりがな(T)	ふりがなの​​表示(S)	1	1614
+Worksheet Menu Bar		ツール(T)	10	30007
+Worksheet Menu Bar	/ツール(T)	スペル ​​チェック(S)...	1	2
+Worksheet Menu Bar	/ツール(T)	ブックの統計情報(B)	1	33780
+Worksheet Menu Bar	/ツール(T)	リサーチ​​(R)...	1	7343
+Worksheet Menu Bar	/ツール(T)	エラー ​​チェック(K)...	1	6122
+Worksheet Menu Bar	/ツール(T)	[読み上げ] ツール バーの表示(H)	1	7011
+Worksheet Menu Bar	/ツール(T)	共有ワークスペース(D)...	1	7710
+Worksheet Menu Bar	/ツール(T)	ブックの​​共有(B)...	1	2040
+Worksheet Menu Bar	/ツール(T)	変更履歴の​​記録(T)	10	30138
+Worksheet Menu Bar	/ツール(T)/変更履歴の​​記録(T)	変更箇所​​の表示(H)...	1	2042
+Worksheet Menu Bar	/ツール(T)/変更履歴の​​記録(T)	変更箇所の​​確認(A)...	1	305
+Worksheet Menu Bar	/ツール(T)	ブックの​​比較と反映(W)...	1	2044
+Worksheet Menu Bar	/ツール(T)	保護(P)	10	30029
+Worksheet Menu Bar	/ツール(T)/保護(P)	シートの​​保護(P)...	1	893
+Worksheet Menu Bar	/ツール(T)/保護(P)	範囲の編集​​を許可(A)...	1	6997
+Worksheet Menu Bar	/ツール(T)/保護(P)	ブックの保護(W)...	1	894
+Worksheet Menu Bar	/ツール(T)/保護(P)	ブックの保護と共有 (レガシ)(S)	1	3059
+Worksheet Menu Bar	/ツール(T)	オンライン グループ作業(N)	10	30468
+Worksheet Menu Bar	/ツール(T)/オンライン グループ作業(N)	会議の開始(M)	1	3727
+Worksheet Menu Bar	/ツール(T)/オンライン グループ作業(N)	会議のスケジュール(S)...	1	4179
+Worksheet Menu Bar	/ツール(T)/オンライン グループ作業(N)	Web ディスカッション(W)	1	4177
+Worksheet Menu Bar	/ツール(T)/オンライン グループ作業(N)	校閲結果の​​差し込み終了(N)...	1	6141
+Worksheet Menu Bar	/ツール(T)	ゴール シーク​​(G)...	1	856
+Worksheet Menu Bar	/ツール(T)	シナリオ​​(E)...	1	857
+Worksheet Menu Bar	/ツール(T)	ワークシート分析(U)	10	30028
+Worksheet Menu Bar	/ツール(T)/ワークシート分析(U)	参照元の​​トレース(T)	1	486
+Worksheet Menu Bar	/ツール(T)/ワークシート分析(U)	参照先の​​トレース(D)	1	451
+Worksheet Menu Bar	/ツール(T)/ワークシート分析(U)	エラーの​​トレース(E)	1	463
+Worksheet Menu Bar	/ツール(T)/ワークシート分析(U)	すべてのトレース矢印​​を削除(A)	1	453
+Worksheet Menu Bar	/ツール(T)/ワークシート分析(U)	数式の​​検証(F)	1	5687
+Worksheet Menu Bar	/ツール(T)/ワークシート分析(U)	ウォッチ ウィンドウの表示(W)	1	5686
+Worksheet Menu Bar	/ツール(T)/ワークシート分析(U)	ワークシート​​分析モード(M)	1	6059
+Worksheet Menu Bar	/ツール(T)/ワークシート分析(U)	[ワークシート分析] ツールバーの表示(S)	1	892
+Worksheet Menu Bar	/ツール(T)	マクロ(M)	10	30017
+Worksheet Menu Bar	/ツール(T)/マクロ(M)	マクロ​​(M)...	1	186
+Worksheet Menu Bar	/ツール(T)/マクロ(M)	新しいマクロ​​の記録(R)...	1	184
+Worksheet Menu Bar	/ツール(T)/マクロ(M)	セキュリティ​​(S)...	1	3627
+Worksheet Menu Bar	/ツール(T)/マクロ(M)	Visual Basic ​​Editor(V)	1	1695
+Worksheet Menu Bar	/ツール(T)	アドイン(I)...	1	943
+Worksheet Menu Bar	/ツール(T)	オートコレクトの​​オプション(A)...	1	793
+Worksheet Menu Bar	/ツール(T)	ユーザー​​設定(C)...	1	797
+Worksheet Menu Bar	/ツール(T)	オプション​​(O)...	1	522
+Worksheet Menu Bar	/ツール(T)	キーボードの​​ユーザー設定(K)...	1	818
+Worksheet Menu Bar		データ(D)	10	30011
+Worksheet Menu Bar	/データ(D)	並べ替え​​(S)...	1	928
+Worksheet Menu Bar	/データ(D)	フィルター(F)	10	30031
+Worksheet Menu Bar	/データ(D)/フィルター(F)	オートフィルター(F)	1	899
+Worksheet Menu Bar	/データ(D)/フィルター(F)	すべて表示(S)	1	900
+Worksheet Menu Bar	/データ(D)/フィルター(F)	フィルター ​​オプションの設定(A)...	1	901
+Worksheet Menu Bar	/データ(D)	フォーム​​(O)...	1	860
+Worksheet Menu Bar	/データ(D)	集計​​(B)...	1	861
+Worksheet Menu Bar	/データ(D)	入力規則​​(L)...	1	2034
+Worksheet Menu Bar	/データ(D)	テーブル​​(T)...	1	862
+Worksheet Menu Bar	/データ(D)	区切り位置​​(E)...	1	806
+Worksheet Menu Bar	/データ(D)	統合​​(N)...	1	863
+Worksheet Menu Bar	/データ(D)	グループとアウトラインの設定(G)	10	30032
+Worksheet Menu Bar	/データ(D)/グループとアウトラインの設定(G)	詳細を表示しない(H)	1	464
+Worksheet Menu Bar	/データ(D)/グループとアウトラインの設定(G)	詳細データの表示(S)	1	462
+Worksheet Menu Bar	/データ(D)/グループとアウトラインの設定(G)	グループ化(G)...	1	3159
+Worksheet Menu Bar	/データ(D)/グループとアウトラインの設定(G)	グループ解除(U)...	1	3160
+Worksheet Menu Bar	/データ(D)/グループとアウトラインの設定(G)	アウトラインの自動作成(A)	1	904
+Worksheet Menu Bar	/データ(D)/グループとアウトラインの設定(G)	アウトラインのクリア(C)	1	905
+Worksheet Menu Bar	/データ(D)/グループとアウトラインの設定(G)	設定​​(E)...	1	906
+Worksheet Menu Bar	/データ(D)	ピボットテーブル/​​ピボットグラフ ウィザード(P)	1	2915
+Worksheet Menu Bar	/データ(D)	外部データの取り込み(D)	10	30101
+Worksheet Menu Bar	/データ(D)/外部データの取り込み(D)	データの取り込み(D)...	1	6262
+Worksheet Menu Bar	/データ(D)/外部データの取り込み(D)	新しい Web クエリ(W)...	1	3829
+Worksheet Menu Bar	/データ(D)/外部データの取り込み(D)	新しいデータベース ​​クエリ(N)...	1	2054
+Worksheet Menu Bar	/データ(D)/外部データの取り込み(D)	クエリの​​編集(E)...	1	1950
+Worksheet Menu Bar	/データ(D)/外部データの取り込み(D)	データ範囲​​プロパティ(A)...	1	1951
+Worksheet Menu Bar	/データ(D)/外部データの取り込み(D)	パラメーター​​(M)...	1	537
+Worksheet Menu Bar	/データ(D)	画像から	10	33995
+Worksheet Menu Bar	/データ(D)/画像から	ファイルからの画像(P)...	1	33996
+Worksheet Menu Bar	/データ(D)/画像から	クリップボードからの画像	1	34002
+Worksheet Menu Bar	/データ(D)	リスト(I)	10	31276
+Worksheet Menu Bar	/データ(D)/リスト(I)	テーブルの作成(C)...	1	7193
+Worksheet Menu Bar	/データ(D)/リスト(I)	テーブルのサイズ変更(R)...	1	7765
+Worksheet Menu Bar	/データ(D)/リスト(I)	集計行(T)	1	7372
+Worksheet Menu Bar	/データ(D)/リスト(I)	範囲に変換(V)	1	7375
+Worksheet Menu Bar	/データ(D)/リスト(I)	テーブルの発行(P)...	1	7684
+Worksheet Menu Bar	/データ(D)/リスト(I)	サーバー上のリストの表示(L)	1	7763
+Worksheet Menu Bar	/データ(D)/リスト(I)	リストのリンクを解除(U)	1	7683
+Worksheet Menu Bar	/データ(D)/リスト(I)	リストの同期(Y)	1	7761
+Worksheet Menu Bar	/データ(D)/リスト(I)	変更を破棄して最新の情報に更新(D)	1	7762
+Worksheet Menu Bar	/データ(D)	XML(X)	10	31268
+Worksheet Menu Bar	/データ(D)/XML(X)	インポート​​(I)...	1	7433
+Worksheet Menu Bar	/データ(D)/XML(X)	エクスポート​​(E)...	1	7432
+Worksheet Menu Bar	/データ(D)/XML(X)	XML データの更新(R)	1	7812
+Worksheet Menu Bar	/データ(D)/XML(X)	XML ソース(X)...	1	7693
+Worksheet Menu Bar	/データ(D)/XML(X)	XML の対応付けのプロパティ(P)...	1	7813
+Worksheet Menu Bar	/データ(D)/XML(X)	XML ​​拡張パック(A)...	1	7784
+Worksheet Menu Bar	/データ(D)	更新(R)	1	459
+Worksheet Menu Bar		ウィンドウ(W)	10	30009
+Worksheet Menu Bar	/ウィンドウ(W)	新しいウィンドウ​​を開く(N)	1	303
+Worksheet Menu Bar	/ウィンドウ(W)	整列(A)...	1	298
+Worksheet Menu Bar	/ウィンドウ(W)	並べて比較(B)...	1	7698
+Worksheet Menu Bar	/ウィンドウ(W)	表示しない​​(H)	1	865
+Worksheet Menu Bar	/ウィンドウ(W)	再表示​​(U)...	1	866
+Worksheet Menu Bar	/ウィンドウ(W)	分割(S)	1	302
+Worksheet Menu Bar	/ウィンドウ(W)	ウィンドウ枠の固定(F)	1	443
+Worksheet Menu Bar	/ウィンドウ(W)	1 Book5	1	830
+Worksheet Menu Bar	/ウィンドウ(W)	ウィンドウ名​​(W)	1	830
+Worksheet Menu Bar	/ウィンドウ(W)	ウィンドウ名​​(W)	1	830
+Worksheet Menu Bar	/ウィンドウ(W)	ウィンドウ名​​(W)	1	830
+Worksheet Menu Bar	/ウィンドウ(W)	ウィンドウ名​​(W)	1	830
+Worksheet Menu Bar	/ウィンドウ(W)	ウィンドウ名​​(W)	1	830
+Worksheet Menu Bar	/ウィンドウ(W)	ウィンドウ名​​(W)	1	830
+Worksheet Menu Bar	/ウィンドウ(W)	ウィンドウ名​​(W)	1	830
+Worksheet Menu Bar	/ウィンドウ(W)	ウィンドウ名​​(W)	1	830
+Worksheet Menu Bar	/ウィンドウ(W)	ウィンドウ名​​(W)	1	830
+Worksheet Menu Bar		ヘルプ(H)	10	30010
+Worksheet Menu Bar	/ヘルプ(H)	ヘルプ​​(H)	1	984
+Worksheet Menu Bar	/ヘルプ(H)	アシスタントを表示しない(H)	1	1004
+Worksheet Menu Bar	/ヘルプ(H)	Office.com(O)	1	3775
+Worksheet Menu Bar	/ヘルプ(H)	お問い合わせ先(C)	1	7903
+Worksheet Menu Bar	/ヘルプ(H)	トレーニングを表示(S)	1	27442
+Worksheet Menu Bar	/ヘルプ(H)	コミュニティ(C)	1	32694
+Worksheet Menu Bar	/ヘルプ(H)	Excel ブログ(E)	1	32695
+Worksheet Menu Bar	/ヘルプ(H)	Lotus 1-2-3 ヘルプ(L)...	1	936
+Worksheet Menu Bar	/ヘルプ(H)	更新プログラム​​のチェック(K)	1	9340
+Worksheet Menu Bar	/ヘルプ(H)	アプリケーションの​​自動修復(R)...	1	3774
+Worksheet Menu Bar	/ヘルプ(H)	ライセンス​​認証(V)...	1	5933
+Worksheet Menu Bar	/ヘルプ(H)	プライバシー ​​オプション(P)...	1	7714
+Worksheet Menu Bar	/ヘルプ(H)	バージョン情報(A)	1	927
+Chart Menu Bar		ファイル​​(F)	10	30002
+Chart Menu Bar	/ファイル​​(F)	新規作成​​(N)...	1	18
+Chart Menu Bar	/ファイル​​(F)	開く(O)...	1	23
+Chart Menu Bar	/ファイル​​(F)	閉じる​​(C)	1	106
+Chart Menu Bar	/ファイル​​(F)	上書き​​保存(S)	1	3
+Chart Menu Bar	/ファイル​​(F)	名前を付けて​​保存(A)...	1	748
+Chart Menu Bar	/ファイル​​(F)	単一 Web ​​ページ (*.mht)	1	3823
+Chart Menu Bar	/ファイル​​(F)	作業状態の​​保存(W)...	1	846
+Chart Menu Bar	/ファイル​​(F)	ファイル検索(H)...	1	5905
+Chart Menu Bar	/ファイル​​(F)	チェック​​アウト(E)	1	6127
+Chart Menu Bar	/ファイル​​(F)	チェック​​イン(E)...	1	6128
+Chart Menu Bar	/ファイル​​(F)	バージョン​​履歴(R)...	1	7799
+Chart Menu Bar	/ファイル​​(F)	アクセス​​許可(M)...	1	7994
+Chart Menu Bar	/ファイル​​(F)	アクセス許可(M)	10	31308
+Chart Menu Bar	/ファイル​​(F)/アクセス許可(M)	アクセス​​制限なし(U)	1	7990
+Chart Menu Bar	/ファイル​​(F)/アクセス許可(M)	アクセス​​制限あり(R)	1	7991
+Chart Menu Bar	/ファイル​​(F)/アクセス許可(M)	資格情報の​​管理(M)	1	10014
+Chart Menu Bar	/ファイル​​(F)	ブラウザーで​​プレビュー(B)	1	3655
+Chart Menu Bar	/ファイル​​(F)	ページ​​設定(U)...	1	247
+Chart Menu Bar	/ファイル​​(F)	印刷​​プレビュー(V)	1	109
+Chart Menu Bar	/ファイル​​(F)	印刷(P)...	1	4
+Chart Menu Bar	/ファイル​​(F)	送信(D)	10	30095
+Chart Menu Bar	/ファイル​​(F)/送信(D)	メールの​​宛先(M)	1	3738
+Chart Menu Bar	/ファイル​​(F)/送信(D)	校閲結果の​​返信(S)...	1	6139
+Chart Menu Bar	/ファイル​​(F)/送信(D)	メールの宛先 (校閲用)(C)...	1	5958
+Chart Menu Bar	/ファイル​​(F)/送信(D)	メールの宛先 ​​(添付ファイル)(A)...	1	2188
+Chart Menu Bar	/ファイル​​(F)/送信(D)	Exchange​​フォルダー(E)...	1	938
+Chart Menu Bar	/ファイル​​(F)/送信(D)	オンライン会議の参加者(O)	1	3728
+Chart Menu Bar	/ファイル​​(F)/送信(D)	インターネット FAX サービス​​を使用する宛先(X)...	1	7392
+Chart Menu Bar	/ファイル​​(F)	プロパティ​​(I)	1	750
+Chart Menu Bar	/ファイル​​(F)	最近使用した​​ファイル名(R)	1	12547
+Chart Menu Bar	/ファイル​​(F)	最近使用した​​ファイル名(R)	1	831
+Chart Menu Bar	/ファイル​​(F)	Excel の終了(X)	1	752
+Chart Menu Bar		編集(E)	10	30003
+Chart Menu Bar	/編集(E)	元に戻せません(U)	1	128
+Chart Menu Bar	/編集(E)	繰り返しできません(R)	1	37
+Chart Menu Bar	/編集(E)	切り取り(T)	1	21
+Chart Menu Bar	/編集(E)	コピー(C)	1	19
+Chart Menu Bar	/編集(E)	Office ​​クリップボード(B)...	1	809
+Chart Menu Bar	/編集(E)	貼り付け(P)	1	22
+Chart Menu Bar	/編集(E)	形式を選択して​​貼り付け(S)...	1	755
+Chart Menu Bar	/編集(E)	クリア​​(A)	10	30021
+Chart Menu Bar	/編集(E)/クリア​​(A)	すべて(A)	1	1964
+Chart Menu Bar	/編集(E)/クリア​​(A)	系列(S)	1	907
+Chart Menu Bar	/編集(E)/クリア​​(A)	書式(F)	1	872
+Chart Menu Bar	/編集(E)	シートの削除(L)	1	847
+Chart Menu Bar	/編集(E)	シートの​​移動またはコピー(M)...	1	848
+Chart Menu Bar	/編集(E)	リンクの​​設定(K)...	1	759
+Chart Menu Bar		表示(V)	10	30004
+Chart Menu Bar	/表示(V)	ツール バー(T)	10	30045
+Chart Menu Bar	/表示(V)/ツール バー(T)	標準	1	761
+Chart Menu Bar	/表示(V)/ツール バー(T)	書式設定	1	761
+Chart Menu Bar	/表示(V)/ツール バー(T)	Visual Basic	1	761
+Chart Menu Bar	/表示(V)/ツール バー(T)	Web	1	761
+Chart Menu Bar	/表示(V)/ツール バー(T)	ウォッチ ウィンドウ	1	761
+Chart Menu Bar	/表示(V)/ツール バー(T)	オンライン コンテンツ	1	761
+Chart Menu Bar	/表示(V)/ツール バー(T)	クエリと接続	1	761
+Chart Menu Bar	/表示(V)/ツール バー(T)	グラフ	1	761
+Chart Menu Bar	/表示(V)/ツール バー(T)	コントロール ツールボックス	1	761
+Chart Menu Bar	/表示(V)/ツール バー(T)	スマート検索	1	761
+Chart Menu Bar	/表示(V)/ツール バー(T)	チェック/コメント	1	761
+Chart Menu Bar	/表示(V)/ツール バー(T)	データ カタログ検索	1	761
+Chart Menu Bar	/表示(V)/ツール バー(T)	データ選択ウィザード	1	761
+Chart Menu Bar	/表示(V)/ツール バー(T)	ピボットテーブル	1	761
+Chart Menu Bar	/表示(V)/ツール バー(T)	ファイルから挿入	1	761
+Chart Menu Bar	/表示(V)/ツール バー(T)	フォーム	1	761
+Chart Menu Bar	/表示(V)/ツール バー(T)	ブック クエリ	1	761
+Chart Menu Bar	/表示(V)/ツール バー(T)	ヘルプ	1	761
+Chart Menu Bar	/表示(V)/ツール バー(T)	リサーチ ツール	1	761
+Chart Menu Bar	/表示(V)/ツール バー(T)	リスト	1	761
+Chart Menu Bar	/表示(V)/ツール バー(T)	ワークシート分析	1	761
+Chart Menu Bar	/表示(V)/ツール バー(T)	ワードアート	1	761
+Chart Menu Bar	/表示(V)/ツール バー(T)	外部データ	1	761
+Chart Menu Bar	/表示(V)/ツール バー(T)	共有クエリ	1	761
+Chart Menu Bar	/表示(V)/ツール バー(T)	罫線	1	761
+Chart Menu Bar	/表示(V)/ツール バー(T)	最新の情報に更新	1	761
+Chart Menu Bar	/表示(V)/ツール バー(T)	図	1	761
+Chart Menu Bar	/表示(V)/ツール バー(T)	図形描画	1	761
+Chart Menu Bar	/表示(V)/ツール バー(T)	読み上げ	1	761
+Chart Menu Bar	/表示(V)/ツール バー(T)	保護	1	761
+Chart Menu Bar	/表示(V)	数式バー(F)	1	849
+Chart Menu Bar	/表示(V)	ステータス ​​バー(S)	1	850
+Chart Menu Bar	/表示(V)	ヘッダーとフッター(H)...	1	762
+Chart Menu Bar	/表示(V)	コメント​​(C)	1	1594
+Chart Menu Bar	/表示(V)	ユーザー設定​​のビュー(V)...	1	950
+Chart Menu Bar	/表示(V)	全画面​​表示(U)	1	178
+Chart Menu Bar	/表示(V)	ズーム​​(Z)...	1	925
+Chart Menu Bar	/表示(V)	ウィンドウに合わせてサイズ変更(W)	1	908
+Chart Menu Bar	/表示(V)	グラフ ウィンドウ(W)	1	2571
+Chart Menu Bar		挿入(I)	10	30005
+Chart Menu Bar	/挿入(I)	インク注釈​​(A)	1	9071
+Chart Menu Bar	/挿入(I)	図(P)	10	30180
+Chart Menu Bar	/挿入(I)/図(P)	オンライン​​画像(O)...	1	20868
+Chart Menu Bar	/挿入(I)/図(P)	クリップ ​​アート(C)...	1	682
+Chart Menu Bar	/挿入(I)/図(P)	ファイルから(F)...	1	2619
+Chart Menu Bar	/挿入(I)/図(P)	スキャナー​​またはカメラから(S)...	1	1764
+Chart Menu Bar	/挿入(I)/図(P)	インク描画と​​書き込み(D)	1	9405
+Chart Menu Bar	/挿入(I)/図(P)	オートシェイプ(A)	1	2630
+Chart Menu Bar	/挿入(I)/図(P)	ワードアート​​(W)...	1	1031
+Chart Menu Bar	/挿入(I)	ワークシート​​(W)	1	852
+Chart Menu Bar	/挿入(I)	グラフ(H)...	1	1957
+Chart Menu Bar	/挿入(I)	ハイパーリンク(I)...	1	1576
+Chart Menu Bar	/挿入(I)	記号と​​特殊文字(S)...	1	308
+Chart Menu Bar		書式(O)	10	30006
+Chart Menu Bar	/書式(O)	セル(E)...	1	917
+Chart Menu Bar	/書式(O)	シート(H)	10	30026
+Chart Menu Bar	/書式(O)/シート(H)	名前の変更(R)	1	889
+Chart Menu Bar	/書式(O)/シート(H)	非表示​​(H)	1	890
+Chart Menu Bar	/書式(O)/シート(H)	再表示(U)...	1	891
+Chart Menu Bar	/書式(O)/シート(H)	背景​​(B)...	1	952
+Chart Menu Bar	/書式(O)/シート(H)	シート見出しの色(T)...	1	5747
+Chart Menu Bar		ツール(T)	10	30007
+Chart Menu Bar	/ツール(T)	スペル ​​チェック(S)...	1	2
+Chart Menu Bar	/ツール(T)	オートコレクトの​​オプション(A)...	1	793
+Chart Menu Bar	/ツール(T)	[読み上げ] ツール バーの表示(H)	1	7011
+Chart Menu Bar	/ツール(T)	ブックの​​共有(B)...	1	2040
+Chart Menu Bar	/ツール(T)	変更履歴の​​記録(T)	10	30138
+Chart Menu Bar	/ツール(T)/変更履歴の​​記録(T)	変更箇所​​の表示(H)...	1	2042
+Chart Menu Bar	/ツール(T)/変更履歴の​​記録(T)	変更箇所の​​確認(A)...	1	305
+Chart Menu Bar	/ツール(T)	ブックの​​比較と反映(W)...	1	2044
+Chart Menu Bar	/ツール(T)	保護(P)	10	30029
+Chart Menu Bar	/ツール(T)/保護(P)	シートの保護(P)...	1	893
+Chart Menu Bar	/ツール(T)/保護(P)	ブックの保護(W)...	1	894
+Chart Menu Bar	/ツール(T)/保護(P)	ブックの保護と共有 (レガシ)(S)	1	3059
+Chart Menu Bar	/ツール(T)	オンライン グループ作業(N)	10	30468
+Chart Menu Bar	/ツール(T)/オンライン グループ作業(N)	会議の開始(M)	1	3727
+Chart Menu Bar	/ツール(T)/オンライン グループ作業(N)	会議のスケジュール(S)...	1	4179
+Chart Menu Bar	/ツール(T)/オンライン グループ作業(N)	Web ディスカッション(W)	1	4177
+Chart Menu Bar	/ツール(T)/オンライン グループ作業(N)	校閲結果の​​差し込み終了(N)...	1	6141
+Chart Menu Bar	/ツール(T)	マクロ(M)	10	30017
+Chart Menu Bar	/ツール(T)/マクロ(M)	マクロ​​(M)...	1	186
+Chart Menu Bar	/ツール(T)/マクロ(M)	新しいマクロ​​の記録(R)...	1	184
+Chart Menu Bar	/ツール(T)/マクロ(M)	セキュリティ​​(S)...	1	3627
+Chart Menu Bar	/ツール(T)/マクロ(M)	Visual Basic ​​Editor(V)	1	1695
+Chart Menu Bar	/ツール(T)	アドイン(I)...	1	943
+Chart Menu Bar	/ツール(T)	ユーザー​​設定(C)...	1	797
+Chart Menu Bar	/ツール(T)	オプション​​(O)...	1	522
+Chart Menu Bar		グラフ(C)	10	30022
+Chart Menu Bar	/グラフ(C)	グラフの種類(Y)...	1	918
+Chart Menu Bar	/グラフ(C)	データの​​選択(E)...	1	954
+Chart Menu Bar	/グラフ(C)	グラフのオプション(I)...	1	956
+Chart Menu Bar	/グラフ(C)	グラフの​​移動(V)...	1	955
+Chart Menu Bar	/グラフ(C)	データの追加(A)...	1	1963
+Chart Menu Bar	/グラフ(C)	近似曲線の追加(R)...	1	914
+Chart Menu Bar	/グラフ(C)	3-D グラフ(V)...	1	919
+Chart Menu Bar		ウィンドウ(W)	10	30009
+Chart Menu Bar	/ウィンドウ(W)	新しいウィンドウ​​を開く(N)	1	303
+Chart Menu Bar	/ウィンドウ(W)	整列(A)...	1	298
+Chart Menu Bar	/ウィンドウ(W)	並べて比較(B)...	1	7698
+Chart Menu Bar	/ウィンドウ(W)	表示しない​​(H)	1	865
+Chart Menu Bar	/ウィンドウ(W)	再表示​​(U)...	1	866
+Chart Menu Bar	/ウィンドウ(W)	1 Book5	1	830
+Chart Menu Bar	/ウィンドウ(W)	ウィンドウ名​​(W)	1	830
+Chart Menu Bar	/ウィンドウ(W)	ウィンドウ名​​(W)	1	830
+Chart Menu Bar	/ウィンドウ(W)	ウィンドウ名​​(W)	1	830
+Chart Menu Bar	/ウィンドウ(W)	ウィンドウ名​​(W)	1	830
+Chart Menu Bar	/ウィンドウ(W)	ウィンドウ名​​(W)	1	830
+Chart Menu Bar	/ウィンドウ(W)	ウィンドウ名​​(W)	1	830
+Chart Menu Bar	/ウィンドウ(W)	ウィンドウ名​​(W)	1	830
+Chart Menu Bar	/ウィンドウ(W)	ウィンドウ名​​(W)	1	830
+Chart Menu Bar	/ウィンドウ(W)	ウィンドウ名​​(W)	1	830
+Chart Menu Bar		ヘルプ(H)	10	30010
+Chart Menu Bar	/ヘルプ(H)	ヘルプ​​(H)	1	984
+Chart Menu Bar	/ヘルプ(H)	アシスタントを表示しない(H)	1	1004
+Chart Menu Bar	/ヘルプ(H)	Lotus 1-2-3 ヘルプ(L)...	1	936
+Chart Menu Bar	/ヘルプ(H)	アプリケーションの​​自動修復(R)...	1	3774
+Chart Menu Bar	/ヘルプ(H)	プライバシー ​​オプション(P)...	1	7714
+Chart Menu Bar	/ヘルプ(H)	Office.com(O)	1	3775
+Chart Menu Bar	/ヘルプ(H)	バージョン情報(A)	1	927
+WordArt		ワードアート​​(W)...	1	1031
+WordArt		テキストの​​編集(X)...	1	2094
+WordArt		ワードアート ​​ギャラリー(W)	1	1606
+WordArt		オブジェクトの​​書式設定(O)...	1	962
+WordArt		ワードアート : 形状(W)	12	1058
+WordArt		ワードアート: ​​文字の高さを揃える(W)	1	1063
+WordArt		ワードアート: ​​縦書きテキスト(W)	1	1061
+WordArt		ワードアート : 配置(W)	12	1059
+WordArt		ワードアート : 文字の間隔(W)	12	1060
+Picture		ファイルから(F)...	1	2619
+Picture		色(C)	12	1403
+Picture		コントラスト ​​(強)(M)	1	1064
+Picture		コントラスト ​​(弱)(L)	1	1065
+Picture		明るさ ​​(強)(M)	1	1066
+Picture		明るさ ​​(弱)(L)	1	1067
+Picture		トリミング​​(C)	1	732
+Picture		左へ 90 度回転(L)	1	199
+Picture		線の​​スタイル(L)	12	692
+Picture		図の圧縮​​(C)...	1	6382
+Picture		オブジェクトの​​書式設定(O)...	1	962
+Picture		透明色を​​指定(S)	1	2827
+Picture		図の​​リセット(R)	1	1362
+Drawing Canvas		描画に​​合わせる(T)	1	5866
+Drawing Canvas		拡張 ​​(描画)(P)	1	5916
+Drawing Canvas		描画の​​サイズ変更(C)	1	7067
+Diagram		図形の​​挿入(N)	1	6933
+Diagram		背面の図形に​​移動(B)	1	6010
+Diagram		前面の図形に​​移動(F)	1	6011
+Diagram		図表の​​反転(R)	1	6099
+Diagram		レイアウト(L)	10	31179
+Diagram	/レイアウト(L)	キャンバスを​​図表に合わせる(F)	1	6826
+Diagram	/レイアウト(L)	キャンバスの​​拡張 (図表)(E)	1	6828
+Diagram	/レイアウト(L)	図表の​​サイズ変更(Z)	1	6827
+Diagram	/レイアウト(L)	図表の​​オートレイアウト(A)	1	6100
+Diagram		図表スタイル ​​ギャラリー(A)	1	6068
+Diagram		変更(C)	10	31180
+Diagram	/変更(C)	ドーナツ型​​(C)	1	5830
+Diagram	/変更(C)	放射型​​(R)	1	5829
+Diagram	/変更(C)	ピラミッド​​(P)	1	6009
+Diagram	/変更(C)	ベン図形型​​(V)	1	5833
+Diagram	/変更(C)	ターゲット型​​(T)	1	5832
+Ink Drawing and Writing		描画と書き込みペン(D)	13	7880
+Ink Drawing and Writing		消しゴム(E)	1	7502
+Ink Drawing and Writing		オブジェクトの​​選択(S)	1	182
+Ink Drawing and Writing		線の色​​(L)	13	1692
+Ink Drawing and Writing		線の​​スタイル(L)	12	692
+Ink Drawing and Writing		消去の中止(S)	1	9438
+Ink Annotations		インク注釈ペン(A)	13	9122
+Ink Annotations		消しゴム ​​(ストローク)(E)	1	9523
+Ink Annotations		オブジェクトの​​選択(S)	1	182
+Ink Annotations		線の色​​(L)	13	1692
+Ink Annotations		線の​​スタイル(L)	12	692
+Ink Annotations		インク注釈を表示しない(I)	1	32684
+Ink Annotations		インク注釈を表示しない(I)	1	7500
+Ink Annotations		インクの​​中止(S)	1	9524
+Circular Reference		循環参照のトレース(N):	4	1623
+Circular Reference		参照先の​​トレース(D)	1	451
+Circular Reference		参照元の​​トレース(T)	1	486
+Circular Reference		すべてのトレース矢印​​を削除(A)	1	453
+PivotTable Field List		ピボットテーブルのフィールド	25	5746
+Web		戻る​​(B)	1	1017
+Web		進む​​(F)	1	1018
+Web		中止​​(S)	1	1019
+Web		最新の情報​​に更新(R)	1	1020
+Web		スタート ​​ページ(S)	1	1016
+Web		Web の​​検索(W)	1	1922
+Web		お気に入り(S)	10	30176
+Web	/お気に入り(S)	お気に入りに​​追加(A)...	1	1022
+Web	/お気に入り(S)	お気に入り​​を開く(F)...	1	1021
+Web		移動(G)	10	30328
+Web	/移動(G)	ハイパーリンク​​を開く(O)	1	1015
+Web	/移動(G)	戻る​​(B)	1	1017
+Web	/移動(G)	進む​​(F)	1	1018
+Web	/移動(G)	スタート ​​ページ(S)	1	1016
+Web	/移動(G)	Web の​​検索(W)	1	1922
+Web	/移動(G)	スタート ページ​​の設定(P)...	1	2057
+Web	/移動(G)	検索ページの設定(C)...	1	2058
+Web		[Web] ツールバーのみを表示(S)	1	1023
+Web		アドレス(A):	4	1740
+Standard		新規作成​​(N)	1	2520
+Standard		開く	1	23
+Standard		上書き​​保存(S)	1	3
+Standard		アクセス許可 (アクセス制限なし)	1	9004
+Standard		メールの​​宛先(M)	1	3738
+Standard		クイック印刷(Q)	1	2521
+Standard		印刷​​プレビュー(V)	1	109
+Standard		スペル ​​チェック(S)...	1	2
+Standard		リサーチ​​(R)...	1	7343
+Standard		切り取り​​(T)	1	21
+Standard		コピー​​(C)	1	19
+Standard		貼り付け​​(P)	13	6002
+Standard		書式のコピー/​​貼り付け(F)	1	108
+Standard		元に戻す(U)	6	128
+Standard		やり直し(R)	6	129
+Standard		インク注釈​​(A)	1	9071
+Standard		ハイパーリンク(I)...	1	1576
+Standard		オート SUM(A)	13	226
+Standard		昇順で​​並べ替え(A)	1	210
+Standard		降順で​​並べ替え(C)	1	211
+Standard		グラフ ウィザード(C)	1	436
+Standard		図形描画(D)	1	204
+Standard		ズーム​​(Z):	4	1733
+Formatting		フォント​​(F):	4	1728
+Formatting		フォント サイズ(F):	4	1731
+Formatting		太字(B)	1	113
+Formatting		斜体(I)	1	114
+Formatting		下線(U)	1	115
+Formatting		左揃え​​(L)	1	120
+Formatting		中央揃え​​(C)	1	122
+Formatting		右揃え​​(R)	1	121
+Formatting		セルを結合して中央揃え(M)	1	402
+Formatting		通貨​​表示形式(A)	1	1643
+Formatting		パーセント ​​スタイル(P)	1	396
+Formatting		桁区切り​​スタイル(C)	1	397
+Formatting		小数点以下の​​表示桁数を増やす(I)	1	398
+Formatting		小数点以下の​​表示桁数を減らす(D)	1	399
+Formatting		インデントを​​減らす(D)	1	3162
+Formatting		インデントを​​増やす(I)	1	3161
+Formatting		罫線(B)	13	203
+Formatting		塗りつぶしの色(F)	13	1691
+Formatting		フォントの色(F)	13	401
+PivotTable		ピボットテーブル(P)	10	30253
+PivotTable	/ピボットテーブル(P)	レポートの書式設定(T)...	1	5473
+PivotTable	/ピボットテーブル(P)	ピボットグラフ​​(C)	1	3789
+PivotTable	/ピボットテーブル(P)	ピボットテーブル ウィザード(W)	1	457
+PivotTable	/ピボットテーブル(P)	データの更新(R)	1	459
+PivotTable	/ピボットテーブル(P)	クリア	10	31378
+PivotTable	/ピボットテーブル(P)/クリア	テーブル	1	11450
+PivotTable	/ピボットテーブル(P)	オフライン ​​OLAP(L)...	1	3988
+PivotTable	/ピボットテーブル(P)	削除(R)	1	5955
+PivotTable	/ピボットテーブル(P)	削除(R)	1	5955
+PivotTable	/ピボットテーブル(P)	選択(S)	10	30252
+PivotTable	/ピボットテーブル(P)/選択(S)	ラベル​​(L)	1	995
+PivotTable	/ピボットテーブル(P)/選択(S)	データ​​(D)	1	993
+PivotTable	/ピボットテーブル(P)/選択(S)	ラベルと​​データ(A)	1	994
+PivotTable	/ピボットテーブル(P)/選択(S)	テーブル​​全体(T)	1	1600
+PivotTable	/ピボットテーブル(P)/選択(S)	選択範囲を​​有効にする(E)	1	991
+PivotTable	/ピボットテーブル(P)	グループと詳細の表示(G)	10	30251
+PivotTable	/ピボットテーブル(P)/グループと詳細の表示(G)	フィールド全体の展開(E)	1	462
+PivotTable	/ピボットテーブル(P)/グループと詳細の表示(G)	フィールド全体の折りたたみ(C)	1	464
+PivotTable	/ピボットテーブル(P)/グループと詳細の表示(G)	グループ化(G)...	1	3159
+PivotTable	/ピボットテーブル(P)/グループと詳細の表示(G)	グループ解除(U)...	1	3160
+PivotTable	/ピボットテーブル(P)	数式(M)	10	30254
+PivotTable	/ピボットテーブル(P)/数式(M)	集計​​フィールド(F)...	1	1597
+PivotTable	/ピボットテーブル(P)/数式(M)	集計​​アイテム(I)...	1	1598
+PivotTable	/ピボットテーブル(P)/数式(M)	解決の​​順序(S)...	1	2914
+PivotTable	/ピボットテーブル(P)/数式(M)	数式の​​一覧表示(L)	1	992
+PivotTable	/ピボットテーブル(P)	移動(M)	10	30485
+PivotTable	/ピボットテーブル(P)/移動(M)	項目を先頭へ移動(B)	1	12518
+PivotTable	/ピボットテーブル(P)/移動(M)	項目を上に移動(U)	1	12519
+PivotTable	/ピボットテーブル(P)/移動(M)	項目を下に移動(O)	1	12520
+PivotTable	/ピボットテーブル(P)/移動(M)	項目を末尾へ移動(E)	1	12521
+PivotTable	/ピボットテーブル(P)/移動(M)	先頭へ移動(B)	1	4148
+PivotTable	/ピボットテーブル(P)/移動(M)	左へ移動(L)	1	4149
+PivotTable	/ピボットテーブル(P)/移動(M)	右へ移動(R)	1	4150
+PivotTable	/ピボットテーブル(P)/移動(M)	末尾へ移動(E)	1	4151
+PivotTable	/ピボットテーブル(P)/移動(M)	列に移動(C)	1	6688
+PivotTable	/ピボットテーブル(P)	フィールドの​​設定(N)	1	460
+PivotTable	/ピボットテーブル(P)	集計(U)	1	6689
+PivotTable	/ピボットテーブル(P)	並べ替えてトップテンを表示(A)...	1	6687
+PivotTable	/ピボットテーブル(P)	プロパティ ​​フィールド(I)...	1	6076
+PivotTable	/ピボットテーブル(P)	表のオプション(O)...	1	1604
+PivotTable	/ピボットテーブル(P)	レポート フィルター ​​ページの表示(P)...	1	461
+PivotTable		ピボットグラフ(P)	10	30469
+PivotTable	/ピボットグラフ(P)	フィールドの​​設定(N)	1	460
+PivotTable	/ピボットグラフ(P)	オプション(O)...	1	1604
+PivotTable	/ピボットグラフ(P)	データの更新(R)	1	459
+PivotTable	/ピボットグラフ(P)	ピボットグラフのフィールド ボタンを表示しない(H)	1	3956
+PivotTable	/ピボットグラフ(P)	数式(M)	10	30254
+PivotTable	/ピボットグラフ(P)/数式(M)	集計​​フィールド(F)...	1	1597
+PivotTable	/ピボットグラフ(P)/数式(M)	集計​​アイテム(I)...	1	1598
+PivotTable	/ピボットグラフ(P)/数式(M)	解決の​​順序(S)...	1	2914
+PivotTable	/ピボットグラフ(P)/数式(M)	数式の​​一覧表示(L)	1	992
+PivotTable	/ピボットグラフ(P)	フィールドの削除(V)	1	5416
+PivotTable		レポートの書式設定(T)	1	5473
+PivotTable		グラフ ウィザード(C)	1	436
+PivotTable		詳細を表示しない(H)	1	464
+PivotTable		詳細データの表示(S)	1	462
+PivotTable		データの更新(R)	1	459
+PivotTable		フィルターされたアイテムを合計に含める(I)	1	20857
+PivotTable		アイテムを常に表示(A)	1	5920
+PivotTable		フィールドの​​設定(N)	1	460
+PivotTable		フィールド リストの表示(S)	1	3790
+Chart		グラフ オブジェクト(C):	4	1622
+Chart		選択したオブジェクト(S)	1	917
+Chart		グラフの種類(Y)...	13	918
+Chart		凡例​​(L)	1	439
+Chart		データ テーブル(D)	1	987
+Chart		系列を行方向に定義(R)	1	989
+Chart		系列を列方向に定義(C)	1	988
+Chart		右回りに​​回転(A)	1	1014
+Chart		左回りに​​回転(A)	1	1013
+Reviewing		新しいコメント(M)	1	1589
+Reviewing		前の​​コメント(P)	1	1590
+Reviewing		次の​​コメント(N)	1	1591
+Reviewing		コメントの​​表示/非表示(O)	1	1593
+Reviewing		コメント​​(C)	1	1594
+Reviewing		コメントの​​削除(M)	1	1592
+Reviewing		インク注釈​​(A)	1	9071
+Reviewing		インク注釈を表示しない(I)	1	7500
+Reviewing		すべてのインク注釈​​の削除(D)	1	7674
+Reviewing		Microsoft Outlook ​​タスクの作成(C)	1	837
+Reviewing		ファイルの​​更新(U)	1	455
+Reviewing		メールの宛先 ​​(添付ファイル)(A)...	1	2188
+Reviewing		校閲結果の​​返信(C)...	1	6139
+Reviewing		校閲結果の​​差し込み終了(N)...	1	6141
+Forms		ラベル​​(L)	1	476
+Forms		エディット ​​ボックス(E)	1	219
+Forms		グループ ​​ボックス(G)	1	467
+Forms		ボタン​​(B)	1	282
+Forms		チェック ​​ボックス(H)	1	220
+Forms		オプション ​​ボタン(P)	1	446
+Forms		リスト ​​ボックス(I)	1	448
+Forms		コンボ ​​ボックス(C)	1	221
+Forms		リスト エディット コンボ ボックス(D)	1	471
+Forms		ドロップダウン コンボ ボックス(W)	1	475
+Forms		スクロール ​​バー(S)	1	447
+Forms		スピン ​​ボタン(S)	1	468
+Forms		コントロールのプロパティ	1	222
+Forms		コード​​(C)	1	488
+Forms		グリッド	1	485
+Forms		ダイアログの実行(R)	1	470
+Stop Recording		記録終了​​(R)	1	2186
+Stop Recording		相対参照	1	896
+External Data		クエリの​​編集(E)...	1	1950
+External Data		データ範囲​​プロパティ(A)...	1	1951
+External Data		パラメーター​​(M)...	1	537
+External Data		データの更新(R)	1	459
+External Data		更新の​​取り消し(C)	1	1953
+External Data		すべて​​更新(A)	1	1952
+External Data		データ更新の​​状況(R)	1	1954
+Formula Auditing		エラー ​​チェック(K)...	1	6122
+Formula Auditing		参照元の​​トレース(T)	1	486
+Formula Auditing		参照元トレース矢印​​の削除(R)	1	452
+Formula Auditing		参照先の​​トレース(D)	1	451
+Formula Auditing		参照先トレース矢印​​の削除(R)	1	450
+Formula Auditing		すべてのトレース矢印​​を削除(A)	1	453
+Formula Auditing		エラーの​​トレース(E)	1	463
+Formula Auditing		新しいコメント(M)	1	1589
+Formula Auditing		無効データのマーク	1	2035
+Formula Auditing		入力規則マーク​​のクリア(C)	1	2055
+Formula Auditing		ウォッチ ウィンドウ​​の表示(W)	1	5686
+Formula Auditing		数式の​​検証(F)	1	5687
+Full Screen		全画面​​表示(U)	1	178
+PivotChart Menu		フィールドの​​設定(N)	1	460
+PivotChart Menu		オプション(O)...	1	1604
+PivotChart Menu		データの更新(R)	1	459
+PivotChart Menu		ピボットグラフのフィールド ボタンを表示しない(H)	1	3956
+PivotChart Menu		数式(M)	10	30254
+PivotChart Menu	/数式(M)	集計​​フィールド(F)...	1	1597
+PivotChart Menu	/数式(M)	集計​​アイテム(I)...	1	1598
+PivotChart Menu	/数式(M)	解決の​​順序(S)...	1	2914
+PivotChart Menu	/数式(M)	数式の​​一覧表示(L)	1	992
+PivotChart Menu		フィールドの削除(V)	1	5416
+Visual Basic		マクロ​​(M)...	1	186
+Visual Basic		新しいマクロ​​の記録(R)...	1	184
+Visual Basic		セキュリティ...	1	3627
+Visual Basic		Visual Basic ​​Editor(V)	1	1695
+Visual Basic		コントロール ​​ツールボックス(O)	1	548
+Visual Basic		デザイン ​​モード(D)	1	1605
+Visual Basic		Microsoft Script Editor	1	3631
+Control Toolbox		デザイン ​​モード(D)	1	1605
+Control Toolbox		プロパティ​​(I)	1	222
+Control Toolbox		コードの​​表示(V)	1	1561
+Control Toolbox		チェック ボックス(K)	1	1848
+Control Toolbox		テキスト ボックス(T)	1	1850
+Control Toolbox		コマンド ボタン(U)	1	1851
+Control Toolbox		オプション ​​ボタン(O)	1	1852
+Control Toolbox		リスト ​​ボックス(L)	1	1853
+Control Toolbox		コンボ ボックス(X)	1	1854
+Control Toolbox		トグル ​​ボタン(G)	1	1855
+Control Toolbox		スピン ​​ボタン(N)	1	1856
+Control Toolbox		スクロール ​​バー(S)	1	1857
+Control Toolbox		ラベル​​(A)	1	1858
+Control Toolbox		イメージ​​(I)	1	2089
+Control Toolbox		コントロールの選択(M)...	7	642
+Exit Design Mode		デザイン ​​モード(D)	1	1605
+Refresh		最新の情報に更新(S)	1	3817
+Refresh		更新しない(N)	1	3819
+Watch Window		ウォッチ ウィンドウ(W)	21	5684
+Borders		罫線の​​作成(D)	13	6048
+Borders		罫線の​​削除(E)	1	6049
+Borders		線のスタイル(L)	9	6050
+Borders		線の色(L)	12	6051
+Protection		セルのロック	1	225
+Protection		範囲の編集を​​可能にする(A)...	1	6997
+Protection		シートの​​保護(P)...	1	893
+Protection		ブックの保護(W)...	1	894
+Protection		ブックの保護と共有 (レガシ)(S)	1	3059
+Text To Speech		セルの​​読み上げ(P)	1	7006
+Text To Speech		読み上げ​​の停止(S)	1	7007
+Text To Speech		行ごと​​(R)	1	7008
+Text To Speech		列ごと​​(C)	1	7009
+Text To Speech		Enter キーを押した時​​に読み上げる(E)	1	7010
+List		リスト(L)	10	31262
+List	/リスト(L)	挿入(I)	10	31274
+List	/リスト(L)/挿入(I)	テーブルの列 (左)(L)	1	7568
+List	/リスト(L)/挿入(I)	テーブルの列 (右)(R)	1	12196
+List	/リスト(L)/挿入(I)	テーブルの行 (上)(A)	1	7373
+List	/リスト(L)/挿入(I)	テーブルの行 (下)(B)	1	12197
+List	/リスト(L)	削除(D)	10	31275
+List	/リスト(L)/削除(D)	テーブルの列(C)	1	7569
+List	/リスト(L)/削除(D)	テーブルの行(R)	1	7374
+List	/リスト(L)	並べ替え​​(S)...	1	928
+List	/リスト(L)	フォーム​​(O)...	1	860
+List	/リスト(L)	テーブルの発行(P)...	1	7684
+List	/リスト(L)	ピボットグラフ​​	1	3789
+List	/リスト(L)	テーブルのサイズ変更(R)...	1	7765
+List	/リスト(L)	サーバー上のリストの表示(L)	1	7763
+List	/リスト(L)	範囲に変換(V)	1	7375
+List	/リスト(L)	リストのリンクを解除(U)	1	7683
+List	/リスト(L)	データ範囲​​プロパティ(A)...	1	1951
+List		集計行​​(T)	1	7372
+List		リストの同期(Y)	1	7761
+List		変更を破棄して最新の情報に更新(D)	1	7762
+List		XML データの更新(R)	1	7812
+List		インポート​​(I)...	1	7433
+List		エクスポート​​(E)...	1	7432
+List		XML の対応付けのプロパティ(P)...	1	7813
+List		グラフ ウィザード(C)	1	7764
+List		テーブルの印刷	1	7380
+List		見出し行の表示/非表示(H)	1	12394
+Compare Side by Side		同時に​​スクロール(S)	1	7873
+Compare Side by Side		ウィンドウの位置​​を元に戻す(R)	1	7874
+Compare Side by Side		並べて比較(B)...	1	7698
+Workbook tabs		Sheet1	1	957
+Workbook tabs		シート一覧(S)	1	957
+Workbook tabs		シート一覧(S)	1	957
+Workbook tabs		シート一覧(S)	1	957
+Workbook tabs		シート一覧(S)	1	957
+Workbook tabs		シート一覧(S)	1	957
+Workbook tabs		シート一覧(S)	1	957
+Workbook tabs		シート一覧(S)	1	957
+Workbook tabs		シート一覧(S)	1	957
+Workbook tabs		シート一覧(S)	1	957
+Workbook tabs		シート一覧(S)	1	957
+Workbook tabs		シート一覧(S)	1	957
+Workbook tabs		シート一覧(S)	1	957
+Workbook tabs		シート一覧(S)	1	957
+Workbook tabs		シート一覧(S)	1	957
+Workbook tabs		シート一覧(S)	1	957
+Cell		切り取り​​(T)	1	21
+Cell		コピー​​(C)	1	19
+Cell		貼り付け​​(P)	1	22
+Cell		Paste as Table with Copilot	1	37952
+Cell		形式を選択して貼り付け(S)...	1	21437
+Cell		複合表として​​貼り付け(P)	1	3624
+Cell		データ型カードを表示(S)	1	32714
+Cell		データの種類(Y)	10	32713
+Cell	/データの種類(Y)	設定の更新をしています(R)...	1	34171
+Cell	/データの種類(Y)	更新(R)	1	33296
+Cell	/データの種類(Y)	変更(C)...	1	32715
+Cell	/データの種類(Y)	テキストに変換(T)	1	32716
+Cell		ス‍マ‍ー‍ト​​検索(L)	1	25536
+Cell		セル内の画像(P)	10	34738
+Cell	/セル内の画像(P)	セルの上に配置(P)	1	34739
+Cell	/セル内の画像(P)	参照の作成(C)	1	34759
+Cell	/セル内の画像(P)	データ型カードを表示(S)	1	32714
+Cell		代替テキストを表示(A)...	1	34737
+Cell		この数式を説明する(E)	1	44585
+Cell		この数式を説明する(E)	1	47805
+Cell		Copilot(C)	1	34820
+Cell		Copilot とチャットする(C)	1	44471
+Cell		Copilot	10	34807
+Cell	/Copilot	カスタマイズされたテーブルの作成(C)	1	42662
+Cell	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Cell	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Cell	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Cell	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Cell	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Cell	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Cell	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Cell	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Cell	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Cell	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Cell	/Copilot	アプリのスキルを開く(O)	1	40006
+Cell	/Copilot	Copilot とチャットする(C)	1	44471
+Cell		セルの​​挿入(E)...	1	295
+Cell		削除(D)...	1	292
+Cell		数式と値のクリア(N)	1	3125
+Cell		翻訳	1	33409
+Cell		Python 出力 (Y)	10	34750
+Cell	/Python 出力 (Y)	Python オブジェクト(P)	1	34764
+Cell	/Python 出力 (Y)	Excel の値(E)	1	34765
+Cell		セルの上にプロットを表示(P)	1	45242
+Cell		エディターの表示(E)	1	37910
+Cell		数式エディター(F)	1	37869
+Cell		クイック分析(Q)	1	24508
+Cell		スパークライン(A)	10	31623
+Cell	/スパークライン(A)	グループの位置と​​データの編集(E)...	1	19222
+Cell	/スパークライン(A)	単一スパークラインの​​データを編集(S)...	1	19223
+Cell	/スパークライン(A)	グループ化​​(G)	1	19226
+Cell	/スパークライン(A)	グループ​​解除(U)	1	19227
+Cell	/スパークライン(A)	選択した​​スパークラインのクリア(C)	1	19229
+Cell	/スパークライン(A)	選択したスパークライン ​​グループのクリア(L)	1	19230
+Cell		フィルター(E)	10	31402
+Cell	/フィルター(E)	フィルターのクリア(E)	1	900
+Cell	/フィルター(E)	再適用​​(R)	1	12231
+Cell	/フィルター(E)	選択したセルの値でフィルター(V)	1	12232
+Cell	/フィルター(E)	選択したセルの色でフィルター(C)	1	12233
+Cell	/フィルター(E)	選択したセルのフォント色でフィルター(F)	1	12234
+Cell	/フィルター(E)	選択したセルのアイコンでフィルター(I)	1	12235
+Cell		並べ替え(O)	10	31435
+Cell	/並べ替え(O)	昇順​​(S)	1	12947
+Cell	/並べ替え(O)	降順​​(O)	1	12948
+Cell	/並べ替え(O)	選択したセルの色を上に表示(C)	1	12943
+Cell	/並べ替え(O)	選択したフォントの色を上に表示(F)	1	12944
+Cell	/並べ替え(O)	選択した書式設定のアイコンを上に配置(F)	1	12945
+Cell	/並べ替え(O)	ユーザー設定の​​並べ替え(U)...	1	12949
+Cell		テーブルまたは範囲からデータを取得(G)...	1	34003
+Cell		コメントの挿入(M)	1	2031
+Cell		コメントの​​削除(M)	1	1592
+Cell		コメントの​​表示/非表示(O)	1	1593
+Cell		セルの書式設定(F)...	1	855
+Cell		ドロップダウン リストから選択(K)...	1	1966
+Cell		ふりがなの表示(S)	1	1614
+Cell		名前の​​定義(A)...	1	13380
+Cell		で開く(O)	10	34600
+Cell	/で開く(O)	デスクトップ(D)	1	34602
+Cell	/で開く(O)	ブラウザー(B)	1	34601
+Cell		既定で開く設定(P)	10	34680
+Cell	/既定で開く設定(P)	デスクトップ(D)	1	34682
+Cell	/既定で開く設定(P)	ブラウザー(B)	1	34681
+Cell		既定で開く設定(P)	1	49649
+Cell		ハイパーリンク(H)...	1	1576
+Cell		ハイパーリンク​​の編集(H)...	1	1577
+Cell		ハイパーリンク​​を開く(O)	1	1015
+Cell		ハイパーリンクの削除(R)	1	3626
+Cell		この範囲にリンクする(L)	1	34646
+Cell		変更内容を表示(G)	1	34405
+Cell		詳細を展開(X)	1	11299
+Cell		追加アクション(I)	10	31595
+Cell	/追加アクション(I)	(処理が定義されていません)	1	11298
+Cell		全画面​​表示(U)	1	178
+Cell		他のユーザーを非表示(H)	1	34125
+Cell		追加操作​​(A)	1	22577
+Cell		近くにいる人(N)	10	34042
+Cell	/近くにいる人(N)	近くにいる人(N)	1	34042
+Cell	/近くにいる人(N)	近くにいる人(N)	1	34042
+Cell	/近くにいる人(N)	近くにいる人(N)	1	34042
+Cell	/近くにいる人(N)	近くにいる人(N)	1	34042
+Cell	/近くにいる人(N)	近くにいる人(N)	1	34042
+Cell	/近くにいる人(N)	近くにいる人(N)	1	34042
+Cell	/近くにいる人(N)	近くにいる人(N)	1	34042
+Cell	/近くにいる人(N)	近くにいる人(N)	1	34042
+Cell	/近くにいる人(N)	近くにいる人(N)	1	34042
+Cell	/近くにいる人(N)	近くにいる人(N)	1	34042
+Column		切り取り​​(T)	1	21
+Column		コピー​​(C)	1	19
+Column		貼り付け​​(P)	1	22
+Column		形式を選択して貼り付け(S)...	1	21437
+Column		複合表として​​貼り付け(P)	1	3624
+Column		データの種類(Y)	10	32713
+Column	/データの種類(Y)	設定の更新をしています(R)...	1	34171
+Column	/データの種類(Y)	更新(R)	1	33296
+Column	/データの種類(Y)	変更(C)...	1	32715
+Column	/データの種類(Y)	テキストに変換(T)	1	32716
+Column		この数式を説明する(E)	1	47805
+Column		Copilot(C)	1	34820
+Column		Copilot とチャットする(C)	1	44471
+Column		Copilot	10	34807
+Column	/Copilot	カスタマイズされたテーブルの作成(C)	1	42662
+Column	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Column	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Column	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Column	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Column	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Column	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Column	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Column	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Column	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Column	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Column	/Copilot	アプリのスキルを開く(O)	1	40006
+Column	/Copilot	Copilot とチャットする(C)	1	44471
+Column		列(C)	1	297
+Column		削除(D)...	1	294
+Column		数式と値のクリア(N)	1	3125
+Column		Python 出力 (Y)	10	34750
+Column	/Python 出力 (Y)	Python オブジェクト(P)	1	34764
+Column	/Python 出力 (Y)	Excel の値(E)	1	34765
+Column		エディターの表示(E)	1	37910
+Column		数式エディター(F)	1	37869
+Column		セルの書式設定(F)...	1	855
+Column		列の幅(W)...	1	542
+Column		非表示​​(H)	1	886
+Column		再表示​​(U)	1	887
+Column		ハイパーリンクの削除(R)	1	3626
+Column		この範囲にリンクする(L)	1	34646
+Column		変更内容を表示(G)	1	34405
+Row		切り取り​​(T)	1	21
+Row		コピー​​(C)	1	19
+Row		貼り付け​​(P)	1	22
+Row		形式を選択して貼り付け(S)...	1	21437
+Row		複合表として​​貼り付け(P)	1	3624
+Row		データの種類(Y)	10	32713
+Row	/データの種類(Y)	設定の更新をしています(R)...	1	34171
+Row	/データの種類(Y)	更新(R)	1	33296
+Row	/データの種類(Y)	変更(C)...	1	32715
+Row	/データの種類(Y)	テキストに変換(T)	1	32716
+Row		この数式を説明する(E)	1	47805
+Row		Copilot(C)	1	34820
+Row		Copilot とチャットする(C)	1	44471
+Row		Copilot	10	34807
+Row	/Copilot	カスタマイズされたテーブルの作成(C)	1	42662
+Row	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Row	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Row	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Row	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Row	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Row	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Row	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Row	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Row	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Row	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Row	/Copilot	アプリのスキルを開く(O)	1	40006
+Row	/Copilot	Copilot とチャットする(C)	1	44471
+Row		行(R)	1	296
+Row		削除(D)...	1	293
+Row		数式と値のクリア(N)	1	3125
+Row		Python 出力 (Y)	10	34750
+Row	/Python 出力 (Y)	Python オブジェクト(P)	1	34764
+Row	/Python 出力 (Y)	Excel の値(E)	1	34765
+Row		エディターの表示(E)	1	37910
+Row		数式エディター(F)	1	37869
+Row		セルの書式設定(F)...	1	855
+Row		行の高さ​​(R)...	1	541
+Row		非表示​​(H)	1	883
+Row		再表示​​(U)	1	884
+Row		ハイパーリンクの削除(R)	1	3626
+Row		この範囲にリンクする(L)	1	34646
+Row		変更内容を表示(G)	1	34405
+Cell		切り取り​​(T)	1	21
+Cell		コピー​​(C)	1	19
+Cell		貼り付け​​(P)	1	22
+Cell		形式を選択して貼り付け(S)...	1	21437
+Cell		複合表として​​貼り付け(P)	1	3624
+Cell		データ型カードを表示(S)	1	32714
+Cell		データの種類(Y)	10	32713
+Cell	/データの種類(Y)	設定の更新をしています(R)...	1	34171
+Cell	/データの種類(Y)	更新(R)	1	33296
+Cell	/データの種類(Y)	変更(C)...	1	32715
+Cell	/データの種類(Y)	テキストに変換(T)	1	32716
+Cell		ス‍マ‍ー‍ト​​検索(L)	1	25536
+Cell		セル内の画像(P)	10	34738
+Cell	/セル内の画像(P)	セルの上に配置(P)	1	34739
+Cell	/セル内の画像(P)	参照の作成(C)	1	34759
+Cell	/セル内の画像(P)	データ型カードを表示(S)	1	32714
+Cell		代替テキストを表示(A)...	1	34737
+Cell		この数式を説明する(E)	1	44585
+Cell		この数式を説明する(E)	1	47805
+Cell		Copilot(C)	1	34820
+Cell		Copilot とチャットする(C)	1	44471
+Cell		Copilot	10	34807
+Cell	/Copilot	カスタマイズされたテーブルの作成(C)	1	42662
+Cell	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Cell	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Cell	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Cell	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Cell	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Cell	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Cell	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Cell	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Cell	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Cell	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Cell	/Copilot	アプリのスキルを開く(O)	1	40006
+Cell	/Copilot	Copilot とチャットする(C)	1	44471
+Cell		セルの​​挿入(E)...	1	295
+Cell		削除(D)...	1	292
+Cell		数式と値のクリア(N)	1	3125
+Cell		Python 出力 (Y)	10	34750
+Cell	/Python 出力 (Y)	Python オブジェクト(P)	1	34764
+Cell	/Python 出力 (Y)	Excel の値(E)	1	34765
+Cell		セルの上にプロットを表示(P)	1	45242
+Cell		エディターの表示(E)	1	37910
+Cell		数式エディター(F)	1	37869
+Cell		クイック分析(Q)	1	24508
+Cell		コメントの挿入(M)	1	2031
+Cell		コメントの​​削除(M)	1	1592
+Cell		コメントの​​表示/非表示(O)	1	1593
+Cell		セルの書式設定(F)...	1	855
+Cell		改ページの挿入(B)	1	1588
+Cell		すべての改ページ​​を解除(A)	1	1585
+Cell		印刷範囲の​​設定(S)	1	364
+Cell		印刷範囲に​​追加(A)	1	1583
+Cell		印刷範囲から除外(E)	1	1586
+Cell		印刷範囲の解除(R)	1	2038
+Cell		ページ​​設定(U)...	1	247
+Cell		全画面​​表示(U)	1	178
+Column		切り取り​​(T)	1	21
+Column		コピー​​(C)	1	19
+Column		貼り付け​​(P)	1	22
+Column		形式を選択して貼り付け(S)...	1	21437
+Column		複合表として​​貼り付け(P)	1	3624
+Column		データの種類(Y)	10	32713
+Column	/データの種類(Y)	設定の更新をしています(R)...	1	34171
+Column	/データの種類(Y)	更新(R)	1	33296
+Column	/データの種類(Y)	変更(C)...	1	32715
+Column	/データの種類(Y)	テキストに変換(T)	1	32716
+Column		この数式を説明する(E)	1	47805
+Column		Copilot(C)	1	34820
+Column		Copilot とチャットする(C)	1	44471
+Column		Copilot	10	34807
+Column	/Copilot	カスタマイズされたテーブルの作成(C)	1	42662
+Column	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Column	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Column	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Column	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Column	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Column	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Column	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Column	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Column	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Column	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Column	/Copilot	アプリのスキルを開く(O)	1	40006
+Column	/Copilot	Copilot とチャットする(C)	1	44471
+Column		列(C)	1	297
+Column		削除(D)...	1	294
+Column		数式と値のクリア(N)	1	3125
+Column		Python 出力 (Y)	10	34750
+Column	/Python 出力 (Y)	Python オブジェクト(P)	1	34764
+Column	/Python 出力 (Y)	Excel の値(E)	1	34765
+Column		エディターの表示(E)	1	37910
+Column		数式エディター(F)	1	37869
+Column		セルの書式設定(F)...	1	855
+Column		列の幅(W)...	1	542
+Column		非表示​​(H)	1	886
+Column		再表示​​(U)	1	887
+Column		改ページの挿入(B)	1	1588
+Column		すべての改ページ​​を解除(A)	1	1585
+Column		印刷範囲の​​設定(S)	1	364
+Column		印刷範囲に​​追加(A)	1	1583
+Column		印刷範囲から除外(E)	1	1586
+Column		印刷範囲の解除(R)	1	2038
+Column		ページ​​設定(U)...	1	247
+Row		切り取り​​(T)	1	21
+Row		コピー​​(C)	1	19
+Row		貼り付け​​(P)	1	22
+Row		形式を選択して貼り付け(S)...	1	21437
+Row		複合表として​​貼り付け(P)	1	3624
+Row		データの種類(Y)	10	32713
+Row	/データの種類(Y)	設定の更新をしています(R)...	1	34171
+Row	/データの種類(Y)	更新(R)	1	33296
+Row	/データの種類(Y)	変更(C)...	1	32715
+Row	/データの種類(Y)	テキストに変換(T)	1	32716
+Row		この数式を説明する(E)	1	47805
+Row		Copilot(C)	1	34820
+Row		Copilot とチャットする(C)	1	44471
+Row		Copilot	10	34807
+Row	/Copilot	カスタマイズされたテーブルの作成(C)	1	42662
+Row	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Row	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Row	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Row	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Row	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Row	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Row	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Row	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Row	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Row	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+Row	/Copilot	アプリのスキルを開く(O)	1	40006
+Row	/Copilot	Copilot とチャットする(C)	1	44471
+Row		行(R)	1	296
+Row		削除(D)...	1	293
+Row		数式と値のクリア(N)	1	3125
+Row		Python 出力 (Y)	10	34750
+Row	/Python 出力 (Y)	Python オブジェクト(P)	1	34764
+Row	/Python 出力 (Y)	Excel の値(E)	1	34765
+Row		エディターの表示(E)	1	37910
+Row		数式エディター(F)	1	37869
+Row		セルの書式設定(F)...	1	855
+Row		行の高さ​​(R)...	1	541
+Row		非表示​​(H)	1	883
+Row		再表示​​(U)	1	884
+Row		改ページの挿入(B)	1	1588
+Row		すべての改ページ​​を解除(A)	1	1585
+Row		印刷範囲の​​設定(S)	1	364
+Row		印刷範囲に​​追加(A)	1	1583
+Row		印刷範囲から除外(E)	1	1586
+Row		印刷範囲の解除(R)	1	2038
+Row		ページ​​設定(U)...	1	247
+Ply		挿入​​(I)...	1	945
+Ply		削除(D)	1	847
+Ply		名前の変更(R)	1	889
+Ply		移動またはコピー(M)...	1	848
+Ply		コードの​​表示(V)	1	1561
+Ply		シートの保護(P)...	1	893
+Ply		シート見出し​​の色	1	12181
+Ply		非表示​​(H)	1	890
+Ply		再表示(U)...	1	891
+Ply		すべてのシート​​を選択(S)	1	946
+Ply		シートのグループ解除(N)	1	1968
+Ply		このシートへのリンク(L)	1	34749
+Ply		変更内容を表示(G)	1	34406
+XLM Cell		切り取り​​(T)	1	21
+XLM Cell		コピー​​(C)	1	19
+XLM Cell		貼り付け​​(P)	1	22
+XLM Cell		形式を選択して貼り付け(S)...	1	21437
+XLM Cell		複合表として​​貼り付け(P)	1	3624
+XLM Cell		ス‍マ‍ー‍ト​​検索(L)	1	25536
+XLM Cell		セルの​​挿入(E)...	1	295
+XLM Cell		削除(D)...	1	292
+XLM Cell		数式と値のクリア(N)	1	3125
+XLM Cell		コメントの挿入(M)	1	2031
+XLM Cell		コメントの​​削除(M)	1	1592
+XLM Cell		コメントの​​表示/非表示(O)	1	1593
+XLM Cell		セルの書式設定(F)...	1	855
+XLM Cell		マクロ実行(R)...	1	186
+XLM Cell		全画面​​表示(U)	1	178
+XLM Cell		追加操作​​(A)	1	22577
+Document		上書き​​保存(S)	1	3
+Document		名前を付けて​​保存(A)...	1	748
+Document		印刷(P)...	1	4
+Document		ページ​​設定(U)...	1	247
+Document		スペル ​​チェック(S)...	1	2
+Document		新しいウィンドウ​​を開く(N)	1	303
+Document		整列(A)...	1	298
+Document		ズーム​​(Z)...	1	925
+Document		コードの​​表示(V)	1	1561
+Desktop		新規作成​​(N)...	1	18
+Desktop		開く(O)...	1	23
+Desktop		作業状態の​​保存(W)...	1	846
+Desktop		再計算​​実行(C)	1	960
+Desktop		全画面​​表示(U)	1	178
+Nondefault Drag and Drop		ここに移動(M)	1	2046
+Nondefault Drag and Drop		ここにコピー(C)	1	2045
+Nondefault Drag and Drop		ここに値のみをコピー(V)	1	2048
+Nondefault Drag and Drop		ここに書式のみをコピー(F)	1	2047
+Nondefault Drag and Drop		ここにリンク(L)	1	2158
+Nondefault Drag and Drop		ここにハイパーリンク​​を作成(H)	1	2159
+Nondefault Drag and Drop		下へシフトしてコピー(S)	1	2049
+Nondefault Drag and Drop		右へシフトしてコピー(T)	1	2050
+Nondefault Drag and Drop		下へシフトして移動(D)	1	2051
+Nondefault Drag and Drop		右へシフトして移動(R)	1	2052
+Nondefault Drag and Drop		キャンセル​​(A)	1	569
+AutoFill		セルのコピー(C)	1	2019
+AutoFill		連続データ(S)	1	2020
+AutoFill		書式のみコピー (フィル)(F)	1	2021
+AutoFill		書式なしコピー (フィル)(O)	1	2022
+AutoFill		連続データ (日単位)(D)	1	2023
+AutoFill		連続データ (週日単位)(W)	1	2024
+AutoFill		連続データ (月単位)(M)	1	2025
+AutoFill		連続データ (年単位)(Y)	1	2026
+AutoFill		連続データ (加算)(L)	1	2027
+AutoFill		連続データ (乗算)(G)	1	2028
+AutoFill		フラッシュ フィル(F)	1	24079
+AutoFill		連続データ(E)...	1	2029
+Button		切り取り​​(T)	1	21
+Button		コピー​​(C)	1	19
+Button		インクをテキスト​​としてコピー(T)	1	9382
+Button		貼り付け​​(P)	1	22
+Button		クリア	1	47
+Button		オブジェクト編集	1	961
+Button		オブジェクト(O)	10	30019
+Button	/オブジェクト(O)	<動詞(<)>	1	1965
+Button	/オブジェクト(O)	<動詞(<)>	1	1965
+Button	/オブジェクト(O)	<動詞(<)>	1	1965
+Button	/オブジェクト(O)	<動詞(<)>	1	1965
+Button	/オブジェクト(O)	<動詞(<)>	1	1965
+Button	/オブジェクト(O)	<動詞(<)>	1	1965
+Button	/オブジェクト(O)	<動詞(<)>	1	1965
+Button	/オブジェクト(O)	<動詞(<)>	1	1965
+Button	/オブジェクト(O)	<動詞(<)>	1	1965
+Button	/オブジェクト(O)	<動詞(<)>	1	1965
+Button	/オブジェクト(O)	<動詞(<)>	1	1965
+Button	/オブジェクト(O)	<動詞(<)>	1	1965
+Button	/オブジェクト(O)	<動詞(<)>	1	1965
+Button	/オブジェクト(O)	<動詞(<)>	1	1965
+Button	/オブジェクト(O)	<動詞(<)>	1	1965
+Button	/オブジェクト(O)	変換​​(V)...	1	1967
+Button	/オブジェクト(O)	Office Math に変換(N)	1	33423
+Button		オブジェクトの書式設定(F)...	1	962
+Button		最前面へ移動(R)	1	166
+Button		最背面へ​​移動(K)	1	167
+Button		グループ化(G)	1	164
+Button		スクリプトの表示	1	34418
+Button		マクロの​​登録(N)...	1	859
+Dialog		貼り付け​​(P)	1	22
+Dialog		タブ ​​オーダー(B)...	1	469
+Dialog		ダイアログの実行(R)	1	470
+Dialog		全画面​​表示(U)	1	178
+Series		選択したオブジェクト(S)	1	917
+Series		グラフの種類(Y)...	1	918
+Series		データの​​選択(E)...	1	954
+Series		近似曲線の追加(R)...	1	914
+Series		クリア​​(A)	1	47
+Plot Area		選択したオブジェクト(S)	1	917
+Plot Area		グラフの種類(Y)...	1	918
+Plot Area		データの​​選択(E)...	1	954
+Plot Area		グラフのオプション(I)...	1	956
+Plot Area		グラフの​​移動(V)...	1	955
+Plot Area		3-D グラフ(V)...	1	919
+Plot Area		グラフ ウィンドウ(W)	1	2571
+Plot Area		クリア​​(A)	1	47
+Floor and Walls		選択したオブジェクト(S)	1	917
+Floor and Walls		3-D グラフ(V)...	1	919
+Floor and Walls		クリア​​(A)	1	47
+Trendline		選択したオブジェクト(S)	1	917
+Trendline		クリア​​(A)	1	47
+Chart		選択したオブジェクト(S)	1	917
+Chart		クリア​​(A)	1	47
+Format Data Series		選択したオブジェクト(S)	1	917
+Format Data Series		グラフの種類(Y)...	1	918
+Format Data Series		データの​​選択(E)...	1	954
+Format Data Series		近似曲線の追加(R)...	1	914
+Format Data Series		詳細を表示しない(H)	1	464
+Format Data Series		詳細データの表示(W)	1	4002
+Format Axis		選択したオブジェクト(S)	1	917
+Format Axis		クリア​​(A)	1	47
+Format Axis		詳細を表示しない(H)	1	464
+Format Axis		詳細データの表示(S)	1	462
+Format Legend Entry		選択したオブジェクト(S)	1	917
+Format Legend Entry		詳細を表示しない(H)	1	464
+Format Legend Entry		詳細データの表示(S)	1	462
+Format Legend Entry		クリア​​(A)	1	47
+Formula Bar		切り取り​​(T)	1	21
+Formula Bar		コピー​​(C)	1	19
+Formula Bar		貼り付け​​(P)	1	22
+Formula Bar		ス‍マ‍ー‍ト​​検索(L)	1	25536
+Formula Bar		セルの書式設定(F)...	1	855
+Formula Bar		ドロップダウン リストから選択(K)...	1	1966
+Formula Bar		再変換(V)	1	3720
+Formula Bar		ハングルと漢字の変換(H)...	1	3492
+Formula Bar		数式バーの展開(B)	1	15134
+PivotTable Context Menu		コピー​​(C)	1	19
+PivotTable Context Menu		セルの書式設定(F)...	1	855
+PivotTable Context Menu		表示形式(T)...	1	12529
+PivotTable Context Menu		セル内の画像(P)	10	34738
+PivotTable Context Menu	/セル内の画像(P)	セルの上に配置(P)	1	34739
+PivotTable Context Menu	/セル内の画像(P)	参照の作成(C)	1	34759
+PivotTable Context Menu	/セル内の画像(P)	データ型カードを表示(S)	1	32714
+PivotTable Context Menu		代替テキストを表示(A)...	1	34737
+PivotTable Context Menu		データ型カードを表示(S)	1	32714
+PivotTable Context Menu		更新(R)	1	459
+PivotTable Context Menu		ピボットテーブルの削除(D)	1	39739
+PivotTable Context Menu		並べ替え(S)	10	31403
+PivotTable Context Menu	/並べ替え(S)	昇順​​(S)	1	12516
+PivotTable Context Menu	/並べ替え(S)	降順​​(O)	1	12517
+PivotTable Context Menu	/並べ替え(S)	その他の並べ替えオプション(M)...	1	12522
+PivotTable Context Menu		フィルター(T)	10	31404
+PivotTable Context Menu	/フィルター(T)	フィルターのクリア(C)	1	605
+PivotTable Context Menu	/フィルター(T)	選択した項目のみを保持(K)	1	12523
+PivotTable Context Menu	/フィルター(T)	選択した項目を表示しない(H)	1	12524
+PivotTable Context Menu	/フィルター(T)	トップテン(T)...	1	12525
+PivotTable Context Menu	/フィルター(T)	ラベル フィルター(L)...	1	12527
+PivotTable Context Menu	/フィルター(T)	値フィルター(S)...	1	12526
+PivotTable Context Menu		小計(B)	1	12528
+PivotTable Context Menu		展開/折りたたみ(E)	10	31583
+PivotTable Context Menu	/展開/折りたたみ(E)	展開(X)	1	462
+PivotTable Context Menu	/展開/折りたたみ(E)	折りたたみ(O)	1	464
+PivotTable Context Menu	/展開/折りたたみ(E)	フィールド全体の展開(E)	1	462
+PivotTable Context Menu	/展開/折りたたみ(E)	フィールド全体の折りたたみ(C)	1	464
+PivotTable Context Menu		ドリルダウン/ドリルアップ(W)	10	25034
+PivotTable Context Menu	/ドリルダウン/ドリルアップ(W)	ドリルダウン(D)	1	22987
+PivotTable Context Menu	/ドリルダウン/ドリルアップ(W)	ドリルアップ(U)	1	22988
+PivotTable Context Menu	/ドリルダウン/ドリルアップ(W)	ドリルアップ	1	24124
+PivotTable Context Menu	/ドリルダウン/ドリルアップ(W)	ドリルアップ	1	24124
+PivotTable Context Menu	/ドリルダウン/ドリルアップ(W)	ドリルアップ	1	24124
+PivotTable Context Menu	/ドリルダウン/ドリルアップ(W)	ドリルアップ	1	24124
+PivotTable Context Menu	/ドリルダウン/ドリルアップ(W)	ドリルアップ	1	24124
+PivotTable Context Menu	/ドリルダウン/ドリルアップ(W)	ドリルアップ	1	24124
+PivotTable Context Menu	/ドリルダウン/ドリルアップ(W)	ドリルアップ	1	24124
+PivotTable Context Menu	/ドリルダウン/ドリルアップ(W)	ドリルアップ	1	24124
+PivotTable Context Menu	/ドリルダウン/ドリルアップ(W)	ドリルアップ	1	24124
+PivotTable Context Menu	/ドリルダウン/ドリルアップ(W)	ドリルアップ	1	24124
+PivotTable Context Menu	/ドリルダウン/ドリルアップ(W)	ドリルアップ	1	24124
+PivotTable Context Menu	/ドリルダウン/ドリルアップ(W)	ドリルアップ	1	24124
+PivotTable Context Menu	/ドリルダウン/ドリルアップ(W)	ドリルアップ	1	24124
+PivotTable Context Menu	/ドリルダウン/ドリルアップ(W)	ドリルアップ	1	24124
+PivotTable Context Menu	/ドリルダウン/ドリルアップ(W)	ドリルアップ	1	24124
+PivotTable Context Menu	/ドリルダウン/ドリルアップ(W)	ドリルアップ	1	24124
+PivotTable Context Menu	/ドリルダウン/ドリルアップ(W)	ドリルアップ	1	24124
+PivotTable Context Menu	/ドリルダウン/ドリルアップ(W)	ドリルアップ	1	24124
+PivotTable Context Menu	/ドリルダウン/ドリルアップ(W)	ドリルアップ	1	24124
+PivotTable Context Menu	/ドリルダウン/ドリルアップ(W)	ドリルアップ	1	24124
+PivotTable Context Menu	/ドリルダウン/ドリルアップ(W)	ドリルアップ	1	24124
+PivotTable Context Menu	/ドリルダウン/ドリルアップ(W)	ドリルアップ	1	24124
+PivotTable Context Menu	/ドリルダウン/ドリルアップ(W)	ドリルアップ	1	24124
+PivotTable Context Menu	/ドリルダウン/ドリルアップ(W)	ドリルアップ	1	24124
+PivotTable Context Menu	/ドリルダウン/ドリルアップ(W)	ドリルアップ	1	24124
+PivotTable Context Menu	/ドリルダウン/ドリルアップ(W)	ドリルアップ	1	24124
+PivotTable Context Menu	/ドリルダウン/ドリルアップ(W)	ドリルアップ	1	24124
+PivotTable Context Menu	/ドリルダウン/ドリルアップ(W)	ドリルアップ	1	24124
+PivotTable Context Menu	/ドリルダウン/ドリルアップ(W)	ドリルアップ	1	24124
+PivotTable Context Menu	/ドリルダウン/ドリルアップ(W)	ドリルアップ	1	24124
+PivotTable Context Menu	/ドリルダウン/ドリルアップ(W)	ドリルアップ	1	24124
+PivotTable Context Menu		クイック調査(Q)	1	25035
+PivotTable Context Menu		グループ化(G)...	1	3159
+PivotTable Context Menu		グループ解除(U)...	1	3160
+PivotTable Context Menu		移動(M)	10	30485
+PivotTable Context Menu	/移動(M)	項目を先頭へ移動(B)	1	12518
+PivotTable Context Menu	/移動(M)	項目を上に移動(U)	1	12519
+PivotTable Context Menu	/移動(M)	項目を下に移動(O)	1	12520
+PivotTable Context Menu	/移動(M)	項目を末尾へ移動(E)	1	12521
+PivotTable Context Menu	/移動(M)	先頭へ移動(B)	1	4148
+PivotTable Context Menu	/移動(M)	左へ移動(L)	1	4149
+PivotTable Context Menu	/移動(M)	右へ移動(R)	1	4150
+PivotTable Context Menu	/移動(M)	末尾へ移動(E)	1	4151
+PivotTable Context Menu	/移動(M)	列に移動(C)	1	6688
+PivotTable Context Menu		削除(R)	1	5955
+PivotTable Context Menu		削除(R)	1	5955
+PivotTable Context Menu		総計の削除(V)	1	12538
+PivotTable Context Menu		値の削除(V)	1	12537
+PivotTable Context Menu		値の集計方法(M)	10	31405
+PivotTable Context Menu	/値の集計方法(M)	合計​​(S)	1	12530
+PivotTable Context Menu	/値の集計方法(M)	データの個数(C)	1	12531
+PivotTable Context Menu	/値の集計方法(M)	平均​​(A)	1	12532
+PivotTable Context Menu	/値の集計方法(M)	最大値​​(M)	1	12533
+PivotTable Context Menu	/値の集計方法(M)	最小値​​(I)	1	12534
+PivotTable Context Menu	/値の集計方法(M)	積(P)	1	12535
+PivotTable Context Menu	/値の集計方法(M)	個別のカウント(D)	1	34131
+PivotTable Context Menu	/値の集計方法(M)	その他のオプション(O)...	1	12536
+PivotTable Context Menu		計算の種類(A)	10	31621
+PivotTable Context Menu	/計算の種類(A)	計算なし(N)	1	16734
+PivotTable Context Menu	/計算の種類(A)	総計に対する比率(G)	1	16735
+PivotTable Context Menu	/計算の種類(A)	列集計に対する比率(C)	1	16736
+PivotTable Context Menu	/計算の種類(A)	行集計に対する比率(R)	1	16737
+PivotTable Context Menu	/計算の種類(A)	基準値に対する比率(O)...	1	16738
+PivotTable Context Menu	/計算の種類(A)	親行集計に対する比率(P)	1	16739
+PivotTable Context Menu	/計算の種類(A)	親列集計に対する比率(A)	1	16740
+PivotTable Context Menu	/計算の種類(A)	親集計に対する比率(E)...	1	16741
+PivotTable Context Menu	/計算の種類(A)	基準値との差分(D)...	1	16742
+PivotTable Context Menu	/計算の種類(A)	基準値との差分の比率(F)...	1	16743
+PivotTable Context Menu	/計算の種類(A)	累計​​(T)...	1	16744
+PivotTable Context Menu	/計算の種類(A)	比率の累計(U)...	1	16745
+PivotTable Context Menu	/計算の種類(A)	昇順での順位(S)...	1	16746
+PivotTable Context Menu	/計算の種類(A)	降順での順位(L)...	1	16747
+PivotTable Context Menu	/計算の種類(A)	指数 (インデックス)(I)	1	16748
+PivotTable Context Menu	/計算の種類(A)	その他のオプション(M)...	1	16749
+PivotTable Context Menu		詳細の表示(E)	1	34829
+PivotTable Context Menu		フィールドの表示/非表示(H)	10	31406
+PivotTable Context Menu	/フィールドの表示/非表示(H)	すべてのフィールドの表示(S)	1	12541
+PivotTable Context Menu		レポートにプロパティを表示(P)	10	31407
+PivotTable Context Menu	/レポートにプロパティを表示(P)	プロパティをすべて表示(S)	1	15463
+PivotTable Context Menu	/レポートにプロパティを表示(P)	プロパティをすべて表示しない(H)	1	15464
+PivotTable Context Menu		ツールヒントにプロパティを表示(L)	10	31408
+PivotTable Context Menu	/ツールヒントにプロパティを表示(L)	プロパティをすべて表示(S)	1	15461
+PivotTable Context Menu	/ツールヒントにプロパティを表示(L)	プロパティをすべて表示しない(H)	1	15462
+PivotTable Context Menu		追加アクション(I)	10	31595
+PivotTable Context Menu	/追加アクション(I)	(処理が定義されていません)	1	11298
+PivotTable Context Menu		What-If 分析(W)	10	31622
+PivotTable Context Menu	/What-If 分析(W)	選択した変更を反映してピボットテーブルを計算(A)	1	19239
+PivotTable Context Menu	/What-If 分析(W)	選択した変更を破棄(I)	1	19240
+PivotTable Context Menu	/What-If 分析(W)	変更を反映して​​ピボットテーブルを計算(C)	1	19233
+PivotTable Context Menu	/What-If 分析(W)	変更の​​破棄(D)	1	19235
+PivotTable Context Menu	/What-If 分析(W)	設定​​(S)...	1	19238
+PivotTable Context Menu		フィールドの設定(N)...	1	460
+PivotTable Context Menu		ピボットテーブル オプション(O)...	1	1604
+PivotTable Context Menu		フィールド リストを表示する(D)	1	3790
+PivotTable Context Menu		改ページの挿入(B)	1	1588
+PivotTable Context Menu		すべての改ページ​​を解除(A)	1	1585
+PivotTable Context Menu		印刷範囲の​​設定(S)	1	364
+PivotTable Context Menu		印刷範囲の解除(R)	1	2038
+PivotTable Context Menu		ページ​​設定(U)...	1	247
+PivotTable Context Menu		他のユーザーを非表示(H)	1	34125
+PivotTable Context Menu		追加操作​​(A)	1	22577
+PivotTable Context Menu		近くにいる人(N)	10	34042
+PivotTable Context Menu	/近くにいる人(N)	近くにいる人(N)	1	34042
+PivotTable Context Menu	/近くにいる人(N)	近くにいる人(N)	1	34042
+PivotTable Context Menu	/近くにいる人(N)	近くにいる人(N)	1	34042
+PivotTable Context Menu	/近くにいる人(N)	近くにいる人(N)	1	34042
+PivotTable Context Menu	/近くにいる人(N)	近くにいる人(N)	1	34042
+PivotTable Context Menu	/近くにいる人(N)	近くにいる人(N)	1	34042
+PivotTable Context Menu	/近くにいる人(N)	近くにいる人(N)	1	34042
+PivotTable Context Menu	/近くにいる人(N)	近くにいる人(N)	1	34042
+PivotTable Context Menu	/近くにいる人(N)	近くにいる人(N)	1	34042
+PivotTable Context Menu	/近くにいる人(N)	近くにいる人(N)	1	34042
+Query		切り取り​​(T)	1	21
+Query		コピー​​(C)	1	19
+Query		貼り付け​​(P)	1	22
+Query		形式を選択して貼り付け(S)...	1	21437
+Query		複合表として​​貼り付け(P)	1	3624
+Query		セルの​​挿入(E)...	1	295
+Query		削除(D)...	1	292
+Query		数式と値のクリア(N)	1	3125
+Query		クイック分析(Q)	1	24508
+Query		フィルター(E)	10	31402
+Query	/フィルター(E)	フィルターのクリア(E)	1	900
+Query	/フィルター(E)	再適用​​(R)	1	12231
+Query	/フィルター(E)	選択したセルの値でフィルター(V)	1	12232
+Query	/フィルター(E)	選択したセルの色でフィルター(C)	1	12233
+Query	/フィルター(E)	選択したセルのフォント色でフィルター(F)	1	12234
+Query	/フィルター(E)	選択したセルのアイコンでフィルター(I)	1	12235
+Query		並べ替え(O)	10	31435
+Query	/並べ替え(O)	昇順​​(S)	1	12947
+Query	/並べ替え(O)	降順​​(O)	1	12948
+Query	/並べ替え(O)	選択したセルの色を上に表示(C)	1	12943
+Query	/並べ替え(O)	選択したフォントの色を上に表示(F)	1	12944
+Query	/並べ替え(O)	選択した書式設定のアイコンを上に配置(F)	1	12945
+Query	/並べ替え(O)	ユーザー設定の​​並べ替え(U)...	1	12949
+Query		コメントの挿入(M)	1	2031
+Query		コメントの​​削除(M)	1	1592
+Query		コメントの​​表示/非表示(O)	1	1593
+Query		セルの書式設定(F)...	1	855
+Query		クエリの​​編集(E)...	1	1950
+Query		データ範囲​​プロパティ(A)...	1	1951
+Query		パラメーター​​(M)...	1	537
+Query		更新(R)	1	459
+Query		他のユーザーを非表示(H)	1	34125
+Query		追加操作​​(A)	1	22577
+Query Layout		切り取り​​(T)	1	21
+Query Layout		コピー​​(C)	1	19
+Query Layout		貼り付け​​(P)	1	22
+Query Layout		形式を選択して貼り付け(S)...	1	21437
+Query Layout		複合表として​​貼り付け(P)	1	3624
+Query Layout		セルの​​挿入(E)...	1	295
+Query Layout		削除(D)...	1	292
+Query Layout		数式と値のクリア(N)	1	3125
+Query Layout		クイック分析(Q)	1	24508
+Query Layout		コメントの挿入(M)	1	2031
+Query Layout		コメントの​​削除(M)	1	1592
+Query Layout		コメントの​​表示/非表示(O)	1	1593
+Query Layout		セルの書式設定(F)...	1	855
+Query Layout		クエリの​​編集(E)...	1	1950
+Query Layout		データ範囲​​プロパティ(A)...	1	1951
+Query Layout		パラメーター​​(M)...	1	537
+Query Layout		更新(R)	1	459
+Query Layout		改ページの挿入(B)	1	1588
+Query Layout		すべての改ページ​​を解除(A)	1	1585
+Query Layout		印刷範囲の​​設定(S)	1	364
+Query Layout		印刷範囲に​​追加(A)	1	1583
+Query Layout		印刷範囲から除外(E)	1	1586
+Query Layout		印刷範囲の解除(R)	1	2038
+Query Layout		ページ​​設定(U)...	1	247
+Query Layout		他のユーザーを非表示(H)	1	34125
+Query Layout		追加操作​​(A)	1	22577
+AutoCalculate		なし(N)	1	2012
+AutoCalculate		平均(A)	1	2013
+AutoCalculate		データの個数(C)	1	2014
+AutoCalculate		数値の個数(O)	1	2015
+AutoCalculate		最大値(M)	1	2016
+AutoCalculate		最小値(I)	1	2017
+AutoCalculate		合計(S)	1	2018
+Object/Plot		オブジェクトの書式設定(F)...	1	917
+Object/Plot		グラフの種類(Y)...	1	918
+Object/Plot		データの​​選択(E)...	1	954
+Object/Plot		グラフのオプション(I)...	1	956
+Object/Plot		グラフの​​移動(V)...	1	955
+Object/Plot		3-D グラフ(V)...	1	919
+Object/Plot		グラフ ウィンドウ(W)	1	2571
+Object/Plot		切り取り​​(T)	1	21
+Object/Plot		コピー​​(C)	1	19
+Object/Plot		貼り付け​​(P)	1	22
+Object/Plot		クリア​​(A)	1	47
+Object/Plot		最前面へ移動(R)	1	166
+Object/Plot		最背面へ​​移動(K)	1	167
+Object/Plot		マクロの​​登録(N)...	1	859
+Title Bar (Charting)		印刷(P)...	1	4
+Title Bar (Charting)		ページ​​設定(U)...	1	247
+Title Bar (Charting)		スペル ​​チェック(S)...	1	2
+Layout		セルの書式設定(F)...	1	855
+Layout		削除(D)...	1	292
+Layout		ピボットテーブル ウィザード(W)	1	457
+Layout		更新(R)	1	459
+Layout		選択(S)	10	30252
+Layout	/選択(S)	ラベル​​(L)	1	995
+Layout	/選択(S)	データ​​(D)	1	993
+Layout	/選択(S)	ラベルと​​データ(A)	1	994
+Layout	/選択(S)	テーブル​​全体(T)	1	1600
+Layout	/選択(S)	選択範囲を​​有効にする(E)	1	991
+Layout		グループと詳細の表示(G)	10	30251
+Layout	/グループと詳細の表示(G)	フィールド全体の展開(E)	1	462
+Layout	/グループと詳細の表示(G)	フィールド全体の折りたたみ(C)	1	464
+Layout	/グループと詳細の表示(G)	グループ化(G)...	1	3159
+Layout	/グループと詳細の表示(G)	グループ解除(U)...	1	3160
+Layout		展開/折りたたみ(E)	10	31583
+Layout	/展開/折りたたみ(E)	展開(X)	1	462
+Layout	/展開/折りたたみ(E)	折りたたみ(O)	1	464
+Layout	/展開/折りたたみ(E)	フィールド全体の展開(E)	1	462
+Layout	/展開/折りたたみ(E)	フィールド全体の折りたたみ(C)	1	464
+Layout		数式(M)	10	30254
+Layout		フィールドの​​設定(N)	1	460
+Layout		オプション(O)...	1	1604
+Layout		レポート フィルター ​​ページの表示(P)...	1	461
+Layout		改ページの挿入(B)	1	1588
+Layout		すべての改ページ​​を解除(A)	1	1585
+Layout		印刷範囲の​​設定(S)	1	364
+Layout		印刷範囲に​​追加(A)	1	1583
+Layout		印刷範囲から除外(E)	1	1586
+Layout		印刷範囲の解除(R)	1	2038
+Layout		ページ​​設定(U)...	1	247
+Layout		他のユーザーを非表示(H)	1	34125
+Layout		追加操作​​(A)	1	22577
+Pivot Chart Popup		選択したオブジェクト(S)	1	917
+Pivot Chart Popup		ピボットグラフのオプション(P)...	1	1604
+Pivot Chart Popup		ピボットテーブル ウィザード(W)	1	457
+Pivot Chart Popup		更新(R)	1	459
+Pivot Chart Popup		ピボットグラフのフィールド ボタンを表示しない(H)	1	3956
+Pivot Chart Popup		グループと詳細の表示(G)	10	30251
+Pivot Chart Popup	/グループと詳細の表示(G)	詳細を表示しない(H)	1	464
+Pivot Chart Popup	/グループと詳細の表示(G)	詳細データの表示(S)	1	462
+Pivot Chart Popup	/グループと詳細の表示(G)	グループ化(G)...	1	3159
+Pivot Chart Popup	/グループと詳細の表示(G)	グループ解除(U)...	1	3160
+Pivot Chart Popup		フィールドの削除(V)	1	47
+Phonetic Information		切り取り​​(T)	1	21
+Phonetic Information		コピー​​(C)	1	19
+Phonetic Information		貼り付け​​(P)	1	22
+Phonetic Information		ふりがなリストから選択 ...	1	3514
+Auto Sum		合計(S)	1	226
+Auto Sum		平均​​(A)	1	5803
+Auto Sum		数値の​​個数(C)	1	5804
+Auto Sum		最大値​​(M)	1	5806
+Auto Sum		最小値​​(I)	1	5807
+Auto Sum		その他の関数(F)...	1	5808
+Paste Special Dropdown		数式​​(F)	1	5836
+Paste Special Dropdown		値(V)	1	370
+Paste Special Dropdown		罫線なし​​(B)	1	5837
+Paste Special Dropdown		行/列の​​入れ替え(T)	1	5838
+Paste Special Dropdown		リンク貼り付け(N)	1	1956
+Paste Special Dropdown		形式を選択して​​貼り付け(S)...	1	755
+Find Format		書式(F)...	1	5939
+Find Format		セルから書式を選択(C)...	1	5935
+Find Format		書式検索のクリア(R)	1	5937
+Replace Format		書式(F)...	1	5940
+Replace Format		セルから書式を選択(C)...	1	5936
+Replace Format		書式置換のクリア(R)	1	5938
+List Range Popup		切り取り​​(T)	1	21
+List Range Popup		コピー​​(C)	1	19
+List Range Popup		貼り付け​​(P)	1	22
+List Range Popup		形式を選択して貼り付け(S)...	1	21437
+List Range Popup		複合表として​​貼り付け(P)	1	3624
+List Range Popup		データ型カードを表示(S)	1	32714
+List Range Popup		データの種類(Y)	10	32713
+List Range Popup	/データの種類(Y)	設定の更新をしています(R)...	1	34171
+List Range Popup	/データの種類(Y)	更新(R)	1	33296
+List Range Popup	/データの種類(Y)	変更(C)...	1	32715
+List Range Popup	/データの種類(Y)	テキストに変換(T)	1	32716
+List Range Popup		ス‍マ‍ー‍ト​​検索(L)	1	25536
+List Range Popup		セル内の画像(P)	10	34738
+List Range Popup	/セル内の画像(P)	セルの上に配置(P)	1	34739
+List Range Popup	/セル内の画像(P)	参照の作成(C)	1	34759
+List Range Popup	/セル内の画像(P)	データ型カードを表示(S)	1	32714
+List Range Popup		代替テキストを表示(A)...	1	34737
+List Range Popup		更新(R)	1	459
+List Range Popup		この数式を説明する(E)	1	47805
+List Range Popup		Copilot(C)	1	34820
+List Range Popup		Copilot とチャットする(C)	1	44471
+List Range Popup		Copilot	10	34807
+List Range Popup	/Copilot	カスタマイズされたテーブルの作成(C)	1	42662
+List Range Popup	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+List Range Popup	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+List Range Popup	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+List Range Popup	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+List Range Popup	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+List Range Popup	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+List Range Popup	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+List Range Popup	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+List Range Popup	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+List Range Popup	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+List Range Popup	/Copilot	アプリのスキルを開く(O)	1	40006
+List Range Popup	/Copilot	Copilot とチャットする(C)	1	44471
+List Range Popup		挿入(I)	10	31274
+List Range Popup	/挿入(I)	テーブルの列 (左)(L)	1	7568
+List Range Popup	/挿入(I)	テーブルの列 (右)(R)	1	12196
+List Range Popup	/挿入(I)	テーブルの行 (上)(A)	1	7373
+List Range Popup	/挿入(I)	テーブルの行 (下)(B)	1	12197
+List Range Popup		削除(D)	10	31275
+List Range Popup	/削除(D)	テーブルの列(C)	1	7569
+List Range Popup	/削除(D)	テーブルの行(R)	1	7374
+List Range Popup		選択(L)	10	31536
+List Range Popup	/選択(L)	テーブルの列データ(C)	1	12485
+List Range Popup	/選択(L)	テーブルの列全体(E)	1	12486
+List Range Popup	/選択(L)	テーブルの行(R)	1	12484
+List Range Popup		数式と値のクリア(N)	1	3125
+List Range Popup		Python 出力 (Y)	10	34750
+List Range Popup	/Python 出力 (Y)	Python オブジェクト(P)	1	34764
+List Range Popup	/Python 出力 (Y)	Excel の値(E)	1	34765
+List Range Popup		セルの上にプロットを表示(P)	1	45242
+List Range Popup		エディターの表示(E)	1	37910
+List Range Popup		数式エディター(F)	1	37869
+List Range Popup		クイック分析(Q)	1	24508
+List Range Popup		スパークライン(A)	10	31623
+List Range Popup	/スパークライン(A)	グループの位置と​​データの編集(E)...	1	19222
+List Range Popup	/スパークライン(A)	単一スパークラインの​​データを編集(S)...	1	19223
+List Range Popup	/スパークライン(A)	グループ化​​(G)	1	19226
+List Range Popup	/スパークライン(A)	グループ​​解除(U)	1	19227
+List Range Popup	/スパークライン(A)	選択した​​スパークラインのクリア(C)	1	19229
+List Range Popup	/スパークライン(A)	選択したスパークライン ​​グループのクリア(L)	1	19230
+List Range Popup		並べ替え(O)	10	31435
+List Range Popup	/並べ替え(O)	昇順​​(S)	1	12947
+List Range Popup	/並べ替え(O)	降順​​(O)	1	12948
+List Range Popup	/並べ替え(O)	選択したセルの色を上に表示(C)	1	12943
+List Range Popup	/並べ替え(O)	選択したフォントの色を上に表示(F)	1	12944
+List Range Popup	/並べ替え(O)	選択した書式設定のアイコンを上に配置(F)	1	12945
+List Range Popup	/並べ替え(O)	ユーザー設定の​​並べ替え(U)...	1	12949
+List Range Popup		フィルター(E)	10	31402
+List Range Popup	/フィルター(E)	フィルターのクリア(E)	1	900
+List Range Popup	/フィルター(E)	再適用​​(R)	1	12231
+List Range Popup	/フィルター(E)	選択したセルの値でフィルター(V)	1	12232
+List Range Popup	/フィルター(E)	選択したセルの色でフィルター(C)	1	12233
+List Range Popup	/フィルター(E)	選択したセルのフォント色でフィルター(F)	1	12234
+List Range Popup	/フィルター(E)	選択したセルのアイコンでフィルター(I)	1	12235
+List Range Popup		テーブル(B)	10	31535
+List Range Popup	/テーブル(B)	集計行​​(T)	1	7372
+List Range Popup	/テーブル(B)	範囲に​​変換(V)	1	7375
+List Range Popup	/テーブル(B)	外部データのプロパティ(A)...	1	1951
+List Range Popup	/テーブル(B)	クエリの​​編集(E)...	1	1950
+List Range Popup	/テーブル(B)	DAX の編集(D)...	1	24333
+List Range Popup	/テーブル(B)	パラメーター​​(M)...	1	537
+List Range Popup	/テーブル(B)	データ ソースとのリンクを解除(U)	1	7683
+List Range Popup	/テーブル(B)	SharePoint リスト​​の表示/編集(L)	1	7763
+List Range Popup	/テーブル(B)	SharePoint と同期(Y)	1	7761
+List Range Popup	/テーブル(B)	変更を破棄して​​最新の情報に更新(D)	1	7762
+List Range Popup	/テーブル(B)	代替テキスト(L)...	1	20580
+List Range Popup		XML(X)	10	31268
+List Range Popup	/XML(X)	インポート​​(I)...	1	7433
+List Range Popup	/XML(X)	エクスポート​​(E)...	1	7432
+List Range Popup	/XML(X)	XML データの更新(R)	1	7812
+List Range Popup	/XML(X)	XML ソース(X)...	1	7693
+List Range Popup	/XML(X)	XML の対応付けのプロパティ(P)...	1	7813
+List Range Popup	/XML(X)	XML ​​拡張パック(A)...	1	7784
+List Range Popup		テーブルまたは範囲からデータを取得(G)...	1	34003
+List Range Popup		コメントの挿入(M)	1	2031
+List Range Popup		コメントの​​削除(M)	1	1592
+List Range Popup		コメントの​​表示/非表示(O)	1	1593
+List Range Popup		セルの書式設定(F)...	1	855
+List Range Popup		ドロップダウン リストから選択(K)...	1	1966
+List Range Popup		ハイパーリンク(H)...	1	1576
+List Range Popup		ハイパーリンク​​の編集(H)...	1	1577
+List Range Popup		ハイパーリンク​​を開く(O)	1	1015
+List Range Popup		ハイパーリンクの削除(R)	1	3626
+List Range Popup		この範囲にリンクする(L)	1	34646
+List Range Popup		このテーブルへのリンク(L)	1	34761
+List Range Popup		変更内容を表示(G)	1	34405
+List Range Popup		他のユーザーを非表示(H)	1	34125
+List Range Popup		追加操作​​(A)	1	22577
+List Range Popup		近くにいる人(N)	10	34042
+List Range Popup	/近くにいる人(N)	近くにいる人(N)	1	34042
+List Range Popup	/近くにいる人(N)	近くにいる人(N)	1	34042
+List Range Popup	/近くにいる人(N)	近くにいる人(N)	1	34042
+List Range Popup	/近くにいる人(N)	近くにいる人(N)	1	34042
+List Range Popup	/近くにいる人(N)	近くにいる人(N)	1	34042
+List Range Popup	/近くにいる人(N)	近くにいる人(N)	1	34042
+List Range Popup	/近くにいる人(N)	近くにいる人(N)	1	34042
+List Range Popup	/近くにいる人(N)	近くにいる人(N)	1	34042
+List Range Popup	/近くにいる人(N)	近くにいる人(N)	1	34042
+List Range Popup	/近くにいる人(N)	近くにいる人(N)	1	34042
+List Range Layout Popup		切り取り​​(T)	1	21
+List Range Layout Popup		コピー​​(C)	1	19
+List Range Layout Popup		貼り付け​​(P)	1	22
+List Range Layout Popup		形式を選択して貼り付け(S)...	1	21437
+List Range Layout Popup		複合表として​​貼り付け(P)	1	3624
+List Range Layout Popup		セル内の画像(P)	10	34738
+List Range Layout Popup	/セル内の画像(P)	セルの上に配置(P)	1	34739
+List Range Layout Popup	/セル内の画像(P)	参照の作成(C)	1	34759
+List Range Layout Popup	/セル内の画像(P)	データ型カードを表示(S)	1	32714
+List Range Layout Popup		代替テキストを表示(A)...	1	34737
+List Range Layout Popup		データ型カードを表示(S)	1	32714
+List Range Layout Popup		データの種類(Y)	10	32713
+List Range Layout Popup	/データの種類(Y)	設定の更新をしています(R)...	1	34171
+List Range Layout Popup	/データの種類(Y)	更新(R)	1	33296
+List Range Layout Popup	/データの種類(Y)	変更(C)...	1	32715
+List Range Layout Popup	/データの種類(Y)	テキストに変換(T)	1	32716
+List Range Layout Popup		更新(R)	1	459
+List Range Layout Popup		この数式を説明する(E)	1	47805
+List Range Layout Popup		Copilot(C)	1	34820
+List Range Layout Popup		Copilot とチャットする(C)	1	44471
+List Range Layout Popup		Copilot	10	34807
+List Range Layout Popup	/Copilot	カスタマイズされたテーブルの作成(C)	1	42662
+List Range Layout Popup	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+List Range Layout Popup	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+List Range Layout Popup	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+List Range Layout Popup	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+List Range Layout Popup	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+List Range Layout Popup	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+List Range Layout Popup	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+List Range Layout Popup	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+List Range Layout Popup	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+List Range Layout Popup	/Copilot	推奨される Copilot プロンプト(S)	1	49151
+List Range Layout Popup	/Copilot	アプリのスキルを開く(O)	1	40006
+List Range Layout Popup	/Copilot	Copilot とチャットする(C)	1	44471
+List Range Layout Popup		挿入(I)	10	31274
+List Range Layout Popup	/挿入(I)	テーブルの列 (左)(L)	1	7568
+List Range Layout Popup	/挿入(I)	テーブルの列 (右)(R)	1	12196
+List Range Layout Popup	/挿入(I)	テーブルの行 (上)(A)	1	7373
+List Range Layout Popup	/挿入(I)	テーブルの行 (下)(B)	1	12197
+List Range Layout Popup		削除(D)	10	31275
+List Range Layout Popup	/削除(D)	テーブルの列(C)	1	7569
+List Range Layout Popup	/削除(D)	テーブルの行(R)	1	7374
+List Range Layout Popup		選択(L)	10	31536
+List Range Layout Popup	/選択(L)	テーブルの列データ(C)	1	12485
+List Range Layout Popup	/選択(L)	テーブルの列全体(E)	1	12486
+List Range Layout Popup	/選択(L)	テーブルの行(R)	1	12484
+List Range Layout Popup		数式と値のクリア(N)	1	3125
+List Range Layout Popup		Python 出力 (Y)	10	34750
+List Range Layout Popup	/Python 出力 (Y)	Python オブジェクト(P)	1	34764
+List Range Layout Popup	/Python 出力 (Y)	Excel の値(E)	1	34765
+List Range Layout Popup		セルの上にプロットを表示(P)	1	45242
+List Range Layout Popup		エディターの表示(E)	1	37910
+List Range Layout Popup		数式エディター(F)	1	37869
+List Range Layout Popup		クイック分析(Q)	1	24508
+List Range Layout Popup		テーブル(B)	10	31535
+List Range Layout Popup	/テーブル(B)	集計行​​(T)	1	7372
+List Range Layout Popup	/テーブル(B)	範囲に​​変換(V)	1	7375
+List Range Layout Popup	/テーブル(B)	外部データのプロパティ(A)...	1	1951
+List Range Layout Popup	/テーブル(B)	クエリの​​編集(E)...	1	1950
+List Range Layout Popup	/テーブル(B)	DAX の編集(D)...	1	24333
+List Range Layout Popup	/テーブル(B)	パラメーター​​(M)...	1	537
+List Range Layout Popup	/テーブル(B)	データ ソースとのリンクを解除(U)	1	7683
+List Range Layout Popup	/テーブル(B)	SharePoint リスト​​の表示/編集(L)	1	7763
+List Range Layout Popup	/テーブル(B)	SharePoint と同期(Y)	1	7761
+List Range Layout Popup	/テーブル(B)	変更を破棄して​​最新の情報に更新(D)	1	7762
+List Range Layout Popup	/テーブル(B)	代替テキスト(L)...	1	20580
+List Range Layout Popup		XML(X)	10	31268
+List Range Layout Popup	/XML(X)	インポート​​(I)...	1	7433
+List Range Layout Popup	/XML(X)	エクスポート​​(E)...	1	7432
+List Range Layout Popup	/XML(X)	XML データの更新(R)	1	7812
+List Range Layout Popup	/XML(X)	XML ソース(X)...	1	7693
+List Range Layout Popup	/XML(X)	XML の対応付けのプロパティ(P)...	1	7813
+List Range Layout Popup	/XML(X)	XML ​​拡張パック(A)...	1	7784
+List Range Layout Popup		コメントの挿入(M)	1	2031
+List Range Layout Popup		コメントの​​削除(M)	1	1592
+List Range Layout Popup		コメントの​​表示/非表示(O)	1	1593
+List Range Layout Popup		セルの書式設定(F)...	1	855
+List Range Layout Popup		改ページの挿入(B)	1	1588
+List Range Layout Popup		すべての改ページ​​を解除(A)	1	1585
+List Range Layout Popup		印刷範囲の​​設定(S)	1	364
+List Range Layout Popup		印刷範囲に​​追加(A)	1	1583
+List Range Layout Popup		印刷範囲から除外(E)	1	1586
+List Range Layout Popup		印刷範囲の解除(R)	1	2038
+List Range Layout Popup		ページ​​設定(U)...	1	247
+List Range Layout Popup		他のユーザーを非表示(H)	1	34125
+List Range Layout Popup		追加操作​​(A)	1	22577
+XML Range Popup		切り取り​​(T)	1	21
+XML Range Popup		コピー​​(C)	1	19
+XML Range Popup		貼り付け​​(P)	1	22
+XML Range Popup		形式を選択して貼り付け(S)...	1	21437
+XML Range Popup		複合表として​​貼り付け(P)	1	3624
+XML Range Popup		セルの​​挿入(E)...	1	295
+XML Range Popup		削除(D)...	1	292
+XML Range Popup		数式と値のクリア(N)	1	3125
+XML Range Popup		XML(X)	10	31268
+XML Range Popup	/XML(X)	インポート​​(I)...	1	7433
+XML Range Popup	/XML(X)	エクスポート​​(E)...	1	7432
+XML Range Popup	/XML(X)	XML データの更新(R)	1	7812
+XML Range Popup	/XML(X)	XML ソース(X)...	1	7693
+XML Range Popup	/XML(X)	XML の対応付けのプロパティ(P)...	1	7813
+XML Range Popup	/XML(X)	XML ​​拡張パック(A)...	1	7784
+XML Range Popup		コメントの挿入(M)	1	2031
+XML Range Popup		コメントの​​削除(M)	1	1592
+XML Range Popup		コメントの​​表示/非表示(O)	1	1593
+XML Range Popup		セルの書式設定(F)...	1	855
+XML Range Popup		ドロップダウン リストから選択(K)...	1	1966
+XML Range Popup		ハイパーリンク(H)...	1	1576
+XML Range Popup		ハイパーリンク​​の編集(H)...	1	1577
+XML Range Popup		ハイパーリンク​​を開く(O)	1	1015
+XML Range Popup		ハイパーリンクの削除(R)	1	3626
+XML Range Popup		追加操作​​(A)	1	22577
+List Range Layout Popup		切り取り​​(T)	1	21
+List Range Layout Popup		コピー​​(C)	1	19
+List Range Layout Popup		貼り付け​​(P)	1	22
+List Range Layout Popup		形式を選択して貼り付け(S)...	1	21437
+List Range Layout Popup		複合表として​​貼り付け(P)	1	3624
+List Range Layout Popup		セルの​​挿入(E)...	1	295
+List Range Layout Popup		削除(D)...	1	292
+List Range Layout Popup		数式と値のクリア(N)	1	3125
+List Range Layout Popup		XML(X)	10	31268
+List Range Layout Popup	/XML(X)	インポート​​(I)...	1	7433
+List Range Layout Popup	/XML(X)	エクスポート​​(E)...	1	7432
+List Range Layout Popup	/XML(X)	XML データの更新(R)	1	7812
+List Range Layout Popup	/XML(X)	XML ソース(X)...	1	7693
+List Range Layout Popup	/XML(X)	XML の対応付けのプロパティ(P)...	1	7813
+List Range Layout Popup	/XML(X)	XML ​​拡張パック(A)...	1	7784
+List Range Layout Popup		コメントの挿入(M)	1	2031
+List Range Layout Popup		コメントの​​削除(M)	1	1592
+List Range Layout Popup		コメントの​​表示/非表示(O)	1	1593
+List Range Layout Popup		セルの書式設定(F)...	1	855
+List Range Layout Popup		改ページの挿入(B)	1	1588
+List Range Layout Popup		すべての改ページ​​を解除(A)	1	1585
+List Range Layout Popup		印刷範囲の​​設定(S)	1	364
+List Range Layout Popup		印刷範囲に​​追加(A)	1	1583
+List Range Layout Popup		印刷範囲から除外(E)	1	1586
+List Range Layout Popup		印刷範囲の解除(R)	1	2038
+List Range Layout Popup		ページ​​設定(U)...	1	247
+List Range Layout Popup		追加操作​​(A)	1	22577
+Nil		ドキュメント​​管理サーバー(D)	1	12962
+Nil		チェックアウトの​​破棄(U)	1	16204
+Nil		互換性​​チェック(C)	1	12845
+Nil		署名の​​表示(W)	1	11237
+Nil		Excel ​​Services(S)	1	12395
+Nil		ページ ​​レイアウト(L)	1	11441
+Nil		署名欄​​...	1	11303
+Nil		署名欄​​...	1	12781
+Nil		ルールの​​管理(R)...	1	12212
+Nil		その他のルール...	1	12331
+Nil		ドキュメント​​検査(I)	1	11703
+Nil		ドキュメント ワークスペース​​の作成(C)	1	12961
+Nil		ドキュメント​​管理情報(D)...	1	12963
+Nil		ドキュメント ​​パネル	1	14596
+Nil		ブックの接続(W)...	1	11205
+Nil		ピボットテーブル	1	12247
+Nil		ピボットテーブル	1	34039
+Nil		ピボットテーブル(T)	1	34040
+Nil		ピボットテーブル	1	34164
+Nil		ピボットグラフ	1	12248
+Nil		ピボットグラフ​​	1	3789
+Nil		位置の変更	1	12249
+Nil		データ ソース​​の変更...	1	12250
+Nil		ドキュメント​​検査(I)	1	11703
+Nil		テーブルを Visio の​​ピボットダイアグラムにエクスポート...	1	15363
+Nil		Visio 図面にテーブルをエクスポート(V)...	1	32700
+Nil		ワークフロー タスク​​の表示(W)	1	11292
+Nil		ワークフロー​​(K)	1	11293
+Nil		ドキュメントの​​暗号化(E)	1	15675
+Nil		最終版​​にする(F)	1	13033
+Nil		常に読み取り専用で開く(O)	1	32768
+Nil		リンク​​(K)...	1	14736
+Nil		ブックのリンク(W)	1	34689
+Nil		このドキュメントに署名(S)	1	13034
+Nil		デジタル署名​​の追加(S)	1	13035
+Nil		署名サービスと​​デジタル ID(I)...	1	13036
+Nil		‎¥‎ 日本語‎	1	13457
+Nil		​​	1	13457
+Nil		​​	1	13457
+Nil		​​	1	13457
+Nil		‎$‎ 英語 (米国)‎	1	13457
+Nil		‎€‎ ユーロ (€ 123)‎	1	13457
+Nil		‎£‎ 英語 (英国)‎	1	13457
+Nil		‎CHF‎ フランス語 (スイス)‎	1	13457
+Nil		​​	1	13457
+Nil		​​	1	13457
+Nil		その他の​​通貨表示形式(M)...	1	13458
+Nil		セットの​​管理(M)...	1	17585
+Nil		行と列の集計を行わない(F)	1	14908
+Nil		行と列の集計を行う(N)	1	14909
+Nil		行のみ集計を行う(R)	1	14910
+Nil		列のみ集計を行う(C)	1	14911
+Nil		小計を表示しない(D)	1	14905
+Nil		すべての小計をグループの末尾に表示する(B)	1	14906
+Nil		すべての小計をグループの先頭に表示する(T)	1	14907
+Nil		各アイテムの後ろに空行を入れる(I)	1	14912
+Nil		アイテムの後ろの​​空行を削除する(R)	1	14913
+Nil		ブックの​​保護(W)...	1	16136
+Nil		計算の​​種類(A)	1	16750
+Nil		集計方法​​(B)	1	16751
+Nil		行アイテムに基づいて​​セットを作成(R)...	1	17583
+Nil		列アイテムに基づいて​​セットを作成(C)...	1	17584
+Nil		折れ線​​(L)	1	18927
+Nil		縦棒​​(C)	1	18928
+Nil		勝敗​​(W)	1	18929
+Nil		グループの位置と​​データの編集(E)...	1	19222
+Nil		単一スパークラインの​​データを編集(S)...	1	19223
+Nil		値と数値の​​書式(A)	1	19084
+Nil		数式と数値の​​書式(O)	1	19083
+Nil		グループ化​​(G)	1	19226
+Nil		グループ​​解除(U)	1	19227
+Nil		選択した​​スパークラインのクリア(C)	1	19229
+Nil		選択したスパークライン ​​グループのクリア(L)	1	19230
+Nil		非表示および​​空白のセル(H)...	1	19224
+Nil		行/列の​​切り替え(W)	1	19225
+Nil		What-If 分析​​を有効にする(E)	1	19232
+Nil		変更を自動的​​に計算(A)	1	19234
+Nil		変更を反映して​​ピボットテーブルを計算(C)	1	19233
+Nil		変更の​​破棄(D)	1	19235
+Nil		変更の​​発行(P)	1	19236
+Nil		データ ソース値​​の更新(R)	1	19237
+Nil		設定​​(S)...	1	19238
+Nil		インク(I)	1	18072
+Nil		テキストのみ​​保持(T)	1	18064
+Nil		貼り付け先の​​書式に合わせる(M)	1	18063
+Nil		元の書式​​を保持(K)	1	19089
+Nil		貼り付け先の​​テーマを使用(H)	1	18062
+Nil		元の列幅を​​保持(W)	1	19086
+Nil		元の書式を保持(K)	1	18060
+Nil		値と元の​​書式(E)	1	19085
+Nil		更新可能な ​​Web クエリ(W)...	1	19087
+Nil		テキスト ファイル ​​ウィザードを使用(U)...	1	19088
+Nil		更新可能な ​​Web クエリ(W)...	1	19516
+Nil		テキスト ファイル ​​ウィザードを使用(U)...	1	19517
+Nil		セルに画像を貼り付け(C)	1	34785
+Nil		アクセシビリティ ​​チェック(A)	1	19666
+Nil		条件付き書式​​の結合(G)	1	19518
+Nil		その他の​​色(M)...	1	19451
+Nil		ユーザー設定の太さ(W)...	1	19453
+Nil		折れ線(L)	1	20450
+Nil		縦棒(C)	1	20451
+Nil		勝敗(W)	1	20452
+Nil		その他の​​色(M)...	1	20473
+Nil		その他の​​色(M)...	1	20474
+Nil		その他の​​色(M)...	1	20475
+Nil		その他の​​色(M)...	1	20476
+Nil		その他の​​色(M)...	1	20477
+Nil		その他の​​色(M)...	1	20478
+Nil		スライサーの​​表示設定(E)...	1	18884
+Nil		スライサー​​の挿入(I)...	1	18885
+Nil		フィルター​​の接続(F)...	1	18886
+Nil		レポートの接続(I)...	1	18887
+Nil		切り取り​​(T)	1	20859
+Nil		コピー​​(C)	1	20860
+Nil		更新​​(R)	1	20861
+Nil		昇順(S)	1	20862
+Nil		降順(O)	1	20863
+Nil		データ ソース順​​で並べ替え(D)	1	20864
+Nil		スライサーの削除(V)	1	20866
+Nil		コピーの​​保存(A)	1	20221
+Nil		変更の​​破棄(C)	1	20216
+Nil		スライサーからフィルターをクリア(A)	1	20865
+Nil		編集を​​有効にする(E)	1	20848
+Nil		ピボットグラフ ​​フィルター	1	14244
+Nil		翻訳​​(A)...	1	6111
+Nil		翻訳(S)	1	32736
+Nil		スライサー​​(S)...	1	21344
+Nil		ドキュメントを​​再度開く	1	21486
+Nil		ドキュメントの​​暗号化(E)	1	21974
+Nil		ユーザー設定(C)	1	112
+Nil		印刷プレビュー (全画面表示)(E)	1	22398
+Nil		オプション​​...	1	6042
+Nil		印刷プレビュー​​と印刷(P)	1	22586
+Nil		タイムライン(T)	1	22990
+Nil		年	1	24122
+Nil		四半期	1	24122
+Nil		月	1	24122
+Nil		日	1	24122
+Nil		ドリルダウン(W)	1	24126
+Nil		ドリルアップ(U)	1	24127
+Nil		ドリルアップ	1	24129
+Nil		ドリルアップ	1	24129
+Nil		ドリルアップ	1	24129
+Nil		ドリルアップ	1	24129
+Nil		ドリルアップ	1	24129
+Nil		ドリルアップ	1	24129
+Nil		ドリルアップ	1	24129
+Nil		ドリルアップ	1	24129
+Nil		ドリルアップ	1	24129
+Nil		ドリルアップ	1	24129
+Nil		ドリルアップ	1	24129
+Nil		ドリルアップ	1	24129
+Nil		ドリルアップ	1	24129
+Nil		ドリルアップ	1	24129
+Nil		ドリルアップ	1	24129
+Nil		ドリルアップ	1	24129
+Nil		ドリルアップ	1	24129
+Nil		ドリルアップ	1	24129
+Nil		ドリルアップ	1	24129
+Nil		ドリルアップ	1	24129
+Nil		ドリルアップ	1	24129
+Nil		ドリルアップ	1	24129
+Nil		ドリルアップ	1	24129
+Nil		ドリルアップ	1	24129
+Nil		ドリルアップ	1	24129
+Nil		ドリルアップ	1	24129
+Nil		ドリルアップ	1	24129
+Nil		ドリルアップ	1	24129
+Nil		ドリルアップ	1	24129
+Nil		ドリルアップ	1	24129
+Nil		ドリルアップ	1	24129
+Nil		ドリルダウン	1	24131
+Nil		Excel で開く(E)	1	24149
+Nil		フラッシュ ​​フィル(F)	1	24054
+Nil		タイムライン​​の挿入(I)...	1	24168
+Nil		MDX 計算メジャー(E)...	1	24198
+Nil		MDX 計算メンバー(A)...	1	24233
+Nil		計算の管理(M)...	1	24232
+Nil		おすすめ​​ピボットテーブル	1	24247
+Nil		軸アイテムに基づいてセットを作成(R)...	1	24259
+Nil		凡例アイテムに基づいてセットを作成(C)...	1	24260
+Nil		ピボットグラフのオプション(O)...	1	24261
+Nil		詳細の表示(S)	1	24262
+Nil		グラフの挿入ダイアログ ボックス(I)	1	24256
+Nil		ピボットテーブル	1	24465
+Nil		更新(R)	1	24400
+Nil		タイムラインのフィルターをクリア(A)	1	24401
+Nil		タイムラインの削除(V)	1	24476
+Nil		おすすめ​​ピボットテーブル	1	24587
+Nil		フラッシュ フィル(F)...	1	24054
+Nil		オートフィル	1	24836
+Nil		削除(D)	1	24081
+Nil		ピボットグラフと​​ピボットテーブル(P)	1	24997
+Nil		スライサーの​​挿入(I)...	1	24998
+Nil		クイック調査(Q)	1	25037
+Nil		フィルター​​の接続(F)...	1	25159
+Nil		Power View(P)	1	25203
+Nil		スライサーからフィルターをクリア(A)	1	25239
+Nil		スライサーの削除(V)	1	25237
+Nil		タイムラインのフィルターをクリア(A)	1	25238
+Nil		削除​​(V)	1	25236
+Nil		挿入​​(I)	1	25242
+Nil		挿入​​(I)	1	25244
+Nil		削除(D)...	1	25243
+Nil		削除(D)...	1	25245
+Nil		非表示​​(H)	1	25248
+Nil		再表示​​(U)	1	25249
+Nil		非表示​​(H)	1	25246
+Nil		再表示​​(U)	1	25247
+Nil		3D Maps を開く(O)	1	25478
+Nil		選択したデータを 3D Maps に追加(A)	1	25479
+Nil		複数選択(M)	1	26449
+Nil		複数選択(M)	1	26450
+Nil		予測シート(F)	1	26271
+Nil		更新(R)	1	27707
+Nil		ブックの保護と共有 (レガシ)(S)	1	32595
+Nil		ブックの共有 (レガシ)(B)	1	32594
+Nil		範囲の編集を許可する(A)	1	32470
+Nil		新しいフォーム(N)	1	32834
+Nil		フォームのプレビュー(P)	1	32835
+Nil		フォームの編集(E)	1	32836
+Nil		フォームの送信(S)	1	32837
+Nil		フォーム(F)	1	32833
+Nil		もう一度開く(R)	1	33280
+Nil		新しいコメント(M)	1	33164
+Nil		新しいメモ(N)	1	33158
+Nil		メモの表示/非表示(O)	1	33162
+Nil		スマート検索(L)	1	33592
+Nil		ファイルを信頼する(T)	1	33912
+Nil		新規(N)	1	33908
+Nil		終了(E)	1	33909
+Nil		保持(K)	1	33929
+Nil		コメント​​(C)	1	24342
+Nil		アクセシビリティのヘルプ(H)	1	34089
+Nil		データ分析(A)	1	34210
+Nil		グラフのデザインに関する推奨事項(C)	1	34302
+Nil		モードの切り替え(M)	1	34121
+Nil		すべてのスクリプト(A)	1	34524
+Nil		新しいスクリプト(N)	1	34585
+Nil		タスクの自動化(T)	1	34586
+Nil		共有スクリプト(S)	1	34618
+Nil		チェック ボックス(C)	1	34610
+Nil		操作を記録(R)	1	34626
+Nil		Star Rating	1	34612
+Nil		Picture Format	1	34768
+Nil		Copilot	1	34807
+Nil		詳細の表示(D)	1	34828
+Nil		Spinner Control	1	40302
+Nil		ドロップダウン	1	35457
+Nil		クラッシュ(C)	1	46798
+Nil		Explode	1	37807
+Nil		元に戻せません(U)	1	22364
+Nil		繰り返しできません(R)	1	22365
+Nil		グリッド センサー(G)	1	36011
+Nil		コード エディターで作成(C)	1	41461
+Nil		レコーディングから作成(R)	1	44905
+Nil		最近使用したスクリプト(R)	1	45375
+Nil		このブックのスクリプト(W)	1	38699
+Nil		サンプル(S)	1	39561
+Nil		チャット(C)	1	44005
+Nil		アプリ スキル(A)	1	41021
+Nil		アナリスト(N)	1	44110
+Nil		Copilot	1	49951
+Nil		AI を使用して下書き(D) (プレビュー)	1	39906
+Nil		リボン外に移動する(R)	1	49987
+Filter Names		フィルターのクリア(C)	1	13370
+Filter Names		ワークシートを範囲とした名前(S)	1	13371
+Filter Names		ブックを範囲とした名前(B)	1	13372
+Filter Names		エラーのある名前(W)	1	13373
+Filter Names		エラーのない名前(O)	1	13374
+Filter Names		定義された名前(N)	1	13377
+Filter Names		テーブル名(T)	1	13378
+Excel Previewer		コピー​​(C)	1	19
+&Legacy Keyboard Support		編集(E)	10	30003
+&Legacy Keyboard Support	/編集(E)	元に戻せません(U)	1	128
+&Legacy Keyboard Support	/編集(E)	繰り返しできません(R)	1	37
+&Legacy Keyboard Support	/編集(E)	切り取り​​(T)	1	21
+&Legacy Keyboard Support	/編集(E)	コピー​​(C)	1	19
+&Legacy Keyboard Support	/編集(E)	Office ​​クリップボード(B)...	1	809
+&Legacy Keyboard Support	/編集(E)	貼り付け(P)	1	22
+&Legacy Keyboard Support	/編集(E)	形式を選択して​​貼り付け(S)...	1	755
+&Legacy Keyboard Support	/編集(E)	ハイパーリンクとして​​貼り付け(H)	1	2787
+&Legacy Keyboard Support	/編集(E)	フィル(I)	10	30020
+&Legacy Keyboard Support	/編集(E)/フィル(I)	下方向へ​​コピー(D)	1	372
+&Legacy Keyboard Support	/編集(E)/フィル(I)	右方向へ​​コピー(R)	1	371
+&Legacy Keyboard Support	/編集(E)/フィル(I)	上方向へ​​コピー(U)	1	867
+&Legacy Keyboard Support	/編集(E)/フィル(I)	左方向へ​​コピー(L)	1	868
+&Legacy Keyboard Support	/編集(E)/フィル(I)	作業グループへ​​コピー(A)...	1	869
+&Legacy Keyboard Support	/編集(E)/フィル(I)	連続データの​​作成(S)...	1	870
+&Legacy Keyboard Support	/編集(E)/フィル(I)	文字の​​割付(J)	1	871
+&Legacy Keyboard Support	/編集(E)	クリア​​(A)	10	30021
+&Legacy Keyboard Support	/編集(E)/クリア​​(A)	すべて(A)	1	1964
+&Legacy Keyboard Support	/編集(E)/クリア​​(A)	書式(F)	1	872
+&Legacy Keyboard Support	/編集(E)/クリア​​(A)	数式と値​​(C)	1	873
+&Legacy Keyboard Support	/編集(E)/クリア​​(A)	コメント​​(M)	1	874
+&Legacy Keyboard Support	/編集(E)/クリア​​(A)	コメントとメモをクリア(M)	1	33727
+&Legacy Keyboard Support	/編集(E)/クリア​​(A)	ハイパーリンク​​(H)	1	2955
+&Legacy Keyboard Support	/編集(E)/クリア​​(A)	ブックのクリーンアップ(W)	1	33882
+&Legacy Keyboard Support	/編集(E)/クリア​​(A)	ハイパーリンク​​の削除(R)	1	16486
+&Legacy Keyboard Support	/編集(E)	削除(D)...	1	478
+&Legacy Keyboard Support	/編集(E)	シートの削除(L)	1	847
+&Legacy Keyboard Support	/編集(E)	シートの​​移動またはコピー(M)...	1	848
+&Legacy Keyboard Support	/編集(E)	検索​​(F)...	1	1849
+&Legacy Keyboard Support	/編集(E)	置換​​(E)...	1	313
+&Legacy Keyboard Support	/編集(E)	ジャンプ​​(G)...	1	757
+&Legacy Keyboard Support	/編集(E)	リンクの​​設定(K)...	1	759
+&Legacy Keyboard Support	/編集(E)	オブジェクト(O)	1	961
+&Legacy Keyboard Support	/編集(E)	オブジェクト(O)	10	30019
+&Legacy Keyboard Support	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+&Legacy Keyboard Support	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+&Legacy Keyboard Support	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+&Legacy Keyboard Support	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+&Legacy Keyboard Support	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+&Legacy Keyboard Support	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+&Legacy Keyboard Support	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+&Legacy Keyboard Support	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+&Legacy Keyboard Support	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+&Legacy Keyboard Support	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+&Legacy Keyboard Support	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+&Legacy Keyboard Support	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+&Legacy Keyboard Support	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+&Legacy Keyboard Support	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+&Legacy Keyboard Support	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+&Legacy Keyboard Support	/編集(E)/オブジェクト(O)	変換​​(V)...	1	1967
+&Legacy Keyboard Support	/編集(E)/オブジェクト(O)	Office Math に変換(N)	1	33423
+&Legacy Keyboard Support		表示(V)	10	30004
+&Legacy Keyboard Support	/表示(V)	標準​​(N)	1	723
+&Legacy Keyboard Support	/表示(V)	改ページ プレビュー(P)	1	724
+&Legacy Keyboard Support	/表示(V)	作業​​ウィンドウ(K)	1	5746
+&Legacy Keyboard Support	/表示(V)	ツール バー(T)	10	30045
+&Legacy Keyboard Support	/表示(V)/ツール バー(T)	標準	1	761
+&Legacy Keyboard Support	/表示(V)/ツール バー(T)	書式設定	1	761
+&Legacy Keyboard Support	/表示(V)/ツール バー(T)	Visual Basic	1	761
+&Legacy Keyboard Support	/表示(V)/ツール バー(T)	Web	1	761
+&Legacy Keyboard Support	/表示(V)/ツール バー(T)	ウォッチ ウィンドウ	1	761
+&Legacy Keyboard Support	/表示(V)/ツール バー(T)	オンライン コンテンツ	1	761
+&Legacy Keyboard Support	/表示(V)/ツール バー(T)	クエリと接続	1	761
+&Legacy Keyboard Support	/表示(V)/ツール バー(T)	グラフ	1	761
+&Legacy Keyboard Support	/表示(V)/ツール バー(T)	コントロール ツールボックス	1	761
+&Legacy Keyboard Support	/表示(V)/ツール バー(T)	スマート検索	1	761
+&Legacy Keyboard Support	/表示(V)/ツール バー(T)	チェック/コメント	1	761
+&Legacy Keyboard Support	/表示(V)/ツール バー(T)	データ カタログ検索	1	761
+&Legacy Keyboard Support	/表示(V)/ツール バー(T)	データ選択ウィザード	1	761
+&Legacy Keyboard Support	/表示(V)/ツール バー(T)	ピボットテーブル	1	761
+&Legacy Keyboard Support	/表示(V)/ツール バー(T)	ファイルから挿入	1	761
+&Legacy Keyboard Support	/表示(V)/ツール バー(T)	フォーム	1	761
+&Legacy Keyboard Support	/表示(V)/ツール バー(T)	ブック クエリ	1	761
+&Legacy Keyboard Support	/表示(V)/ツール バー(T)	ヘルプ	1	761
+&Legacy Keyboard Support	/表示(V)/ツール バー(T)	リサーチ ツール	1	761
+&Legacy Keyboard Support	/表示(V)/ツール バー(T)	リスト	1	761
+&Legacy Keyboard Support	/表示(V)/ツール バー(T)	ワークシート分析	1	761
+&Legacy Keyboard Support	/表示(V)/ツール バー(T)	ワードアート	1	761
+&Legacy Keyboard Support	/表示(V)/ツール バー(T)	外部データ	1	761
+&Legacy Keyboard Support	/表示(V)/ツール バー(T)	共有クエリ	1	761
+&Legacy Keyboard Support	/表示(V)/ツール バー(T)	罫線	1	761
+&Legacy Keyboard Support	/表示(V)/ツール バー(T)	最新の情報に更新	1	761
+&Legacy Keyboard Support	/表示(V)/ツール バー(T)	図	1	761
+&Legacy Keyboard Support	/表示(V)/ツール バー(T)	図形描画	1	761
+&Legacy Keyboard Support	/表示(V)/ツール バー(T)	読み上げ	1	761
+&Legacy Keyboard Support	/表示(V)/ツール バー(T)	保護	1	761
+&Legacy Keyboard Support	/表示(V)	数式バー(F)	1	849
+&Legacy Keyboard Support	/表示(V)	ステータス ​​バー(S)	1	850
+&Legacy Keyboard Support	/表示(V)	ヘッダーとフッター(H)...	1	762
+&Legacy Keyboard Support	/表示(V)	コメント​​(C)	1	1594
+&Legacy Keyboard Support	/表示(V)	ユーザー設定​​のビュー(V)...	1	950
+&Legacy Keyboard Support	/表示(V)	全画面​​表示(U)	1	178
+&Legacy Keyboard Support	/表示(V)	ズーム​​(Z)...	1	925
+&Legacy Keyboard Support		挿入(I)	10	30005
+&Legacy Keyboard Support	/挿入(I)	セルの​​挿入(E)...	1	295
+&Legacy Keyboard Support	/挿入(I)	行(R)	1	296
+&Legacy Keyboard Support	/挿入(I)	列(C)	1	297
+&Legacy Keyboard Support	/挿入(I)	ワークシート​​(W)	1	852
+&Legacy Keyboard Support	/挿入(I)	グラフ(H)...	1	1957
+&Legacy Keyboard Support	/挿入(I)	記号と​​特殊文字(S)...	1	308
+&Legacy Keyboard Support	/挿入(I)	改ページ​​(B)	1	509
+&Legacy Keyboard Support	/挿入(I)	すべての改ページ​​を解除(A)	1	1585
+&Legacy Keyboard Support	/挿入(I)	関数​​(F)...	1	385
+&Legacy Keyboard Support	/挿入(I)	名前(N)	10	30023
+&Legacy Keyboard Support	/挿入(I)/名前(N)	定義(D)...	1	878
+&Legacy Keyboard Support	/挿入(I)/名前(N)	貼り付け​​(P)...	1	879
+&Legacy Keyboard Support	/挿入(I)/名前(N)	作成​​(C)...	1	880
+&Legacy Keyboard Support	/挿入(I)/名前(N)	引用​​(A)...	1	881
+&Legacy Keyboard Support	/挿入(I)	新しいコメント(M)	1	1589
+&Legacy Keyboard Support	/挿入(I)	インク注釈​​(A)	1	9071
+&Legacy Keyboard Support	/挿入(I)	図(P)	10	30180
+&Legacy Keyboard Support	/挿入(I)/図(P)	オンライン​​画像(O)...	1	20868
+&Legacy Keyboard Support	/挿入(I)/図(P)	クリップ ​​アート(C)...	1	682
+&Legacy Keyboard Support	/挿入(I)/図(P)	ファイルから(F)...	1	2619
+&Legacy Keyboard Support	/挿入(I)/図(P)	スキャナー​​またはカメラから(S)...	1	1764
+&Legacy Keyboard Support	/挿入(I)/図(P)	インク描画と​​書き込み(D)	1	9405
+&Legacy Keyboard Support	/挿入(I)/図(P)	オートシェイプ(A)	1	2630
+&Legacy Keyboard Support	/挿入(I)/図(P)	ワードアート​​(W)...	1	1031
+&Legacy Keyboard Support	/挿入(I)/図(P)	組織図​​(O)	1	702
+&Legacy Keyboard Support	/挿入(I)	図表​​(G)...	1	1032
+&Legacy Keyboard Support	/挿入(I)	オブジェクト​​(O)...	1	546
+&Legacy Keyboard Support	/挿入(I)	ハイパーリンク(I)...	1	1576
+&Legacy Keyboard Support		書式(O)	10	30006
+&Legacy Keyboard Support	/書式(O)	セル(E)...	1	855
+&Legacy Keyboard Support	/書式(O)	行(R)	10	30024
+&Legacy Keyboard Support	/書式(O)/行(R)	高さ(E)...	1	541
+&Legacy Keyboard Support	/書式(O)/行(R)	自動調整​​(A)	1	882
+&Legacy Keyboard Support	/書式(O)/行(R)	非表示​​(H)	1	883
+&Legacy Keyboard Support	/書式(O)/行(R)	再表示​​(U)	1	884
+&Legacy Keyboard Support	/書式(O)	列(C)	10	30025
+&Legacy Keyboard Support	/書式(O)/列(C)	幅(W)...	1	542
+&Legacy Keyboard Support	/書式(O)/列(C)	選択範囲に​​合わせる(A)	1	885
+&Legacy Keyboard Support	/書式(O)/列(C)	非表示​​(H)	1	886
+&Legacy Keyboard Support	/書式(O)/列(C)	再表示​​(U)	1	887
+&Legacy Keyboard Support	/書式(O)/列(C)	標準の幅​​(S)...	1	888
+&Legacy Keyboard Support	/書式(O)	シート(H)	10	30026
+&Legacy Keyboard Support	/書式(O)/シート(H)	名前の変更(R)	1	889
+&Legacy Keyboard Support	/書式(O)/シート(H)	非表示​​(H)	1	890
+&Legacy Keyboard Support	/書式(O)/シート(H)	再表示(U)...	1	891
+&Legacy Keyboard Support	/書式(O)/シート(H)	背景​​(B)...	1	952
+&Legacy Keyboard Support	/書式(O)/シート(H)	シート見出しの色(T)...	1	5747
+&Legacy Keyboard Support	/書式(O)	オート ​​フォーマット(A)...	1	786
+&Legacy Keyboard Support	/書式(O)	条件付き書式(D)...	1	3058
+&Legacy Keyboard Support	/書式(O)	スタイル​​(S)...	1	254
+&Legacy Keyboard Support	/書式(O)	ふりがな(T)	10	30136
+&Legacy Keyboard Support	/書式(O)/ふりがな(T)	ふりがなの​​編集(E)	1	1611
+&Legacy Keyboard Support	/書式(O)/ふりがな(T)	ふりがなの​​設定(T)...	1	1613
+&Legacy Keyboard Support	/書式(O)/ふりがな(T)	ふりがなの​​表示(S)	1	1614
+&Legacy Keyboard Support		ツール(T)	10	30007
+&Legacy Keyboard Support	/ツール(T)	スペル ​​チェック(S)...	1	2
+&Legacy Keyboard Support	/ツール(T)	ブックの統計情報(B)	1	33780
+&Legacy Keyboard Support	/ツール(T)	リサーチ​​(R)...	1	7343
+&Legacy Keyboard Support	/ツール(T)	エラー ​​チェック(K)...	1	6122
+&Legacy Keyboard Support	/ツール(T)	[読み上げ] ツール バーの表示(H)	1	7011
+&Legacy Keyboard Support	/ツール(T)	共有ワークスペース(D)...	1	7710
+&Legacy Keyboard Support	/ツール(T)	ブックの​​共有(B)...	1	2040
+&Legacy Keyboard Support	/ツール(T)	変更履歴の​​記録(T)	10	30138
+&Legacy Keyboard Support	/ツール(T)/変更履歴の​​記録(T)	変更箇所​​の表示(H)...	1	2042
+&Legacy Keyboard Support	/ツール(T)/変更履歴の​​記録(T)	変更箇所の​​確認(A)...	1	305
+&Legacy Keyboard Support	/ツール(T)	ブックの​​比較と反映(W)...	1	2044
+&Legacy Keyboard Support	/ツール(T)	保護(P)	10	30029
+&Legacy Keyboard Support	/ツール(T)/保護(P)	シートの​​保護(P)...	1	893
+&Legacy Keyboard Support	/ツール(T)/保護(P)	範囲の編集​​を許可(A)...	1	6997
+&Legacy Keyboard Support	/ツール(T)/保護(P)	ブックの保護(W)...	1	894
+&Legacy Keyboard Support	/ツール(T)/保護(P)	ブックの保護と共有 (レガシ)(S)	1	3059
+&Legacy Keyboard Support	/ツール(T)	オンライン グループ作業(N)	10	30468
+&Legacy Keyboard Support	/ツール(T)/オンライン グループ作業(N)	会議の開始(M)	1	3727
+&Legacy Keyboard Support	/ツール(T)/オンライン グループ作業(N)	会議のスケジュール(S)...	1	4179
+&Legacy Keyboard Support	/ツール(T)/オンライン グループ作業(N)	Web ディスカッション(W)	1	4177
+&Legacy Keyboard Support	/ツール(T)/オンライン グループ作業(N)	校閲結果の​​差し込み終了(N)...	1	6141
+&Legacy Keyboard Support	/ツール(T)	ゴール シーク​​(G)...	1	856
+&Legacy Keyboard Support	/ツール(T)	シナリオ​​(E)...	1	857
+&Legacy Keyboard Support	/ツール(T)	ワークシート分析(U)	10	30028
+&Legacy Keyboard Support	/ツール(T)/ワークシート分析(U)	参照元の​​トレース(T)	1	486
+&Legacy Keyboard Support	/ツール(T)/ワークシート分析(U)	参照先の​​トレース(D)	1	451
+&Legacy Keyboard Support	/ツール(T)/ワークシート分析(U)	エラーの​​トレース(E)	1	463
+&Legacy Keyboard Support	/ツール(T)/ワークシート分析(U)	すべてのトレース矢印​​を削除(A)	1	453
+&Legacy Keyboard Support	/ツール(T)/ワークシート分析(U)	数式の​​検証(F)	1	5687
+&Legacy Keyboard Support	/ツール(T)/ワークシート分析(U)	ウォッチ ウィンドウの表示(W)	1	5686
+&Legacy Keyboard Support	/ツール(T)/ワークシート分析(U)	ワークシート​​分析モード(M)	1	6059
+&Legacy Keyboard Support	/ツール(T)/ワークシート分析(U)	[ワークシート分析] ツールバーの表示(S)	1	892
+&Legacy Keyboard Support	/ツール(T)	マクロ(M)	10	30017
+&Legacy Keyboard Support	/ツール(T)/マクロ(M)	マクロ​​(M)...	1	186
+&Legacy Keyboard Support	/ツール(T)/マクロ(M)	新しいマクロ​​の記録(R)...	1	184
+&Legacy Keyboard Support	/ツール(T)/マクロ(M)	セキュリティ​​(S)...	1	3627
+&Legacy Keyboard Support	/ツール(T)/マクロ(M)	Visual Basic ​​Editor(V)	1	1695
+&Legacy Keyboard Support	/ツール(T)	アドイン(I)...	1	943
+&Legacy Keyboard Support	/ツール(T)	オートコレクトの​​オプション(A)...	1	793
+&Legacy Keyboard Support	/ツール(T)	ユーザー​​設定(C)...	1	797
+&Legacy Keyboard Support	/ツール(T)	オプション​​(O)...	1	522
+&Legacy Keyboard Support	/ツール(T)	キーボードの​​ユーザー設定(K)...	1	818
+&Legacy Keyboard Support		データ(D)	10	30011
+&Legacy Keyboard Support	/データ(D)	並べ替え​​(S)...	1	928
+&Legacy Keyboard Support	/データ(D)	フィルター(F)	10	30031
+&Legacy Keyboard Support	/データ(D)/フィルター(F)	オートフィルター(F)	1	899
+&Legacy Keyboard Support	/データ(D)/フィルター(F)	すべて表示(S)	1	900
+&Legacy Keyboard Support	/データ(D)/フィルター(F)	フィルター ​​オプションの設定(A)...	1	901
+&Legacy Keyboard Support	/データ(D)	フォーム​​(O)...	1	860
+&Legacy Keyboard Support	/データ(D)	集計​​(B)...	1	861
+&Legacy Keyboard Support	/データ(D)	入力規則​​(L)...	1	2034
+&Legacy Keyboard Support	/データ(D)	テーブル​​(T)...	1	862
+&Legacy Keyboard Support	/データ(D)	区切り位置​​(E)...	1	806
+&Legacy Keyboard Support	/データ(D)	統合​​(N)...	1	863
+&Legacy Keyboard Support	/データ(D)	グループとアウトラインの設定(G)	10	30032
+&Legacy Keyboard Support	/データ(D)/グループとアウトラインの設定(G)	詳細を表示しない(H)	1	464
+&Legacy Keyboard Support	/データ(D)/グループとアウトラインの設定(G)	詳細データの表示(S)	1	462
+&Legacy Keyboard Support	/データ(D)/グループとアウトラインの設定(G)	グループ化(G)...	1	3159
+&Legacy Keyboard Support	/データ(D)/グループとアウトラインの設定(G)	グループ解除(U)...	1	3160
+&Legacy Keyboard Support	/データ(D)/グループとアウトラインの設定(G)	アウトラインの自動作成(A)	1	904
+&Legacy Keyboard Support	/データ(D)/グループとアウトラインの設定(G)	アウトラインのクリア(C)	1	905
+&Legacy Keyboard Support	/データ(D)/グループとアウトラインの設定(G)	設定​​(E)...	1	906
+&Legacy Keyboard Support	/データ(D)	ピボットテーブル/​​ピボットグラフ ウィザード(P)	1	2915
+&Legacy Keyboard Support	/データ(D)	外部データの取り込み(D)	10	30101
+&Legacy Keyboard Support	/データ(D)/外部データの取り込み(D)	データの取り込み(D)...	1	6262
+&Legacy Keyboard Support	/データ(D)/外部データの取り込み(D)	新しい Web クエリ(W)...	1	3829
+&Legacy Keyboard Support	/データ(D)/外部データの取り込み(D)	新しいデータベース ​​クエリ(N)...	1	2054
+&Legacy Keyboard Support	/データ(D)/外部データの取り込み(D)	クエリの​​編集(E)...	1	1950
+&Legacy Keyboard Support	/データ(D)/外部データの取り込み(D)	データ範囲​​プロパティ(A)...	1	1951
+&Legacy Keyboard Support	/データ(D)/外部データの取り込み(D)	パラメーター​​(M)...	1	537
+&Legacy Keyboard Support	/データ(D)	画像から	10	33995
+&Legacy Keyboard Support	/データ(D)/画像から	ファイルからの画像(P)...	1	33996
+&Legacy Keyboard Support	/データ(D)/画像から	クリップボードからの画像	1	34002
+&Legacy Keyboard Support	/データ(D)	リスト(I)	10	31276
+&Legacy Keyboard Support	/データ(D)/リスト(I)	テーブルの作成(C)...	1	7193
+&Legacy Keyboard Support	/データ(D)/リスト(I)	テーブルのサイズ変更(R)...	1	7765
+&Legacy Keyboard Support	/データ(D)/リスト(I)	集計行(T)	1	7372
+&Legacy Keyboard Support	/データ(D)/リスト(I)	範囲に変換(V)	1	7375
+&Legacy Keyboard Support	/データ(D)/リスト(I)	テーブルの発行(P)...	1	7684
+&Legacy Keyboard Support	/データ(D)/リスト(I)	サーバー上のリストの表示(L)	1	7763
+&Legacy Keyboard Support	/データ(D)/リスト(I)	リストのリンクを解除(U)	1	7683
+&Legacy Keyboard Support	/データ(D)/リスト(I)	リストの同期(Y)	1	7761
+&Legacy Keyboard Support	/データ(D)/リスト(I)	変更を破棄して最新の情報に更新(D)	1	7762
+&Legacy Keyboard Support	/データ(D)	XML(X)	10	31268
+&Legacy Keyboard Support	/データ(D)/XML(X)	インポート​​(I)...	1	7433
+&Legacy Keyboard Support	/データ(D)/XML(X)	エクスポート​​(E)...	1	7432
+&Legacy Keyboard Support	/データ(D)/XML(X)	XML データの更新(R)	1	7812
+&Legacy Keyboard Support	/データ(D)/XML(X)	XML ソース(X)...	1	7693
+&Legacy Keyboard Support	/データ(D)/XML(X)	XML の対応付けのプロパティ(P)...	1	7813
+&Legacy Keyboard Support	/データ(D)/XML(X)	XML ​​拡張パック(A)...	1	7784
+&Legacy Keyboard Support	/データ(D)	更新(R)	1	459
+Row		切り取り​​(T)	1	21
+Row		コピー​​(C)	1	19
+Row		貼り付け​​(P)	1	22
+Row		形式を選択して貼り付け(S)...	1	21437
+Row		複合表として​​貼り付け(P)	1	3624
+Row		行の高さ​​(R)...	1	541
+Row		ハイパーリンクの削除(R)	1	3626
+Column		切り取り​​(T)	1	21
+Column		コピー​​(C)	1	19
+Column		貼り付け​​(P)	1	22
+Column		形式を選択して貼り付け(S)...	1	21437
+Column		複合表として​​貼り付け(P)	1	3624
+Column		列の幅(W)...	1	542
+Column		ハイパーリンクの削除(R)	1	3626
+Copilot Menu		カスタマイズされたテーブルの作成(C)	1	42662
+Copilot Menu		推奨される Copilot プロンプト(S)	1	49151
+Copilot Menu		推奨される Copilot プロンプト(S)	1	49151
+Copilot Menu		推奨される Copilot プロンプト(S)	1	49151
+Copilot Menu		推奨される Copilot プロンプト(S)	1	49151
+Copilot Menu		推奨される Copilot プロンプト(S)	1	49151
+Copilot Menu		推奨される Copilot プロンプト(S)	1	49151
+Copilot Menu		推奨される Copilot プロンプト(S)	1	49151
+Copilot Menu		推奨される Copilot プロンプト(S)	1	49151
+Copilot Menu		推奨される Copilot プロンプト(S)	1	49151
+Copilot Menu		推奨される Copilot プロンプト(S)	1	49151
+Copilot Menu		Copilot IPE(C)	1	39336
+Copilot Menu		Copilot とチャットする(C)	1	44471
+Copilot Menu		このドキュメントを再度開くまで非表示にする(H)	1	47393
+Drawing		図形の調整(R)	10	30013
+Drawing	/図形の調整(R)	グループ化​​(G)	1	164
+Drawing	/図形の調整(R)	グループ​​解除(U)	1	165
+Drawing	/図形の調整(R)	再グループ化​​(O)	1	338
+Drawing	/図形の調整(R)	順序(R)	10	30078
+Drawing	/図形の調整(R)/順序(R)	最前面へ移動(R)	1	166
+Drawing	/図形の調整(R)/順序(R)	最背面へ​​移動(K)	1	167
+Drawing	/図形の調整(R)/順序(R)	前面へ​​移動(F)	1	170
+Drawing	/図形の調整(R)/順序(R)	背面へ​​移動(B)	1	171
+Drawing	/図形の調整(R)	位置合わせ(S)	10	30084
+Drawing	/図形の調整(R)/位置合わせ(S)	グリッド​​(G)	1	549
+Drawing	/図形の調整(R)/位置合わせ(S)	図形​​(S)	1	1402
+Drawing	/図形の調整(R)	微調整​​(N)	10	30082
+Drawing	/図形の調整(R)/微調整​​(N)	上​​(U)	1	1035
+Drawing	/図形の調整(R)/微調整​​(N)	下​​(D)	1	1036
+Drawing	/図形の調整(R)/微調整​​(N)	左​​(L)	1	1037
+Drawing	/図形の調整(R)/微調整​​(N)	右​​(R)	1	1038
+Drawing	/図形の調整(R)	配置/整列(A)	10	30174
+Drawing	/図形の調整(R)/配置/整列(A)	左揃え​​(L)	1	664
+Drawing	/図形の調整(R)/配置/整列(A)	左右​​中央揃え(C)	1	668
+Drawing	/図形の調整(R)/配置/整列(A)	右揃え​​(R)	1	665
+Drawing	/図形の調整(R)/配置/整列(A)	上揃え​​(T)	1	666
+Drawing	/図形の調整(R)/配置/整列(A)	上下​​中央揃え(M)	1	669
+Drawing	/図形の調整(R)/配置/整列(A)	下揃え​​(B)	1	667
+Drawing	/図形の調整(R)/配置/整列(A)	左右に​​整列(H)	1	408
+Drawing	/図形の調整(R)/配置/整列(A)	上下に​​整列(V)	1	465
+Drawing	/図形の調整(R)/配置/整列(A)	キャンバスに合わせる(O)	1	5976
+Drawing	/図形の調整(R)/配置/整列(A)	組織図と相対(O)	1	7070
+Drawing	/図形の調整(R)/配置/整列(A)	図表と相対(O)	1	7071
+Drawing	/図形の調整(R)	回転/反転(P)	10	30036
+Drawing	/図形の調整(R)/回転/反転(P)	自由に​​回転(T)	1	688
+Drawing	/図形の調整(R)/回転/反転(P)	左へ 90 度回転(L)	1	199
+Drawing	/図形の調整(R)/回転/反転(P)	右へ 90 度回転(R)	1	198
+Drawing	/図形の調整(R)/回転/反転(P)	左右反転(H)	1	196
+Drawing	/図形の調整(R)/回転/反転(P)	上下反転(V)	1	197
+Drawing	/図形の調整(R)	コネクタの​​再接続(T)	1	1033
+Drawing	/図形の調整(R)	頂点の​​編集(E)	1	206
+Drawing	/図形の調整(R)	オートシェイプの変更(C)	10	30080
+Drawing	/図形の調整(R)/オートシェイプの変更(C)	基本図形(B)	12	1405
+Drawing	/図形の調整(R)/オートシェイプの変更(C)	ブロック矢印(A)	12	1408
+Drawing	/図形の調整(R)/オートシェイプの変更(C)	フローチャート(F)	12	1407
+Drawing	/図形の調整(R)/オートシェイプの変更(C)	星とリボン(S)	12	1409
+Drawing	/図形の調整(R)/オートシェイプの変更(C)	吹き出し(C)	12	1406
+Drawing	/図形の調整(R)	オートシェイプの​​既定値に設定(D)	1	2179
+Drawing		オブジェクトの​​選択(S)	1	182
+Drawing		オートシェイプ(U)	10	30177
+Drawing	/オートシェイプ(U)	線(L)	12	2631
+Drawing	/オートシェイプ(U)	コネクタ(N)	12	2633
+Drawing	/オートシェイプ(U)	基本図形(B)	12	2632
+Drawing	/オートシェイプ(U)	ブロック矢印(A)	12	1049
+Drawing	/オートシェイプ(U)	フローチャート(F)	12	1048
+Drawing	/オートシェイプ(U)	星とリボン(S)	12	1050
+Drawing	/オートシェイプ(U)	吹き出し(C)	12	1047
+Drawing	/オートシェイプ(U)	その他のオートシェイプ(M)...	1	3889
+Drawing		線(L)	1	130
+Drawing		線矢印(A)	1	243
+Drawing		正方形/長方形(R)	1	1111
+Drawing		楕円(O)	1	1119
+Drawing		テキスト ​​ボックス(X)	1	139
+Drawing		縦書きテキスト ボックス​​の描画(V)	1	318
+Drawing		ワードアート​​(W)...	1	1031
+Drawing		図表​​(G)...	1	1032
+Drawing		クリップ ​​アート(C)...	1	682
+Drawing		ファイルから(F)...	1	2619
+Drawing		インク描画と​​書き込み(D)	1	9405
+Drawing		塗りつぶしの色(F)	13	1691
+Drawing		線の色​​(L)	13	1692
+Drawing		フォントの色(F)	13	401
+Drawing		線の​​スタイル(L)	12	692
+Drawing		実線/点線のスタイル(D)	12	693
+Drawing		矢印のスタイル(A)	12	694
+Drawing		影付き​​スタイル(S)	12	394
+Drawing		3-D スタイル(3)	12	339
+Shadow Settings		影の​​オン/オフ(S)	1	2175
+Shadow Settings		影の微調整 ​​(上)(N)	1	1068
+Shadow Settings		影の微調整 ​​(下)(N)	1	1069
+Shadow Settings		影の微調整 ​​(左)(N)	1	1070
+Shadow Settings		影の微調整 ​​(右)(N)	1	1071
+Shadow Settings		影の色​​(S)	13	1693
+3-D Settings		3-D の​​オン/オフ(3)	1	1374
+3-D Settings		下に​​傾ける(T)	1	1375
+3-D Settings		上に​​傾ける(T)	1	1376
+3-D Settings		左に​​傾ける(T)	1	1377
+3-D Settings		右に​​傾ける(T)	1	1378
+3-D Settings		奥行き(D)	12	1379
+3-D Settings		視点(D)	12	1380
+3-D Settings		光源(L)	12	1382
+3-D Settings		表面​​(S)	12	1383
+3-D Settings		3-D の色(3)	13	1694
+Organization Chart		図形の挿入(N)	13	6925
+Organization Chart		レイアウト(L)	10	31158
+Organization Chart	/レイアウト(L)	標準​​(S)	1	6131
+Organization Chart	/レイアウト(L)	左右に分岐​​(B)	1	6132
+Organization Chart	/レイアウト(L)	左に分岐​​(L)	1	6133
+Organization Chart	/レイアウト(L)	右に分岐​​(R)	1	6134
+Organization Chart	/レイアウト(L)	組織図の​​オートレイアウト(A)	1	6071
+Organization Chart		選択(C)	10	31181
+Organization Chart	/選択(C)	レベル​​(L)	1	6072
+Organization Chart	/選択(C)	分岐​​(B)	1	6073
+Organization Chart	/選択(C)	すべての​​アシスタント(A)	1	6074
+Organization Chart	/選択(C)	すべての​​コネクタ(C)	1	6075
+Organization Chart		組織図スタイル ​​ギャラリー(A)	1	6949
+Organization Chart		ズーム​​(Z):	4	1733
+Borders		罫線(B)	18	1618
+Borders		罫線の作成(D)...	1	6056
+Borders		罫線(B)	18	1618
+Draw Border		罫線の​​作成(D)	1	6206
+Draw Border		罫線グリッド​​の作成(D)	1	6207
+Chart Type		グラフの種類(C)	18	1616
+Pattern		パターン(P)	18	1617
+Pattern		自動設定の色(A)	18	3141
+Pattern		配色(C)	18	1929
+Pattern		色(C)	18	1930
+Font Color		自動設定の色(A)	18	1926
+Font Color		配色(C)	18	1927
+Font Color		色(C)	18	1928
+Fill Color		色なし(N)	18	1453
+Fill Color		配色(C)	18	1455
+Fill Color		標準の色(S)	18	1456
+Fill Color		最近使用した色(R)	18	1457
+Fill Color		塗りつぶしの色(M)...	1	1051
+Fill Color		塗りつぶし​​効果(F)...	1	1006
+Fill Color		塗りつぶし効果(F)...	1	2668
+Line Color		色なし(N)	18	1458
+Line Color		自動設定の色(A)	18	1459
+Line Color		配色(C)	18	1460
+Line Color		標準の色(S)	18	1461
+Line Color		最近使用した色(R)	18	1462
+Line Color		その他の枠線の色(M)...	1	1052
+Line Color		線の​​パターン(P)...	1	1053
+Drawing and Writing Pens		ボールペン	15	9997
+Drawing and Writing Pens		黒	1	9062
+Drawing and Writing Pens		青	1	9063
+Drawing and Writing Pens		赤	1	9064
+Drawing and Writing Pens		フェルトペン	15	9998
+Drawing and Writing Pens		黒	1	9065
+Drawing and Writing Pens		青	1	9066
+Drawing and Writing Pens		赤	1	9067
+Drawing and Writing Pens		蛍光ペン	15	9999
+Drawing and Writing Pens		黄	1	9068
+Drawing and Writing Pens		水色​​	1	9069
+Drawing and Writing Pens		ピンク​​	1	9070
+Annotation Pens		ボールペン	15	9997
+Annotation Pens		黒	1	9072
+Annotation Pens		青	1	9073
+Annotation Pens		赤	1	9074
+Annotation Pens		フェルトペン	15	9998
+Annotation Pens		黒	1	9075
+Annotation Pens		青	1	9076
+Annotation Pens		赤	1	9077
+Annotation Pens		蛍光ペン	15	9999
+Annotation Pens		黄	1	9078
+Annotation Pens		水色	1	9079
+Annotation Pens		ピンク	1	9080
+Drawing and Writing Pens		黒	1	9062
+Drawing and Writing Pens		青	1	9063
+Drawing and Writing Pens		赤	1	9064
+Drawing and Writing Pens		黒	1	9065
+Drawing and Writing Pens		青	1	9066
+Drawing and Writing Pens		赤	1	9067
+Drawing and Writing Pens		黄	1	9068
+Drawing and Writing Pens		水色​​	1	9069
+Drawing and Writing Pens		ピンク​​	1	9070
+Annotation Pens		黒	1	9072
+Annotation Pens		青	1	9073
+Annotation Pens		赤	1	9074
+Annotation Pens		黒	1	9075
+Annotation Pens		青	1	9076
+Annotation Pens		赤	1	9077
+Annotation Pens		黄	1	9078
+Annotation Pens		水色	1	9079
+Annotation Pens		ピンク	1	9080
+Order		最前面へ移動(R)	1	166
+Order		最背面へ​​移動(K)	1	167
+Order		前面へ​​移動(F)	1	170
+Order		背面へ​​移動(B)	1	171
+Nudge		上​​(U)	1	1035
+Nudge		下​​(D)	1	1036
+Nudge		左​​(L)	1	1037
+Nudge		右​​(R)	1	1038
+Align or Distribute		左揃え​​(L)	1	664
+Align or Distribute		左右​​中央揃え(C)	1	668
+Align or Distribute		右揃え​​(R)	1	665
+Align or Distribute		上揃え​​(T)	1	666
+Align or Distribute		上下​​中央揃え(M)	1	669
+Align or Distribute		下揃え​​(B)	1	667
+Align or Distribute		左右に​​整列(H)	1	408
+Align or Distribute		上下に​​整列(V)	1	465
+Align or Distribute		キャンバスに合わせる(O)	1	5976
+Align or Distribute		組織図と相対(O)	1	7070
+Align or Distribute		図表と相対(O)	1	7071
+Rotate or Flip		自由に​​回転(T)	1	688
+Rotate or Flip		左へ 90 度回転(L)	1	199
+Rotate or Flip		右へ 90 度回転(R)	1	198
+Rotate or Flip		左右反転(H)	1	196
+Rotate or Flip		上下反転(V)	1	197
+Lines		線(L)	1	130
+Lines		線矢印(A)	1	243
+Lines		線矢印: 双方向(D)	1	1639
+Lines		曲線(C)	1	1041
+Lines		フリーフォーム: 図形(F)	1	200
+Lines		フリーフォーム: フリーハンド(S)	1	409
+Connectors		直線コネクタ(R)	1	1042
+Connectors		直線矢印コネクタ(S)	1	2640
+Connectors		直線双方向矢印コネクタ(S)	1	2641
+Connectors		コネクタ: カギ線(E)	1	1043
+Connectors		コネクタ: カギ線矢印(E)	1	2642
+Connectors		コネクタ: カギ線双方向矢印(E)	1	2643
+Connectors		コネクタ: 曲線(U)	1	1044
+Connectors		コネクタ: 曲線矢印(C)	1	2644
+Connectors		コネクタ: 曲線双方向矢印(C)	1	2645
+AutoShapes		線(L)	12	2631
+AutoShapes		コネクタ(N)	12	2633
+AutoShapes		基本図形(B)	12	2632
+AutoShapes		ブロック矢印(A)	12	1049
+AutoShapes		フローチャート(F)	12	1048
+AutoShapes		星とリボン(S)	12	1050
+AutoShapes		吹き出し(C)	12	1047
+AutoShapes		その他のオートシェイプ(M)...	1	3889
+Callouts		吹き出し: 四角形(R)	1	1172
+Callouts		吹き出し: 角を丸めた四角形(R)	1	1173
+Callouts		吹き出し: 円形(O)	1	1174
+Callouts		思考の吹き出し: 雲形(C)	1	1175
+Callouts		吹き出し: 線(L)	1	1219
+Callouts		線吹き出し 2 (枠付き)(L)	1	1176
+Callouts		線吹き出し 3 (枠付き)(L)	1	1177
+Callouts		線吹き出し 4 (枠付き)(L)	1	1178
+Callouts		強調線吹き出し 1(L)	1	1220
+Callouts		強調線吹き出し 2(L)	1	1221
+Callouts		強調線吹き出し 3(L)	1	1222
+Callouts		強調線吹き出し 4(L)	1	1223
+Callouts		線吹き出し 1(L)	1	1224
+Callouts		線吹き出し 2(L)	1	1225
+Callouts		線吹き出し 3(L)	1	1226
+Callouts		線吹き出し 4(L)	1	1227
+Callouts		強調線吹き出し 1 (枠付き)(L)	1	1228
+Callouts		強調線吹き出し 2 (枠付き)(L)	1	1229
+Callouts		強調線吹き出し 3 (枠付き)(L)	1	1230
+Callouts		強調線吹き出し 4 (枠付き)(L)	1	1110
+Flowchart		フローチャート: 処理(F)	1	1190
+Flowchart		フローチャート: 代替処理(F)	1	1191
+Flowchart		フローチャート: 判断(F)	1	1192
+Flowchart		フローチャート: データ(F)	1	1193
+Flowchart		フローチャート: 定義済み処理(F)	1	1194
+Flowchart		フローチャート: 内部記憶(F)	1	1195
+Flowchart		フローチャート: 書類(F)	1	1196
+Flowchart		フローチャート: 複数書類(F)	1	1197
+Flowchart		フローチャート: 端子(F)	1	1198
+Flowchart		フローチャート: 準備(F)	1	1199
+Flowchart		フローチャート: 手操作入力(F)	1	1200
+Flowchart		フローチャート: 手作業(F)	1	1201
+Flowchart		フローチャート: 結合子(F)	1	1202
+Flowchart		フローチャート: 他ページ結合子(F)	1	1203
+Flowchart		フローチャート: カード(F)	1	1204
+Flowchart		フローチャート: せん孔テープ(F)	1	1205
+Flowchart		フローチャート: 和接合(F)	1	1206
+Flowchart		フローチャート: 論理和(F)	1	1207
+Flowchart		フローチャート: 照合(F)	1	1208
+Flowchart		フローチャート: 分類(F)	1	1209
+Flowchart		フローチャート: 抜出し(F)	1	1210
+Flowchart		フローチャート: 組合せ(F)	1	1211
+Flowchart		フローチャート: 記憶データ(F)	1	1213
+Flowchart		フローチャート: 論理積ゲート(F)	1	1218
+Flowchart		フローチャート: 順次アクセス記憶(F)	1	1214
+Flowchart		フローチャート: 磁気ディスク(F)	1	1215
+Flowchart		フローチャート: 直接アクセス記憶(F)	1	1216
+Flowchart		フローチャート: 表示(F)	1	1217
+Block Arrows		矢印: 右(R)	1	1142
+Block Arrows		矢印: 左(L)	1	1143
+Block Arrows		矢印: 上(U)	1	1144
+Block Arrows		矢印: 下(D)	1	1145
+Block Arrows		矢印: 左右(L)	1	1146
+Block Arrows		矢印: 上下(U)	1	1147
+Block Arrows		矢印: 四方向(Q)	1	1148
+Block Arrows		矢印: 三方向(L)	1	1149
+Block Arrows		矢印: 折線(B)	1	1152
+Block Arrows		矢印: U ターン(U)	1	1153
+Block Arrows		矢印: 二方向(L)	1	1150
+Block Arrows		矢印: 上向き折線(B)	1	1151
+Block Arrows		矢印: 右カーブ(C)	1	1160
+Block Arrows		矢印: 左カーブ(C)	1	1161
+Block Arrows		矢印: 上カーブ(C)	1	1162
+Block Arrows		矢印: 下カーブ(C)	1	1163
+Block Arrows		矢印: ストライプ(S)	1	1154
+Block Arrows		矢印: V 字型(N)	1	1155
+Block Arrows		矢印: 五方向(P)	1	1156
+Block Arrows		矢印: 山形(C)	1	1157
+Block Arrows		吹き出し: 右矢印(R)	1	1164
+Block Arrows		吹き出し: 左矢印(L)	1	1165
+Block Arrows		吹き出し: 上矢印(U)	1	1166
+Block Arrows		吹き出し: 下矢印(D)	1	1167
+Block Arrows		吹き出し: 左右矢印(L)	1	1168
+Block Arrows		吹き出し: 上下矢印(U)	1	1169
+Block Arrows		吹き出し: 四方向矢印(Q)	1	1170
+Block Arrows		矢印: 環状(C)	1	1158
+Stars & Banners		爆発: 8 pt(E)	1	1188
+Stars & Banners		爆発: 14 pt(E)	1	1189
+Stars & Banners		星: 4 pt(4)	1	2638
+Stars & Banners		星: 5 pt(5)	1	1183
+Stars & Banners		星: 8 pt(8)	1	1184
+Stars & Banners		星: 16 pt(1)	1	1185
+Stars & Banners		星: 24 pt(2)	1	1186
+Stars & Banners		星: 32 pt(3)	1	1187
+Stars & Banners		リボン: 上に曲がる(U)	1	1180
+Stars & Banners		リボン: 下に曲がる(D)	1	1179
+Stars & Banners		リボン: カーブして上方向に曲がる(C)	1	1182
+Stars & Banners		リボン: カーブして下方向に曲がる(C)	1	1181
+Stars & Banners		スクロール: 縦(V)	1	1127
+Stars & Banners		スクロール: 横(H)	1	1128
+Stars & Banners		波線(W)	1	1125
+Stars & Banners		小波(D)	1	2639
+Basic Shapes		正方形/長方形(R)	1	1111
+Basic Shapes		平行四辺形(P)	1	1112
+Basic Shapes		台形(T)	1	1113
+Basic Shapes		ひし形(D)	1	1114
+Basic Shapes		四角形: 角を丸くする(R)	1	1115
+Basic Shapes		八角形(O)	1	1116
+Basic Shapes		二等辺三角形(I)	1	1117
+Basic Shapes		直角三角形(R)	1	1118
+Basic Shapes		楕円(O)	1	1119
+Basic Shapes		六角形(H)	1	1120
+Basic Shapes		十字形(C)	1	1121
+Basic Shapes		五角形(P)	1	1124
+Basic Shapes		円柱(C)	1	1126
+Basic Shapes		直方体(C)	1	1122
+Basic Shapes		四角形: 角度付き(B)	1	1130
+Basic Shapes		四角形: メモ(F)	1	1129
+Basic Shapes		スマイル(S)	1	1131
+Basic Shapes		円: 塗りつぶしなし(H)	1	1132
+Basic Shapes		"禁止"マーク(")	1	1133
+Basic Shapes		アーチ(B)	1	1134
+Basic Shapes		ハート(H)	1	1141
+Basic Shapes		稲妻(L)	1	1140
+Basic Shapes		太陽(S)	1	2634
+Basic Shapes		月(M)	1	2635
+Basic Shapes		円弧​​(A)	1	1139
+Basic Shapes		大かっこ(D)	1	2636
+Basic Shapes		中かっこ(D)	1	2637
+Basic Shapes		ブローチ(P)	1	1123
+Basic Shapes		左大かっこ(L)	1	1135
+Basic Shapes		右大かっこ(R)	1	1136
+Basic Shapes		左中かっこ(L)	1	1137
+Basic Shapes		右中かっこ(R)	1	1138
+Insert Shape		部下​​(S)	1	5856
+Insert Shape		同レベル​​(C)	1	5855
+Insert Shape		アシスタント​​(A)	1	5849
+Shapes		切り取り​​(T)	1	21
+Shapes		コピー​​(C)	1	19
+Shapes		インクをテキスト​​としてコピー(T)	1	9382
+Shapes		貼り付け​​(P)	1	22
+Shapes		再変換​​(V)	1	3720
+Shapes		テキストの​​編集(X)	1	1401
+Shapes		グループ化(G)	10	30175
+Shapes	/グループ化(G)	グループ化​​(G)	1	164
+Shapes	/グループ化(G)	グループ​​解除(U)	1	165
+Shapes	/グループ化(G)	再グループ化​​(O)	1	338
+Shapes		順序(R)	10	30078
+Shapes	/順序(R)	最前面へ移動(R)	1	166
+Shapes	/順序(R)	最背面へ​​移動(K)	1	167
+Shapes	/順序(R)	前面へ​​移動(F)	1	170
+Shapes	/順序(R)	背面へ​​移動(B)	1	171
+Shapes		マクロの​​登録(N)...	1	859
+Shapes		オートシェイプの​​既定値に設定(D)	1	2179
+Shapes		オブジェクトの​​書式設定(O)...	1	962
+Shapes		ハイパーリンク(H)...	1	1576
+Shapes		ハイパーリンク​​の編集(H)...	1	1577
+Shapes		ハイパーリンク​​を開く(O)	1	1015
+Shapes		ハイパーリンクの削除(R)	1	3626
+Shapes		ス‍マ‍ー‍ト​​検索(L)	1	25536
+Shapes		スクリプトの表示	1	34418
+Inactive Chart		切り取り​​(T)	1	21
+Inactive Chart		コピー​​(C)	1	19
+Inactive Chart		貼り付け​​(P)	1	22
+Inactive Chart		オブジェクト​​(O)...	1	961
+Inactive Chart		グループ化(G)	10	30175
+Inactive Chart	/グループ化(G)	グループ化​​(G)	1	164
+Inactive Chart	/グループ化(G)	グループ​​解除(U)	1	165
+Inactive Chart	/グループ化(G)	再グループ化​​(O)	1	338
+Inactive Chart		順序(R)	10	30078
+Inactive Chart	/順序(R)	最前面へ移動(R)	1	166
+Inactive Chart	/順序(R)	最背面へ​​移動(K)	1	167
+Inactive Chart	/順序(R)	前面へ​​移動(F)	1	170
+Inactive Chart	/順序(R)	背面へ​​移動(B)	1	171
+Inactive Chart		マクロの​​登録(N)...	1	859
+Inactive Chart		オートシェイプの​​既定値に設定(D)	1	2179
+Inactive Chart		オブジェクトの​​書式設定(O)...	1	962
+Excel Control		切り取り​​(T)	1	21
+Excel Control		コピー​​(C)	1	19
+Excel Control		貼り付け​​(P)	1	22
+Excel Control		テキストの​​編集(X)	1	1401
+Excel Control		グループ化(G)	10	30175
+Excel Control	/グループ化(G)	グループ化​​(G)	1	164
+Excel Control	/グループ化(G)	グループ​​解除(U)	1	165
+Excel Control	/グループ化(G)	再グループ化​​(O)	1	338
+Excel Control		順序(R)	10	30078
+Excel Control	/順序(R)	最前面へ移動(R)	1	166
+Excel Control	/順序(R)	最背面へ​​移動(K)	1	167
+Excel Control	/順序(R)	前面へ​​移動(F)	1	170
+Excel Control	/順序(R)	背面へ​​移動(B)	1	171
+Excel Control		マクロの​​登録(N)...	1	859
+Excel Control		オブジェクトの​​書式設定(O)...	1	962
+Curve		切り取り​​(T)	1	21
+Curve		コピー​​(C)	1	19
+Curve		インクをテキスト​​としてコピー(T)	1	9382
+Curve		貼り付け​​(P)	1	22
+Curve		頂点の​​編集(E)	1	206
+Curve		パスを​​開く(N)	1	2693
+Curve		パスを​​閉じる(L)	1	1420
+Curve		グループ化(G)	10	30175
+Curve	/グループ化(G)	グループ化​​(G)	1	164
+Curve	/グループ化(G)	グループ​​解除(U)	1	165
+Curve	/グループ化(G)	再グループ化​​(O)	1	338
+Curve		順序(R)	10	30078
+Curve	/順序(R)	最前面へ移動(R)	1	166
+Curve	/順序(R)	最背面へ​​移動(K)	1	167
+Curve	/順序(R)	前面へ​​移動(F)	1	170
+Curve	/順序(R)	背面へ​​移動(B)	1	171
+Curve		マクロの​​登録(N)...	1	859
+Curve		オートシェイプの​​既定値に設定(D)	1	2179
+Curve		オブジェクトの​​書式設定(O)...	1	962
+Curve		ハイパーリンク(H)...	1	1576
+Curve		ハイパーリンク​​の編集(H)...	1	1577
+Curve		ハイパーリンク​​を開く(O)	1	1015
+Curve		ハイパーリンクの削除(R)	1	3626
+Curve Node		頂点の​​追加(A)	1	1415
+Curve Node		頂点の​​削除(L)	1	1416
+Curve Node		パスを​​開く(N)	1	2693
+Curve Node		パスを​​閉じる(L)	1	1420
+Curve Node		頂点の​​自動設定(T)	1	1421
+Curve Node		頂点を中心に​​スムージングする(S)	1	1422
+Curve Node		頂点で線分を​​伸ばす(R)	1	1423
+Curve Node		頂点を​​基準にする(C)	1	1424
+Curve Node		頂点編集の​​終了(E)	1	1425
+Curve Node		オートシェイプの​​既定値に設定(D)	1	2179
+Curve Node		オブジェクトの​​書式設定(O)...	1	962
+Curve Node		ハイパーリンク(H)...	1	1576
+Curve Node		ハイパーリンク​​の編集(H)...	1	1577
+Curve Node		ハイパーリンク​​を開く(O)	1	1015
+Curve Node		ハイパーリンクの削除(R)	1	3626
+Curve Segment		頂点の​​追加(A)	1	1415
+Curve Segment		線分の​​削除(L)	1	2692
+Curve Segment		パスを​​開く(N)	1	2693
+Curve Segment		パスを​​閉じる(L)	1	1420
+Curve Segment		線分を​​伸ばす(S)	1	1417
+Curve Segment		線分を​​曲げる(C)	1	1418
+Curve Segment		頂点編集の​​終了(E)	1	1425
+Curve Segment		オートシェイプの​​既定値に設定(D)	1	2179
+Curve Segment		オブジェクトの​​書式設定(O)...	1	962
+Curve Segment		ハイパーリンク(H)...	1	1576
+Curve Segment		ハイパーリンク​​の編集(H)...	1	1577
+Curve Segment		ハイパーリンク​​を開く(O)	1	1015
+Curve Segment		ハイパーリンクの削除(R)	1	3626
+Pictures Context Menu		切り取り​​(T)	1	21
+Pictures Context Menu		コピー​​(C)	1	19
+Pictures Context Menu		貼り付け​​(P)	1	22
+Pictures Context Menu		署名(S)...	1	12776
+Pictures Context Menu		署名の詳細(G)...	1	12778
+Pictures Context Menu		署名の設定(P)...	1	12779
+Pictures Context Menu		署名の削除(N)	1	12780
+Pictures Context Menu		グループ化(G)	10	30175
+Pictures Context Menu	/グループ化(G)	グループ化​​(G)	1	164
+Pictures Context Menu	/グループ化(G)	グループ​​解除(U)	1	165
+Pictures Context Menu	/グループ化(G)	再グループ化​​(O)	1	338
+Pictures Context Menu		順序(R)	10	30078
+Pictures Context Menu	/順序(R)	最前面へ移動(R)	1	166
+Pictures Context Menu	/順序(R)	最背面へ​​移動(K)	1	167
+Pictures Context Menu	/順序(R)	前面へ​​移動(F)	1	170
+Pictures Context Menu	/順序(R)	背面へ​​移動(B)	1	171
+Pictures Context Menu		マクロの​​登録(N)...	1	859
+Pictures Context Menu		オブジェクトの​​書式設定(O)...	1	962
+Pictures Context Menu		ハイパーリンク(H)...	1	1576
+Pictures Context Menu		ハイパーリンク​​の編集(H)...	1	1577
+Pictures Context Menu		ハイパーリンク​​を開く(O)	1	1015
+Pictures Context Menu		ハイパーリンクの削除(R)	1	3626
+OLE Object		切り取り​​(T)	1	21
+OLE Object		コピー​​(C)	1	19
+OLE Object		貼り付け​​(P)	1	22
+OLE Object		オブジェクト(O)	10	30019
+OLE Object	/オブジェクト(O)	<動詞(<)>	1	1965
+OLE Object	/オブジェクト(O)	<動詞(<)>	1	1965
+OLE Object	/オブジェクト(O)	<動詞(<)>	1	1965
+OLE Object	/オブジェクト(O)	<動詞(<)>	1	1965
+OLE Object	/オブジェクト(O)	<動詞(<)>	1	1965
+OLE Object	/オブジェクト(O)	<動詞(<)>	1	1965
+OLE Object	/オブジェクト(O)	<動詞(<)>	1	1965
+OLE Object	/オブジェクト(O)	<動詞(<)>	1	1965
+OLE Object	/オブジェクト(O)	<動詞(<)>	1	1965
+OLE Object	/オブジェクト(O)	<動詞(<)>	1	1965
+OLE Object	/オブジェクト(O)	<動詞(<)>	1	1965
+OLE Object	/オブジェクト(O)	<動詞(<)>	1	1965
+OLE Object	/オブジェクト(O)	<動詞(<)>	1	1965
+OLE Object	/オブジェクト(O)	<動詞(<)>	1	1965
+OLE Object	/オブジェクト(O)	<動詞(<)>	1	1965
+OLE Object	/オブジェクト(O)	変換​​(V)...	1	1967
+OLE Object	/オブジェクト(O)	Office Math に変換(N)	1	33423
+OLE Object		グループ化(G)	10	30175
+OLE Object	/グループ化(G)	グループ化​​(G)	1	164
+OLE Object	/グループ化(G)	グループ​​解除(U)	1	165
+OLE Object	/グループ化(G)	再グループ化​​(O)	1	338
+OLE Object		順序(R)	10	30078
+OLE Object	/順序(R)	最前面へ移動(R)	1	166
+OLE Object	/順序(R)	最背面へ​​移動(K)	1	167
+OLE Object	/順序(R)	前面へ​​移動(F)	1	170
+OLE Object	/順序(R)	背面へ​​移動(B)	1	171
+OLE Object		マクロの​​登録(N)...	1	859
+OLE Object		オブジェクトの​​書式設定(O)...	1	962
+ActiveX Control		切り取り​​(T)	1	21
+ActiveX Control		コピー​​(C)	1	19
+ActiveX Control		貼り付け​​(P)	1	22
+ActiveX Control		プロパティ​​(I)	1	222
+ActiveX Control		コードの​​表示(V)	1	1561
+ActiveX Control		オブジェクト(O)	10	30019
+ActiveX Control	/オブジェクト(O)	<動詞(<)>	1	1965
+ActiveX Control	/オブジェクト(O)	<動詞(<)>	1	1965
+ActiveX Control	/オブジェクト(O)	<動詞(<)>	1	1965
+ActiveX Control	/オブジェクト(O)	<動詞(<)>	1	1965
+ActiveX Control	/オブジェクト(O)	<動詞(<)>	1	1965
+ActiveX Control	/オブジェクト(O)	<動詞(<)>	1	1965
+ActiveX Control	/オブジェクト(O)	<動詞(<)>	1	1965
+ActiveX Control	/オブジェクト(O)	<動詞(<)>	1	1965
+ActiveX Control	/オブジェクト(O)	<動詞(<)>	1	1965
+ActiveX Control	/オブジェクト(O)	<動詞(<)>	1	1965
+ActiveX Control	/オブジェクト(O)	<動詞(<)>	1	1965
+ActiveX Control	/オブジェクト(O)	<動詞(<)>	1	1965
+ActiveX Control	/オブジェクト(O)	<動詞(<)>	1	1965
+ActiveX Control	/オブジェクト(O)	<動詞(<)>	1	1965
+ActiveX Control	/オブジェクト(O)	<動詞(<)>	1	1965
+ActiveX Control	/オブジェクト(O)	変換​​(V)...	1	1967
+ActiveX Control	/オブジェクト(O)	Office Math に変換(N)	1	33423
+ActiveX Control		グループ化(G)	10	30175
+ActiveX Control	/グループ化(G)	グループ化​​(G)	1	164
+ActiveX Control	/グループ化(G)	グループ​​解除(U)	1	165
+ActiveX Control	/グループ化(G)	再グループ化​​(O)	1	338
+ActiveX Control		順序(R)	10	30078
+ActiveX Control	/順序(R)	最前面へ移動(R)	1	166
+ActiveX Control	/順序(R)	最背面へ​​移動(K)	1	167
+ActiveX Control	/順序(R)	前面へ​​移動(F)	1	170
+ActiveX Control	/順序(R)	背面へ​​移動(B)	1	171
+ActiveX Control		オブジェクトの​​書式設定(O)...	1	962
+WordArt Context Menu		切り取り​​(T)	1	21
+WordArt Context Menu		コピー​​(C)	1	19
+WordArt Context Menu		貼り付け​​(P)	1	22
+WordArt Context Menu		テキストの​​編集(X)...	1	2094
+WordArt Context Menu		グループ化(G)	10	30175
+WordArt Context Menu	/グループ化(G)	グループ化​​(G)	1	164
+WordArt Context Menu	/グループ化(G)	グループ​​解除(U)	1	165
+WordArt Context Menu	/グループ化(G)	再グループ化​​(O)	1	338
+WordArt Context Menu		順序(R)	10	30078
+WordArt Context Menu	/順序(R)	最前面へ移動(R)	1	166
+WordArt Context Menu	/順序(R)	最背面へ​​移動(K)	1	167
+WordArt Context Menu	/順序(R)	前面へ​​移動(F)	1	170
+WordArt Context Menu	/順序(R)	背面へ​​移動(B)	1	171
+WordArt Context Menu		マクロの​​登録(N)...	1	859
+WordArt Context Menu		オートシェイプの​​既定値に設定(D)	1	2179
+WordArt Context Menu		オブジェクトの​​書式設定(O)...	1	962
+WordArt Context Menu		ハイパーリンク(H)...	1	1576
+WordArt Context Menu		ハイパーリンク​​の編集(H)...	1	1577
+WordArt Context Menu		ハイパーリンク​​を開く(O)	1	1015
+WordArt Context Menu		ハイパーリンクの削除(R)	1	3626
+Rotate Mode		切り取り​​(T)	1	21
+Rotate Mode		コピー​​(C)	1	19
+Rotate Mode		貼り付け​​(P)	1	22
+Rotate Mode		回転モードの終了(E)	1	1412
+Rotate Mode		オートシェイプの​​既定値に設定(D)	1	2179
+Rotate Mode		オブジェクトの​​書式設定(O)...	1	962
+Connector		切り取り​​(T)	1	21
+Connector		コピー​​(C)	1	19
+Connector		貼り付け​​(P)	1	22
+Connector		直線​​コネクタ(S)	1	2091
+Connector		コネクタ: カギ線(E)	1	2092
+Connector		曲線​​コネクタ(U)	1	2093
+Connector		コネクタの​​再接続(T)	1	1033
+Connector		マクロの​​登録(N)...	1	859
+Connector		オートシェイプの​​既定値に設定(D)	1	2179
+Connector		オブジェクトの​​書式設定(O)...	1	962
+Connector		ハイパーリンク(H)...	1	1576
+Connector		ハイパーリンク​​の編集(H)...	1	1577
+Connector		ハイパーリンク​​を開く(O)	1	1015
+Connector		ハイパーリンクの削除(R)	1	3626
+Script Anchor Popup		切り取り​​(T)	1	21
+Script Anchor Popup		コピー​​(C)	1	19
+Script Anchor Popup		貼り付け​​(P)	1	22
+Canvas Popup		切り取り​​(T)	1	21
+Canvas Popup		コピー​​(C)	1	19
+Canvas Popup		貼り付け​​(P)	1	22
+Canvas Popup		描画に​​合わせる(T)	1	5866
+Canvas Popup		拡張 ​​(描画)(P)	1	5916
+Canvas Popup		描画の​​サイズ変更(C)	1	7067
+Canvas Popup		グループ化(G)	10	30175
+Canvas Popup	/グループ化(G)	グループ化​​(G)	1	164
+Canvas Popup	/グループ化(G)	グループ​​解除(U)	1	165
+Canvas Popup	/グループ化(G)	再グループ化​​(O)	1	338
+Canvas Popup		順序(R)	10	30078
+Canvas Popup	/順序(R)	最前面へ移動(R)	1	166
+Canvas Popup	/順序(R)	最背面へ​​移動(K)	1	167
+Canvas Popup	/順序(R)	前面へ​​移動(F)	1	170
+Canvas Popup	/順序(R)	背面へ​​移動(B)	1	171
+Canvas Popup		オートフォーマット​​の使用(U)	1	7000
+Canvas Popup		オブジェクトの​​書式設定(O)...	1	962
+Canvas Popup		ハイパーリンク(H)...	1	1576
+Canvas Popup		ハイパーリンク​​の編集(H)...	1	1577
+Canvas Popup		ハイパーリンク​​を開く(O)	1	1015
+Canvas Popup		ハイパーリンクの削除(R)	1	3626
+Organization Chart Popup		テキストの​​編集(X)	1	1401
+Organization Chart Popup		部下​​(S)	1	5856
+Organization Chart Popup		同レベル​​(C)	1	5855
+Organization Chart Popup		アシスタント​​(A)	1	5849
+Organization Chart Popup		削除​​(D)	1	5858
+Organization Chart Popup		レイアウト(L)	10	31158
+Organization Chart Popup	/レイアウト(L)	標準​​(S)	1	6131
+Organization Chart Popup	/レイアウト(L)	左右に分岐​​(B)	1	6132
+Organization Chart Popup	/レイアウト(L)	左に分岐​​(L)	1	6133
+Organization Chart Popup	/レイアウト(L)	右に分岐​​(R)	1	6134
+Organization Chart Popup	/レイアウト(L)	組織図の​​オートレイアウト(A)	1	6071
+Organization Chart Popup		選択(C)	10	31181
+Organization Chart Popup	/選択(C)	レベル​​(L)	1	6072
+Organization Chart Popup	/選択(C)	分岐​​(B)	1	6073
+Organization Chart Popup	/選択(C)	すべての​​アシスタント(A)	1	6074
+Organization Chart Popup	/選択(C)	すべての​​コネクタ(C)	1	6075
+Organization Chart Popup		オートフォーマット​​の使用(U)	1	7000
+Organization Chart Popup		オブジェクトの​​書式設定(O)...	1	962
+Diagram		テキストの​​編集(X)	1	1401
+Diagram		図形の​​挿入(N)	1	6933
+Diagram		図形の削除(D)	1	6829
+Diagram		オートフォーマット​​の使用(U)	1	7000
+Diagram		オブジェクトの​​書式設定(O)...	1	962
+Comments		作業​​ウィンドウ(K)	25	5746
+Version History		作業​​ウィンドウ(K)	25	5746
+Task Pane		作業​​ウィンドウ(K)	25	5746
+Office Clipboard		Office クリップボード	25	5746
+XML Source		作業​​ウィンドウ(K)	25	5746
+Research		作業​​ウィンドウ(K)	25	5746
+XML Document		作業​​ウィンドウ(K)	25	5746
+Signatures		作業​​ウィンドウ(K)	25	5746
+Document Actions		作業​​ウィンドウ(K)	25	5746
+Clip Art		作業​​ウィンドウ(K)	25	5746
+Format Object		作業​​ウィンドウ(K)	25	5746
+Document Management		作業​​ウィンドウ(K)	25	5746
+Document Updates		作業​​ウィンドウ(K)	25	5746
+Mail Merge Panes		作業​​ウィンドウ(K)	25	5746
+Fax Service		作業​​ウィンドウ(K)	25	5746
+Meeting Workspace		作業​​ウィンドウ(K)	25	5746
+Attachment Options		作業​​ウィンドウ(K)	25	5746
+Accessibility		作業​​ウィンドウ(K)	25	5746
+Editor		作業​​ウィンドウ(K)	25	5746
+Dictionaries		作業​​ウィンドウ(K)	25	5746
+Thesaurus		作業​​ウィンドウ(K)	25	5746
+History		作業​​ウィンドウ(K)	25	5746
+Share		作業​​ウィンドウ(K)	25	5746
+Smart Lookup		作業​​ウィンドウ(K)	25	5746
+Researcher		作業​​ウィンドウ(K)	25	5746
+Insert From File		作業​​ウィンドウ(K)	25	5746
+Help		作業​​ウィンドウ(K)	25	5746
+Online Content		作業​​ウィンドウ(K)	25	5746
+Feedback		作業​​ウィンドウ(K)	25	5746
+Data Selector		作業​​ウィンドウ(K)	25	5746
+Contact Support		作業​​ウィンドウ(K)	25	5746
+Troubleshooter		作業​​ウィンドウ(K)	25	5746
+Activity		作業​​ウィンドウ(K)	25	5746
+Admin Tenant Portal		作業​​ウィンドウ(K)	25	5746
+Notifications		作業​​ウィンドウ(K)	25	5746
+User Voice		作業​​ウィンドウ(K)	25	5746
+Search Feedback		作業​​ウィンドウ(K)	25	5746
+Outlook Room Finder Pane		作業​​ウィンドウ(K)	25	5746
+Outlook Meeting Insights Pane		作業​​ウィンドウ(K)	25	5746
+Outlook Notifications Pane		作業​​ウィンドウ(K)	25	5746
+Diagnostic Pane		作業​​ウィンドウ(K)	25	5746
+Diagnostic Pane		作業​​ウィンドウ(K)	25	5746
+Diagnostic Pane		作業​​ウィンドウ(K)	25	5746
+Diagnostic Pane		作業​​ウィンドウ(K)	25	5746
+Data Types Refresh Settings		作業​​ウィンドウ(K)	25	5746
+Outlook My Day Pane		作業​​ウィンドウ(K)	25	5746
+Changes		作業​​ウィンドウ(K)	25	5746
+Outlook FindTime Pane		作業​​ウィンドウ(K)	25	5746
+Merge Conflict		作業​​ウィンドウ(K)	25	5746
+Workbook Performance		作業​​ウィンドウ(K)	25	5746
+Excel Task Pane		作業​​ウィンドウ(K)	25	5746
+Workbook Links		作業​​ウィンドウ(K)	25	5746
+Python in Excel		作業​​ウィンドウ(K)	25	5746
+Hello AI		作業​​ウィンドウ(K)	25	5746
+Accessibility Assistant		作業​​ウィンドウ(K)	25	5746
+Advertisement		作業​​ウィンドウ(K)	25	5746
+Outlook MetaOS App Side Pane		作業​​ウィンドウ(K)	25	5746
+Discover Microsoft 365		作業​​ウィンドウ(K)	25	5746
+Diagnostic Pane		作業​​ウィンドウ(K)	25	5746
+Edit Control		作業​​ウィンドウ(K)	25	5746
+Annotations		作業​​ウィンドウ(K)	25	5746
+Math Creator		作業​​ウィンドウ(K)	25	5746
+Changes		変更内容を表示(V)	1	27423
+Add Command		ファイル	10	30054
+Add Command	/ファイル	新規作成​​(N)...	1	18
+Add Command	/ファイル	新規作成​​(N)	1	2520
+Add Command	/ファイル	開く	1	23
+Add Command	/ファイル	閉じる​​(C)	1	106
+Add Command	/ファイル	上書き​​保存(S)	1	3
+Add Command	/ファイル	名前を付けて​​保存(A)...	1	748
+Add Command	/ファイル	作業状態の​​保存(W)...	1	846
+Add Command	/ファイル	単一 Web ​​ページ (*.mht)	1	3823
+Add Command	/ファイル	単一 Web ​​ページ (*.mht)	1	3823
+Add Command	/ファイル	Web ページ​​として発行(H)...	1	3903
+Add Command	/ファイル	アクセス​​許可(M)...	1	7994
+Add Command	/ファイル	ブラウザーで​​プレビュー(B)	1	3655
+Add Command	/ファイル	チェック​​アウト(E)	1	6127
+Add Command	/ファイル	チェック​​イン(E)...	1	6128
+Add Command	/ファイル	チェックアウトの​​破棄(U)	1	16204
+Add Command	/ファイル	ファイルの​​更新(U)	1	455
+Add Command	/ファイル	ページ​​設定(U)...	1	247
+Add Command	/ファイル	印刷範囲の​​設定(S)	1	364
+Add Command	/ファイル	印刷範囲の​​クリア(C)	1	1584
+Add Command	/ファイル	印刷​​プレビュー(V)	1	109
+Add Command	/ファイル	印刷/Web プレビュー	14	30458
+Add Command	/ファイル	印刷(P)...	1	4
+Add Command	/ファイル	クイック印刷(Q)	1	2521
+Add Command	/ファイル	テーブルの印刷	1	7380
+Add Command	/ファイル	メールの​​宛先(M)	1	3738
+Add Command	/ファイル	校閲者へ​​送信(R)...	1	5958
+Add Command	/ファイル	校閲結果の​​返信(C)...	1	6139
+Add Command	/ファイル	メールの宛先 ​​(添付ファイル)(A)...	1	2188
+Add Command	/ファイル	送信​​(S)	1	3708
+Add Command	/ファイル	回覧先	1	259
+Add Command	/ファイル	インターネット FAX サービス​​を使用する宛先(X)...	1	7392
+Add Command	/ファイル	PDF 形式の添付ファイル​​として電子メールで送信(P)	1	15730
+Add Command	/ファイル	XPS 形式の添付ファイル​​として電子メールで送信(S)	1	15731
+Add Command	/ファイル	Exchange​​フォルダー(E)...	1	938
+Add Command	/ファイル	オンライン会議の参加者(O)	1	3728
+Add Command	/ファイル	バージョン​​履歴(R)...	1	7799
+Add Command	/ファイル	プロパティ​​(I)	1	750
+Add Command	/ファイル	互換性​​チェック(C)	1	12845
+Add Command	/ファイル	署名の​​表示(W)	1	11237
+Add Command	/ファイル	署名(S)...	1	12776
+Add Command	/ファイル	署名の詳細(G)...	1	12778
+Add Command	/ファイル	署名の設定(P)...	1	12779
+Add Command	/ファイル	署名の削除(N)	1	12780
+Add Command	/ファイル	最終版​​にする(F)	1	13033
+Add Command	/ファイル	コメント ブロック(C)	1	192
+Add Command	/ファイル	印刷範囲の​​設定(S)	1	364
+Add Command	/ファイル	印刷範囲の解除(R)	1	2038
+Add Command	/ファイル	すべてのフィールドの表示(S)	1	12541
+Add Command	/ファイル	Excel の終了(X)	1	752
+Add Command	/ファイル	Excel ​​Services(S)	1	12395
+Add Command	/ファイル	発行​​オプション(U)	1	15347
+Add Command	/ファイル	読み取り専用の​​設定/解除(T)	1	456
+Add Command	/ファイル	PDF または ​​XPS(P)	1	12499
+Add Command	/ファイル	変更ウィンドウのリセット(R)	1	34650
+Add Command		編集	10	30055
+Add Command	/編集	元に戻す(U)	6	128
+Add Command	/編集	やり直し(R)	6	129
+Add Command	/編集	切り取り​​(T)	1	21
+Add Command	/編集	コピー​​(C)	1	19
+Add Command	/編集	Office ​​クリップボード(B)...	1	809
+Add Command	/編集	貼り付け​​(P)	1	22
+Add Command	/編集	形式を選択して​​貼り付け(S)...	1	755
+Add Command	/編集	ハイパーリンクとして​​貼り付け(H)	1	2787
+Add Command	/編集	書式設定​​(R)	1	369
+Add Command	/編集	値​​(V)	1	370
+Add Command	/編集	下方向へ​​コピー(D)	1	372
+Add Command	/編集	右方向へ​​コピー(R)	1	371
+Add Command	/編集	上方向へ​​コピー(U)	1	867
+Add Command	/編集	左方向へ​​コピー(L)	1	868
+Add Command	/編集	作業グループへ​​コピー(A)...	1	869
+Add Command	/編集	連続データの​​作成(S)...	1	870
+Add Command	/編集	文字の​​割付(J)	1	871
+Add Command	/編集	すべて(A)	1	1964
+Add Command	/編集	数式と値のクリア	1	47
+Add Command	/編集	書式の​​クリア(C)	1	368
+Add Command	/編集	コメントの​​削除(M)	1	1592
+Add Command	/編集	セルの​​削除(D)	1	292
+Add Command	/編集	行の削除(R)	1	293
+Add Command	/編集	列の削除(C)	1	294
+Add Command	/編集	シートの削除(L)	1	847
+Add Command	/編集	シートの​​移動またはコピー(M)...	1	848
+Add Command	/編集	検索​​(F)...	1	1849
+Add Command	/編集	置換​​(E)...	1	313
+Add Command	/編集	ジャンプ​​(G)...	1	757
+Add Command	/編集	可視セルの​​選択(S)	1	441
+Add Command	/編集	アクティブ セル領域​​の選択(S)	1	442
+Add Command	/編集	インクをテキスト​​としてコピー(T)	1	9382
+Add Command	/編集	削除​​(D)	1	11953
+Add Command		表示	10	30056
+Add Command	/表示	標準​​(N)	1	723
+Add Command	/表示	改ページ プレビュー(P)	1	724
+Add Command	/表示	数式バー(F)	1	849
+Add Command	/表示	ステータス ​​バー(S)	1	850
+Add Command	/表示	ヘッダーとフッター(H)...	1	762
+Add Command	/表示	ユーザー設定​​のビュー	4	17423
+Add Command	/表示	全画面​​表示(U)	1	178
+Add Command	/表示	ズーム​​(Z):	4	1733
+Add Command	/表示	画面表示​​拡大(Z)	1	444
+Add Command	/表示	画面表示​​縮小(Z)	1	445
+Add Command	/表示	コメント​​(C)	1	1594
+Add Command	/表示	コメントの​​表示/非表示(O)	1	1593
+Add Command	/表示	前の​​コメント(P)	1	1590
+Add Command	/表示	次の​​コメント(N)	1	1591
+Add Command	/表示	HTML ソース(E)	1	3902
+Add Command		挿入	10	30057
+Add Command	/挿入	セルの​​挿入(E)...	1	295
+Add Command	/挿入	行(R)	1	296
+Add Command	/挿入	列(C)	1	297
+Add Command	/挿入	ワークシート​​(W)	1	852
+Add Command	/挿入	グラフ(H)...	1	1957
+Add Command	/挿入	改ページ​​(B)	1	509
+Add Command	/挿入	関数​​(F)...	1	385
+Add Command	/挿入	オート SUM(A)	13	226
+Add Command	/挿入	貼り付け​​(P)...	1	879
+Add Command	/挿入	新しいコメント(M)	1	1589
+Add Command	/挿入	インク注釈​​(A)	1	9071
+Add Command	/挿入	インク描画と​​書き込み(D)	1	9405
+Add Command	/挿入	ファイルから(F)...	1	2619
+Add Command	/挿入	オンライン​​画像(O)...	1	20868
+Add Command	/挿入	オートシェイプ(A)	1	2630
+Add Command	/挿入	組織図​​(O)	1	702
+Add Command	/挿入	ワードアート​​(W)...	1	1031
+Add Command	/挿入	スキャナー​​またはカメラから(S)...	1	1764
+Add Command	/挿入	オブジェクト​​(O)...	1	546
+Add Command	/挿入	ハイパーリンク(I)...	1	1576
+Add Command	/挿入	記号と​​特殊文字(S)...	1	308
+Add Command	/挿入	= 挿入​​(E)	1	373
+Add Command	/挿入	+ 挿入​​(P)	1	374
+Add Command	/挿入	- 挿入​​(M)	1	375
+Add Command	/挿入	* 挿入​​(M)	1	376
+Add Command	/挿入	/ 挿入​​(D)	1	377
+Add Command	/挿入	^ 挿入​​(E)	1	378
+Add Command	/挿入	左かっこ​​挿入(L)	1	379
+Add Command	/挿入	右かっこ​​挿入(R)	1	380
+Add Command	/挿入	コロン​​挿入(C)	1	381
+Add Command	/挿入	コンマ​​挿入(C)	1	382
+Add Command	/挿入	% 挿入​​(P)	1	383
+Add Command	/挿入	$ 挿入​​(D)	1	384
+Add Command	/挿入	図表​​(G)...	1	1032
+Add Command	/挿入	ドーナツ型​​図表(C)	1	5825
+Add Command	/挿入	放射型​​図表(R)	1	5824
+Add Command	/挿入	ピラミッド型​​図表(P)	1	5826
+Add Command	/挿入	ターゲット型​​図表(T)	1	5827
+Add Command	/挿入	ベン図形型​​図表(V)	1	5828
+Add Command	/挿入	署名欄​​...	1	11303
+Add Command	/挿入	署名欄​​...	1	12781
+Add Command	/挿入	手書き​​文字入力(C)	1	387
+Add Command		書式	10	30058
+Add Command	/書式	セル(E)...	1	855
+Add Command	/書式	フォント​​(F):	4	1728
+Add Command	/書式	フォント サイズ(F):	4	1731
+Add Command	/書式	スタイル​​(S)...	1	254
+Add Command	/書式	スタイル​​(S):	4	1732
+Add Command	/書式	フォント サイズ​​の拡大(I)	1	403
+Add Command	/書式	フォント サイズ​​の縮小(D)	1	404
+Add Command	/書式	太字(B)	1	113
+Add Command	/書式	斜体(I)	1	114
+Add Command	/書式	下線(U)	1	115
+Add Command	/書式	書式のコピー/​​貼り付け(F)	1	108
+Add Command	/書式	二重下線​​(D)	1	60
+Add Command	/書式	取り消し線​​(S)	1	290
+Add Command	/書式	フォントの色(F)	13	401
+Add Command	/書式	フォント色の変更	1	417
+Add Command	/書式	フォント色の変更	1	12306
+Add Command	/書式	左揃え​​(L)	1	120
+Add Command	/書式	中央揃え​​(C)	1	122
+Add Command	/書式	右揃え​​(R)	1	121
+Add Command	/書式	上揃え​​	1	15051
+Add Command	/書式	上下​​中央揃え	1	15052
+Add Command	/書式	下揃え​​	1	15053
+Add Command	/書式	両端揃え​​(J)	1	123
+Add Command	/書式	均等​​割り付け	1	2792
+Add Command	/書式	縦方向に​​均等割付(V)	1	6543
+Add Command	/書式	セルを結合して中央揃え(M)	1	402
+Add Command	/書式	インデントを​​減らす(D)	1	3162
+Add Command	/書式	インデントを​​増やす(I)	1	3161
+Add Command	/書式	通貨​​表示形式(A)	1	1643
+Add Command	/書式	パーセント ​​スタイル(P)	1	396
+Add Command	/書式	桁区切り​​スタイル(C)	1	397
+Add Command	/書式	小数点以下の​​表示桁数を増やす(I)	1	398
+Add Command	/書式	小数点以下の​​表示桁数を減らす(D)	1	399
+Add Command	/書式	セルの​​結合(M)	1	798
+Add Command	/書式	セル結合の解除	1	800
+Add Command	/書式	横方向に結合(M)	1	1742
+Add Command	/書式	選択範囲内で中央揃え(S)	1	34214
+Add Command	/書式	縦書き​​(V)	1	405
+Add Command	/書式	左へ 90 度​​回転(R)	1	406
+Add Command	/書式	右へ 90 度​​回転(R)	1	407
+Add Command	/書式	右回りに​​回転(A)	1	1014
+Add Command	/書式	左回りに​​回転(A)	1	1013
+Add Command	/書式	高さ(E)...	1	541
+Add Command	/書式	幅(W)...	1	542
+Add Command	/書式	オート ​​フォーマット(A)...	1	786
+Add Command	/書式	条件付き書式(D)...	1	3058
+Add Command	/書式	罫線(B)	13	203
+Add Command	/書式	枠なし(N)	1	151
+Add Command	/書式	外枠罫線	1	150
+Add Command	/書式	内側罫線	1	149
+Add Command	/書式	左罫線​​(L)	1	147
+Add Command	/書式	右罫線​​(R)	1	148
+Add Command	/書式	上罫線​​(T)	1	145
+Add Command	/書式	下罫線​​(B)	1	146
+Add Command	/書式	縦罫線 (内側)(V)	1	1841
+Add Command	/書式	横罫線 (内側)(Z)	1	1840
+Add Command	/書式	斜め罫線 (右下がり)(D)	1	1842
+Add Command	/書式	斜め罫線 (右上がり)(U)	1	1843
+Add Command	/書式	格子(A)	1	1704
+Add Command	/書式	下二重罫線(B)	1	1699
+Add Command	/書式	塗りつぶしの色(F)	13	1691
+Add Command	/書式	パターン(P)	13	1988
+Add Command	/書式	濃い​​網かけ(D)	1	118
+Add Command	/書式	薄い​​網かけ(L)	1	393
+Add Command	/書式	オートフォーマット	1	107
+Add Command	/書式	セルのロック	1	225
+Add Command	/書式	ふりがなの​​編集(E)	1	1611
+Add Command	/書式	ふりがなの​​設定(T)...	1	1613
+Add Command	/書式	ふりがなの​​表示(S)	1	1614
+Add Command	/書式	テキストの方向(T)	14	4027
+Add Command	/書式	シート ​​(右から左)	1	1925
+Add Command	/書式	罫線の​​作成(D)	13	6048
+Add Command	/書式	罫線の​​削除(E)	1	6049
+Add Command	/書式	線のスタイル(L)	9	6050
+Add Command	/書式	線の色(L)	12	6051
+Add Command	/書式	グリッドの塗りつぶし(F)	1	6054
+Add Command	/書式	罫線の作成(D)...	1	6056
+Add Command		ツール	10	30059
+Add Command	/ツール	スペル ​​チェック(S)...	1	2
+Add Command	/ツール	ハングルと漢字の変換(H)...	1	3492
+Add Command	/ツール	リサーチ​​(R)...	1	7343
+Add Command	/ツール	ファイル検索(H)...	1	5905
+Add Command	/ツール	ブックの​​共有(B)...	1	2040
+Add Command	/ツール	変更箇所​​の表示(H)...	1	2042
+Add Command	/ツール	変更箇所の​​確認(A)...	1	305
+Add Command	/ツール	ブックの​​比較と反映(W)...	1	2044
+Add Command	/ツール	会議の開始(M)	1	3727
+Add Command	/ツール	校閲結果の​​差し込み終了(N)...	1	6141
+Add Command	/ツール	シートの​​保護(P)...	1	893
+Add Command	/ツール	ブックの保護(W)...	1	894
+Add Command	/ツール	ブックの保護と共有 (レガシ)(S)	1	3059
+Add Command	/ツール	範囲の編集を​​可能にする(A)...	1	6997
+Add Command	/ツール	シナリオ​​(E)...	1	857
+Add Command	/ツール	シナリオ(S):	4	1737
+Add Command	/ツール	参照元の​​トレース(T)	1	486
+Add Command	/ツール	参照元トレース矢印​​の削除(R)	1	452
+Add Command	/ツール	参照先の​​トレース(D)	1	451
+Add Command	/ツール	参照先トレース矢印​​の削除(R)	1	450
+Add Command	/ツール	エラーの​​トレース(E)	1	463
+Add Command	/ツール	すべてのトレース矢印​​を削除(A)	1	453
+Add Command	/ツール	無効データのマーク	1	2035
+Add Command	/ツール	[ワークシート分析] ツールバーの表示(S)	1	892
+Add Command	/ツール	マクロ​​(M)...	1	186
+Add Command	/ツール	新しいマクロ​​の記録(R)...	1	184
+Add Command	/ツール	セキュリティ​​(S)...	1	3627
+Add Command	/ツール	Visual Basic ​​Editor(V)	1	1695
+Add Command	/ツール	スクリプトの挿入(I)	1	3628
+Add Command	/ツール	すべてのスクリプトの削除(C)	1	3630
+Add Command	/ツール	すべてのスクリプトを表示(A)	1	3689
+Add Command	/ツール	COM アドイン(C)...	1	3754
+Add Command	/ツール	Web ​​オプション(W)...	1	3831
+Add Command	/ツール	すべて計算	1	5472
+Add Command	/ツール	コントロール ​​ツールボックス(O)	1	548
+Add Command	/ツール	Microsoft Outlook ​​タスクの作成(C)	1	837
+Add Command	/ツール	再計算​​実行(C)	1	960
+Add Command	/ツール	カメラ​​(C)	1	280
+Add Command	/ツール	ユーザー設定	1	283
+Add Command	/ツール	ユーザー設定	1	286
+Add Command	/ツール	名前の​​選択(S)	1	3709
+Add Command	/ツール	名前の​​確認(C)	1	3710
+Add Command	/ツール	共有ワークスペース(D)...	1	7710
+Add Command	/ツール	ユーザー​​設定(C)...	1	797
+Add Command	/ツール	オプション​​(O)...	1	522
+Add Command	/ツール	セルの​​読み上げ(P)	1	7006
+Add Command	/ツール	読み上げ​​の停止(S)	1	7007
+Add Command	/ツール	行ごと​​(R)	1	7008
+Add Command	/ツール	列ごと​​(C)	1	7009
+Add Command	/ツール	Enter キーを押した時​​に読み上げる(E)	1	7010
+Add Command	/ツール	[読み上げ] ツール バーの表示(H)	1	7011
+Add Command	/ツール	エラー ​​チェック(K)...	1	6122
+Add Command	/ツール	ウォッチ ウィンドウ​​の表示(W)	1	5686
+Add Command	/ツール	数式の​​検証(F)	1	5687
+Add Command	/ツール	ワークシート​​分析モード(M)	1	6059
+Add Command	/ツール	ユーザー設定	1	1741
+Add Command	/ツール	MS Excel 4.0 マクロ シートの挿入(I)	1	365
+Add Command	/ツール	ダイアログ(D)	1	489
+Add Command	/ツール	貼り付け​​(P)	13	6002
+Add Command	/ツール	外枠(O)	1	150
+Add Command	/ツール	左罫線(X)	1	389
+Add Command	/ツール	右罫線(X)	1	390
+Add Command	/ツール	上罫線(X)	1	391
+Add Command	/ツール	ユーザー設定(C)	1	117
+Add Command	/ツール	新しい​​描画オブジェクト(N)	1	5811
+Add Command	/ツール	組織図​​(O)	1	702
+Add Command	/ツール	ユーザー設定	1	417
+Add Command	/ツール	最初の文字に​​依存(C)	1	4021
+Add Command	/ツール	マクロのステップ実行	1	187
+Add Command	/ツール	相対参照	1	896
+Add Command	/ツール	記録終了​​(R)	1	2186
+Add Command	/ツール	継続実行	1	189
+Add Command	/ツール	グラフ(H)...	1	1957
+Add Command	/ツール	ポップヒント​​(T)	1	124
+Add Command	/ツール	ファイル検索(H)...	1	5905
+Add Command	/ツール	メモの添付(A)	1	454
+Add Command	/ツール	循環参照のトレース(N):	4	1623
+Add Command	/ツール	Microsoft Word(M)	1	42
+Add Command	/ツール	Microsoft ​​PowerPoint(P)	1	267
+Add Command	/ツール	Microsoft ​​Access(A)	1	264
+Add Command	/ツール	Microsoft Project(R)	1	269
+Add Command	/ツール	Microsoft Mail(M)	1	262
+Add Command	/ツール	レポートの書式設定(T)	1	5473
+Add Command	/ツール	ファイルの​​検索(F)...	1	140
+Add Command	/ツール	ユーザー設定	1	477
+Add Command	/ツール	ユーザー設定	1	270
+Add Command	/ツール	ユーザー設定	1	271
+Add Command	/ツール	ユーザー設定	1	478
+Add Command	/ツール	ユーザー設定	1	68
+Add Command	/ツール	ユーザー設定	1	272
+Add Command	/ツール	ユーザー設定	1	59
+Add Command	/ツール	ユーザー設定	1	276
+Add Command	/ツール	ユーザー設定	1	126
+Add Command	/ツール	ユーザー設定	1	479
+Add Command	/ツール	ユーザー設定	1	279
+Add Command	/ツール	ユーザー設定	1	278
+Add Command	/ツール	ユーザー設定	1	480
+Add Command	/ツール	ユーザー設定	1	274
+Add Command	/ツール	ユーザー設定	1	275
+Add Command	/ツール	ユーザー設定	1	481
+Add Command	/ツール	ユーザー設定	1	482
+Add Command	/ツール	ユーザー設定	1	483
+Add Command	/ツール	ユーザー設定	1	484
+Add Command	/ツール	ユーザー設定	1	67
+Add Command	/ツール	ユーザー設定	1	273
+Add Command	/ツール	ユーザー設定	1	281
+Add Command	/ツール	ユーザー設定	1	51
+Add Command	/ツール	ユーザー設定	1	259
+Add Command	/ツール	ユーザー設定	1	112
+Add Command	/ツール	アンサー ​​ウィザード(A)...	1	937
+Add Command	/ツール	ユーザー設定	1	112
+Add Command	/ツール	ユーザー設定	1	112
+Add Command	/ツール	ユーザー設定	1	112
+Add Command	/ツール	ユーザー設定	1	112
+Add Command	/ツール	ユーザー設定	1	112
+Add Command	/ツール	ユーザー設定	1	112
+Add Command	/ツール	ユーザー設定	1	112
+Add Command	/ツール	入力規則マーク​​のクリア(C)	1	2055
+Add Command	/ツール	新しいコメント(M)	1	1589
+Add Command	/ツール	ツールバーの添付(A)...	1	2966
+Add Command	/ツール	マクロの登録(M)...	1	825
+Add Command	/ツール	塗りつぶし効果(F)...	1	2668
+Add Command	/ツール	最新の情報に更新(S)	1	3817
+Add Command	/ツール	更新しない(N)	1	3819
+Add Command	/ツール	Microsoft Script Editor	1	3631
+Add Command	/ツール	オフライン ​​OLAP(L)...	1	3988
+Add Command	/ツール	セキュリティ...	1	3627
+Add Command	/ツール	ウォッチ式の追加...(A)	1	5688
+Add Command	/ツール	ウォッチ式の削除(D)	1	5689
+Add Command	/ツール	罫線グリッドの作成(D)	13	6399
+Add Command	/ツール	罫線(B)	13	6055
+Add Command	/ツール	罫線の​​作成(D)	1	6206
+Add Command	/ツール	罫線グリッド​​の作成(D)	1	6207
+Add Command	/ツール	グラフ ウィザード(C)	1	7764
+Add Command	/ツール	アクセス許可 (アクセス制限なし)	1	9004
+Add Command	/ツール	インク注釈を表示しない(I)	1	7500
+Add Command	/ツール	すべてのインク注釈​​の削除(D)	1	7674
+Add Command		データ	10	30241
+Add Command	/データ	並べ替え​​(S)...	1	928
+Add Command	/データ	昇順で​​並べ替え(A)	1	210
+Add Command	/データ	降順で​​並べ替え(C)	1	211
+Add Command	/データ	オートフィルター​​(F)	1	458
+Add Command	/データ	すべて表示(S)	1	900
+Add Command	/データ	フィルター ​​オプションの設定(A)...	1	901
+Add Command	/データ	フォーム​​(O)...	1	860
+Add Command	/データ	集計​​(B)...	1	861
+Add Command	/データ	入力規則​​(L)...	1	2034
+Add Command	/データ	テーブル​​(T)...	1	862
+Add Command	/データ	区切り位置​​(E)...	1	806
+Add Command	/データ	統合​​(N)...	1	863
+Add Command	/データ	詳細を表示しない(H)	1	464
+Add Command	/データ	詳細データの表示(S)	1	462
+Add Command	/データ	グループ解除(U)...	1	3160
+Add Command	/データ	グループ化(G)...	1	3159
+Add Command	/データ	アウトラインの自動作成(A)	1	904
+Add Command	/データ	アウトラインのクリア(C)	1	905
+Add Command	/データ	アウトライン記号​​の表示(S)	1	440
+Add Command	/データ	テーブルの作成(C)...	1	7193
+Add Command	/データ	テーブルの発行(P)...	1	7684
+Add Command	/データ	ピボットグラフ​​	1	3789
+Add Command	/データ	サーバー上のリストの表示(L)	1	7763
+Add Command	/データ	リストのリンクを解除(U)	1	7683
+Add Command	/データ	リストの同期(Y)	1	7761
+Add Command	/データ	変更を破棄して最新の情報に更新(D)	1	7762
+Add Command	/データ	テーブルの列 (左)(L)	1	7568
+Add Command	/データ	列の削除(D)	1	7569
+Add Command	/データ	上に行を​​挿入(A)	1	7373
+Add Command	/データ	行の削除(W)	1	7374
+Add Command	/データ	範囲に変換(V)	1	7375
+Add Command	/データ	集計行​​(T)	1	7372
+Add Command	/データ	テーブルの印刷	1	7380
+Add Command	/データ	見出し行の表示/非表示(H)	1	12394
+Add Command	/データ	ピボットテーブル/​​ピボットグラフ ウィザード(P)	1	2915
+Add Command	/データ	フィールドの​​設定(N)	1	460
+Add Command	/データ	レポート フィルター ​​ページの表示(P)...	1	461
+Add Command	/データ	ラベル​​(L)	1	995
+Add Command	/データ	データ​​(D)	1	993
+Add Command	/データ	ラベルと​​データ(A)	1	994
+Add Command	/データ	データの取り込み(D)...	1	6262
+Add Command	/データ	新しい Web クエリ(W)...	1	3829
+Add Command	/データ	新しいデータベース ​​クエリ(N)...	1	2054
+Add Command	/データ	テキスト ファイル​​のインポート(T)...	1	3844
+Add Command	/データ	クエリの​​編集(E)...	1	1950
+Add Command	/データ	データ範囲​​プロパティ(A)...	1	1951
+Add Command	/データ	パラメーター​​(M)...	1	537
+Add Command	/データ	データの更新(R)	1	459
+Add Command	/データ	更新の​​取り消し(C)	1	1953
+Add Command	/データ	すべて​​更新(A)	1	1952
+Add Command	/データ	データ更新の​​状況(R)	1	1954
+Add Command	/データ	プロパティ ​​フィールド(I)...	1	6076
+Add Command	/データ	テーブルの​​クリア	1	11451
+Add Command	/データ	GetPivotData ​​の生成(G)	1	6136
+Add Command	/データ	XML データの更新(R)	1	7812
+Add Command	/データ	インポート​​(I)...	1	7433
+Add Command	/データ	エクスポート​​(E)...	1	7432
+Add Command	/データ	XML ソース(X)...	1	7693
+Add Command	/データ	XML の対応付けのプロパティ(P)...	1	7813
+Add Command	/データ	XML ​​拡張パック(A)...	1	7784
+Add Command	/データ	ピボットテーブル ウィザード(W)	1	457
+Add Command	/データ	データの更新(R)	1	459
+Add Command	/データ	ラベル​​(L)	1	995
+Add Command	/データ	データ​​(D)	1	993
+Add Command	/データ	選択範囲を​​有効にする(E)	1	991
+Add Command	/データ	ラベルと​​データ(A)	1	994
+Add Command	/データ	数式の​​一覧表示(L)	1	992
+Add Command	/データ	ピボットグラフ​​(C)	1	3789
+Add Command	/データ	ピボットテーブル ウィザード(W)	1	457
+Add Command	/データ	データの更新(R)	1	459
+Add Command	/データ	フィールドの​​設定(N)	1	460
+Add Command	/データ	並べ替えてトップテンを表示(A)...	1	6687
+Add Command	/データ	フィールド​​の展開(X)	1	12188
+Add Command	/データ	フィールドの​​折りたたみ(P)	1	12189
+Add Command	/データ	選択範囲を​​有効にする(E)	1	991
+Add Command	/データ	グループ解除(U)...	1	3160
+Add Command	/データ	グループ化(G)...	1	3159
+Add Command	/データ	解決の​​順序(S)...	1	2914
+Add Command	/データ	すべて​​更新(A)	1	1952
+Add Command	/データ	集計​​アイテム(I)...	1	1598
+Add Command	/データ	集計​​フィールド(F)...	1	1597
+Add Command	/データ	レポートの書式設定(T)...	1	5473
+Add Command	/データ	テーブル​​全体(T)	1	1600
+Add Command	/データ	表のオプション(O)...	1	1604
+Add Command	/データ	集計(U)	1	6689
+Add Command	/データ	オプション(O)...	1	1604
+Add Command	/データ	数式の​​一覧表示(L)	1	992
+Add Command	/データ	グラフ ウィザード(C)	1	436
+Add Command	/データ	フィールド リストの表示(S)	1	3790
+Add Command	/データ	フィルターされたアイテムを合計に含める(I)	1	20857
+Add Command	/データ	アイテムを常に表示(A)	1	5920
+Add Command	/データ	ピボットグラフのフィールド ボタンを表示しない(H)	1	3956
+Add Command	/データ	フィールドの削除(V)	1	5416
+Add Command	/データ	テーブル	1	11450
+Add Command	/データ	フィルターのクリア	1	12491
+Add Command	/データ	フィールド ​​ボタン(F)	1	18600
+Add Command	/データ	ボタンの​​表示	1	18599
+Add Command	/データ	レポート フィルター ​​フィールド ボタンの表示(R)	1	18601
+Add Command	/データ	凡例フィールド ​​ボタンの表示(L)	1	18602
+Add Command	/データ	軸フィールド ​​ボタンの表示(X)	1	18603
+Add Command	/データ	値フィールド ​​ボタンの表示(V)	1	18604
+Add Command	/データ	すべて​​非表示(A)	1	18605
+Add Command	/データ	[フィールド全体の展開/折りたたみ] ボタンを表示(E)	1	26607
+Add Command		ウィンドウ/ヘルプ	10	30061
+Add Command	/ウィンドウ/ヘルプ	新しいウィンドウ​​を開く(N)	1	303
+Add Command	/ウィンドウ/ヘルプ	整列(A)...	1	298
+Add Command	/ウィンドウ/ヘルプ	同時に​​スクロール(S)	1	7873
+Add Command	/ウィンドウ/ヘルプ	ウィンドウの位置​​を元に戻す(R)	1	7874
+Add Command	/ウィンドウ/ヘルプ	並べて比較(B)...	1	7698
+Add Command	/ウィンドウ/ヘルプ	表示しない​​(H)	1	865
+Add Command	/ウィンドウ/ヘルプ	再表示​​(U)...	1	866
+Add Command	/ウィンドウ/ヘルプ	分割(S)	1	302
+Add Command	/ウィンドウ/ヘルプ	ウィンドウ枠の​​固定(F)	1	443
+Add Command	/ウィンドウ/ヘルプ	アシスタントを表示しない(H)	1	1004
+Add Command	/ウィンドウ/ヘルプ	お問い合わせ先(C)	1	7903
+Add Command	/ウィンドウ/ヘルプ	更新プログラム​​のチェック(K)	1	9340
+Add Command	/ウィンドウ/ヘルプ	プライバシー ​​オプション(P)...	1	7714
+Add Command		図形描画	10	30073
+Add Command	/図形描画	図形描画(D)	1	204
+Add Command	/図形描画	オブジェクトの​​選択(S)	1	182
+Add Command	/図形描画	複数オブジェクト​​の選択(S)	1	3990
+Add Command	/図形描画	グループ化​​(G)	1	164
+Add Command	/図形描画	グループ​​解除(U)	1	165
+Add Command	/図形描画	再グループ化​​(O)	1	338
+Add Command	/図形描画	最前面へ移動(R)	1	166
+Add Command	/図形描画	最背面へ​​移動(K)	1	167
+Add Command	/図形描画	前面へ​​移動(F)	1	170
+Add Command	/図形描画	背面へ​​移動(B)	1	171
+Add Command	/図形描画	グリッド​​(G)	1	549
+Add Command	/図形描画	図形​​(S)	1	1402
+Add Command	/図形描画	上​​(U)	1	1035
+Add Command	/図形描画	下​​(D)	1	1036
+Add Command	/図形描画	左​​(L)	1	1037
+Add Command	/図形描画	右​​(R)	1	1038
+Add Command	/図形描画	左揃え​​(L)	1	664
+Add Command	/図形描画	左右​​中央揃え(C)	1	668
+Add Command	/図形描画	右揃え​​(R)	1	665
+Add Command	/図形描画	上揃え​​(T)	1	666
+Add Command	/図形描画	上下​​中央揃え(M)	1	669
+Add Command	/図形描画	下揃え​​(B)	1	667
+Add Command	/図形描画	左右に​​整列(H)	1	408
+Add Command	/図形描画	上下に​​整列(V)	1	465
+Add Command	/図形描画	キャンバスに合わせる(O)	1	5976
+Add Command	/図形描画	組織図と相対(O)	1	7070
+Add Command	/図形描画	図表と相対(O)	1	7071
+Add Command	/図形描画	自由に​​回転(T)	1	688
+Add Command	/図形描画	左へ 90 度回転(L)	1	199
+Add Command	/図形描画	右へ 90 度回転(R)	1	198
+Add Command	/図形描画	左右反転(H)	1	196
+Add Command	/図形描画	上下反転(V)	1	197
+Add Command	/図形描画	コネクタの​​再接続(T)	1	1033
+Add Command	/図形描画	頂点の​​編集(E)	1	206
+Add Command	/図形描画	オートシェイプの変更(C)	10	30080
+Add Command	/図形描画/オートシェイプの変更(C)	基本図形(B)	12	1405
+Add Command	/図形描画/オートシェイプの変更(C)	ブロック矢印(A)	12	1408
+Add Command	/図形描画/オートシェイプの変更(C)	フローチャート(F)	12	1407
+Add Command	/図形描画/オートシェイプの変更(C)	星とリボン(S)	12	1409
+Add Command	/図形描画/オートシェイプの変更(C)	吹き出し(C)	12	1406
+Add Command	/図形描画	オートシェイプの​​既定値に設定(D)	1	2179
+Add Command	/図形描画	塗りつぶしの色(F)	13	1691
+Add Command	/図形描画	線の色​​(L)	13	1692
+Add Command	/図形描画	線の​​スタイル(L)	12	692
+Add Command	/図形描画	実線/点線のスタイル(D)	12	693
+Add Command	/図形描画	矢印のスタイル(A)	12	694
+Add Command	/図形描画	影付き​​スタイル(S)	12	394
+Add Command	/図形描画	3-D スタイル(3)	12	339
+Add Command	/図形描画	オブジェクトの​​書式設定(O)...	1	962
+Add Command	/図形描画	影の​​オン/オフ(S)	1	2175
+Add Command	/図形描画	影の微調整 ​​(上)(N)	1	1068
+Add Command	/図形描画	影の微調整 ​​(下)(N)	1	1069
+Add Command	/図形描画	影の微調整 ​​(左)(N)	1	1070
+Add Command	/図形描画	影の微調整 ​​(右)(N)	1	1071
+Add Command	/図形描画	影の色​​(S)	13	1693
+Add Command	/図形描画	3-D の​​オン/オフ(3)	1	1374
+Add Command	/図形描画	下に​​傾ける(T)	1	1375
+Add Command	/図形描画	上に​​傾ける(T)	1	1376
+Add Command	/図形描画	左に​​傾ける(T)	1	1377
+Add Command	/図形描画	右に​​傾ける(T)	1	1378
+Add Command	/図形描画	奥行き(D)	12	1379
+Add Command	/図形描画	視点(D)	12	1380
+Add Command	/図形描画	光源(L)	12	1382
+Add Command	/図形描画	表面​​(S)	12	1383
+Add Command	/図形描画	3-D の色(3)	13	1694
+Add Command	/図形描画	テキストの​​編集(X)...	1	2094
+Add Command	/図形描画	クリップ ​​アート(C)...	1	682
+Add Command	/図形描画	ワードアート ​​ギャラリー(W)	1	1606
+Add Command	/図形描画	ワードアート : 形状(W)	12	1058
+Add Command	/図形描画	ワードアート: ​​文字の高さを揃える(W)	1	1063
+Add Command	/図形描画	ワードアート: ​​縦書きテキスト(W)	1	1061
+Add Command	/図形描画	ワードアート : 配置(W)	12	1059
+Add Command	/図形描画	ワードアート : 文字の間隔(W)	12	1060
+Add Command	/図形描画	色(C)	12	1403
+Add Command	/図形描画	コントラスト ​​(強)(M)	1	1064
+Add Command	/図形描画	コントラスト ​​(弱)(L)	1	1065
+Add Command	/図形描画	明るさ ​​(強)(M)	1	1066
+Add Command	/図形描画	明るさ ​​(弱)(L)	1	1067
+Add Command	/図形描画	トリミング​​(C)	1	732
+Add Command	/図形描画	図の​​リセット(R)	1	1362
+Add Command	/図形描画	透明色を​​指定(S)	1	2827
+Add Command	/図形描画	描画に​​合わせる(T)	1	5866
+Add Command	/図形描画	サイズ変更​​(S)	1	5867
+Add Command	/図形描画	拡張 ​​(描画)(P)	1	5916
+Add Command	/図形描画	選択(C)	10	31181
+Add Command	/図形描画/選択(C)	レベル​​(L)	1	6072
+Add Command	/図形描画/選択(C)	分岐​​(B)	1	6073
+Add Command	/図形描画/選択(C)	すべての​​アシスタント(A)	1	6074
+Add Command	/図形描画/選択(C)	すべての​​コネクタ(C)	1	6075
+Add Command	/図形描画	削除​​(D)	1	5858
+Add Command	/図形描画	レイアウト(L)	10	31158
+Add Command	/図形描画/レイアウト(L)	標準​​(S)	1	6131
+Add Command	/図形描画/レイアウト(L)	左右に分岐​​(B)	1	6132
+Add Command	/図形描画/レイアウト(L)	左に分岐​​(L)	1	6133
+Add Command	/図形描画/レイアウト(L)	右に分岐​​(R)	1	6134
+Add Command	/図形描画/レイアウト(L)	組織図の​​オートレイアウト(A)	1	6071
+Add Command	/図形描画	組織図の​​オートレイアウト(A)	1	6071
+Add Command	/図形描画	組織図スタイル ​​ギャラリー(A)	1	6949
+Add Command	/図形描画	組織図の​​サイズ変更(Z)	1	6839
+Add Command	/図形描画	図形の​​挿入(N)	1	6933
+Add Command	/図形描画	レイアウト(L)	10	31179
+Add Command	/図形描画/レイアウト(L)	キャンバスを​​図表に合わせる(F)	1	6826
+Add Command	/図形描画/レイアウト(L)	キャンバスの​​拡張 (図表)(E)	1	6828
+Add Command	/図形描画/レイアウト(L)	図表の​​サイズ変更(Z)	1	6827
+Add Command	/図形描画/レイアウト(L)	図表の​​オートレイアウト(A)	1	6100
+Add Command	/図形描画	背面の図形に​​移動(B)	1	6010
+Add Command	/図形描画	前面の図形に​​移動(F)	1	6011
+Add Command	/図形描画	図表の​​反転(R)	1	6099
+Add Command	/図形描画	図表の​​オートレイアウト(A)	1	6100
+Add Command	/図形描画	オートフォーマット​​の使用(U)	1	7000
+Add Command	/図形描画	図表スタイル ​​ギャラリー(A)	1	6068
+Add Command	/図形描画	図表の​​サイズ変更(Z)	1	6827
+Add Command	/図形描画	図...	1	12612
+Add Command	/図形描画	変更(C)	10	31180
+Add Command	/図形描画/変更(C)	ドーナツ型​​(C)	1	5830
+Add Command	/図形描画/変更(C)	放射型​​(R)	1	5829
+Add Command	/図形描画/変更(C)	ピラミッド​​(P)	1	6009
+Add Command	/図形描画/変更(C)	ベン図形型​​(V)	1	5833
+Add Command	/図形描画/変更(C)	ターゲット型​​(T)	1	5832
+Add Command		オートシェイプ	10	30246
+Add Command	/オートシェイプ	線(L)	1	130
+Add Command	/オートシェイプ	線矢印(A)	1	243
+Add Command	/オートシェイプ	正方形/長方形(R)	1	1111
+Add Command	/オートシェイプ	楕円(O)	1	1119
+Add Command	/オートシェイプ	テキスト ​​ボックス(X)	1	139
+Add Command	/オートシェイプ	縦書きテキスト ボックス​​の描画(V)	1	318
+Add Command	/オートシェイプ	ワードアート​​(W)...	1	1031
+Add Command	/オートシェイプ	オートシェイプ(U)	10	30177
+Add Command	/オートシェイプ/オートシェイプ(U)	線(L)	12	2631
+Add Command	/オートシェイプ/オートシェイプ(U)	コネクタ(N)	12	2633
+Add Command	/オートシェイプ/オートシェイプ(U)	基本図形(B)	12	2632
+Add Command	/オートシェイプ/オートシェイプ(U)	ブロック矢印(A)	12	1049
+Add Command	/オートシェイプ/オートシェイプ(U)	フローチャート(F)	12	1048
+Add Command	/オートシェイプ/オートシェイプ(U)	星とリボン(S)	12	1050
+Add Command	/オートシェイプ/オートシェイプ(U)	吹き出し(C)	12	1047
+Add Command	/オートシェイプ/オートシェイプ(U)	その他のオートシェイプ(M)...	1	3889
+Add Command	/オートシェイプ	線(L)	12	2631
+Add Command	/オートシェイプ	コネクタ(N)	12	2633
+Add Command	/オートシェイプ	基本図形(B)	12	2632
+Add Command	/オートシェイプ	ブロック矢印(A)	12	1049
+Add Command	/オートシェイプ	フローチャート(F)	12	1048
+Add Command	/オートシェイプ	星とリボン(S)	12	1050
+Add Command	/オートシェイプ	吹き出し(C)	12	1047
+Add Command	/オートシェイプ	その他のオートシェイプ(M)...	1	3889
+Add Command	/オートシェイプ	線矢印: 双方向(D)	1	1639
+Add Command	/オートシェイプ	曲線(C)	1	1041
+Add Command	/オートシェイプ	フリーフォーム: 図形(F)	1	200
+Add Command	/オートシェイプ	フリーフォーム: フリーハンド(S)	1	409
+Add Command	/オートシェイプ	直線コネクタ(R)	1	1042
+Add Command	/オートシェイプ	直線矢印コネクタ(S)	1	2640
+Add Command	/オートシェイプ	直線双方向矢印コネクタ(S)	1	2641
+Add Command	/オートシェイプ	コネクタ: カギ線(E)	1	1043
+Add Command	/オートシェイプ	コネクタ: カギ線矢印(E)	1	2642
+Add Command	/オートシェイプ	コネクタ: カギ線双方向矢印(E)	1	2643
+Add Command	/オートシェイプ	コネクタ: 曲線(U)	1	1044
+Add Command	/オートシェイプ	コネクタ: 曲線矢印(C)	1	2644
+Add Command	/オートシェイプ	コネクタ: 曲線双方向矢印(C)	1	2645
+Add Command	/オートシェイプ	平行四辺形(P)	1	1112
+Add Command	/オートシェイプ	台形(T)	1	1113
+Add Command	/オートシェイプ	ひし形(D)	1	1114
+Add Command	/オートシェイプ	四角形: 角を丸くする(R)	1	1115
+Add Command	/オートシェイプ	八角形(O)	1	1116
+Add Command	/オートシェイプ	二等辺三角形(I)	1	1117
+Add Command	/オートシェイプ	直角三角形(R)	1	1118
+Add Command	/オートシェイプ	六角形(H)	1	1120
+Add Command	/オートシェイプ	十字形(C)	1	1121
+Add Command	/オートシェイプ	五角形(P)	1	1124
+Add Command	/オートシェイプ	円柱(C)	1	1126
+Add Command	/オートシェイプ	直方体(C)	1	1122
+Add Command	/オートシェイプ	四角形: 角度付き(B)	1	1130
+Add Command	/オートシェイプ	四角形: メモ(F)	1	1129
+Add Command	/オートシェイプ	スマイル(S)	1	1131
+Add Command	/オートシェイプ	円: 塗りつぶしなし(H)	1	1132
+Add Command	/オートシェイプ	"禁止"マーク(")	1	1133
+Add Command	/オートシェイプ	アーチ(B)	1	1134
+Add Command	/オートシェイプ	ハート(H)	1	1141
+Add Command	/オートシェイプ	稲妻(L)	1	1140
+Add Command	/オートシェイプ	太陽(S)	1	2634
+Add Command	/オートシェイプ	月(M)	1	2635
+Add Command	/オートシェイプ	円弧​​(A)	1	1139
+Add Command	/オートシェイプ	大かっこ(D)	1	2636
+Add Command	/オートシェイプ	中かっこ(D)	1	2637
+Add Command	/オートシェイプ	ブローチ(P)	1	1123
+Add Command	/オートシェイプ	左大かっこ(L)	1	1135
+Add Command	/オートシェイプ	右大かっこ(R)	1	1136
+Add Command	/オートシェイプ	左中かっこ(L)	1	1137
+Add Command	/オートシェイプ	右中かっこ(R)	1	1138
+Add Command	/オートシェイプ	矢印: 右(R)	1	1142
+Add Command	/オートシェイプ	矢印: 左(L)	1	1143
+Add Command	/オートシェイプ	矢印: 上(U)	1	1144
+Add Command	/オートシェイプ	矢印: 下(D)	1	1145
+Add Command	/オートシェイプ	矢印: 左右(L)	1	1146
+Add Command	/オートシェイプ	矢印: 上下(U)	1	1147
+Add Command	/オートシェイプ	矢印: 四方向(Q)	1	1148
+Add Command	/オートシェイプ	矢印: 三方向(L)	1	1149
+Add Command	/オートシェイプ	矢印: 折線(B)	1	1152
+Add Command	/オートシェイプ	矢印: U ターン(U)	1	1153
+Add Command	/オートシェイプ	矢印: 二方向(L)	1	1150
+Add Command	/オートシェイプ	矢印: 上向き折線(B)	1	1151
+Add Command	/オートシェイプ	矢印: 右カーブ(C)	1	1160
+Add Command	/オートシェイプ	矢印: 左カーブ(C)	1	1161
+Add Command	/オートシェイプ	矢印: 上カーブ(C)	1	1162
+Add Command	/オートシェイプ	矢印: 下カーブ(C)	1	1163
+Add Command	/オートシェイプ	矢印: ストライプ(S)	1	1154
+Add Command	/オートシェイプ	矢印: V 字型(N)	1	1155
+Add Command	/オートシェイプ	矢印: 五方向(P)	1	1156
+Add Command	/オートシェイプ	矢印: 山形(C)	1	1157
+Add Command	/オートシェイプ	吹き出し: 右矢印(R)	1	1164
+Add Command	/オートシェイプ	吹き出し: 左矢印(L)	1	1165
+Add Command	/オートシェイプ	吹き出し: 上矢印(U)	1	1166
+Add Command	/オートシェイプ	吹き出し: 下矢印(D)	1	1167
+Add Command	/オートシェイプ	吹き出し: 左右矢印(L)	1	1168
+Add Command	/オートシェイプ	吹き出し: 上下矢印(U)	1	1169
+Add Command	/オートシェイプ	吹き出し: 四方向矢印(Q)	1	1170
+Add Command	/オートシェイプ	矢印: 環状(C)	1	1158
+Add Command	/オートシェイプ	フローチャート: 処理(F)	1	1190
+Add Command	/オートシェイプ	フローチャート: 代替処理(F)	1	1191
+Add Command	/オートシェイプ	フローチャート: 判断(F)	1	1192
+Add Command	/オートシェイプ	フローチャート: データ(F)	1	1193
+Add Command	/オートシェイプ	フローチャート: 定義済み処理(F)	1	1194
+Add Command	/オートシェイプ	フローチャート: 内部記憶(F)	1	1195
+Add Command	/オートシェイプ	フローチャート: 書類(F)	1	1196
+Add Command	/オートシェイプ	フローチャート: 複数書類(F)	1	1197
+Add Command	/オートシェイプ	フローチャート: 端子(F)	1	1198
+Add Command	/オートシェイプ	フローチャート: 準備(F)	1	1199
+Add Command	/オートシェイプ	フローチャート: 手操作入力(F)	1	1200
+Add Command	/オートシェイプ	フローチャート: 手作業(F)	1	1201
+Add Command	/オートシェイプ	フローチャート: 結合子(F)	1	1202
+Add Command	/オートシェイプ	フローチャート: 他ページ結合子(F)	1	1203
+Add Command	/オートシェイプ	フローチャート: カード(F)	1	1204
+Add Command	/オートシェイプ	フローチャート: せん孔テープ(F)	1	1205
+Add Command	/オートシェイプ	フローチャート: 和接合(F)	1	1206
+Add Command	/オートシェイプ	フローチャート: 論理和(F)	1	1207
+Add Command	/オートシェイプ	フローチャート: 照合(F)	1	1208
+Add Command	/オートシェイプ	フローチャート: 分類(F)	1	1209
+Add Command	/オートシェイプ	フローチャート: 抜出し(F)	1	1210
+Add Command	/オートシェイプ	フローチャート: 組合せ(F)	1	1211
+Add Command	/オートシェイプ	フローチャート: 記憶データ(F)	1	1213
+Add Command	/オートシェイプ	フローチャート: 論理積ゲート(F)	1	1218
+Add Command	/オートシェイプ	フローチャート: 順次アクセス記憶(F)	1	1214
+Add Command	/オートシェイプ	フローチャート: 磁気ディスク(F)	1	1215
+Add Command	/オートシェイプ	フローチャート: 直接アクセス記憶(F)	1	1216
+Add Command	/オートシェイプ	フローチャート: 表示(F)	1	1217
+Add Command	/オートシェイプ	爆発: 8 pt(E)	1	1188
+Add Command	/オートシェイプ	爆発: 14 pt(E)	1	1189
+Add Command	/オートシェイプ	星: 4 pt(4)	1	2638
+Add Command	/オートシェイプ	星: 5 pt(5)	1	1183
+Add Command	/オートシェイプ	星: 8 pt(8)	1	1184
+Add Command	/オートシェイプ	星: 16 pt(1)	1	1185
+Add Command	/オートシェイプ	星: 24 pt(2)	1	1186
+Add Command	/オートシェイプ	星: 32 pt(3)	1	1187
+Add Command	/オートシェイプ	リボン: 上に曲がる(U)	1	1180
+Add Command	/オートシェイプ	リボン: 下に曲がる(D)	1	1179
+Add Command	/オートシェイプ	リボン: カーブして上方向に曲がる(C)	1	1182
+Add Command	/オートシェイプ	リボン: カーブして下方向に曲がる(C)	1	1181
+Add Command	/オートシェイプ	スクロール: 縦(V)	1	1127
+Add Command	/オートシェイプ	スクロール: 横(H)	1	1128
+Add Command	/オートシェイプ	波線(W)	1	1125
+Add Command	/オートシェイプ	小波(D)	1	2639
+Add Command	/オートシェイプ	吹き出し: 四角形(R)	1	1172
+Add Command	/オートシェイプ	吹き出し: 角を丸めた四角形(R)	1	1173
+Add Command	/オートシェイプ	吹き出し: 円形(O)	1	1174
+Add Command	/オートシェイプ	思考の吹き出し: 雲形(C)	1	1175
+Add Command	/オートシェイプ	吹き出し: 線(L)	1	1219
+Add Command	/オートシェイプ	線吹き出し 2 (枠付き)(L)	1	1176
+Add Command	/オートシェイプ	線吹き出し 3 (枠付き)(L)	1	1177
+Add Command	/オートシェイプ	線吹き出し 4 (枠付き)(L)	1	1178
+Add Command	/オートシェイプ	強調線吹き出し 1(L)	1	1220
+Add Command	/オートシェイプ	強調線吹き出し 2(L)	1	1221
+Add Command	/オートシェイプ	強調線吹き出し 3(L)	1	1222
+Add Command	/オートシェイプ	強調線吹き出し 4(L)	1	1223
+Add Command	/オートシェイプ	線吹き出し 1(L)	1	1224
+Add Command	/オートシェイプ	線吹き出し 2(L)	1	1225
+Add Command	/オートシェイプ	線吹き出し 3(L)	1	1226
+Add Command	/オートシェイプ	線吹き出し 4(L)	1	1227
+Add Command	/オートシェイプ	強調線吹き出し 1 (枠付き)(L)	1	1228
+Add Command	/オートシェイプ	強調線吹き出し 2 (枠付き)(L)	1	1229
+Add Command	/オートシェイプ	強調線吹き出し 3 (枠付き)(L)	1	1230
+Add Command	/オートシェイプ	強調線吹き出し 4 (枠付き)(L)	1	1110
+Add Command	/オートシェイプ	ペン​​(P)	1	13969
+Add Command	/オートシェイプ	フェルトペン​​(F)	1	13970
+Add Command	/オートシェイプ	蛍光ペン​​(H)	1	13971
+Add Command	/オートシェイプ	その他の​​ペンの色(M)...	1	7879
+Add Command	/オートシェイプ	インク ツール​​を閉じる	1	15599
+Add Command		グラフ作成	10	30243
+Add Command	/グラフ作成	グラフの種類(Y)...	1	918
+Add Command	/グラフ作成	データの​​選択(E)...	1	954
+Add Command	/グラフ作成	グラフのオプション(I)...	1	956
+Add Command	/グラフ作成	グラフの​​移動(V)...	1	955
+Add Command	/グラフ作成	データの追加(A)...	1	1963
+Add Command	/グラフ作成	近似曲線の追加(R)...	1	914
+Add Command	/グラフ作成	3-D グラフ(V)...	1	919
+Add Command	/グラフ作成	ウィンドウに合わせてサイズ変更(W)	1	908
+Add Command	/グラフ作成	グラフ ウィンドウ(W)	1	2571
+Add Command	/グラフ作成	グラフ オブジェクト(C):	4	1622
+Add Command	/グラフ作成	選択したオブジェクト(S)	1	917
+Add Command	/グラフ作成	面グラフ(A)	1	418
+Add Command	/グラフ作成	横棒グラフ(B)	1	419
+Add Command	/グラフ作成	縦棒グラフ(C)	1	420
+Add Command	/グラフ作成	積み上げ縦棒グラフ(S)	1	421
+Add Command	/グラフ作成	折れ線グラフ(L)	1	422
+Add Command	/グラフ作成	円グラフ(P)	1	423
+Add Command	/グラフ作成	3-D 面グラフ(3)	1	424
+Add Command	/グラフ作成	3-D 横棒グラフ(3)	1	425
+Add Command	/グラフ作成	3-D 集合縦棒グラフ(3)	1	426
+Add Command	/グラフ作成	3-D 縦棒グラフ(3)	1	427
+Add Command	/グラフ作成	3-D 折れ線グラフ(3)	1	428
+Add Command	/グラフ作成	3-D 円グラフ(3)	1	429
+Add Command	/グラフ作成	散布図(()	1	430
+Add Command	/グラフ作成	バブル チャート(B)	1	1635
+Add Command	/グラフ作成	3-D 等高線グラフ(3)	1	431
+Add Command	/グラフ作成	3-D 円柱グラフ(3)	1	1636
+Add Command	/グラフ作成	3-D 円錐グラフ(3)	1	1638
+Add Command	/グラフ作成	3-D ピラミッド グラフ(3)	1	1637
+Add Command	/グラフ作成	レーダー チャート(R)	1	432
+Add Command	/グラフ作成	株価チャート (出来高-高値-安値-終値)(V)	1	434
+Add Command	/グラフ作成	株価チャート (始値-高値-安値-終値)(O)	1	1844
+Add Command	/グラフ作成	ドーナツ グラフ(D)	1	449
+Add Command	/グラフ作成	標準グラフ(D)	1	435
+Add Command	/グラフ作成	グラフ ウィザード(C)	1	436
+Add Command	/グラフ作成	項目軸目盛線(C)	1	438
+Add Command	/グラフ作成	数値軸目盛線(V)	1	437
+Add Command	/グラフ作成	凡例​​(L)	1	439
+Add Command	/グラフ作成	グラフの種類(Y)...	13	918
+Add Command	/グラフ作成	データ テーブル(D)	1	987
+Add Command	/グラフ作成	系列を行方向に定義(R)	1	989
+Add Command	/グラフ作成	系列を列方向に定義(C)	1	988
+Add Command		Web	10	30249
+Add Command	/Web	アドレス(A):	4	1740
+Add Command	/Web	ハイパーリンク​​を開く(O)	1	1015
+Add Command	/Web	お気に入り​​を開く(F)...	1	1021
+Add Command	/Web	スタート ​​ページ(S)	1	1016
+Add Command	/Web	Web の​​検索(W)	1	1922
+Add Command	/Web	お気に入り(S)	10	30176
+Add Command	/Web/お気に入り(S)	お気に入りに​​追加(A)...	1	1022
+Add Command	/Web/お気に入り(S)	お気に入り​​を開く(F)...	1	1021
+Add Command	/Web	移動(G)	10	30328
+Add Command	/Web/移動(G)	ハイパーリンク​​を開く(O)	1	1015
+Add Command	/Web/移動(G)	戻る​​(B)	1	1017
+Add Command	/Web/移動(G)	進む​​(F)	1	1018
+Add Command	/Web/移動(G)	スタート ​​ページ(S)	1	1016
+Add Command	/Web/移動(G)	Web の​​検索(W)	1	1922
+Add Command	/Web/移動(G)	スタート ページ​​の設定(P)...	1	2057
+Add Command	/Web/移動(G)	検索ページの設定(C)...	1	2058
+Add Command	/Web	戻る​​(B)	1	1017
+Add Command	/Web	進む​​(F)	1	1018
+Add Command	/Web	中止​​(S)	1	1019
+Add Command	/Web	最新の情報​​に更新(R)	1	1020
+Add Command	/Web	お気に入りに​​追加(A)...	1	1022
+Add Command	/Web	[Web] ツールバーのみを表示(S)	1	1023
+Add Command	/Web	ハイパーリンク(I)...	1	1576
+Add Command	/Web	[Web] ツールバー(W)	1	2934
+Add Command		フォーム	10	30244
+Add Command	/フォーム	チェック ​​ボックス(H)	1	220
+Add Command	/フォーム	オプション ​​ボタン(P)	1	446
+Add Command	/フォーム	ボタン​​(B)	1	282
+Add Command	/フォーム	エディット ​​ボックス(E)	1	219
+Add Command	/フォーム	リスト ​​ボックス(I)	1	448
+Add Command	/フォーム	コンボ ​​ボックス(C)	1	221
+Add Command	/フォーム	リスト エディット コンボ ボックス(D)	1	471
+Add Command	/フォーム	ドロップダウン コンボ ボックス(W)	1	475
+Add Command	/フォーム	スクロール ​​バー(S)	1	447
+Add Command	/フォーム	スピン ​​ボタン(S)	1	468
+Add Command	/フォーム	ラベル​​(L)	1	476
+Add Command	/フォーム	グループ ​​ボックス(G)	1	467
+Add Command	/フォーム	コントロールのプロパティ	1	222
+Add Command	/フォーム	コード​​(C)	1	488
+Add Command	/フォーム	グリッド	1	485
+Add Command	/フォーム	タブ ​​オーダー(B)...	1	469
+Add Command	/フォーム	ダイアログの実行(R)	1	470
+Add Command		コントロール ツールボックス	10	30247
+Add Command	/コントロール ツールボックス	デザイン ​​モード(D)	1	1605
+Add Command	/コントロール ツールボックス	プロパティ​​(I)	1	222
+Add Command	/コントロール ツールボックス	コードの​​表示(V)	1	1561
+Add Command	/コントロール ツールボックス	コントロールの選択(M)...	7	642
+Add Command	/コントロール ツールボックス	チェック ボックス(K)	1	1848
+Add Command	/コントロール ツールボックス	オプション ​​ボタン(O)	1	1852
+Add Command	/コントロール ツールボックス	コマンド ボタン(U)	1	1851
+Add Command	/コントロール ツールボックス	トグル ​​ボタン(G)	1	1855
+Add Command	/コントロール ツールボックス	テキスト ボックス(T)	1	1850
+Add Command	/コントロール ツールボックス	リスト ​​ボックス(L)	1	1853
+Add Command	/コントロール ツールボックス	コンボ ボックス(X)	1	1854
+Add Command	/コントロール ツールボックス	スクロール ​​バー(S)	1	1857
+Add Command	/コントロール ツールボックス	スピン ​​ボタン(N)	1	1856
+Add Command	/コントロール ツールボックス	ラベル​​(A)	1	1858
+Add Command	/コントロール ツールボックス	イメージ​​(I)	1	2089
+Add Command		マクロ	10	30062
+Add Command	/マクロ	ユーザー設定​​メニュー項目(C)	1	2949
+Add Command	/マクロ	ユーザー設定​​ボタン(C)	1	2950
+Built-in Menus		ファイル​​(F)	10	30002
+Built-in Menus	/ファイル​​(F)	新規作成​​(N)...	1	18
+Built-in Menus	/ファイル​​(F)	開く(O)...	1	23
+Built-in Menus	/ファイル​​(F)	閉じる​​(C)	1	106
+Built-in Menus	/ファイル​​(F)	上書き​​保存(S)	1	3
+Built-in Menus	/ファイル​​(F)	名前を付けて​​保存(A)...	1	748
+Built-in Menus	/ファイル​​(F)	単一 Web ​​ページ (*.mht)	1	3823
+Built-in Menus	/ファイル​​(F)	作業状態の​​保存(W)...	1	846
+Built-in Menus	/ファイル​​(F)	ファイル検索(H)...	1	5905
+Built-in Menus	/ファイル​​(F)	アクセス​​許可(M)...	1	7994
+Built-in Menus	/ファイル​​(F)	アクセス許可(M)	10	31308
+Built-in Menus	/ファイル​​(F)/アクセス許可(M)	アクセス​​制限なし(U)	1	7990
+Built-in Menus	/ファイル​​(F)/アクセス許可(M)	アクセス​​制限あり(R)	1	7991
+Built-in Menus	/ファイル​​(F)/アクセス許可(M)	資格情報の​​管理(M)	1	10014
+Built-in Menus	/ファイル​​(F)	チェック​​アウト(E)	1	6127
+Built-in Menus	/ファイル​​(F)	チェック​​イン(E)...	1	6128
+Built-in Menus	/ファイル​​(F)	バージョン​​履歴(R)...	1	7799
+Built-in Menus	/ファイル​​(F)	ブラウザーで​​プレビュー(B)	1	3655
+Built-in Menus	/ファイル​​(F)	ページ​​設定(U)...	1	247
+Built-in Menus	/ファイル​​(F)	印刷範囲(T)	10	30255
+Built-in Menus	/ファイル​​(F)/印刷範囲(T)	印刷範囲の​​設定(S)	1	364
+Built-in Menus	/ファイル​​(F)/印刷範囲(T)	印刷範囲の​​クリア(C)	1	1584
+Built-in Menus	/ファイル​​(F)	印刷​​プレビュー(V)	1	109
+Built-in Menus	/ファイル​​(F)	印刷(P)...	1	4
+Built-in Menus	/ファイル​​(F)	送信(D)	10	30095
+Built-in Menus	/ファイル​​(F)/送信(D)	メールの​​宛先(M)	1	3738
+Built-in Menus	/ファイル​​(F)/送信(D)	校閲結果の​​返信(S)...	1	6139
+Built-in Menus	/ファイル​​(F)/送信(D)	メールの宛先 (校閲用)(C)...	1	5958
+Built-in Menus	/ファイル​​(F)/送信(D)	メールの宛先 ​​(添付ファイル)(A)...	1	2188
+Built-in Menus	/ファイル​​(F)/送信(D)	Exchange​​フォルダー(E)...	1	938
+Built-in Menus	/ファイル​​(F)/送信(D)	オンライン会議の参加者(O)	1	3728
+Built-in Menus	/ファイル​​(F)/送信(D)	インターネット FAX サービス​​を使用する宛先(X)...	1	7392
+Built-in Menus	/ファイル​​(F)	プロパティ​​(I)	1	750
+Built-in Menus	/ファイル​​(F)	最近使用した​​ファイル名(R)	1	12547
+Built-in Menus	/ファイル​​(F)	最近使用した​​ファイル名(R)	1	831
+Built-in Menus	/ファイル​​(F)	サインアウト​​(T)	1	5950
+Built-in Menus	/ファイル​​(F)	Excel の終了(X)	1	752
+Built-in Menus		印刷範囲(T)	10	30255
+Built-in Menus	/印刷範囲(T)	印刷範囲の​​設定(S)	1	364
+Built-in Menus	/印刷範囲(T)	印刷範囲の​​クリア(C)	1	1584
+Built-in Menus		送信(D)	10	30095
+Built-in Menus	/送信(D)	メールの​​宛先(M)	1	3738
+Built-in Menus	/送信(D)	校閲結果の​​返信(S)...	1	6139
+Built-in Menus	/送信(D)	メールの宛先 (校閲用)(C)...	1	5958
+Built-in Menus	/送信(D)	メールの宛先 ​​(添付ファイル)(A)...	1	2188
+Built-in Menus	/送信(D)	Exchange​​フォルダー(E)...	1	938
+Built-in Menus	/送信(D)	オンライン会議の参加者(O)	1	3728
+Built-in Menus	/送信(D)	インターネット FAX サービス​​を使用する宛先(X)...	1	7392
+Built-in Menus		編集(E)	10	30003
+Built-in Menus	/編集(E)	元に戻せません(U)	1	128
+Built-in Menus	/編集(E)	繰り返しできません(R)	1	37
+Built-in Menus	/編集(E)	切り取り​​(T)	1	21
+Built-in Menus	/編集(E)	コピー​​(C)	1	19
+Built-in Menus	/編集(E)	Office ​​クリップボード(B)...	1	809
+Built-in Menus	/編集(E)	貼り付け(P)	1	22
+Built-in Menus	/編集(E)	形式を選択して​​貼り付け(S)...	1	755
+Built-in Menus	/編集(E)	ハイパーリンクとして​​貼り付け(H)	1	2787
+Built-in Menus	/編集(E)	フィル(I)	10	30020
+Built-in Menus	/編集(E)/フィル(I)	下方向へ​​コピー(D)	1	372
+Built-in Menus	/編集(E)/フィル(I)	右方向へ​​コピー(R)	1	371
+Built-in Menus	/編集(E)/フィル(I)	上方向へ​​コピー(U)	1	867
+Built-in Menus	/編集(E)/フィル(I)	左方向へ​​コピー(L)	1	868
+Built-in Menus	/編集(E)/フィル(I)	作業グループへ​​コピー(A)...	1	869
+Built-in Menus	/編集(E)/フィル(I)	連続データの​​作成(S)...	1	870
+Built-in Menus	/編集(E)/フィル(I)	文字の​​割付(J)	1	871
+Built-in Menus	/編集(E)	クリア​​(A)	10	30021
+Built-in Menus	/編集(E)/クリア​​(A)	すべて(A)	1	1964
+Built-in Menus	/編集(E)/クリア​​(A)	書式(F)	1	872
+Built-in Menus	/編集(E)/クリア​​(A)	数式と値​​(C)	1	873
+Built-in Menus	/編集(E)/クリア​​(A)	コメント​​(M)	1	874
+Built-in Menus	/編集(E)/クリア​​(A)	コメントとメモをクリア(M)	1	33727
+Built-in Menus	/編集(E)/クリア​​(A)	ハイパーリンク​​(H)	1	2955
+Built-in Menus	/編集(E)/クリア​​(A)	ブックのクリーンアップ(W)	1	33882
+Built-in Menus	/編集(E)/クリア​​(A)	ハイパーリンク​​の削除(R)	1	16486
+Built-in Menus	/編集(E)	削除(D)...	1	478
+Built-in Menus	/編集(E)	シートの削除(L)	1	847
+Built-in Menus	/編集(E)	シートの​​移動またはコピー(M)...	1	848
+Built-in Menus	/編集(E)	検索​​(F)...	1	1849
+Built-in Menus	/編集(E)	置換​​(E)...	1	313
+Built-in Menus	/編集(E)	ジャンプ​​(G)...	1	757
+Built-in Menus	/編集(E)	リンクの​​設定(K)...	1	759
+Built-in Menus	/編集(E)	オブジェクト(O)	1	961
+Built-in Menus	/編集(E)	オブジェクト(O)	10	30019
+Built-in Menus	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+Built-in Menus	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+Built-in Menus	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+Built-in Menus	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+Built-in Menus	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+Built-in Menus	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+Built-in Menus	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+Built-in Menus	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+Built-in Menus	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+Built-in Menus	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+Built-in Menus	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+Built-in Menus	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+Built-in Menus	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+Built-in Menus	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+Built-in Menus	/編集(E)/オブジェクト(O)	<動詞(<)>	1	1965
+Built-in Menus	/編集(E)/オブジェクト(O)	変換​​(V)...	1	1967
+Built-in Menus	/編集(E)/オブジェクト(O)	Office Math に変換(N)	1	33423
+Built-in Menus		フィル(I)	10	30020
+Built-in Menus	/フィル(I)	下方向へ​​コピー(D)	1	372
+Built-in Menus	/フィル(I)	右方向へ​​コピー(R)	1	371
+Built-in Menus	/フィル(I)	上方向へ​​コピー(U)	1	867
+Built-in Menus	/フィル(I)	左方向へ​​コピー(L)	1	868
+Built-in Menus	/フィル(I)	作業グループへ​​コピー(A)...	1	869
+Built-in Menus	/フィル(I)	連続データの​​作成(S)...	1	870
+Built-in Menus	/フィル(I)	文字の​​割付(J)	1	871
+Built-in Menus		クリア​​(A)	10	30021
+Built-in Menus	/クリア​​(A)	すべて(A)	1	1964
+Built-in Menus	/クリア​​(A)	書式(F)	1	872
+Built-in Menus	/クリア​​(A)	数式と値​​(C)	1	873
+Built-in Menus	/クリア​​(A)	コメント​​(M)	1	874
+Built-in Menus	/クリア​​(A)	コメントとメモをクリア(M)	1	33727
+Built-in Menus	/クリア​​(A)	ハイパーリンク​​(H)	1	2955
+Built-in Menus	/クリア​​(A)	ブックのクリーンアップ(W)	1	33882
+Built-in Menus	/クリア​​(A)	ハイパーリンク​​の削除(R)	1	16486
+Built-in Menus		オブジェクト(O)	10	30019
+Built-in Menus	/オブジェクト(O)	<動詞(<)>	1	1965
+Built-in Menus	/オブジェクト(O)	<動詞(<)>	1	1965
+Built-in Menus	/オブジェクト(O)	<動詞(<)>	1	1965
+Built-in Menus	/オブジェクト(O)	<動詞(<)>	1	1965
+Built-in Menus	/オブジェクト(O)	<動詞(<)>	1	1965
+Built-in Menus	/オブジェクト(O)	<動詞(<)>	1	1965
+Built-in Menus	/オブジェクト(O)	<動詞(<)>	1	1965
+Built-in Menus	/オブジェクト(O)	<動詞(<)>	1	1965
+Built-in Menus	/オブジェクト(O)	<動詞(<)>	1	1965
+Built-in Menus	/オブジェクト(O)	<動詞(<)>	1	1965
+Built-in Menus	/オブジェクト(O)	<動詞(<)>	1	1965
+Built-in Menus	/オブジェクト(O)	<動詞(<)>	1	1965
+Built-in Menus	/オブジェクト(O)	<動詞(<)>	1	1965
+Built-in Menus	/オブジェクト(O)	<動詞(<)>	1	1965
+Built-in Menus	/オブジェクト(O)	<動詞(<)>	1	1965
+Built-in Menus	/オブジェクト(O)	変換​​(V)...	1	1967
+Built-in Menus	/オブジェクト(O)	Office Math に変換(N)	1	33423
+Built-in Menus		表示(V)	10	30004
+Built-in Menus	/表示(V)	標準​​(N)	1	723
+Built-in Menus	/表示(V)	改ページ プレビュー(P)	1	724
+Built-in Menus	/表示(V)	作業​​ウィンドウ(K)	1	5746
+Built-in Menus	/表示(V)	ツール バー(T)	10	30045
+Built-in Menus	/表示(V)/ツール バー(T)	標準	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	書式設定	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	Visual Basic	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	Web	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	ウォッチ ウィンドウ	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	オンライン コンテンツ	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	クエリと接続	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	グラフ	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	コントロール ツールボックス	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	スマート検索	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	チェック/コメント	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	データ カタログ検索	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	データ選択ウィザード	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	ピボットテーブル	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	ファイルから挿入	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	フォーム	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	ブック クエリ	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	ヘルプ	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	リサーチ ツール	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	リスト	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	ワークシート分析	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	ワードアート	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	外部データ	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	共有クエリ	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	罫線	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	最新の情報に更新	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	図	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	図形描画	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	読み上げ	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	保護	1	761
+Built-in Menus	/表示(V)	数式バー(F)	1	849
+Built-in Menus	/表示(V)	ステータス ​​バー(S)	1	850
+Built-in Menus	/表示(V)	ヘッダーとフッター(H)...	1	762
+Built-in Menus	/表示(V)	コメント​​(C)	1	1594
+Built-in Menus	/表示(V)	ユーザー設定​​のビュー(V)...	1	950
+Built-in Menus	/表示(V)	全画面​​表示(U)	1	178
+Built-in Menus	/表示(V)	ズーム​​(Z)...	1	925
+Built-in Menus		ツール バー(T)	10	30045
+Built-in Menus	/ツール バー(T)	標準	1	761
+Built-in Menus	/ツール バー(T)	書式設定	1	761
+Built-in Menus	/ツール バー(T)	Visual Basic	1	761
+Built-in Menus	/ツール バー(T)	Web	1	761
+Built-in Menus	/ツール バー(T)	ウォッチ ウィンドウ	1	761
+Built-in Menus	/ツール バー(T)	オンライン コンテンツ	1	761
+Built-in Menus	/ツール バー(T)	クエリと接続	1	761
+Built-in Menus	/ツール バー(T)	グラフ	1	761
+Built-in Menus	/ツール バー(T)	コントロール ツールボックス	1	761
+Built-in Menus	/ツール バー(T)	スマート検索	1	761
+Built-in Menus	/ツール バー(T)	チェック/コメント	1	761
+Built-in Menus	/ツール バー(T)	データ カタログ検索	1	761
+Built-in Menus	/ツール バー(T)	データ選択ウィザード	1	761
+Built-in Menus	/ツール バー(T)	ピボットテーブル	1	761
+Built-in Menus	/ツール バー(T)	ファイルから挿入	1	761
+Built-in Menus	/ツール バー(T)	フォーム	1	761
+Built-in Menus	/ツール バー(T)	ブック クエリ	1	761
+Built-in Menus	/ツール バー(T)	ヘルプ	1	761
+Built-in Menus	/ツール バー(T)	リサーチ ツール	1	761
+Built-in Menus	/ツール バー(T)	リスト	1	761
+Built-in Menus	/ツール バー(T)	ワークシート分析	1	761
+Built-in Menus	/ツール バー(T)	ワードアート	1	761
+Built-in Menus	/ツール バー(T)	外部データ	1	761
+Built-in Menus	/ツール バー(T)	共有クエリ	1	761
+Built-in Menus	/ツール バー(T)	罫線	1	761
+Built-in Menus	/ツール バー(T)	最新の情報に更新	1	761
+Built-in Menus	/ツール バー(T)	図	1	761
+Built-in Menus	/ツール バー(T)	図形描画	1	761
+Built-in Menus	/ツール バー(T)	読み上げ	1	761
+Built-in Menus	/ツール バー(T)	保護	1	761
+Built-in Menus		挿入(I)	10	30005
+Built-in Menus	/挿入(I)	セルの​​挿入(E)...	1	295
+Built-in Menus	/挿入(I)	行(R)	1	296
+Built-in Menus	/挿入(I)	列(C)	1	297
+Built-in Menus	/挿入(I)	ワークシート​​(W)	1	852
+Built-in Menus	/挿入(I)	グラフ(H)...	1	1957
+Built-in Menus	/挿入(I)	記号と​​特殊文字(S)...	1	308
+Built-in Menus	/挿入(I)	改ページ​​(B)	1	509
+Built-in Menus	/挿入(I)	すべての改ページ​​を解除(A)	1	1585
+Built-in Menus	/挿入(I)	関数​​(F)...	1	385
+Built-in Menus	/挿入(I)	名前(N)	10	30023
+Built-in Menus	/挿入(I)/名前(N)	定義(D)...	1	878
+Built-in Menus	/挿入(I)/名前(N)	貼り付け​​(P)...	1	879
+Built-in Menus	/挿入(I)/名前(N)	作成​​(C)...	1	880
+Built-in Menus	/挿入(I)/名前(N)	引用​​(A)...	1	881
+Built-in Menus	/挿入(I)	新しいコメント(M)	1	1589
+Built-in Menus	/挿入(I)	インク注釈​​(A)	1	9071
+Built-in Menus	/挿入(I)	図(P)	10	30180
+Built-in Menus	/挿入(I)/図(P)	オンライン​​画像(O)...	1	20868
+Built-in Menus	/挿入(I)/図(P)	クリップ ​​アート(C)...	1	682
+Built-in Menus	/挿入(I)/図(P)	ファイルから(F)...	1	2619
+Built-in Menus	/挿入(I)/図(P)	スキャナー​​またはカメラから(S)...	1	1764
+Built-in Menus	/挿入(I)/図(P)	インク描画と​​書き込み(D)	1	9405
+Built-in Menus	/挿入(I)/図(P)	オートシェイプ(A)	1	2630
+Built-in Menus	/挿入(I)/図(P)	ワードアート​​(W)...	1	1031
+Built-in Menus	/挿入(I)/図(P)	組織図​​(O)	1	702
+Built-in Menus	/挿入(I)	図表​​(G)...	1	1032
+Built-in Menus	/挿入(I)	オブジェクト​​(O)...	1	546
+Built-in Menus	/挿入(I)	ハイパーリンク(I)...	1	1576
+Built-in Menus		名前(N)	10	30023
+Built-in Menus	/名前(N)	定義(D)...	1	878
+Built-in Menus	/名前(N)	貼り付け​​(P)...	1	879
+Built-in Menus	/名前(N)	作成​​(C)...	1	880
+Built-in Menus	/名前(N)	引用​​(A)...	1	881
+Built-in Menus		図(P)	10	30180
+Built-in Menus	/図(P)	オンライン​​画像(O)...	1	20868
+Built-in Menus	/図(P)	クリップ ​​アート(C)...	1	682
+Built-in Menus	/図(P)	ファイルから(F)...	1	2619
+Built-in Menus	/図(P)	スキャナー​​またはカメラから(S)...	1	1764
+Built-in Menus	/図(P)	インク描画と​​書き込み(D)	1	9405
+Built-in Menus	/図(P)	オートシェイプ(A)	1	2630
+Built-in Menus	/図(P)	ワードアート​​(W)...	1	1031
+Built-in Menus	/図(P)	組織図​​(O)	1	702
+Built-in Menus		書式(O)	10	30006
+Built-in Menus	/書式(O)	セル(E)...	1	855
+Built-in Menus	/書式(O)	行(R)	10	30024
+Built-in Menus	/書式(O)/行(R)	高さ(E)...	1	541
+Built-in Menus	/書式(O)/行(R)	自動調整​​(A)	1	882
+Built-in Menus	/書式(O)/行(R)	非表示​​(H)	1	883
+Built-in Menus	/書式(O)/行(R)	再表示​​(U)	1	884
+Built-in Menus	/書式(O)	列(C)	10	30025
+Built-in Menus	/書式(O)/列(C)	幅(W)...	1	542
+Built-in Menus	/書式(O)/列(C)	選択範囲に​​合わせる(A)	1	885
+Built-in Menus	/書式(O)/列(C)	非表示​​(H)	1	886
+Built-in Menus	/書式(O)/列(C)	再表示​​(U)	1	887
+Built-in Menus	/書式(O)/列(C)	標準の幅​​(S)...	1	888
+Built-in Menus	/書式(O)	シート(H)	10	30026
+Built-in Menus	/書式(O)/シート(H)	名前の変更(R)	1	889
+Built-in Menus	/書式(O)/シート(H)	非表示​​(H)	1	890
+Built-in Menus	/書式(O)/シート(H)	再表示(U)...	1	891
+Built-in Menus	/書式(O)/シート(H)	背景​​(B)...	1	952
+Built-in Menus	/書式(O)/シート(H)	シート見出しの色(T)...	1	5747
+Built-in Menus	/書式(O)	オート ​​フォーマット(A)...	1	786
+Built-in Menus	/書式(O)	条件付き書式(D)...	1	3058
+Built-in Menus	/書式(O)	スタイル​​(S)...	1	254
+Built-in Menus	/書式(O)	ふりがな(T)	10	30136
+Built-in Menus	/書式(O)/ふりがな(T)	ふりがなの​​編集(E)	1	1611
+Built-in Menus	/書式(O)/ふりがな(T)	ふりがなの​​設定(T)...	1	1613
+Built-in Menus	/書式(O)/ふりがな(T)	ふりがなの​​表示(S)	1	1614
+Built-in Menus		行(R)	10	30024
+Built-in Menus	/行(R)	高さ(E)...	1	541
+Built-in Menus	/行(R)	自動調整​​(A)	1	882
+Built-in Menus	/行(R)	非表示​​(H)	1	883
+Built-in Menus	/行(R)	再表示​​(U)	1	884
+Built-in Menus		列(C)	10	30025
+Built-in Menus	/列(C)	幅(W)...	1	542
+Built-in Menus	/列(C)	選択範囲に​​合わせる(A)	1	885
+Built-in Menus	/列(C)	非表示​​(H)	1	886
+Built-in Menus	/列(C)	再表示​​(U)	1	887
+Built-in Menus	/列(C)	標準の幅​​(S)...	1	888
+Built-in Menus		シート(H)	10	30026
+Built-in Menus	/シート(H)	名前の変更(R)	1	889
+Built-in Menus	/シート(H)	非表示​​(H)	1	890
+Built-in Menus	/シート(H)	再表示(U)...	1	891
+Built-in Menus	/シート(H)	背景​​(B)...	1	952
+Built-in Menus	/シート(H)	シート見出しの色(T)...	1	5747
+Built-in Menus		ふりがな(T)	10	30136
+Built-in Menus	/ふりがな(T)	ふりがなの​​編集(E)	1	1611
+Built-in Menus	/ふりがな(T)	ふりがなの​​設定(T)...	1	1613
+Built-in Menus	/ふりがな(T)	ふりがなの​​表示(S)	1	1614
+Built-in Menus		ツール(T)	10	30007
+Built-in Menus	/ツール(T)	スペル ​​チェック(S)...	1	2
+Built-in Menus	/ツール(T)	ブックの統計情報(B)	1	33780
+Built-in Menus	/ツール(T)	リサーチ​​(R)...	1	7343
+Built-in Menus	/ツール(T)	エラー ​​チェック(K)...	1	6122
+Built-in Menus	/ツール(T)	[読み上げ] ツール バーの表示(H)	1	7011
+Built-in Menus	/ツール(T)	共有ワークスペース(D)...	1	7710
+Built-in Menus	/ツール(T)	ブックの​​共有(B)...	1	2040
+Built-in Menus	/ツール(T)	変更履歴の​​記録(T)	10	30138
+Built-in Menus	/ツール(T)/変更履歴の​​記録(T)	変更箇所​​の表示(H)...	1	2042
+Built-in Menus	/ツール(T)/変更履歴の​​記録(T)	変更箇所の​​確認(A)...	1	305
+Built-in Menus	/ツール(T)	ブックの​​比較と反映(W)...	1	2044
+Built-in Menus	/ツール(T)	保護(P)	10	30029
+Built-in Menus	/ツール(T)/保護(P)	シートの​​保護(P)...	1	893
+Built-in Menus	/ツール(T)/保護(P)	範囲の編集​​を許可(A)...	1	6997
+Built-in Menus	/ツール(T)/保護(P)	ブックの保護(W)...	1	894
+Built-in Menus	/ツール(T)/保護(P)	ブックの保護と共有 (レガシ)(S)	1	3059
+Built-in Menus	/ツール(T)	オンライン グループ作業(N)	10	30468
+Built-in Menus	/ツール(T)/オンライン グループ作業(N)	会議の開始(M)	1	3727
+Built-in Menus	/ツール(T)/オンライン グループ作業(N)	会議のスケジュール(S)...	1	4179
+Built-in Menus	/ツール(T)/オンライン グループ作業(N)	Web ディスカッション(W)	1	4177
+Built-in Menus	/ツール(T)/オンライン グループ作業(N)	校閲結果の​​差し込み終了(N)...	1	6141
+Built-in Menus	/ツール(T)	ゴール シーク​​(G)...	1	856
+Built-in Menus	/ツール(T)	シナリオ​​(E)...	1	857
+Built-in Menus	/ツール(T)	ワークシート分析(U)	10	30028
+Built-in Menus	/ツール(T)/ワークシート分析(U)	参照元の​​トレース(T)	1	486
+Built-in Menus	/ツール(T)/ワークシート分析(U)	参照先の​​トレース(D)	1	451
+Built-in Menus	/ツール(T)/ワークシート分析(U)	エラーの​​トレース(E)	1	463
+Built-in Menus	/ツール(T)/ワークシート分析(U)	すべてのトレース矢印​​を削除(A)	1	453
+Built-in Menus	/ツール(T)/ワークシート分析(U)	数式の​​検証(F)	1	5687
+Built-in Menus	/ツール(T)/ワークシート分析(U)	ウォッチ ウィンドウの表示(W)	1	5686
+Built-in Menus	/ツール(T)/ワークシート分析(U)	ワークシート​​分析モード(M)	1	6059
+Built-in Menus	/ツール(T)/ワークシート分析(U)	[ワークシート分析] ツールバーの表示(S)	1	892
+Built-in Menus	/ツール(T)	マクロ(M)	10	30017
+Built-in Menus	/ツール(T)/マクロ(M)	マクロ​​(M)...	1	186
+Built-in Menus	/ツール(T)/マクロ(M)	新しいマクロ​​の記録(R)...	1	184
+Built-in Menus	/ツール(T)/マクロ(M)	セキュリティ​​(S)...	1	3627
+Built-in Menus	/ツール(T)/マクロ(M)	Visual Basic ​​Editor(V)	1	1695
+Built-in Menus	/ツール(T)	アドイン(I)...	1	943
+Built-in Menus	/ツール(T)	オートコレクトの​​オプション(A)...	1	793
+Built-in Menus	/ツール(T)	ユーザー​​設定(C)...	1	797
+Built-in Menus	/ツール(T)	オプション​​(O)...	1	522
+Built-in Menus	/ツール(T)	キーボードの​​ユーザー設定(K)...	1	818
+Built-in Menus		変更履歴の​​記録(T)	10	30138
+Built-in Menus	/変更履歴の​​記録(T)	変更箇所​​の表示(H)...	1	2042
+Built-in Menus	/変更履歴の​​記録(T)	変更箇所の​​確認(A)...	1	305
+Built-in Menus		保護(P)	10	30029
+Built-in Menus	/保護(P)	シートの​​保護(P)...	1	893
+Built-in Menus	/保護(P)	範囲の編集​​を許可(A)...	1	6997
+Built-in Menus	/保護(P)	ブックの保護(W)...	1	894
+Built-in Menus	/保護(P)	ブックの保護と共有 (レガシ)(S)	1	3059
+Built-in Menus		ワークシート分析(U)	10	30028
+Built-in Menus	/ワークシート分析(U)	参照元の​​トレース(T)	1	486
+Built-in Menus	/ワークシート分析(U)	参照先の​​トレース(D)	1	451
+Built-in Menus	/ワークシート分析(U)	エラーの​​トレース(E)	1	463
+Built-in Menus	/ワークシート分析(U)	すべてのトレース矢印​​を削除(A)	1	453
+Built-in Menus	/ワークシート分析(U)	数式の​​検証(F)	1	5687
+Built-in Menus	/ワークシート分析(U)	ウォッチ ウィンドウの表示(W)	1	5686
+Built-in Menus	/ワークシート分析(U)	ワークシート​​分析モード(M)	1	6059
+Built-in Menus	/ワークシート分析(U)	[ワークシート分析] ツールバーの表示(S)	1	892
+Built-in Menus		マクロ(M)	10	30017
+Built-in Menus	/マクロ(M)	マクロ​​(M)...	1	186
+Built-in Menus	/マクロ(M)	新しいマクロ​​の記録(R)...	1	184
+Built-in Menus	/マクロ(M)	セキュリティ​​(S)...	1	3627
+Built-in Menus	/マクロ(M)	Visual Basic ​​Editor(V)	1	1695
+Built-in Menus		データ(D)	10	30011
+Built-in Menus	/データ(D)	並べ替え​​(S)...	1	928
+Built-in Menus	/データ(D)	フィルター(F)	10	30031
+Built-in Menus	/データ(D)/フィルター(F)	オートフィルター(F)	1	899
+Built-in Menus	/データ(D)/フィルター(F)	すべて表示(S)	1	900
+Built-in Menus	/データ(D)/フィルター(F)	フィルター ​​オプションの設定(A)...	1	901
+Built-in Menus	/データ(D)	フォーム​​(O)...	1	860
+Built-in Menus	/データ(D)	集計​​(B)...	1	861
+Built-in Menus	/データ(D)	入力規則​​(L)...	1	2034
+Built-in Menus	/データ(D)	テーブル​​(T)...	1	862
+Built-in Menus	/データ(D)	区切り位置​​(E)...	1	806
+Built-in Menus	/データ(D)	統合​​(N)...	1	863
+Built-in Menus	/データ(D)	グループとアウトラインの設定(G)	10	30032
+Built-in Menus	/データ(D)/グループとアウトラインの設定(G)	詳細を表示しない(H)	1	464
+Built-in Menus	/データ(D)/グループとアウトラインの設定(G)	詳細データの表示(S)	1	462
+Built-in Menus	/データ(D)/グループとアウトラインの設定(G)	グループ化(G)...	1	3159
+Built-in Menus	/データ(D)/グループとアウトラインの設定(G)	グループ解除(U)...	1	3160
+Built-in Menus	/データ(D)/グループとアウトラインの設定(G)	アウトラインの自動作成(A)	1	904
+Built-in Menus	/データ(D)/グループとアウトラインの設定(G)	アウトラインのクリア(C)	1	905
+Built-in Menus	/データ(D)/グループとアウトラインの設定(G)	設定​​(E)...	1	906
+Built-in Menus	/データ(D)	ピボットテーブル/​​ピボットグラフ ウィザード(P)	1	2915
+Built-in Menus	/データ(D)	外部データの取り込み(D)	10	30101
+Built-in Menus	/データ(D)/外部データの取り込み(D)	データの取り込み(D)...	1	6262
+Built-in Menus	/データ(D)/外部データの取り込み(D)	新しい Web クエリ(W)...	1	3829
+Built-in Menus	/データ(D)/外部データの取り込み(D)	新しいデータベース ​​クエリ(N)...	1	2054
+Built-in Menus	/データ(D)/外部データの取り込み(D)	クエリの​​編集(E)...	1	1950
+Built-in Menus	/データ(D)/外部データの取り込み(D)	データ範囲​​プロパティ(A)...	1	1951
+Built-in Menus	/データ(D)/外部データの取り込み(D)	パラメーター​​(M)...	1	537
+Built-in Menus	/データ(D)	画像から	10	33995
+Built-in Menus	/データ(D)/画像から	ファイルからの画像(P)...	1	33996
+Built-in Menus	/データ(D)/画像から	クリップボードからの画像	1	34002
+Built-in Menus	/データ(D)	リスト(I)	10	31276
+Built-in Menus	/データ(D)/リスト(I)	テーブルの作成(C)...	1	7193
+Built-in Menus	/データ(D)/リスト(I)	テーブルのサイズ変更(R)...	1	7765
+Built-in Menus	/データ(D)/リスト(I)	集計行(T)	1	7372
+Built-in Menus	/データ(D)/リスト(I)	範囲に変換(V)	1	7375
+Built-in Menus	/データ(D)/リスト(I)	テーブルの発行(P)...	1	7684
+Built-in Menus	/データ(D)/リスト(I)	サーバー上のリストの表示(L)	1	7763
+Built-in Menus	/データ(D)/リスト(I)	リストのリンクを解除(U)	1	7683
+Built-in Menus	/データ(D)/リスト(I)	リストの同期(Y)	1	7761
+Built-in Menus	/データ(D)/リスト(I)	変更を破棄して最新の情報に更新(D)	1	7762
+Built-in Menus	/データ(D)	XML(X)	10	31268
+Built-in Menus	/データ(D)/XML(X)	インポート​​(I)...	1	7433
+Built-in Menus	/データ(D)/XML(X)	エクスポート​​(E)...	1	7432
+Built-in Menus	/データ(D)/XML(X)	XML データの更新(R)	1	7812
+Built-in Menus	/データ(D)/XML(X)	XML ソース(X)...	1	7693
+Built-in Menus	/データ(D)/XML(X)	XML の対応付けのプロパティ(P)...	1	7813
+Built-in Menus	/データ(D)/XML(X)	XML ​​拡張パック(A)...	1	7784
+Built-in Menus	/データ(D)	更新(R)	1	459
+Built-in Menus		フィルター(F)	10	30031
+Built-in Menus	/フィルター(F)	オートフィルター(F)	1	899
+Built-in Menus	/フィルター(F)	すべて表示(S)	1	900
+Built-in Menus	/フィルター(F)	フィルター ​​オプションの設定(A)...	1	901
+Built-in Menus		グループとアウトラインの設定(G)	10	30032
+Built-in Menus	/グループとアウトラインの設定(G)	詳細を表示しない(H)	1	464
+Built-in Menus	/グループとアウトラインの設定(G)	詳細データの表示(S)	1	462
+Built-in Menus	/グループとアウトラインの設定(G)	グループ化(G)...	1	3159
+Built-in Menus	/グループとアウトラインの設定(G)	グループ解除(U)...	1	3160
+Built-in Menus	/グループとアウトラインの設定(G)	アウトラインの自動作成(A)	1	904
+Built-in Menus	/グループとアウトラインの設定(G)	アウトラインのクリア(C)	1	905
+Built-in Menus	/グループとアウトラインの設定(G)	設定​​(E)...	1	906
+Built-in Menus		外部データの取り込み(D)	10	30101
+Built-in Menus	/外部データの取り込み(D)	データの取り込み(D)...	1	6262
+Built-in Menus	/外部データの取り込み(D)	新しい Web クエリ(W)...	1	3829
+Built-in Menus	/外部データの取り込み(D)	新しいデータベース ​​クエリ(N)...	1	2054
+Built-in Menus	/外部データの取り込み(D)	クエリの​​編集(E)...	1	1950
+Built-in Menus	/外部データの取り込み(D)	データ範囲​​プロパティ(A)...	1	1951
+Built-in Menus	/外部データの取り込み(D)	パラメーター​​(M)...	1	537
+Built-in Menus		ウィンドウ(W)	10	30009
+Built-in Menus	/ウィンドウ(W)	新しいウィンドウ​​を開く(N)	1	303
+Built-in Menus	/ウィンドウ(W)	整列(A)...	1	298
+Built-in Menus	/ウィンドウ(W)	並べて比較(B)...	1	7698
+Built-in Menus	/ウィンドウ(W)	表示しない​​(H)	1	865
+Built-in Menus	/ウィンドウ(W)	再表示​​(U)...	1	866
+Built-in Menus	/ウィンドウ(W)	分割(S)	1	302
+Built-in Menus	/ウィンドウ(W)	ウィンドウ枠の固定(F)	1	443
+Built-in Menus	/ウィンドウ(W)	1 Book5	1	830
+Built-in Menus	/ウィンドウ(W)	ウィンドウ名​​(W)	1	830
+Built-in Menus	/ウィンドウ(W)	ウィンドウ名​​(W)	1	830
+Built-in Menus	/ウィンドウ(W)	ウィンドウ名​​(W)	1	830
+Built-in Menus	/ウィンドウ(W)	ウィンドウ名​​(W)	1	830
+Built-in Menus	/ウィンドウ(W)	ウィンドウ名​​(W)	1	830
+Built-in Menus	/ウィンドウ(W)	ウィンドウ名​​(W)	1	830
+Built-in Menus	/ウィンドウ(W)	ウィンドウ名​​(W)	1	830
+Built-in Menus	/ウィンドウ(W)	ウィンドウ名​​(W)	1	830
+Built-in Menus	/ウィンドウ(W)	ウィンドウ名​​(W)	1	830
+Built-in Menus		ヘルプ(H)	10	30010
+Built-in Menus	/ヘルプ(H)	ヘルプ​​(H)	1	984
+Built-in Menus	/ヘルプ(H)	アシスタントを表示しない(H)	1	1004
+Built-in Menus	/ヘルプ(H)	Office.com(O)	1	3775
+Built-in Menus	/ヘルプ(H)	お問い合わせ先(C)	1	7903
+Built-in Menus	/ヘルプ(H)	トレーニングを表示(S)	1	27442
+Built-in Menus	/ヘルプ(H)	コミュニティ(C)	1	32694
+Built-in Menus	/ヘルプ(H)	Excel ブログ(E)	1	32695
+Built-in Menus	/ヘルプ(H)	Lotus 1-2-3 ヘルプ(L)...	1	936
+Built-in Menus	/ヘルプ(H)	更新プログラム​​のチェック(K)	1	9340
+Built-in Menus	/ヘルプ(H)	アプリケーションの​​自動修復(R)...	1	3774
+Built-in Menus	/ヘルプ(H)	ライセンス​​認証(V)...	1	5933
+Built-in Menus	/ヘルプ(H)	プライバシー ​​オプション(P)...	1	7714
+Built-in Menus	/ヘルプ(H)	バージョン情報(A)	1	927
+Built-in Menus		ファイル​​(F)	10	30002
+Built-in Menus	/ファイル​​(F)	新規作成​​(N)...	1	18
+Built-in Menus	/ファイル​​(F)	開く(O)...	1	23
+Built-in Menus	/ファイル​​(F)	閉じる​​(C)	1	106
+Built-in Menus	/ファイル​​(F)	上書き​​保存(S)	1	3
+Built-in Menus	/ファイル​​(F)	名前を付けて​​保存(A)...	1	748
+Built-in Menus	/ファイル​​(F)	単一 Web ​​ページ (*.mht)	1	3823
+Built-in Menus	/ファイル​​(F)	作業状態の​​保存(W)...	1	846
+Built-in Menus	/ファイル​​(F)	ファイル検索(H)...	1	5905
+Built-in Menus	/ファイル​​(F)	チェック​​アウト(E)	1	6127
+Built-in Menus	/ファイル​​(F)	チェック​​イン(E)...	1	6128
+Built-in Menus	/ファイル​​(F)	バージョン​​履歴(R)...	1	7799
+Built-in Menus	/ファイル​​(F)	アクセス​​許可(M)...	1	7994
+Built-in Menus	/ファイル​​(F)	アクセス許可(M)	10	31308
+Built-in Menus	/ファイル​​(F)/アクセス許可(M)	アクセス​​制限なし(U)	1	7990
+Built-in Menus	/ファイル​​(F)/アクセス許可(M)	アクセス​​制限あり(R)	1	7991
+Built-in Menus	/ファイル​​(F)/アクセス許可(M)	資格情報の​​管理(M)	1	10014
+Built-in Menus	/ファイル​​(F)	ブラウザーで​​プレビュー(B)	1	3655
+Built-in Menus	/ファイル​​(F)	ページ​​設定(U)...	1	247
+Built-in Menus	/ファイル​​(F)	印刷​​プレビュー(V)	1	109
+Built-in Menus	/ファイル​​(F)	印刷(P)...	1	4
+Built-in Menus	/ファイル​​(F)	送信(D)	10	30095
+Built-in Menus	/ファイル​​(F)/送信(D)	メールの​​宛先(M)	1	3738
+Built-in Menus	/ファイル​​(F)/送信(D)	校閲結果の​​返信(S)...	1	6139
+Built-in Menus	/ファイル​​(F)/送信(D)	メールの宛先 (校閲用)(C)...	1	5958
+Built-in Menus	/ファイル​​(F)/送信(D)	メールの宛先 ​​(添付ファイル)(A)...	1	2188
+Built-in Menus	/ファイル​​(F)/送信(D)	Exchange​​フォルダー(E)...	1	938
+Built-in Menus	/ファイル​​(F)/送信(D)	オンライン会議の参加者(O)	1	3728
+Built-in Menus	/ファイル​​(F)/送信(D)	インターネット FAX サービス​​を使用する宛先(X)...	1	7392
+Built-in Menus	/ファイル​​(F)	プロパティ​​(I)	1	750
+Built-in Menus	/ファイル​​(F)	最近使用した​​ファイル名(R)	1	12547
+Built-in Menus	/ファイル​​(F)	最近使用した​​ファイル名(R)	1	831
+Built-in Menus	/ファイル​​(F)	Excel の終了(X)	1	752
+Built-in Menus		送信(D)	10	30095
+Built-in Menus	/送信(D)	メールの​​宛先(M)	1	3738
+Built-in Menus	/送信(D)	校閲結果の​​返信(S)...	1	6139
+Built-in Menus	/送信(D)	メールの宛先 (校閲用)(C)...	1	5958
+Built-in Menus	/送信(D)	メールの宛先 ​​(添付ファイル)(A)...	1	2188
+Built-in Menus	/送信(D)	Exchange​​フォルダー(E)...	1	938
+Built-in Menus	/送信(D)	オンライン会議の参加者(O)	1	3728
+Built-in Menus	/送信(D)	インターネット FAX サービス​​を使用する宛先(X)...	1	7392
+Built-in Menus		編集(E)	10	30003
+Built-in Menus	/編集(E)	元に戻せません(U)	1	128
+Built-in Menus	/編集(E)	繰り返しできません(R)	1	37
+Built-in Menus	/編集(E)	切り取り(T)	1	21
+Built-in Menus	/編集(E)	コピー(C)	1	19
+Built-in Menus	/編集(E)	Office ​​クリップボード(B)...	1	809
+Built-in Menus	/編集(E)	貼り付け(P)	1	22
+Built-in Menus	/編集(E)	形式を選択して​​貼り付け(S)...	1	755
+Built-in Menus	/編集(E)	クリア​​(A)	10	30021
+Built-in Menus	/編集(E)/クリア​​(A)	すべて(A)	1	1964
+Built-in Menus	/編集(E)/クリア​​(A)	系列(S)	1	907
+Built-in Menus	/編集(E)/クリア​​(A)	書式(F)	1	872
+Built-in Menus	/編集(E)	シートの削除(L)	1	847
+Built-in Menus	/編集(E)	シートの​​移動またはコピー(M)...	1	848
+Built-in Menus	/編集(E)	リンクの​​設定(K)...	1	759
+Built-in Menus		クリア​​(A)	10	30021
+Built-in Menus	/クリア​​(A)	すべて(A)	1	1964
+Built-in Menus	/クリア​​(A)	系列(S)	1	907
+Built-in Menus	/クリア​​(A)	書式(F)	1	872
+Built-in Menus		表示(V)	10	30004
+Built-in Menus	/表示(V)	ツール バー(T)	10	30045
+Built-in Menus	/表示(V)/ツール バー(T)	標準	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	書式設定	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	Visual Basic	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	Web	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	ウォッチ ウィンドウ	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	オンライン コンテンツ	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	クエリと接続	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	グラフ	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	コントロール ツールボックス	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	スマート検索	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	チェック/コメント	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	データ カタログ検索	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	データ選択ウィザード	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	ピボットテーブル	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	ファイルから挿入	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	フォーム	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	ブック クエリ	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	ヘルプ	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	リサーチ ツール	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	リスト	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	ワークシート分析	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	ワードアート	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	外部データ	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	共有クエリ	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	罫線	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	最新の情報に更新	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	図	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	図形描画	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	読み上げ	1	761
+Built-in Menus	/表示(V)/ツール バー(T)	保護	1	761
+Built-in Menus	/表示(V)	数式バー(F)	1	849
+Built-in Menus	/表示(V)	ステータス ​​バー(S)	1	850
+Built-in Menus	/表示(V)	ヘッダーとフッター(H)...	1	762
+Built-in Menus	/表示(V)	コメント​​(C)	1	1594
+Built-in Menus	/表示(V)	ユーザー設定​​のビュー(V)...	1	950
+Built-in Menus	/表示(V)	全画面​​表示(U)	1	178
+Built-in Menus	/表示(V)	ズーム​​(Z)...	1	925
+Built-in Menus	/表示(V)	ウィンドウに合わせてサイズ変更(W)	1	908
+Built-in Menus	/表示(V)	グラフ ウィンドウ(W)	1	2571
+Built-in Menus		ツール バー(T)	10	30045
+Built-in Menus	/ツール バー(T)	標準	1	761
+Built-in Menus	/ツール バー(T)	書式設定	1	761
+Built-in Menus	/ツール バー(T)	Visual Basic	1	761
+Built-in Menus	/ツール バー(T)	Web	1	761
+Built-in Menus	/ツール バー(T)	ウォッチ ウィンドウ	1	761
+Built-in Menus	/ツール バー(T)	オンライン コンテンツ	1	761
+Built-in Menus	/ツール バー(T)	クエリと接続	1	761
+Built-in Menus	/ツール バー(T)	グラフ	1	761
+Built-in Menus	/ツール バー(T)	コントロール ツールボックス	1	761
+Built-in Menus	/ツール バー(T)	スマート検索	1	761
+Built-in Menus	/ツール バー(T)	チェック/コメント	1	761
+Built-in Menus	/ツール バー(T)	データ カタログ検索	1	761
+Built-in Menus	/ツール バー(T)	データ選択ウィザード	1	761
+Built-in Menus	/ツール バー(T)	ピボットテーブル	1	761
+Built-in Menus	/ツール バー(T)	ファイルから挿入	1	761
+Built-in Menus	/ツール バー(T)	フォーム	1	761
+Built-in Menus	/ツール バー(T)	ブック クエリ	1	761
+Built-in Menus	/ツール バー(T)	ヘルプ	1	761
+Built-in Menus	/ツール バー(T)	リサーチ ツール	1	761
+Built-in Menus	/ツール バー(T)	リスト	1	761
+Built-in Menus	/ツール バー(T)	ワークシート分析	1	761
+Built-in Menus	/ツール バー(T)	ワードアート	1	761
+Built-in Menus	/ツール バー(T)	外部データ	1	761
+Built-in Menus	/ツール バー(T)	共有クエリ	1	761
+Built-in Menus	/ツール バー(T)	罫線	1	761
+Built-in Menus	/ツール バー(T)	最新の情報に更新	1	761
+Built-in Menus	/ツール バー(T)	図	1	761
+Built-in Menus	/ツール バー(T)	図形描画	1	761
+Built-in Menus	/ツール バー(T)	読み上げ	1	761
+Built-in Menus	/ツール バー(T)	保護	1	761
+Built-in Menus		挿入(I)	10	30005
+Built-in Menus	/挿入(I)	インク注釈​​(A)	1	9071
+Built-in Menus	/挿入(I)	図(P)	10	30180
+Built-in Menus	/挿入(I)/図(P)	オンライン​​画像(O)...	1	20868
+Built-in Menus	/挿入(I)/図(P)	クリップ ​​アート(C)...	1	682
+Built-in Menus	/挿入(I)/図(P)	ファイルから(F)...	1	2619
+Built-in Menus	/挿入(I)/図(P)	スキャナー​​またはカメラから(S)...	1	1764
+Built-in Menus	/挿入(I)/図(P)	インク描画と​​書き込み(D)	1	9405
+Built-in Menus	/挿入(I)/図(P)	オートシェイプ(A)	1	2630
+Built-in Menus	/挿入(I)/図(P)	ワードアート​​(W)...	1	1031
+Built-in Menus	/挿入(I)	ワークシート​​(W)	1	852
+Built-in Menus	/挿入(I)	グラフ(H)...	1	1957
+Built-in Menus	/挿入(I)	ハイパーリンク(I)...	1	1576
+Built-in Menus	/挿入(I)	記号と​​特殊文字(S)...	1	308
+Built-in Menus		図(P)	10	30180
+Built-in Menus	/図(P)	オンライン​​画像(O)...	1	20868
+Built-in Menus	/図(P)	クリップ ​​アート(C)...	1	682
+Built-in Menus	/図(P)	ファイルから(F)...	1	2619
+Built-in Menus	/図(P)	スキャナー​​またはカメラから(S)...	1	1764
+Built-in Menus	/図(P)	インク描画と​​書き込み(D)	1	9405
+Built-in Menus	/図(P)	オートシェイプ(A)	1	2630
+Built-in Menus	/図(P)	ワードアート​​(W)...	1	1031
+Built-in Menus		書式(O)	10	30006
+Built-in Menus	/書式(O)	セル(E)...	1	917
+Built-in Menus	/書式(O)	シート(H)	10	30026
+Built-in Menus	/書式(O)/シート(H)	名前の変更(R)	1	889
+Built-in Menus	/書式(O)/シート(H)	非表示​​(H)	1	890
+Built-in Menus	/書式(O)/シート(H)	再表示(U)...	1	891
+Built-in Menus	/書式(O)/シート(H)	背景​​(B)...	1	952
+Built-in Menus	/書式(O)/シート(H)	シート見出しの色(T)...	1	5747
+Built-in Menus		シート(H)	10	30026
+Built-in Menus	/シート(H)	名前の変更(R)	1	889
+Built-in Menus	/シート(H)	非表示​​(H)	1	890
+Built-in Menus	/シート(H)	再表示(U)...	1	891
+Built-in Menus	/シート(H)	背景​​(B)...	1	952
+Built-in Menus	/シート(H)	シート見出しの色(T)...	1	5747
+Built-in Menus		ツール(T)	10	30007
+Built-in Menus	/ツール(T)	スペル ​​チェック(S)...	1	2
+Built-in Menus	/ツール(T)	オートコレクトの​​オプション(A)...	1	793
+Built-in Menus	/ツール(T)	[読み上げ] ツール バーの表示(H)	1	7011
+Built-in Menus	/ツール(T)	ブックの​​共有(B)...	1	2040
+Built-in Menus	/ツール(T)	変更履歴の​​記録(T)	10	30138
+Built-in Menus	/ツール(T)/変更履歴の​​記録(T)	変更箇所​​の表示(H)...	1	2042
+Built-in Menus	/ツール(T)/変更履歴の​​記録(T)	変更箇所の​​確認(A)...	1	305
+Built-in Menus	/ツール(T)	ブックの​​比較と反映(W)...	1	2044
+Built-in Menus	/ツール(T)	保護(P)	10	30029
+Built-in Menus	/ツール(T)/保護(P)	シートの保護(P)...	1	893
+Built-in Menus	/ツール(T)/保護(P)	ブックの保護(W)...	1	894
+Built-in Menus	/ツール(T)/保護(P)	ブックの保護と共有 (レガシ)(S)	1	3059
+Built-in Menus	/ツール(T)	オンライン グループ作業(N)	10	30468
+Built-in Menus	/ツール(T)/オンライン グループ作業(N)	会議の開始(M)	1	3727
+Built-in Menus	/ツール(T)/オンライン グループ作業(N)	会議のスケジュール(S)...	1	4179
+Built-in Menus	/ツール(T)/オンライン グループ作業(N)	Web ディスカッション(W)	1	4177
+Built-in Menus	/ツール(T)/オンライン グループ作業(N)	校閲結果の​​差し込み終了(N)...	1	6141
+Built-in Menus	/ツール(T)	マクロ(M)	10	30017
+Built-in Menus	/ツール(T)/マクロ(M)	マクロ​​(M)...	1	186
+Built-in Menus	/ツール(T)/マクロ(M)	新しいマクロ​​の記録(R)...	1	184
+Built-in Menus	/ツール(T)/マクロ(M)	セキュリティ​​(S)...	1	3627
+Built-in Menus	/ツール(T)/マクロ(M)	Visual Basic ​​Editor(V)	1	1695
+Built-in Menus	/ツール(T)	アドイン(I)...	1	943
+Built-in Menus	/ツール(T)	ユーザー​​設定(C)...	1	797
+Built-in Menus	/ツール(T)	オプション​​(O)...	1	522
+Built-in Menus		変更履歴の​​記録(T)	10	30138
+Built-in Menus	/変更履歴の​​記録(T)	変更箇所​​の表示(H)...	1	2042
+Built-in Menus	/変更履歴の​​記録(T)	変更箇所の​​確認(A)...	1	305
+Built-in Menus		保護(P)	10	30029
+Built-in Menus	/保護(P)	シートの保護(P)...	1	893
+Built-in Menus	/保護(P)	ブックの保護(W)...	1	894
+Built-in Menus	/保護(P)	ブックの保護と共有 (レガシ)(S)	1	3059
+Built-in Menus		マクロ(M)	10	30017
+Built-in Menus	/マクロ(M)	マクロ​​(M)...	1	186
+Built-in Menus	/マクロ(M)	新しいマクロ​​の記録(R)...	1	184
+Built-in Menus	/マクロ(M)	セキュリティ​​(S)...	1	3627
+Built-in Menus	/マクロ(M)	Visual Basic ​​Editor(V)	1	1695
+Built-in Menus		グラフ(C)	10	30022
+Built-in Menus	/グラフ(C)	グラフの種類(Y)...	1	918
+Built-in Menus	/グラフ(C)	データの​​選択(E)...	1	954
+Built-in Menus	/グラフ(C)	グラフのオプション(I)...	1	956
+Built-in Menus	/グラフ(C)	グラフの​​移動(V)...	1	955
+Built-in Menus	/グラフ(C)	データの追加(A)...	1	1963
+Built-in Menus	/グラフ(C)	近似曲線の追加(R)...	1	914
+Built-in Menus	/グラフ(C)	3-D グラフ(V)...	1	919
+Built-in Menus		ウィンドウ(W)	10	30009
+Built-in Menus	/ウィンドウ(W)	新しいウィンドウ​​を開く(N)	1	303
+Built-in Menus	/ウィンドウ(W)	整列(A)...	1	298
+Built-in Menus	/ウィンドウ(W)	並べて比較(B)...	1	7698
+Built-in Menus	/ウィンドウ(W)	表示しない​​(H)	1	865
+Built-in Menus	/ウィンドウ(W)	再表示​​(U)...	1	866
+Built-in Menus	/ウィンドウ(W)	1 Book5	1	830
+Built-in Menus	/ウィンドウ(W)	ウィンドウ名​​(W)	1	830
+Built-in Menus	/ウィンドウ(W)	ウィンドウ名​​(W)	1	830
+Built-in Menus	/ウィンドウ(W)	ウィンドウ名​​(W)	1	830
+Built-in Menus	/ウィンドウ(W)	ウィンドウ名​​(W)	1	830
+Built-in Menus	/ウィンドウ(W)	ウィンドウ名​​(W)	1	830
+Built-in Menus	/ウィンドウ(W)	ウィンドウ名​​(W)	1	830
+Built-in Menus	/ウィンドウ(W)	ウィンドウ名​​(W)	1	830
+Built-in Menus	/ウィンドウ(W)	ウィンドウ名​​(W)	1	830
+Built-in Menus	/ウィンドウ(W)	ウィンドウ名​​(W)	1	830
+Built-in Menus		ヘルプ(H)	10	30010
+Built-in Menus	/ヘルプ(H)	ヘルプ​​(H)	1	984
+Built-in Menus	/ヘルプ(H)	アシスタントを表示しない(H)	1	1004
+Built-in Menus	/ヘルプ(H)	Lotus 1-2-3 ヘルプ(L)...	1	936
+Built-in Menus	/ヘルプ(H)	アプリケーションの​​自動修復(R)...	1	3774
+Built-in Menus	/ヘルプ(H)	プライバシー ​​オプション(P)...	1	7714
+Built-in Menus	/ヘルプ(H)	Office.com(O)	1	3775
+Built-in Menus	/ヘルプ(H)	バージョン情報(A)	1	927
+Envelope		封筒(E)	21	3746
+Business Bar		Business Bar	25	5746
+Layout		標準​​(S)	1	6131
+Layout		左右に分岐​​(B)	1	6132
+Layout		左に分岐​​(L)	1	6133
+Layout		右に分岐​​(R)	1	6134
+Layout		組織図の​​オートレイアウト(A)	1	6071
+Select		レベル​​(L)	1	6072
+Select		分岐​​(B)	1	6073
+Select		すべての​​アシスタント(A)	1	6074
+Select		すべての​​コネクタ(C)	1	6075
+Status Bar		ステータス バー	25	5746
+Ribbon		Ribbon	25	5746

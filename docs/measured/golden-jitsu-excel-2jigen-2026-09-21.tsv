@@ -1,0 +1,19 @@
+# ★範囲を 渡した 時 実Excel は 何を 返すか★（64）（2026-09-20）
+# ★なぜ★ ... Exally1 が 「105個 中 82個 足りない／11個は 気付けない」と 数えた
+#           ⇒★但し 見たのは 私の 紙の `ref` の 字だけ＝中身は 未測定★
+# ★どの Excel か★ ... 版 16.0 ／ build 20326
+# ★どの 貝殻か★ ... PowerShell 5.1.26100.9278
+# ★盤面★ A1:A5=1,2,3,4,5 ／ B1:B5=2,4,6,8,10（★2026-09-08 の 紙と 同じ★）
+# ★置き場★ ... ★A1:B5 と 交わる 行（行1）★／列は 3つ おき（D G J M P）
+# ★読む★ ... 頭の マスから 6行 x 3列（★中身まで★）
+# 組	名前	マス	式	埋まった数	中身（|で マス／ / で 行）
+2jigen	ISNUMBER-2jigen	D1	=ISNUMBER(A1:B5)	10	TRUE|TRUE| / TRUE|TRUE| / TRUE|TRUE| / TRUE|TRUE| / TRUE|TRUE| / ||
+2jigen	ISERR-2jigen	G1	=ISERR(A1:B5)	10	FALSE|FALSE| / FALSE|FALSE| / FALSE|FALSE| / FALSE|FALSE| / FALSE|FALSE| / ||
+2jigen	ISERROR-2jigen	J1	=ISERROR(A1:B5)	10	FALSE|FALSE| / FALSE|FALSE| / FALSE|FALSE| / FALSE|FALSE| / FALSE|FALSE| / ||
+taishou-1jigen	ISNUMBER-1jigen	M1	=ISNUMBER(A1:A5)	5	TRUE|| / TRUE|| / TRUE|| / TRUE|| / TRUE|| / ||
+taishou	SEQUENCE	P1	=SEQUENCE(2)	2	1|| / 2|| / || / || / || / ||
+#
+# ★★対照★★（★盤面が 狂って いない 事を 見ます★）
+# SEQUENCE(2) の 2マス目 ... 2（待つ 2）
+# ISNUMBER(A1:A5) の 5マス目 ... True（待つ True）
+# ★対照 ok ... 2 / 2★

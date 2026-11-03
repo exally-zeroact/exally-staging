@@ -1,0 +1,106 @@
+# ★実Excel に 打たせた CELL の 答え★
+# 取った 日 … 2026-09-07
+# ★どの Excel で 打ったか★ … 版 16.0 ／ build 20326 ／ UI の 言語 1041
+# ★置いた 中身★ A1=123.456 / A2='あいう'(右そろえ) / A3='=1+2' / A4=空 /
+#             B1=-5 / B2='x' / C1=DATE(2024,1,2) 表示 yyyy/m/d / D1=1000 表示 #,##0
+#             B列の 幅=12
+# 関数	式	実Excel の 答え	型
+# ★★2026-09-21 追記（経営者1）── ★この 紙は `.Formula`（★昔の 道★）で 取って います★★
+#   ＝`docs/measured/kansuu46/` の 道具 21本は `Formula2` を ★1本も 使って いません★
+#   ＝`.Formula` は ★溢れません★（2026-09-19 実測）＝★暗黙の 交わりで 1マス★
+#   ⇒★範囲を 渡した 式の 答えは ★1マス目だけ★です（★間違いでは なく 足りない★）
+#   ⇒★実測（2026-09-21）★ この 紙の 範囲を 渡す 812本を `Formula2` で 打ち直すと
+#      ★昔と 同じ 809本／★違う 3本★（ISERR/ISERROR/ISNUMBER の A1:B5）／★溢れた 416本★
+#   ⇒★新しい 道の 紙★ ... docs/measured/golden-furui-kami-torinaoshi-2026-09-21.tsv
+#   ⇒★この 紙を 物差しに する 試験は ★昔の 道を 守って います★★
+CELL	=CELL("address",A1)	$A$1	String
+CELL	=CELL("address",A2)	$A$2	String
+CELL	=CELL("address",A3)	$A$3	String
+CELL	=CELL("address",A4)	$A$4	String
+CELL	=CELL("address",B1)	$B$1	String
+CELL	=CELL("address",C1)	$C$1	String
+CELL	=CELL("address",D1)	$D$1	String
+CELL	=CELL("col",A1)	1	Double
+CELL	=CELL("col",A2)	1	Double
+CELL	=CELL("col",A3)	1	Double
+CELL	=CELL("col",A4)	1	Double
+CELL	=CELL("col",B1)	2	Double
+CELL	=CELL("col",C1)	3	Double
+CELL	=CELL("col",D1)	4	Double
+CELL	=CELL("row",A1)	1	Double
+CELL	=CELL("row",A2)	2	Double
+CELL	=CELL("row",A3)	3	Double
+CELL	=CELL("row",A4)	4	Double
+CELL	=CELL("row",B1)	1	Double
+CELL	=CELL("row",C1)	1	Double
+CELL	=CELL("row",D1)	1	Double
+CELL	=CELL("contents",A1)	123.456	Double
+CELL	=CELL("contents",A2)	あいう	String
+CELL	=CELL("contents",A3)	3	Double
+CELL	=CELL("contents",A4)	0	Double
+CELL	=CELL("contents",B1)	-5	Double
+CELL	=CELL("contents",C1)	45293	Double
+CELL	=CELL("contents",D1)	1000	Double
+CELL	=CELL("type",A1)	v	String
+CELL	=CELL("type",A2)	l	String
+CELL	=CELL("type",A3)	v	String
+CELL	=CELL("type",A4)	b	String
+CELL	=CELL("type",B1)	v	String
+CELL	=CELL("type",C1)	v	String
+CELL	=CELL("type",D1)	v	String
+CELL	=CELL("width",A1)	8	Double
+CELL	=CELL("width",A2)	8	Double
+CELL	=CELL("width",A3)	8	Double
+CELL	=CELL("width",A4)	8	Double
+CELL	=CELL("width",B1)	12	Double
+CELL	=CELL("width",C1)	8	Double
+CELL	=CELL("width",D1)	8	Double
+CELL	=CELL("prefix",A1)		String
+CELL	=CELL("prefix",A2)	"	String
+CELL	=CELL("prefix",A3)		String
+CELL	=CELL("prefix",A4)		String
+CELL	=CELL("prefix",B1)		String
+CELL	=CELL("prefix",C1)		String
+CELL	=CELL("prefix",D1)		String
+CELL	=CELL("protect",A1)	1	Double
+CELL	=CELL("protect",A2)	1	Double
+CELL	=CELL("protect",A3)	1	Double
+CELL	=CELL("protect",A4)	1	Double
+CELL	=CELL("protect",B1)	1	Double
+CELL	=CELL("protect",C1)	1	Double
+CELL	=CELL("protect",D1)	1	Double
+CELL	=CELL("format",A1)	G	String
+CELL	=CELL("format",A2)	G	String
+CELL	=CELL("format",A3)	G	String
+CELL	=CELL("format",A4)	G	String
+CELL	=CELL("format",B1)	G	String
+CELL	=CELL("format",C1)	D1	String
+CELL	=CELL("format",D1)	,0	String
+CELL	=CELL("color",A1)	0	Double
+CELL	=CELL("color",A2)	0	Double
+CELL	=CELL("color",A3)	0	Double
+CELL	=CELL("color",A4)	0	Double
+CELL	=CELL("color",B1)	0	Double
+CELL	=CELL("color",C1)	0	Double
+CELL	=CELL("color",D1)	0	Double
+CELL	=CELL("parentheses",A1)	0	Double
+CELL	=CELL("parentheses",A2)	0	Double
+CELL	=CELL("parentheses",A3)	0	Double
+CELL	=CELL("parentheses",A4)	0	Double
+CELL	=CELL("parentheses",B1)	0	Double
+CELL	=CELL("parentheses",C1)	0	Double
+CELL	=CELL("parentheses",D1)	0	Double
+CELL	=CELL("filename",A1)		String
+CELL	=CELL("filename",A2)		String
+CELL	=CELL("filename",A3)		String
+CELL	=CELL("filename",A4)		String
+CELL	=CELL("filename",B1)		String
+CELL	=CELL("filename",C1)		String
+CELL	=CELL("filename",D1)		String
+CELL	=CELL("こんなの",A1)	#VALUE!	error値
+CELL	=CELL("こんなの",A2)	#VALUE!	error値
+CELL	=CELL("こんなの",A3)	#VALUE!	error値
+CELL	=CELL("こんなの",A4)	#VALUE!	error値
+CELL	=CELL("こんなの",B1)	#VALUE!	error値
+CELL	=CELL("こんなの",C1)	#VALUE!	error値
+CELL	=CELL("こんなの",D1)	#VALUE!	error値

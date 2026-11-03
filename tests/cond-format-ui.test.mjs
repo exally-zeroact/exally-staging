@@ -77,8 +77,15 @@ T('★部品と 窓と 右クリックの項目が 画面に在る★', () => {
   ok(typeof win.openCondFormat === 'function', '窓を開く物が無い');
   ok(typeof win.cfFormatAt === 'function', '描く時に使う物が無い');
   ok(窓(), '窓のHTMLが無い');
-  const 項目 = [...doc.querySelectorAll('#ctx-menu .ctx-item')].map((e) => e.textContent);
-  ok(項目.some((t) => t.indexOf('条件付き書式') >= 0), '★右クリックに 出ていない（置いた≠届く）★：' + 項目.join(' / '));
+  /* ★2026-08-31：右クリックは ★開いた時に 作る★ 形に なった★ */
+  win.sel(0, 0, 0, 0);
+  win.showCtxMenu(10, 10);
+  /* ★見るのは ★押す 口★（字では ない）
+     字だけ 見ると ★字は 残して 呼ぶ先を 差し替えられても 緑のまま★
+     （2026-08-31 わざと 壊して 見つけた） */
+  const 口 = [...doc.querySelectorAll('#ctx-menu .ctx-item')].map((e) => e.getAttribute('data-ctx') || '');
+  ok(口.indexOf('openCondFormat') >= 0,
+    '★右クリックに 出ていない（置いた≠届く）★：' + 口.join(' / '));
 });
 
 T('★窓を開くと 選んだ場所が出て、既定の色は 実Excelの値★', () => {
@@ -263,8 +270,10 @@ if (SELF) {
   console.log('');
   console.log('[self-test] わざと壊して 赤くなるかを数える（★repo は読むだけ★）');
   const BREAKS = [
-    ['book.html', '★右クリックから 項目を消す★',
-      (s) => s.replace('<div class="ctx-item" onclick="openCondFormat()">🎨 条件付き書式（当てはまったら 色を付ける）</div>', '')],
+    /* ★2026-08-31：右クリックの 中身の 正本が 画面から lib/ctx-menu.js へ 移った★
+       ★壊す 先も 一緒に 移す★（印が 古いままだと ★素通り★＝見張りが 眠る） */
+    ['lib/ctx-menu.js', '★右クリックから 項目を消す★',
+      (s) => s.replace("画面: 'openCondFormat'", "画面: 'ctxCopy'")],
     ['book.html', '★描く時に 条件付き書式を見ない（塗り）★',
       (s) => s.replace('    var cf=cfFormatAt(r,c,cell);', '    var cf=null;')],
     ['book.html', '★手の塗りを 条件付き書式で 消してしまう★',

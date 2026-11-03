@@ -1,0 +1,134 @@
+# ★LINEST の 紙を うちの 本番の 道で 押して 突き合わせた★（2026-09-09・2件目）
+#
+# ★正★ golden-linest-hyou-2026-09-09.tsv（実Excel の 実測）
+# ★押す 道★ 本番と 同じ ①JS層 → ②convertFormula → エンジン
+# ★材料は 紙から 読んだ★（54マス）★手で 写して いません★
+# ★合う 幅★ 相対 1e-9（★字が そのまま 同じ 物は そのまま 合う★）
+#
+# 組	式	実Excel	うち	道	判じ	何の 場所
+x1本・きれい	=LINEST(A1:A5,B1:B5)	19.999999999999993	20.00000000000003	エンジン	合った	裸（★うちが 拾う 形★）
+x1本・きれい	=ROWS(LINEST(A1:A5,B1:B5))	1	1	エンジン	合った	表の 大きさ（ROWS）
+x1本・きれい	=COLUMNS(LINEST(A1:A5,B1:B5))	2	2	エンジン	合った	表の 大きさ（COLUMNS）
+x1本・きれい	=ROWS(LINEST(A1:A5,B1:B5,TRUE,TRUE))	5	5	エンジン	合った	表の 大きさ（ROWS）
+x1本・きれい	=COLUMNS(LINEST(A1:A5,B1:B5,TRUE,TRUE))	2	2	エンジン	合った	表の 大きさ（COLUMNS）
+x1本・きれい	=ROWS(LINEST(A1:A5,B1:B5,TRUE,FALSE))	1	1	エンジン	合った	表の 大きさ（ROWS）
+x1本・きれい	=COLUMNS(LINEST(A1:A5,B1:B5,TRUE,FALSE))	2	2	エンジン	合った	表の 大きさ（COLUMNS）
+x1本・きれい	=ROWS(LINEST(A1:A5,B1:B5,FALSE,TRUE))	5	5	エンジン	合った	表の 大きさ（ROWS）
+x1本・きれい	=COLUMNS(LINEST(A1:A5,B1:B5,FALSE,TRUE))	2	2	エンジン	合った	表の 大きさ（COLUMNS）
+x1本・きれい	=ROWS(LINEST(A1:A5,B1:B5,FALSE,FALSE))	1	1	エンジン	合った	表の 大きさ（ROWS）
+x1本・きれい	=COLUMNS(LINEST(A1:A5,B1:B5,FALSE,FALSE))	2	2	エンジン	合った	表の 大きさ（COLUMNS）
+x1本・きれい	=INDEX(LINEST(A1:A5,B1:B5,TRUE,TRUE),1,1)	19.999999999999993	20.00000000000003	エンジン	合った	補正TRUE の 1行1列
+x1本・きれい	=INDEX(LINEST(A1:A5,B1:B5,TRUE,TRUE),1,2)	80.00000000000003	79.99999999999991	エンジン	合った	補正TRUE の 1行2列
+x1本・きれい	=INDEX(LINEST(A1:A5,B1:B5,TRUE,TRUE),2,1)	1.8630587706705477E-15	1.640928159047308e-14	エンジン	★★違う★★	補正TRUE の 2行1列
+x1本・きれい	=INDEX(LINEST(A1:A5,B1:B5,TRUE,TRUE),2,2)	6.1790669046949934E-15	5.4423430114885503e-14	エンジン	★★違う★★	補正TRUE の 2行2列
+x1本・きれい	=INDEX(LINEST(A1:A5,B1:B5,TRUE,TRUE),3,1)	1	1	エンジン	合った	補正TRUE の 3行1列
+x1本・きれい	=INDEX(LINEST(A1:A5,B1:B5,TRUE,TRUE),3,2)	5.891509130072236E-15	5.189070459296527e-14	エンジン	★★違う★★	補正TRUE の 3行2列
+x1本・きれい	=INDEX(LINEST(A1:A5,B1:B5,TRUE,TRUE),4,1)	1.1524096365711176E+32	1.4855280471424563e+30	エンジン	★★違う★★	補正TRUE の 4行1列
+x1本・きれい	=INDEX(LINEST(A1:A5,B1:B5,TRUE,TRUE),4,2)	3	3	エンジン	合った	補正TRUE の 4行2列
+x1本・きれい	=INDEX(LINEST(A1:A5,B1:B5,TRUE,TRUE),5,1)	4000	4000	エンジン	合った	補正TRUE の 5行1列
+x1本・きれい	=INDEX(LINEST(A1:A5,B1:B5,TRUE,TRUE),5,2)	1.0412963948917356E-28	8.077935669463161e-27	エンジン	★★違う★★	補正TRUE の 5行2列
+x1本・きれい	=INDEX(LINEST(A1:A5,B1:B5),1,1)	19.999999999999993	20.00000000000003	エンジン	合った	既定の 1行1列
+x1本・きれい	=INDEX(LINEST(A1:A5,B1:B5),1,2)	80.00000000000003	79.99999999999991	エンジン	合った	既定の 1行2列
+x1本・きれい	=INDEX(LINEST(A1:A5,B1:B5,TRUE,TRUE),6,1)	#REF!	#NUM	エンジン	★誤りの 出方が 違う★	★表の 外を 指した（境目）★
+x1本・きれい	=INDEX(LINEST(A1:A5,B1:B5,TRUE,TRUE),1,9)	#REF!	#NUM	エンジン	★誤りの 出方が 違う★	★表の 外を 指した（境目）★
+x1本・きれい	=INDEX(LINEST(A1:A5,B1:B5,TRUE,TRUE),0,1)	19.999999999999993	#VALUE	エンジン	★誤りの 出方が 違う★	★表の 外を 指した（境目）★
+x1本・きれい	=INDEX(LINEST(A1:A5,B1:B5,TRUE,TRUE),1,0)	19.999999999999993	#VALUE	エンジン	★誤りの 出方が 違う★	★表の 外を 指した（境目）★
+x1本・端数	=LINEST(D1:D5,E1:E5)	2.1299999999999994	2.1300000000000034	エンジン	合った	裸（★うちが 拾う 形★）
+x1本・端数	=ROWS(LINEST(D1:D5,E1:E5))	1	1	エンジン	合った	表の 大きさ（ROWS）
+x1本・端数	=COLUMNS(LINEST(D1:D5,E1:E5))	2	2	エンジン	合った	表の 大きさ（COLUMNS）
+x1本・端数	=ROWS(LINEST(D1:D5,E1:E5,TRUE,TRUE))	5	5	エンジン	合った	表の 大きさ（ROWS）
+x1本・端数	=COLUMNS(LINEST(D1:D5,E1:E5,TRUE,TRUE))	2	2	エンジン	合った	表の 大きさ（COLUMNS）
+x1本・端数	=ROWS(LINEST(D1:D5,E1:E5,TRUE,FALSE))	1	1	エンジン	合った	表の 大きさ（ROWS）
+x1本・端数	=COLUMNS(LINEST(D1:D5,E1:E5,TRUE,FALSE))	2	2	エンジン	合った	表の 大きさ（COLUMNS）
+x1本・端数	=ROWS(LINEST(D1:D5,E1:E5,FALSE,TRUE))	5	5	エンジン	合った	表の 大きさ（ROWS）
+x1本・端数	=COLUMNS(LINEST(D1:D5,E1:E5,FALSE,TRUE))	2	2	エンジン	合った	表の 大きさ（COLUMNS）
+x1本・端数	=ROWS(LINEST(D1:D5,E1:E5,FALSE,FALSE))	1	1	エンジン	合った	表の 大きさ（ROWS）
+x1本・端数	=COLUMNS(LINEST(D1:D5,E1:E5,FALSE,FALSE))	2	2	エンジン	合った	表の 大きさ（COLUMNS）
+x1本・端数	=INDEX(LINEST(D1:D5,E1:E5,TRUE,TRUE),1,1)	2.1299999999999994	2.1300000000000034	エンジン	合った	補正TRUE の 1行1列
+x1本・端数	=INDEX(LINEST(D1:D5,E1:E5,TRUE,TRUE),1,2)	0.6700000000000008	0.6699999999999884	エンジン	合った	補正TRUE の 1行2列
+x1本・端数	=INDEX(LINEST(D1:D5,E1:E5,TRUE,TRUE),2,1)	0.06403124237432867	0.0640312423743285	エンジン	合った	補正TRUE の 2行1列
+x1本・端数	=INDEX(LINEST(D1:D5,E1:E5,TRUE,TRUE),2,2)	0.2123676058159536	0.21236760581595304	エンジン	合った	補正TRUE の 2行2列
+x1本・端数	=INDEX(LINEST(D1:D5,E1:E5,TRUE,TRUE),3,1)	0.9972962279082037	0.9972962279082037	エンジン	合った	補正TRUE の 3行1列
+x1本・端数	=INDEX(LINEST(D1:D5,E1:E5,TRUE,TRUE),3,2)	0.2024845673131664	0.2024845673131659	エンジン	合った	補正TRUE の 3行2列
+x1本・端数	=INDEX(LINEST(D1:D5,E1:E5,TRUE,TRUE),4,1)	1106.5609756097501	1106.560975609756	エンジン	合った	補正TRUE の 4行1列
+x1本・端数	=INDEX(LINEST(D1:D5,E1:E5,TRUE,TRUE),4,2)	3	3	エンジン	合った	補正TRUE の 4行2列
+x1本・端数	=INDEX(LINEST(D1:D5,E1:E5,TRUE,TRUE),5,1)	45.369	45.369	エンジン	合った	補正TRUE の 5行1列
+x1本・端数	=INDEX(LINEST(D1:D5,E1:E5,TRUE,TRUE),5,2)	0.12300000000000066	0.123	エンジン	合った	補正TRUE の 5行2列
+x1本・端数	=INDEX(LINEST(D1:D5,E1:E5),1,1)	2.1299999999999994	2.1300000000000034	エンジン	合った	既定の 1行1列
+x1本・端数	=INDEX(LINEST(D1:D5,E1:E5),1,2)	0.6700000000000008	0.6699999999999884	エンジン	合った	既定の 1行2列
+x1本・端数	=INDEX(LINEST(D1:D5,E1:E5,TRUE,TRUE),6,1)	#REF!	#NUM	エンジン	★誤りの 出方が 違う★	★表の 外を 指した（境目）★
+x1本・端数	=INDEX(LINEST(D1:D5,E1:E5,TRUE,TRUE),1,9)	#REF!	#NUM	エンジン	★誤りの 出方が 違う★	★表の 外を 指した（境目）★
+x1本・端数	=INDEX(LINEST(D1:D5,E1:E5,TRUE,TRUE),0,1)	2.1299999999999994	#VALUE	エンジン	★誤りの 出方が 違う★	★表の 外を 指した（境目）★
+x1本・端数	=INDEX(LINEST(D1:D5,E1:E5,TRUE,TRUE),1,0)	2.1299999999999994	#VALUE	エンジン	★誤りの 出方が 違う★	★表の 外を 指した（境目）★
+★x2本（重回帰）★	=LINEST(G1:G6,H1:I6)	0.7708333333333329	0.7708333333333343	エンジン	合った	裸（★うちが 拾う 形★）
+★x2本（重回帰）★	=ROWS(LINEST(G1:G6,H1:I6))	1	1	エンジン	合った	表の 大きさ（ROWS）
+★x2本（重回帰）★	=COLUMNS(LINEST(G1:G6,H1:I6))	3	3	エンジン	合った	表の 大きさ（COLUMNS）
+★x2本（重回帰）★	=ROWS(LINEST(G1:G6,H1:I6,TRUE,TRUE))	5	5	エンジン	合った	表の 大きさ（ROWS）
+★x2本（重回帰）★	=COLUMNS(LINEST(G1:G6,H1:I6,TRUE,TRUE))	3	3	エンジン	合った	表の 大きさ（COLUMNS）
+★x2本（重回帰）★	=ROWS(LINEST(G1:G6,H1:I6,TRUE,FALSE))	1	1	エンジン	合った	表の 大きさ（ROWS）
+★x2本（重回帰）★	=COLUMNS(LINEST(G1:G6,H1:I6,TRUE,FALSE))	3	3	エンジン	合った	表の 大きさ（COLUMNS）
+★x2本（重回帰）★	=ROWS(LINEST(G1:G6,H1:I6,FALSE,TRUE))	5	5	エンジン	合った	表の 大きさ（ROWS）
+★x2本（重回帰）★	=COLUMNS(LINEST(G1:G6,H1:I6,FALSE,TRUE))	3	3	エンジン	合った	表の 大きさ（COLUMNS）
+★x2本（重回帰）★	=ROWS(LINEST(G1:G6,H1:I6,FALSE,FALSE))	1	1	エンジン	合った	表の 大きさ（ROWS）
+★x2本（重回帰）★	=COLUMNS(LINEST(G1:G6,H1:I6,FALSE,FALSE))	3	3	エンジン	合った	表の 大きさ（COLUMNS）
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6,TRUE,TRUE),1,1)	0.7708333333333329	0.7708333333333343	エンジン	合った	補正TRUE の 1行1列
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6,TRUE,TRUE),1,2)	5.104166666666667	5.104166666666667	エンジン	合った	補正TRUE の 1行2列
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6,TRUE,TRUE),1,3)	2.937499999999999	2.9374999999999925	エンジン	合った	補正TRUE の 1行3列
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6,TRUE,TRUE),2,1)	0.2565687944709887	0.25656879447098874	エンジン	合った	補正TRUE の 2行1列
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6,TRUE,TRUE),2,2)	0.2565687944709887	0.2565687944709888	エンジン	合った	補正TRUE の 2行2列
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6,TRUE,TRUE),2,3)	0.5802248526473426	0.5802248526473427	エンジン	合った	補正TRUE の 2行3列
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6,TRUE,TRUE),3,1)	0.9981370020063055	0.9981370020063055	エンジン	合った	補正TRUE の 3行1列
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6,TRUE,TRUE),3,2)	0.6009252125773321	0.6009252125773324	エンジン	合った	補正TRUE の 3行2列
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6,TRUE,TRUE),3,3)	#N/A	#NA	エンジン	合った	補正TRUE の 3行3列
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6,TRUE,TRUE),4,1)	803.6538461538445	803.6538461538437	エンジン	合った	補正TRUE の 4行1列
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6,TRUE,TRUE),4,2)	3	3	エンジン	合った	補正TRUE の 4行2列
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6,TRUE,TRUE),4,3)	#N/A	#NA	エンジン	合った	補正TRUE の 4行3列
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6,TRUE,TRUE),5,1)	580.4166666666666	580.4166666666666	エンジン	合った	補正TRUE の 5行1列
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6,TRUE,TRUE),5,2)	1.0833333333333355	1.0833333333333366	エンジン	合った	補正TRUE の 5行2列
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6,TRUE,TRUE),5,3)	#N/A	#NA	エンジン	合った	補正TRUE の 5行3列
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6),1,1)	0.7708333333333329	0.7708333333333343	エンジン	合った	既定の 1行1列
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6),1,2)	5.104166666666667	5.104166666666667	エンジン	合った	既定の 1行2列
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6),1,3)	2.937499999999999	2.9374999999999925	エンジン	合った	既定の 1行3列
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6,TRUE,TRUE),6,1)	#REF!	#NUM	エンジン	★誤りの 出方が 違う★	★表の 外を 指した（境目）★
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6,TRUE,TRUE),1,9)	#REF!	#NUM	エンジン	★誤りの 出方が 違う★	★表の 外を 指した（境目）★
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6,TRUE,TRUE),0,1)	0.7708333333333329	#VALUE	エンジン	★誤りの 出方が 違う★	★表の 外を 指した（境目）★
+★x2本（重回帰）★	=INDEX(LINEST(G1:G6,H1:I6,TRUE,TRUE),1,0)	0.7708333333333329	#VALUE	エンジン	★誤りの 出方が 違う★	★表の 外を 指した（境目）★
+★点が 2つだけ★	=LINEST(K1:K2,L1:L2)	4	4	エンジン	合った	裸（★うちが 拾う 形★）
+★点が 2つだけ★	=ROWS(LINEST(K1:K2,L1:L2))	1	1	エンジン	合った	表の 大きさ（ROWS）
+★点が 2つだけ★	=COLUMNS(LINEST(K1:K2,L1:L2))	2	2	エンジン	合った	表の 大きさ（COLUMNS）
+★点が 2つだけ★	=ROWS(LINEST(K1:K2,L1:L2,TRUE,TRUE))	5	5	エンジン	合った	表の 大きさ（ROWS）
+★点が 2つだけ★	=COLUMNS(LINEST(K1:K2,L1:L2,TRUE,TRUE))	2	2	エンジン	合った	表の 大きさ（COLUMNS）
+★点が 2つだけ★	=ROWS(LINEST(K1:K2,L1:L2,TRUE,FALSE))	1	1	エンジン	合った	表の 大きさ（ROWS）
+★点が 2つだけ★	=COLUMNS(LINEST(K1:K2,L1:L2,TRUE,FALSE))	2	2	エンジン	合った	表の 大きさ（COLUMNS）
+★点が 2つだけ★	=ROWS(LINEST(K1:K2,L1:L2,FALSE,TRUE))	5	5	エンジン	合った	表の 大きさ（ROWS）
+★点が 2つだけ★	=COLUMNS(LINEST(K1:K2,L1:L2,FALSE,TRUE))	2	2	エンジン	合った	表の 大きさ（COLUMNS）
+★点が 2つだけ★	=ROWS(LINEST(K1:K2,L1:L2,FALSE,FALSE))	1	1	エンジン	合った	表の 大きさ（ROWS）
+★点が 2つだけ★	=COLUMNS(LINEST(K1:K2,L1:L2,FALSE,FALSE))	2	2	エンジン	合った	表の 大きさ（COLUMNS）
+★点が 2つだけ★	=INDEX(LINEST(K1:K2,L1:L2,TRUE,TRUE),1,1)	4	4	エンジン	合った	補正TRUE の 1行1列
+★点が 2つだけ★	=INDEX(LINEST(K1:K2,L1:L2,TRUE,TRUE),1,2)	-1	-1	エンジン	合った	補正TRUE の 1行2列
+★点が 2つだけ★	=INDEX(LINEST(K1:K2,L1:L2,TRUE,TRUE),2,1)	0	0	エンジン	合った	補正TRUE の 2行1列
+★点が 2つだけ★	=INDEX(LINEST(K1:K2,L1:L2,TRUE,TRUE),2,2)	0	0	エンジン	合った	補正TRUE の 2行2列
+★点が 2つだけ★	=INDEX(LINEST(K1:K2,L1:L2,TRUE,TRUE),3,1)	1	1	エンジン	合った	補正TRUE の 3行1列
+★点が 2つだけ★	=INDEX(LINEST(K1:K2,L1:L2,TRUE,TRUE),3,2)	0	0	エンジン	合った	補正TRUE の 3行2列
+★点が 2つだけ★	=INDEX(LINEST(K1:K2,L1:L2,TRUE,TRUE),4,1)	#NUM!	#NUM	エンジン	合った	補正TRUE の 4行1列
+★点が 2つだけ★	=INDEX(LINEST(K1:K2,L1:L2,TRUE,TRUE),4,2)	0	0	エンジン	合った	補正TRUE の 4行2列
+★点が 2つだけ★	=INDEX(LINEST(K1:K2,L1:L2,TRUE,TRUE),5,1)	8	8	エンジン	合った	補正TRUE の 5行1列
+★点が 2つだけ★	=INDEX(LINEST(K1:K2,L1:L2,TRUE,TRUE),5,2)	0	0	エンジン	合った	補正TRUE の 5行2列
+★点が 2つだけ★	=INDEX(LINEST(K1:K2,L1:L2),1,1)	4	4	エンジン	合った	既定の 1行1列
+★点が 2つだけ★	=INDEX(LINEST(K1:K2,L1:L2),1,2)	-1	-1	エンジン	合った	既定の 1行2列
+★点が 2つだけ★	=INDEX(LINEST(K1:K2,L1:L2,TRUE,TRUE),6,1)	#REF!	#NUM	エンジン	★誤りの 出方が 違う★	★表の 外を 指した（境目）★
+★点が 2つだけ★	=INDEX(LINEST(K1:K2,L1:L2,TRUE,TRUE),1,9)	#REF!	#NUM	エンジン	★誤りの 出方が 違う★	★表の 外を 指した（境目）★
+★点が 2つだけ★	=INDEX(LINEST(K1:K2,L1:L2,TRUE,TRUE),0,1)	4	#VALUE	エンジン	★誤りの 出方が 違う★	★表の 外を 指した（境目）★
+★点が 2つだけ★	=INDEX(LINEST(K1:K2,L1:L2,TRUE,TRUE),1,0)	4	#VALUE	エンジン	★誤りの 出方が 違う★	★表の 外を 指した（境目）★
+★横1行★	=LINEST(N1:S1,N2:S2)	20.000000000000004	20	エンジン	合った	★横1行（x も 1本）★
+★横1行★	=ROWS(LINEST(N1:S1,N2:S2))	1	1	エンジン	合った	★横1行（x も 1本）★
+★横1行★	=COLUMNS(LINEST(N1:S1,N2:S2))	2	2	エンジン	合った	★横1行（x も 1本）★
+★横1行★	=INDEX(LINEST(N1:S1,N2:S2),1,1)	20.000000000000004	20	エンジン	合った	★横1行（x も 1本）★
+★横1行★	=INDEX(LINEST(N1:S1,N2:S2),1,2)	79.99999999999999	80	エンジン	合った	★横1行（x も 1本）★
+#
+# ★★締め★★ 全 119本
+#   合った ……………………………………… 98
+#   ★#NAME?（在るように 見えて 実は 無い）★ … 0
+#   ★値が 違う★ ………………………………… 5
+#   ★誤りの 出方が 違う★ ……………………… 16
+#   ―― 足すと 119 ／ 全 119本

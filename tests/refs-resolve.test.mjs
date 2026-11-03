@@ -112,6 +112,37 @@ export function findUnresolved(files, existing) {
   return bad;
 }
 
+/* ★給与の lib が Exally へ 戻って来ていないか★（2026-09-05 指示役の 丙）
+ *   ★なぜ★ … 2026-09-05 に 給与(kyuyo/)を Exally から 外した時、私は 3本の lib を
+ *              ★Exally の lib/ へ 移して 写しを 残そうとした★。司さんに 止められた。
+ *              「金関係のこと聞かれたりAIが入力する時だけSupabaseの共有から拾うやないんか」
+ *   ★止める 形★ … ★法定の 数値を 持つ ファイルが repo に 現れたら 赤★
+ *              ＋★api/ が それを 読んでいたら 赤★
+ *   ★写しは 静かに 戻る★＝「消したら 500 に なったので 戻しました」で 元通りに なる。
+ *              その時 ★倉庫と ファイルが 二重★に なり、★片方だけ 古くなる★。 */
+export const 給与の見張りの名 = [
+  'shakaihoken-hyo', 'koyo-hoken', 'koyohoken-ritsu', 'shouhizei-ritsu',
+  'saitei-chingin', 'payroll-calc', 'shotokuzei', 'nenmatsu-chosei',
+  'juminzei', 'shoyo-zei', 'warimashi', 'rousai-ritsu',
+];
+/** 純関数：ファイル一覧(path→中身)から「戻って来た給与の物」を返す。self-test で作り物を通せる。 */
+export function 給与が戻っていないか(files) {
+  const 出 = [];
+  for (const rel of Object.keys(files)) {
+    if (rel.startsWith('tests/') || rel.startsWith('scripts/') || rel.startsWith('tools/')) continue;
+    const 名 = rel.split('/').pop().replace(/\.(js|mjs|cjs)$/i, '');
+    if (給与の見張りの名.indexOf(名) >= 0) 出.push({ どこ: rel, なに: '法定の値を持つ写しが 戻っている', 名 });
+  }
+  for (const [rel, src] of Object.entries(files)) {
+    if (!rel.startsWith('api/')) continue;
+    for (const spec of specifiersOf(src)) {
+      const 名 = String(spec).split('/').pop().replace(/\.(js|mjs|cjs)$/i, '');
+      if (給与の見張りの名.indexOf(名) >= 0) 出.push({ どこ: rel, なに: '給与の lib を 読んでいる', 名: spec });
+    }
+  }
+  return 出;
+}
+
 /* ══ self-test（わざと壊して、この検査が本当に赤にできるか確かめる） ══════ */
 if (process.argv.includes('--self-test')) {
   console.log('\n[refs-resolve --self-test] わざと壊して赤になるか');
@@ -179,6 +210,26 @@ if (process.argv.includes('--self-test')) {
     const me = fs.readFileSync(fileURLToPath(import.meta.url), 'utf8');
     const bad = findUnresolved({ 'tests/refs-resolve.test.mjs': me }, ex(all_ForSelfTest()));
     if (bad.length) throw new Error('自分自身を赤にしています:\n' + bad.map(b => '   - ' + b.spec).join('\n'));
+  });
+
+  /* ★丙：給与の写しが 戻ったら 赤に なるか★（2026-09-05） */
+  /* ★偽の 中身は 字を つなげて 作る★＝この ファイル自身に require('…') の 形を 残さない
+     （残すと 上の『自分自身が 走査に 引っかからない』が 赤に なる＝2026-09-05 実測） */
+  const 偽 = (p) => 'const X = ' + 'requi' + 're(' + JSON.stringify(p) + ');';
+  S('★給与の lib が repo に 戻ったら 赤', () => {
+    const r = 給与が戻っていないか({ 'lib/shakaihoken-hyo.js': 'module.exports={};' });
+    if (r.length !== 1) throw new Error('赤になっていない: ' + JSON.stringify(r));
+  });
+  S('★api/ が 給与の lib を 読んだら 赤', () => {
+    const r = 給与が戻っていないか({ 'api/claude.js': 偽('../kyuyo/lib/koyo-hoken.js') });
+    if (r.length !== 1) throw new Error('赤になっていない: ' + JSON.stringify(r));
+  });
+  S('★関係ない物は 赤にしない（誤検知を 出さない）', () => {
+    const r = 給与が戻っていないか({ 'lib/chizu.js': 偽('./horu.js'), 'api/claude.js': 偽('../lib/chizu.js') });
+    if (r.length) throw new Error('誤検知: ' + JSON.stringify(r));
+  });
+  S('★見張りの 名前が 空でない（この検査が 空振りしていない）', () => {
+    if (給与の見張りの名.length < 8) throw new Error('見張る名前が 少なすぎる: ' + 給与の見張りの名.length);
   });
 
   console.log('\n' + pass + ' passed, ' + fail + ' failed');
@@ -266,6 +317,16 @@ T('検査が空振りしていない（相対参照を実際に数えている�
 console.log('\n── 実測 ──');
 console.log('  .js/.mjs: ' + jsFiles.length + '本 / 相対参照 ' + totalRefs + '件 / 未解決 ' + unresolved.length + '件');
 console.log('  api/: ' + apiFiles.length + '本（' + apiFiles.join(', ') + '）');
+
+T('★給与は Exally に 戻っていない（法定の値は 倉庫から 拾う）', () => {
+  const 戻り = 給与が戻っていないか(files);
+  if (戻り.length) {
+    throw new Error('★給与の物が Exally に 戻っています★:' + '\n'
+      + 戻り.map((b) => '   - ' + b.どこ + '  [' + b.なに + ': ' + b.名 + ']').join('\n')
+      + '\n' + '   → ★法定の数値は Supabase の statutory から 拾うこと★（2026-09-05 司さん）'
+      + '\n' + '     ファイルに 写しを 置くと、倉庫と 二重に なり ★片方だけ 古くなる★。');
+  }
+});
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

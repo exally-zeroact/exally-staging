@@ -1,4 +1,4 @@
-# verify-workbook-excel.ps1 - 「うちが書き出した xlsx を実Excelで開いて再計算し、golden と一致するか」を全ケースで見る。
+﻿# verify-workbook-excel.ps1 - 「うちが書き出した xlsx を実Excelで開いて再計算し、golden と一致するか」を全ケースで見る。
 #   往復検証の(3)を 221 ケース全部でやる版。Windows + Excel が要るので CI では走らない。
 #
 #   手順: node tests/xlsx-harness/build-libre-input.mjs tests/xlsx-harness/tmp/cases.xlsx

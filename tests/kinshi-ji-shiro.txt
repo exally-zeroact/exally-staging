@@ -1,0 +1,30 @@
+# 禁止の 字の 見張りの 白名簿（tests/kinshi-ji.test.mjs）＝道<TAB>種類<TAB>blob の id 頭16字（git ls-files -s と 同じ）<TAB>訳
+# PNG は 2026-10-11 に Exally の 席が 1枚ずつ 目で 見た（画面の UI・表の 数字・製品名だけ。本物の 名前・住所・口座・メールは 0）
+docs/measured/e-afurenaoshi-2026-09-11.png	未測定1	2f9e457f9de03db7	目で 見た（10-11）：画面の UI と 見本の 数字だけ
+docs/measured/e-afureru-2026-09-10.png	未測定1	f826dcfc8f64aeaf	目で 見た（10-11）：画面の UI と 見本の 数字だけ
+docs/measured/e-haba-2026-09-11.png	未測定1	8dd63f1da1e90526	目で 見た（10-11）：画面の UI と 見本の 数字だけ
+docs/measured/e-igeta-2026-09-11.png	未測定1	a24735b9b04cee38	目で 見た（10-11）：画面の UI と 見本の 数字だけ
+docs/measured/e-ketsugou-2026-09-10.png	未測定1	c0e7a75f55c97370	目で 見た（10-11）：画面の UI と 見本の 数字だけ
+docs/measured/e-kitei-soroeta-2026-09-11.png	未測定1	e2864d915d9f31ed	目で 見た（10-11）：画面の UI と 見本の 数字だけ
+docs/measured/e-oou-4tsu-2026-09-10.png	未測定1	8c71d7489136f45f	目で 見た（10-11）：画面の UI と 見本の 数字だけ
+docs/measured/e-oou-mae-ato-2026-09-10.png	未測定1	f871458e2d43dd23	目で 見た（10-11）：画面の UI と 見本の 数字だけ
+docs/measured/e-shisuu-mitame-2026-09-10.png	未測定1	4cbda2a6b3533da3	目で 見た（10-11）：画面の UI と 見本の 数字だけ
+docs/measured/e-toast-mae-ato-2026-09-10.png	未測定1	0e3064b93ff9ce26	目で 見た（10-11）：画面の UI と 見本の 数字だけ
+docs/measured/e-toast-warn-2026-09-10.png	未測定1	8b79eda59c0c51cd	目で 見た（10-11）：画面の UI と 見本の 数字だけ
+docs/measured/e/graph-e-toshite-deru-2026-09-22.png	未測定1	7acbb389d8b8184c	目で 見た（10-11）：画面の UI と 見本の 数字だけ
+docs/measured/e/jitsu-excel-kazari3-2026-09-21.png	未測定1	db92c285be5c6d29	目で 見た（10-11）：画面の UI と 見本の 数字だけ
+docs/measured/e/jitsu-excel-yoko-soroe-2026-09-21.png	未測定1	2abf9971c9c61e0c	目で 見た（10-11）：画面の UI と 見本の 数字だけ
+docs/measured/e/mochikomi-gamen-2026-09-21.png	未測定1	3d9fdd89f232c28f	目で 見た（10-11）：画面の UI と 見本の 数字だけ
+docs/measured/kansuu46/cell-honmono-de-osu.png	未測定1	9e1217dd0f8734c8	目で 見た（10-11）：画面の UI と 見本の 数字だけ
+docs/measured/ribbon/jitsuhaishin-safari-1280.png	未測定1	2e33dba11296b557	目で 見た（10-11）：画面の UI と 見本の 数字だけ
+docs/measured/ribbon/jitsuhaishin-safari-1920.png	未測定1	0491f10ce483cbe7	目で 見た（10-11）：画面の UI と 見本の 数字だけ
+docs/measured/ribbon/ribbon-Chrome-1920-naoshita-ato.png	未測定1	bf2cce9ec7e06f0e	目で 見た（10-11）：画面の UI と 見本の 数字だけ
+docs/measured/ribbon/ribbon-Chrome-1920-naosu-mae.png	未測定1	bf2cce9ec7e06f0e	目で 見た（10-11）：画面の UI と 見本の 数字だけ
+docs/measured/ribbon/ribbon-webkit-1920-naoshita-ato.png	未測定1	0491f10ce483cbe7	目で 見た（10-11）：画面の UI と 見本の 数字だけ
+docs/measured/ribbon/ribbon-webkit-1920-naosu-mae.png	未測定1	bb809fa3c0cddd44	目で 見た（10-11）：画面の UI と 見本の 数字だけ
+docs/shots/hairanai-2026-09-06.png	未測定1	46e8021d6e811428	目で 見た（10-11）：画面の UI と 見本の 数字だけ
+docs/shots/hoshi-nashi-3mai-2026-09-06.png	未測定1	e2a88f6e3ebde74a	目で 見た（10-11）：画面の UI と 見本の 数字だけ
+docs/shots/hyou-ireru-jitsuhaishin.png	未測定1	03eb26e824023d76	目で 見た（10-11）：画面の UI と 見本の 数字だけ
+img/icon-192.png	未測定1	bafda9dd1490d8a7	目で 見た（10-11）：画面の UI と 見本の 数字だけ
+img/icon-512.png	未測定1	45dca39c96158b67	目で 見た（10-11）：画面の UI と 見本の 数字だけ
+tests/fixtures/vba-sample.xlsm	未測定1	d7e5dd3d7f6b6a77	VBA の 部品（vbaProject.bin）＝repo の scripts/make-vba-fixture.mjs が 作った 作り物（中の 字は 作り物の 見本だけ）

@@ -27,6 +27,11 @@
   /* 拡張子 → 種類。★ここに無い拡張子は落とさない（黙って octet-stream にしない）。 */
   var MIME = {
     xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    /* ★受け取ったブックは、受け取った形のまま返す（2026-08-09 追加）★
+       実物(代行計算表2026.xlsb)を開いて保存した時、ここに無くて★保存が止まった★。
+       .xlsb を .xlsx として返すと、iPhoneが「Excelで開く」を出さない＝客がファイルを開けない。 */
+    xlsm: 'application/vnd.ms-excel.sheet.macroEnabled.12',
+    xlsb: 'application/vnd.ms-excel.sheet.binary.macroEnabled.12',
     xls: 'application/vnd.ms-excel',
     csv: 'text/csv',
     txt: 'text/plain',
@@ -51,16 +56,15 @@
   }
 
   /* ★代行請求アプリと同じ形（動いている実物に揃える）。
-     後始末（URLの取り消しと要素の削除）は 1.5秒後＝落とし始める前に消えないように。
-     ★target="_blank" は必須（2026-08-09）★
-       ホーム画面から開いたアプリ（standalone）では、download が効かない端末だと
-       ★同じ窓でファイルが開いてしまい、アプリに戻れなくなる★（既知の罠）。
-       別の窓で開けば、閉じるだけでアプリへ戻れる。
-       download が効く端末では target は無視されるので、PCの落ち方は変わらない。 */
+     後始末（URLの取り消しと要素の削除）は 1.5秒後＝落とし始める前に消えないように。 */
   function anchorDownload(blob, filename) {
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = filename;
+    /* ★ホーム画面から開いたアプリで、同じ窓にファイルが開いて戻れなくなるのを止める★
+       （Kyually が実測して渡してきた物。download が効く端末では target は無視されるので
+       　パソコンの落ち方は変わらない。渡し口はここ1箇所なので、ここだけで全部に効く）
+       ★未測定★: ホーム画面アプリの実機では未確認。 */
     a.target = '_blank';
     a.rel = 'noopener';
     document.body.appendChild(a);

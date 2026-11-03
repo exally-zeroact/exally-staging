@@ -1,0 +1,32 @@
+# ★範囲を 渡した 時 実Excel は 何を 返すか★（64）（2026-09-20）
+# ★なぜ★ ... Exally1 が 「105個 中 82個 足りない／11個は 気付けない」と 数えた
+#           ⇒★但し 見たのは 私の 紙の `ref` の 字だけ＝中身は 未測定★
+# ★どの Excel か★ ... 版 16.0 ／ build 20326
+# ★どの 貝殻か★ ... PowerShell 5.1.26100.9278
+# ★盤面★ A1:A6=1,2,2,3,3,4 ／ B1:B3=10,20,30 ／ D1=abc ／ E1 F1 E2 F2=1,2,3,4
+#         ★足した★ A20=5（数）／A21==1+1（★式★）／A22=abc（字）
+# ★読む★ ... 頭の マスから 3行 x 3列（★中身まで★）
+# 組	名前	式	埋まった数	中身（|で 区切る／/ で 行を 分ける）
+kizukenai	UNIQUE	=UNIQUE(A1:A3)	2	1|| / 2|| / ||
+kizukenai	ISBLANK	=ISBLANK(A1:A3)	3	FALSE|| / FALSE|| / FALSE||
+kizukenai	ISERR	=ISERR(A1:A3)	3	FALSE|| / FALSE|| / FALSE||
+kizukenai	ISERROR	=ISERROR(A1:A3)	3	FALSE|| / FALSE|| / FALSE||
+kizukenai	ISFORMULA	=ISFORMULA(A20:A22)	3	FALSE|| / TRUE|| / FALSE||
+kizukenai	ISLOGICAL	=ISLOGICAL(A1:A3)	3	FALSE|| / FALSE|| / FALSE||
+kizukenai	ISNA	=ISNA(A1:A3)	3	FALSE|| / FALSE|| / FALSE||
+kizukenai	ISNONTEXT	=ISNONTEXT(A1:A3)	3	TRUE|| / TRUE|| / TRUE||
+kizukenai	ISNUMBER	=ISNUMBER(A1:A3)	3	TRUE|| / TRUE|| / TRUE||
+kizukenai	ISTEXT	=ISTEXT(A1:A3)	3	FALSE|| / FALSE|| / FALSE||
+kizukenai	ROW	=ROW(A1:A3)	3	1|| / 2|| / 3||
+ayamari-nukitori	ABS	=ABS(A1:A3)	3	1|| / 2|| / 2||
+ayamari-nukitori	LEN	=LEN(A1:A3)	3	1|| / 1|| / 1||
+ayamari-nukitori	UPPER	=UPPER(A1:A3)	3	1|| / 2|| / 2||
+ayamari-nukitori	SQRT	=SQRT(A1:A3)	3	1|| / 1.414214|| / 1.414214||
+ayamari-nukitori	DAY	=DAY(A1:A3)	3	1|| / 2|| / 2||
+taishou	SEQUENCE	=SEQUENCE(3)	3	1|| / 2|| / 3||
+taishou	SUM	=SUM(A1:A3)	1	5|| / || / ||
+#
+# ★★対照★★（★盤面が 狂って いない 事を 見ます★）
+# SEQUENCE の 頭 ... 1（待つ 1）
+# SUM の 答え ...... 5（待つ 5）
+# ★対照 ok ... 2 / 2★

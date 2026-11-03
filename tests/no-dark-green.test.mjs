@@ -30,15 +30,6 @@ export const GOOD = '#2E7D54';
    ただし ★この検査そのもの★ は探す文字列を持つので外す。 */
 export const SKIP = {
   'tests/no-dark-green.test.mjs': 'この検査自身（探す文字列を持っている）',
-  /* ★2026-08-27 この検査を テスト線にも 登録した時に 出た6件★
-     ＝seikyu/ は ★請求書セッションの持ち物（触らない）★。
-       6件とも「この色を使うな」と ★禁じている側★ の字（見張り4本＋注記1本）で、
-       ★色として使っている所は 0件★（1行ずつ 目で読んで 数えた）。
-     ⇒ こちらから 直さない。持ち主に 渡す（勝手に人の物を 触らない）。 */
-  'seikyu/lib/seikyu-templates.js': '請求書セッションの持ち物。中身は「使わない」と書いた注記（色として使っていない）',
-  'seikyu/tests/seikyu-cols.test.mjs': '請求書セッションの持ち物。中身は この色を禁じる見張り',
-  'seikyu/tests/seikyu-paper.test.mjs': '請求書セッションの持ち物。中身は この色を禁じる見張り',
-  'seikyu/tests/seikyu-ui.mjs': '請求書セッションの持ち物。中身は この色を禁じる見張り',
 };
 const SKIP_DIR = new Set(['node_modules', '.git', '.vercel', 'playwright-report', 'test-results']);
 const EXT = new Set(['.js', '.mjs', '.css', '.html', '.json', '.md', '.yml', '.yaml', '.ps1', '.sh']);

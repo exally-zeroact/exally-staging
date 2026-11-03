@@ -218,7 +218,15 @@ function buildReport(res, meta) {
   const esc = s => String(s).replace(/\|/g, '\\|');
   L.push('# 版対応 検証ハーネス レポート');
   L.push('');
-  L.push(`- 生成日: ${meta.date}`);
+  /* ★★生成日を 紙に 書きません★★（2026-09-22）
+       ★★なぜ★★ ... この 紙は ★総なめの たびに 作り直されます★。
+         日付を 書くと ★何も 直して いない 日にも 手元が 汚れます★。
+         ⇒★「汚れて いる＝誰かの 書きかけ」の 見分けが 使えなく なります★
+         ⇒2026-09-22 に この 見分けで 何度も 助かって いるので 止めます。
+       ★取った 日は git が 覚えて います★（commit の 日付）。
+       ★★「取った日」は 「走らせた 証し」では ありません★★＝
+         書き直されて いない 紙にも 日付だけは 新しく 入ります。 */
+  L.push('- この紙は **総なめのたびに作り直されます**（取った日は git の commit が覚えています）');
   L.push(`- 真値: **${meta.golden.product} ${meta.golden.version}** (${meta.golden.platform} / ${meta.golden.updateChannel?.includes('492350f6') ? 'Current Channel' : meta.golden.updateChannel})`);
   L.push(`- ロケール: UI=${meta.golden.uiLanguageId} / 国=${meta.golden.countrySetting} / 小数点='${meta.golden.decimalSep}' 桁区切り='${meta.golden.thousandsSep}' / 日付システム=${meta.golden.date1904 ? '1904' : '1900'}`);
   L.push(`- 計算経路: **book.html の setCellFormula(本番と同じ)**。生の HyperFormula ではない。`);
@@ -252,7 +260,17 @@ function buildReport(res, meta) {
     L.push('');
     L.push('| ケース | 式 | 見方 | 期待 | 実際 | 判定 |');
     L.push('|---|---|---|---|---|---|');
-    for (const v of res.volatileRows) L.push(`| ${v.id} | \`${esc(v.f)}\` | ${v.note} | ${v.want} | ${v.got} | ${v.ok ? 'OK' : '★NG'} |`);
+    /* ★★日付シリアルの 数は 紙に 出しません★★（2026-09-22）
+         `=TODAY()*1` は ★毎日 1 ずつ 増えます★（46283 ⇒ 46287 …）。
+         ⇒紙に 出すと ★何も 直して いない 日にも 手元が 汚れます★。
+         ⇒★判定(OK/NG)は そのまま 出します★＝★見て いる 事は 変わりません★。
+         ★揃って いない 時だけ 数を 出します★＝★赤の 時に 中身が 見えないと 直せない★ */
+    for (const v of res.volatileRows) {
+      const 毎日変わる = v.note.indexOf('日付シリアル') >= 0;
+      const 期待 = (毎日変わる && v.ok) ? '(今日の 値)' : v.want;
+      const 実際 = (毎日変わる && v.ok) ? '(今日の 値)' : v.got;
+      L.push(`| ${v.id} | \`${esc(v.f)}\` | ${v.note} | ${期待} | ${実際} | ${v.ok ? 'OK' : '★NG'} |`);
+    }
     L.push('');
   }
 
@@ -433,7 +451,9 @@ function runSelfTest(base) {
 
   // 4) 区分Aの期限を空にする → 台帳の検査で赤
   const k4 = clone(base.known);
-  const a4 = k4.diffs.find(d => d.class === 'A');
+  /* ★台帳の中身に依存させない★（2026-10-02 区分Aを全部直したら ここが落ちた＝[2] と同じ形にする） */
+  let a4 = k4.diffs.find(d => d.class === 'A');
+  if (!a4) { a4 = { id: 'SELFTEST_CLASS_A', func: '(self-test)', root: 'self-test', class: 'A', due: '2999-12-31', note: 'self-test' }; k4.diffs.push(a4); }
   delete a4.due;
   const r4 = evaluate({ ...base, known: k4 });
   line(`\n[おまけ] 区分Aの期限(due)を空にする (${a4.id})`);

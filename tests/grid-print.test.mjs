@@ -98,8 +98,15 @@ T('★Ctrl+P で 印刷が動く（実際にキーを送る）★', () => {
   eq(win.__開いた窓.length, 1, 'Ctrl+P で 紙の窓が開かない');
 });
 T('★右クリックにも 印刷が在る★', () => {
-  const items = [...doc.querySelectorAll('.ctx-item')].map((e) => e.getAttribute('onclick') || '');
-  ok(items.some((x) => x.startsWith('printSheet()')), '印刷の口が無い');
+  /* ★2026-08-31：右クリックの 中身が ★開いた時に 作る★ 形に なった★
+     （実 Excel の 1,384命令に 合わせて 25→37個。
+       平らに 並べると 画面に 入らないので 組（★）に した）
+     ⇒ ★開いてから 探す★。印は onclick ではなく data-ctx。 */
+  win.sel(0, 0, 0, 0);
+  win.showCtxMenu(10, 10);
+  const items = [...doc.querySelectorAll('#ctx-menu .ctx-item')]
+    .map((e) => e.getAttribute('data-ctx') || '');
+  ok(items.indexOf('printSheet') >= 0, '印刷の口が無い：' + items.join(' / '));
 });
 
 /* ── ① ★白紙を刷らない★（一番 大事） ── */
@@ -136,9 +143,12 @@ T('★A4・縦・余白が 実Excel の既定と同じ★', () => {
   win.printSheet();
   const 中身 = 最後の窓().中身;
   ok(/size: A4 portrait/.test(中身), 'A4縦になっていない');
-  const cm = GOLD.既定.余白cm;
-  ok(中身.indexOf('margin: ' + cm.上下 + 'cm ' + cm.左右 + 'cm') >= 0,
-    '余白が実測（上下' + cm.上下 + 'cm・左右' + cm.左右 + 'cm）と違う');
+  /* ★2026-08-30★ 余白を 4方向べつべつに 出せるように したので、
+     CSS は 「上 右 下 左」の 4つ書きに なった。数は ★丸めない 実測値★
+     （50.4pt÷28.3464566929134=1.778 ／ 54pt÷28.3464566929134=1.905）。 */
+  const 正 = GOLD.既定._余白cmの正確な値;
+  ok(中身.indexOf('margin: ' + 正.上下 + 'cm ' + 正.左右 + 'cm ' + 正.上下 + 'cm ' + 正.左右 + 'cm') >= 0,
+    '余白が実測（上下' + 正.上下 + 'cm・左右' + 正.左右 + 'cm）と違う … ' + (中身.match(/margin:[^;]*/) || [''])[0]);
 });
 T('★枠線を刷らない・行と列の番号も刷らない（実Excel の既定）★', () => {
   reset();
@@ -244,11 +254,16 @@ if (SELF) {
   console.log('\n[self-test] わざと壊して 赤くなるかを数える（★repo は読むだけ★）');
   const BREAKS = [
     ['book.html', 'Ctrl+P の割り当てを消す', (s) => s.replace("    if(ek==='p'){ e.preventDefault(); printSheet(); return; }\n", '')],
-    ['book.html', '右クリックの 印刷を消す', (s) => s.replace('<div class="ctx-item" onclick="printSheet()">🖨️ 印刷（Ctrl+P）</div>', '')],
+    /* ★2026-08-31：右クリックの 中身の 正本が 画面から lib/ctx-menu.js へ 移った★
+       ★壊す 先も 一緒に 移す★（印が 古いままだと ★素通り★＝見張りが 眠る） */
+    ['lib/ctx-menu.js', '右クリックの 印刷を消す',
+      (s) => s.replace("画面: 'printSheet'", "画面: 'ctxCopy'")],
     ['book.html', '★中身が0でも 窓を開く（白紙の印刷ダイアログ）★', (s) => s.replace("  if(!html){ showToast('刷る中身が在りません（先に何か入れてね）'); return; }", '  if(!html){ html = "<html></html>"; }')],
     ['book.html', '選んだ範囲を見ない（いつも全部 刷る）', (s) => s.replace("  var 範囲 = (selR1!==selR2 || selC1!==selC2)\n    ? { r1:selR1, c1:selC1, r2:selR2, c2:selC2 } : null;", '  var 範囲 = null;')],
     ['lib/grid-print.js', '★A4横にする（実測は縦）★', (s) => s.replace("    var 縦 = (o.向き 　!== 'landscape');", '    var 縦 = false;')],
-    ['lib/grid-print.js', '★余白を変える★', (s) => s.replace("'@page { size: A4 ' + (縦 ? 'portrait' : 'landscape') + '; margin: 1.9cm 1.78cm; }',", "'@page { size: A4 ' + (縦 ? 'portrait' : 'landscape') + '; margin: 1cm; }',")],
+    /* ★2026-08-30★ 余白を 4方向べつべつに 出せるように したので、壊す所も 新しい形に 合わせた
+       （前の 字は もう 無いので ★置換できず★＝1本 空振りしていた） */
+    ['lib/grid-print.js', '★余白を変える★', (s) => s.replace("    var 余 = o.余白 || { 上: 1.905, 下: 1.905, 左: 1.778, 右: 1.778 };", "    var 余 = { 上: 1, 下: 1, 左: 1, 右: 1 };")],
     ['lib/grid-print.js', '★枠線を刷ってしまう★', (s) => s.replace('    var 枠線 = !!o.枠線;                          /* ★既定は刷らない（実測）★ */', '    var 枠線 = true;')],
     ['lib/grid-print.js', '★行と列の番号を刷ってしまう★', (s) => s.replace('    var 行列番号 = !!o.行列番号;                  /* ★既定は刷らない（実測）★ */', '    var 行列番号 = true;')],
     ['lib/grid-print.js', '★紙に 式をそのまま出す★', (s) => s.replace("    if (s.charAt(0) === '=') return '';", '')],

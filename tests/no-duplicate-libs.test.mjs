@@ -25,10 +25,8 @@ const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 /* ★2箇所にあってよい物（理由必須）。ここに無い重複は赤。 */
 const EXCEPTIONS = {
-  'auth.js': '名前が同じだけの【別物】。js/auth.js はハブのログイン＋利用権ゲート、'
-    + 'kyuyo/js/auth.js は給与のログイン(window.Store.auth 経由)、'
-    + 'seikyu/js/auth.js は請求書のログイン(SeikyuApp.attach 経由・利用権の関所はまだ無い)。互いの写しではない。'
-    + '★共通の部分（ログイン画面そのもの）は js/exally-login.js に1本で置いてある＝写しではない。'
+  'auth.js': '名前が同じだけの【別物】。js/auth.js(103行)はハブのログイン＋利用権ゲート、'
+    + 'kyuyo/js/auth.js(67行)は給与のログイン(window.Store.auth 経由)。互いの写しではない。'
     + 'ログイン画面そのものは共通部品 js/exally-login.js で1本化してあり、両方それを読んでいる。',
 };
 
@@ -93,18 +91,27 @@ T('★同じ名前の .js が配信物の中に2箇所以上ない', () => {
   }
 });
 
-T('★★法定データ(金額に直結)は必ず1箇所しかない — 例外を認めない★★', () => {
-  const bad = STATUTORY.filter(b => byName[b] && byName[b].length > 1);
-  if (bad.length) {
-    throw new Error('法定データが2箇所以上にあります:\n'
-      + bad.map(b => '   - ' + b + ' → ' + byName[b].join(' / ')).join('\n')
-      + '\n   → ★必ず1本に寄せる。古い方を掴むと社会保険料や最低賃金が【静かに】ずれる。'
-      + '\n     過去に「最賃38県が誤値」の事故を起こしている。ここに例外は無い。');
+/* ★2026-09-05★ 給与(kyuyo/)を Exally から 外し、★法定の ファイルは 1本も 残していない★。
+   司さん「金関係のこと聞かれたりAIが入力する時だけSupabaseの共有から拾うやないんか」
+   ⇒★『2箇所に 無いか』では もう 足りない★＝★0本で ある事★を 見る（★こちらの 方が 強い★）
+   ⇒ 前の 検査は ★lib が 消えた 日に「1本も 見つからない＝空振り」で 赤★に なった。
+     ★空振りを 空振りと 言えたのは 正しい★。だから ★見る 物の 方を 直す★。 */
+T('★★法定データの ファイルは Exally に 1本も 無い（倉庫から 拾う）★★', () => {
+  const 在る = STATUTORY.filter((b) => byName[b]);
+  if (在る.length) {
+    throw new Error('★法定データの ファイルが Exally に 在ります★:' + '\n'
+      + 在る.map((b) => '   - ' + b + ' → ' + byName[b].join(' / ')).join('\n')
+      + '\n' + '   → ★Supabase の statutory から 拾うこと★（2026-09-05 司さん）'
+      + '\n' + '     ファイルに 写しを 置くと 倉庫と 二重に なり ★片方だけ 古くなる★。'
+      + '\n' + '     過去に「最賃38県が誤値」の コピペ事故を 起こしている。');
   }
 });
-T('法定データの一覧が空振りしていない（実際にその名前のファイルがある）', () => {
-  const found = STATUTORY.filter(b => byName[b]);
-  if (found.length < 5) throw new Error('法定データの一覧が実物と合っていません（見つかった: ' + found.join(', ') + '）');
+
+T('★見張る 名前の 一覧が 空でない（この 検査が 空振りしていない）', () => {
+  /* ★0本を 見る 検査は「一覧が 空」でも 緑に なる★＝そこを 塞ぐ。 */
+  if (STATUTORY.length < 10) throw new Error('見張る 名前が 少なすぎる: ' + STATUTORY.length);
+  /* ★配信物を 本当に 数えているか★（数えていなければ byName が 空＝何を 見ても 緑） */
+  if (Object.keys(byName).length < 20) throw new Error('配信物を 数えられていない: ' + Object.keys(byName).length);
 });
 
 T('例外表の各項目に理由が書いてあり、実在する', () => {

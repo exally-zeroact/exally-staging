@@ -1,0 +1,112 @@
+# ★IRR / MIRR / NPV / XNPV の 境目を 実Excel に 聞いた★（2026-09-09）
+#
+# ★なぜ★ XIRR が ★実Excel の #NUM! を 数で 返して いた★（375686054239746.3）
+#   この 4つも ★同じ 家族（お金の 収支の 列を 読む）★＝★同じ 作りの 見込み★
+#   ⇒★見込みで 直さない＝先に 測る★
+#
+# ★境目は 刻んで 詰める★（XIRR で 3点で 決めて 間違えた）
+# ★どの Excel で 打ったか★ … 版 16.0 ／ build 20326
+#
+# ★★材料（機械が 読む）★★ … `#材料<タブ>マス<タブ>値` の 形
+#材料	A1	-1000
+#材料	A2	600
+#材料	A3	700
+#材料	C1	100
+#材料	C2	200
+#材料	C3	300
+#材料	E1	-100
+#材料	E2	-200
+#材料	E3	-300
+#材料	G1	0
+#材料	G2	0
+#材料	G3	0
+#材料	I1	-1000
+#材料	K1	-1000
+#材料	K2	★空★
+#材料	K3	1100
+#材料	O1	-1000
+#材料	O2	600
+#材料	O3	700
+#材料	P1	45292
+#材料	P2	45383
+#材料	P3	45474
+#材料	R1	-1000
+#材料	R2	600
+#材料	R3	700
+#材料	S1	45474
+#材料	S2	45383
+#材料	S3	45292
+#材料	M1	-1000
+#材料	M2	★字「あ」★
+#材料	M3	1100
+#
+# 関数	式	実Excel の 答え	型	窓２(=(式)=0)	何を 見て いるか
+IRR	=IRR(A1:A3)	0.18881944173074183	Double	—	普通（−と＋）
+IRR	=IRR(C1:C3)	#NUM!	Error	—	★全部 プラス★
+IRR	=IRR(E1:E3)	#NUM!	Error	—	★全部 マイナス★
+IRR	=IRR(G1:G3)	#NUM!	Error	—	★全部 0★
+IRR	=IRR(I1:I1)	#NUM!	Error	—	★1件だけ★
+IRR	=IRR(K1:K3)	0.10000000000000009	Double	—	★空が 混ざる★
+IRR	=IRR(M1:M3)	0.10000000000000009	Double	—	★字が 混ざる★
+IRR	=IRR(A1:A3,-0.99)	0.18881944173155896	Double	—	見当 -0.99
+IRR	=IRR(A1:A3,-0.9)	0.18881944173155718	Double	—	見当 -0.9
+IRR	=IRR(A1:A3,-0.5)	0.18881944173155873	Double	—	見当 -0.5
+IRR	=IRR(A1:A3,-0.1)	0.18881944173133958	Double	—	見当 -0.1
+IRR	=IRR(A1:A3,-0.01)	0.18881944173155807	Double	—	見当 -0.01
+IRR	=IRR(A1:A3,0)	0.1888194417315583	Double	—	見当 0
+IRR	=IRR(A1:A3,0.01)	0.18881944173155873	Double	—	見当 0.01
+IRR	=IRR(A1:A3,0.1)	0.18881944173074183	Double	—	見当 0.1
+IRR	=IRR(A1:A3,1)	0.18881944173155873	Double	—	見当 1
+IRR	=IRR(A1:A3,10)	0.18881944173101095	Double	—	見当 10
+IRR	=IRR(A1:A3,100)	0.18881944173155896	Double	—	見当 100
+MIRR	=MIRR(A1:A3,0.1,0.12)	0.17132403714770583	Double	—	普通
+MIRR	=MIRR(C1:C3,0.1,0.12)	#DIV/0!	Error	—	★全部 プラス★
+MIRR	=MIRR(E1:E3,0.1,0.12)	-1	Double	—	★全部 マイナス★
+MIRR	=MIRR(G1:G3,0.1,0.12)	#DIV/0!	Error	—	★全部 0★
+MIRR	=MIRR(I1:I1,0.1,0.12)	#DIV/0!	Error	—	★1件だけ★
+MIRR	=MIRR(K1:K3,0.1,0.12)	0.10000000000000009	Double	—	★空が 混ざる★
+MIRR	=MIRR(M1:M3,0.1,0.12)	0.10000000000000009	Double	—	★字が 混ざる★
+MIRR	=MIRR(A1:A3,-1,0.12)	0.17132403714770583	Double	—	借りる 利率 -1
+MIRR	=MIRR(A1:A3,0.1,-1)	#DIV/0!	Error	—	回す 利率 -1
+MIRR	=MIRR(A1:A3,-0.5,0.12)	0.17132403714770583	Double	—	借りる 利率 -0.5
+MIRR	=MIRR(A1:A3,0.1,-0.5)	0	Number	TRUE	回す 利率 -0.5
+MIRR	=MIRR(A1:A3,-0.01,0.12)	0.17132403714770583	Double	—	借りる 利率 -0.01
+MIRR	=MIRR(A1:A3,0.1,-0.01)	0.13754120804478998	Double	—	回す 利率 -0.01
+MIRR	=MIRR(A1:A3,0,0.12)	0.17132403714770583	Double	—	借りる 利率 0
+MIRR	=MIRR(A1:A3,0.1,0)	0.14017542509913805	Double	—	回す 利率 0
+MIRR	=MIRR(A1:A3,0.01,0.12)	0.17132403714770583	Double	—	借りる 利率 0.01
+MIRR	=MIRR(A1:A3,0.1,0.01)	0.14280357017293221	Double	—	回す 利率 0.01
+NPV	=NPV(0.1,A1:A3)	112.69722013523649	Double	—	普通
+NPV	=NPV(0.1,C1:C3)	481.59278737791124	Double	—	★全部 プラス（断らない はず）★
+NPV	=NPV(0.1,G1:G3)	0	Number	TRUE	★全部 0★
+NPV	=NPV(0.1,K1:K3)	-1.0335167065601457E-13	Double	—	★空が 混ざる★
+NPV	=NPV(0.1,M1:M3)	-1.0335167065601457E-13	Double	—	★字が 混ざる★
+NPV	=NPV(-2,A1:A3)	900	Double	—	利率 -2
+NPV	=NPV(-1.5,A1:A3)	-1200	Double	—	利率 -1.5
+NPV	=NPV(-1.01,A1:A3)	-693899999.9999981	Double	—	利率 -1.01
+NPV	=NPV(-1,A1:A3)	#DIV/0!	Error	—	利率 -1
+NPV	=NPV(-0.99,A1:A3)	705899999.9999981	Double	—	利率 -0.99
+NPV	=NPV(-0.5,A1:A3)	6000	Double	—	利率 -0.5
+NPV	=NPV(0,A1:A3)	300	Double	—	利率 0
+NPV	=NPV(0.5,A1:A3)	-192.5925925925926	Double	—	利率 0.5
+NPV	=NPV(10,A1:A3)	-85.4244928625094	Double	—	利率 10
+XNPV	=XNPV(0.1,O1:O3,P1:P3)	253.4216596369007	Double	—	普通（日付 昇順）
+XNPV	=XNPV(0.1,R1:R3,S1:S3)	#NUM!	Error	—	★日付が 逆順★
+XNPV	=XNPV(0.1,C1:C3,P1:P3)	581.3796920956559	Double	—	★全部 プラス★
+XNPV	=XNPV(0.1,O1:O3,P1:P2)	#NUM!	Error	—	★範囲の 大きさが 違う★
+XNPV	=XNPV(0.1,K1:K3,P1:P3)	#NUM!	Error	—	★空が 混ざる★
+XNPV	=XNPV(0.1,M1:M3,P1:P3)	#NUM!	Error	—	★字が 混ざる★
+XNPV	=XNPV(-2,O1:O3,P1:P3)	#NUM!	Error	—	利率 -2
+XNPV	=XNPV(-1.01,O1:O3,P1:P3)	#NUM!	Error	—	利率 -1.01
+XNPV	=XNPV(-1,O1:O3,P1:P3)	#NUM!	Error	—	利率 -1
+XNPV	=XNPV(-0.99,O1:O3,P1:P3)	#NUM!	Error	—	利率 -0.99
+XNPV	=XNPV(-0.5,O1:O3,P1:P3)	#NUM!	Error	—	利率 -0.5
+XNPV	=XNPV(-0.1,O1:O3,P1:P3)	#NUM!	Error	—	利率 -0.1
+XNPV	=XNPV(-0.01,O1:O3,P1:P3)	#NUM!	Error	—	利率 -0.01
+XNPV	=XNPV(-0.001,O1:O3,P1:P3)	#NUM!	Error	—	利率 -0.001
+XNPV	=XNPV(0,O1:O3,P1:P3)	#NUM!	Error	—	利率 0
+XNPV	=XNPV(0.0001,O1:O3,P1:P3)	299.9501405358503	Double	—	利率 0.0001
+XNPV	=XNPV(0.001,O1:O3,P1:P3)	299.50172455904317	Double	—	利率 0.001
+XNPV	=XNPV(0.01,O1:O3,P1:P3)	295.0489115580393	Double	—	利率 0.01
+XNPV	=XNPV(0.1,O1:O3,P1:P3)	253.4216596369007	Double	—	利率 0.1
+XNPV	=XNPV(10,O1:O3,P1:P3)	-458.24579802980463	Double	—	利率 10

@@ -1,0 +1,20 @@
+# ★範囲を 渡した 時 実Excel は 何を 返すか★（64）（2026-09-20）
+# ★なぜ★ ... 2次元で 溢れた 物を 書き出して 実Excel が どう 見せるか
+# ★どの Excel か★ ... 版 16.0 ／ build 20326
+# ★どの 貝殻か★ ... PowerShell 5.1.26100.9278
+# ★開いた 物★ ... C:\Users\zeroa\AppData\Local\Temp\exally-kakidashi-nijigen.xlsx（17312 バイト）
+# ★読むだけ★（保存して いません／式は 1本も 打って いません）
+# ★盤面★ A1:A5=1,2,3,4,5 ／ B1:B5=2,4,6,8,10
+# ★置き場★ ... D1 G1 J1 M1 P1（★書き出した 物の まま★）
+# ★読む 窓★ ... 頭の マスから 6行 x 3列
+# 組	名前	マス	式	型	=(マス)=0	埋まった数	中身（|で マス／ / で 行）
+2jigen	ISNUMBER-2jigen	D1	=ISNUMBER(A1:B5)	Boolean	False	10	TRUE|TRUE| / TRUE|TRUE| / TRUE|TRUE| / TRUE|TRUE| / TRUE|TRUE| / ||
+2jigen	ISERR-2jigen	G1	=ISERR(A1:B5)	Boolean	False	10	FALSE|FALSE| / FALSE|FALSE| / FALSE|FALSE| / FALSE|FALSE| / FALSE|FALSE| / ||
+2jigen	ISERROR-2jigen	J1	=ISERROR(A1:B5)	Boolean	False	10	FALSE|FALSE| / FALSE|FALSE| / FALSE|FALSE| / FALSE|FALSE| / FALSE|FALSE| / ||
+taishou-1jigen	ISNUMBER-1jigen	M1	=ISNUMBER(A1:A5)	Boolean	False	5	TRUE|| / TRUE|| / TRUE|| / TRUE|| / TRUE|| / ||
+taishou	SEQUENCE	P1	=SEQUENCE(2)	Double	False	1	15|| / || / || / || / || / ||
+#
+# ★★対照★★（★盤面が 狂って いない 事を 見ます★）
+# 対照 M5（ISNUMBER(A1:A5) の 5マス目） ... True（待つ True）
+# 対照 P1（SUM(A1:A5)） ............... 15（待つ 15）
+# ★対照 ok ... 2 / 2★

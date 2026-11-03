@@ -1,0 +1,29 @@
+# ★うちが 書き出した .xlsx を 実Excel に 開かせた★（2026-09-20）
+# ★開いた 物★ ... C:\Users\zeroa\AppData\Local\Temp\exally-kakidashi.xlsx
+# ★開き方★ ... ReadOnly=False（★保存して いません★）
+# ★どの Excel か★ ... 版 16.0 ／ build 20326
+# ★どの 貝殻か★ ... PowerShell 5.1.26100.9278
+# マス	値	出る字	式	型	=(マス)=0
+D1	1	1	=SEQUENCE(3)	Double	False
+D2	2	2		Double	False
+D3	3	3		Double	False
+D4	(kara)			(kara)	True
+D5	(kara)			(kara)	True
+#
+# ★★㊷ ── 頭（D1）を =SEQUENCE(2) に 書き換えた 後★★（★保存して いません★）
+# マス	値	出る字	式	型	溢れの一部か
+# ★頭を 書き換えられたか★ ... ok（=SEQUENCE(3) ⇒ =SEQUENCE(2)）
+D1	1	1	=SEQUENCE(2)	Double	False
+D2	2	2		Double	False
+D3	(kara)			(kara)	False
+D4	(kara)			(kara)	False
+D5	(kara)			(kara)	False
+#
+# ★★㊸ ── 並び 全体（D1:D3）を =SEQUENCE(2) に 書き換えた 後★★
+# ★並び 全体を 書き換えられたか★ ... ★投げないが 変わりません★（前 =SEQUENCE(2) ／ 後 =SEQUENCE(2)）
+# マス	値	出る字	式	型	溢れの一部か
+D1	-2146826243	#スピル!	=SEQUENCE(2)	Other	False
+D2	-2146826243	#スピル!	=SEQUENCE(2)	Other	False
+D3	1	1	=SEQUENCE(2)	Double	False
+D4	2	2		Double	False
+D5	(kara)			(kara)	False

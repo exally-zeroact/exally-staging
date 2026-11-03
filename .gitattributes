@@ -23,3 +23,12 @@ hyperformula.full.min.js -text
 *.xlsx binary
 *.xlsb binary
 *.ttf binary
+
+# ★VBAの元の字は 1バイトも 変えない★（2026-08-28）
+#   ・中身は cp932（Shift_JIS）。text 扱いにすると ★UTF-8だと思って 触られる★。
+#   ・行の終わりは ★CRLF が 正★（VBAの中身は CRLF で 置かれている）。
+#     LF に直されると 見本の .xlsm と 食い違い、
+#     ★手元は緑・CIは赤★（またはその逆）になる。
+#   ・見本の .xlsm も バイトで 固定する。
+tests/fixtures/vba-src/*.bas -text
+tests/fixtures/*.xlsm        -text

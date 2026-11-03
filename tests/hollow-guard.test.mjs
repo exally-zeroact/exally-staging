@@ -127,13 +127,14 @@ const NOT_A_CHECK = {
   'dbtest-seed.mjs': 'DB-test の下ごしらえ／後片付けの道具。CIでは走らない',
   'live-seed.mjs': '実機確認の下ごしらえ／後片付けの道具。鍵が要る・CIでは走らない',
   'live-roundtrip.mjs': '本物のSupabaseへ本物のログインで往復する道具。鍵が要る・CIでは走らない',
-  'live-seikyu.mjs': '請求書の棚へ本物のログインで往復し、凍結と番号の重複が実際に弾かれるか測る道具。鍵が要る・CIでは走らない',
 };
 
-// ★seikyu/tests を足した（2026-08-10）。足すまで請求書のテストは
-//   この道具からも ci-coverage からも見えていなかった＝「何も見ていないのに緑」の口。
 const FILES = [];
-for (const dir of ['tests', 'kyuyo/tests', 'seikyu/tests']) {
+/* ★2026-09-05★ 給与(kyuyo/)を Exally から 外した（給与は Rakunally）。
+   ★在る 所だけ 見る★（無い 所で 落ちない）／★1つも 無ければ 空振りとして 止める★ */
+const 見る所 = ['tests', 'kyuyo/tests'].filter((d) => fs.existsSync(path.join(ROOT, d)));
+if (!見る所.length) throw new Error('★見る 所が 1つも 無い＝この 検査が 空振り★');
+for (const dir of 見る所) {
   for (const f of fs.readdirSync(path.join(ROOT, dir))) {
 
 

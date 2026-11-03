@@ -1,0 +1,17 @@
+# ★テーマの 色は ファイルごとに 変わるか★（79）（2026-09-21）
+# ★読むだけ★（保存して いません）／★開けるのは 字で 書いた 2本だけ★
+# ★どの Excel か★ ... 版 16.0 ／ build 20326
+# ★2本目は `xl/theme/theme1.xml` の accent1 だけ FF0000 に した 写し★（他は 同じ）
+# 紙	見た物	RGB	テーマ番号	濃さ	色の番号	型	=(マス)=0
+moto(そのまま)	★ブックの テーマ accent1★	8544277			
+moto(そのまま)	B2  テーマ塗り(theme4)	8544277	5	0	14	String	False
+moto(そのまま)	B4  テーマ字(theme5)	3305961	6	0	46	String	False
+moto(そのまま)	B6  番号塗り(indexed13)	65535	0	0	6	String	False
+moto(そのまま)	B8  テーマ濃さ	4206603	5	-0.499984740745262	49	String	False
+moto(そのまま)	B10 RGB塗り(対照)	65535	0	0	6	String	False
+accent1 を 赤に した	★ブックの テーマ accent1★	8544277			
+accent1 を 赤に した	B2  テーマ塗り(theme4)	8544277	5	0	14	String	False
+accent1 を 赤に した	B4  テーマ字(theme5)	3305961	6	0	46	String	False
+accent1 を 赤に した	B6  番号塗り(indexed13)	65535	0	0	6	String	False
+accent1 を 赤に した	B8  テーマ濃さ	4206603	5	-0.499984740745262	49	String	False
+accent1 を 赤に した	B10 RGB塗り(対照)	65535	0	0	6	String	False

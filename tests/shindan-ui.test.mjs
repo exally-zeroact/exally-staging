@@ -38,9 +38,33 @@ T('★[hidden] を class の display に負けさせない1行★', () => {
     '★この1行が無いと「中身が空の枠だけ」が残る（他アプリで2回 事故）★');
 });
 T('★見つからなかった時は 何も出さない（0件で騒がない）★', () => {
-  ok(book.indexOf('if(_shindanResult.式の本数 > 0)') >= 0, '★0件でも 知らせている★');
-  ok(/if\(!r \|\| !r\.式の本数\) return;/.test(book), '★中身が無くても 窓が開く★');
+  /* ★2026-09-04 に 印を 変えた★＝診断が ★2本★に なったので 数え方が 変わった
+     （1本目＝消えた参照が IFERROR で隠れている ／ 2本目＝ほかの表の その行）
+     ★ゆるめて いません★＝★2つの 場所（知らせ・窓）とも 0件で 止まる事★を 見る。
+     ★どちらも 2本の 合計で 判定している事★まで 見る（片方だけ 見て 出す、を 防ぐ）。 */
+  const 知らせ = 切り出す('function 診断の知らせを出す');
+  const 窓 = 切り出す('function openShindan');
+  ok(/if\(!n1 && !n2\) return;/.test(知らせ), '★0件でも 知らせている★');
+  ok(/if\(!n1 && !n2\) return;/.test(窓), '★中身が無くても 窓が開く★');
+  ok(/var n2 = _hyouNoSoto\.length;/.test(知らせ), '★知らせが 2本目を 数えていない★');
+  ok(/n2 = _hyouNoSoto\.length;/.test(窓), '★窓が 2本目を 数えていない★');
 });
+/* ★2026-09-04 に 足した＝診断 2本目「ほかの表の その行」★
+   ★司さん「理由と 修正方法まで 教えれないかんやろが」★
+   ⇒★画面が 直し方を 出している事★と ★ボタンの 数が 2本の 合計である事★を 見る。 */
+T('★ボタンの 数が 2本の 合計（片方だけ 数えていない）★', () => {
+  ok(book.indexOf("'危ない所 ' + (n1 + n2) + 'か所'") > 0, '★片方しか 数えていない★');
+});
+T('★2本目は 直し方まで 出す（客に 聞かない）★', () => {
+  const 窓 = 切り出す('function openShindan');
+  ok(窓.indexOf('Shindan.直し方の字(y)') > 0, '★直し方を 出していない★');
+  ok(窓.indexOf('Shindan.直し方の字(y)') > 0, '★直し方を 出していない★');
+});
+/** ★その関数だけを 切り出して 見る★（ファイル全体で 探すと 別の所の 字を 拾う） */
+function 切り出す(頭) {
+  const i = book.indexOf(頭);
+  return i < 0 ? '' : book.slice(i, i + 2400);
+}
 T('★調べられなくても 表は そのまま使える（落ちない）★', () => {
   const i = book.indexOf('function 診断を始める');
   const 所 = book.slice(i, i + 900);
@@ -197,11 +221,18 @@ if (SELF) {
   const BREAKS = [
     ['book.html', '★最初から ボタンを出す★', (s) => s.replace('<button id="shindanBtn" hidden', '<button id="shindanBtn"')],
     ['book.html', '★[hidden] の1行を 消す★', (s) => s.replace('#shindanBtn[hidden]{display:none!important;}', '')],
-    ['book.html', '★0件でも 知らせる★', (s) => s.replace('if(_shindanResult.式の本数 > 0)', 'if(true)')],
-    ['book.html', '★中身が無くても 窓を開く★', (s) => s.replace('if(!r || !r.式の本数) return;', 'r = r || { 見つけた: [], 式の本数: 0 };')],
+    /* ★2026-09-04＝診断が 2本に なったので 壊す 場所も 2か所★（片方だけでは 素通りする） */
+    ['book.html', '★0件でも 知らせる★',
+      (s) => s.replace('  if(!n1 && !n2) return;                       /* ★出来ていない物のボタンは 見せない★ */', '')],
+    ['book.html', '★中身が無くても 窓を開く★',
+      (s) => s.replace('  if(!n1 && !n2) return;                     /* ★出来ていない物のボタンは 見せない★ */', '')],
+    ['book.html', '★2本目を 数えずに ボタンの 数を 出す★',
+      (s) => s.replace("'危ない所 ' + (n1 + n2) + 'か所'", "'危ない所 ' + n1 + 'か所'")],
+    ['book.html', '★2本目の 直し方を 出さない★',
+      (s) => s.replace("'直し方：' + Shindan.直し方の字(y)", "''")],
     ['book.html', '★調べられない時に 画面ごと止まる★', (s) => s.replace("catch(e){ _shindanBusy = false; 開いた知らせは済んだ('診断'); return; }", 'catch(e){ throw e; }')],
     ['book.html', '★一度に全部 やる（画面が固まる）★', (s) => s.replace('Shindan.調べる途中(sheets, { 一度に: 3000 })', 'Shindan.調べる途中(sheets, { 一度に: 1e9 })')],
-    ['book.html', '★0円だと 言わない★', (s) => s.replace('AIは使っていません', '')],
+    ['book.html', '★0円だと 言わない★', (s) => s.split('AIは使っていません').join('')],
     ['book.html', '★場所を 出さない★', (s) => s.replace("頭.textContent = x.シート + ' の ' + x.セル + '　いま出ている物：' + x.いま出ている物;", "頭.textContent = 'ここが危ない';")],
     ['book.html', '★押しても 場所へ行かない★', (s) => s.replace('scrollToCell(x.r, x.c); updateBar(); render();', '')],
     ['book.html', '★端に貼り付く（浮いているボタンに隠れる）★',
@@ -212,7 +243,7 @@ if (SELF) {
     ['book.html', '★控えに 上限を付けない★', (s) => s.replace('while(直した控え.length > 控えの上限) 直した控え.shift();', '')],
     ['book.html', '★控えの失敗で 書き出しごと止まる★', (s) => s.replace('  }catch(e){ return null; }        /* ★控えで 本体を落とさない★ */', '  }catch(e){ throw e; }')],
     ['book.html', '★黙って 先頭だけ出す★',
-      (s) => s.replace("(r.見つけた.length > 出す) ? ('ほか '", "false ? ('ほか '")],
+      (s) => s.replace("    余り ? ('ほか '", "    false ? ('ほか '")],
   ];
   let red = 0;
   for (const [rel, name, brk] of BREAKS) {

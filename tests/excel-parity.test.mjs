@@ -192,6 +192,49 @@ T('★押して確かめた数が0でない（検査が空振りしていない�
   if (have < 5) throw new Error('在ると数えた物が ' + have + ' 個しかない');
 });
 
+/* ★リボン（2026-08-29 に「人が書いた」から「機械で取った」へ 差し替えた）★
+   docs に 書いた 12/67/288 は ★正本 docs/excel-ribbon-flat.tsv から 数え直す★。
+   ★Excelの版が変わって 正本を 取り直したら、docs も 直すまで 赤にする★ */
+const TSV = path.join(ROOT, 'docs', 'excel-ribbon-flat.tsv');
+T('★リボンの正本が 在る（機械で取った物）', () => {
+  if (!fs.existsSync(TSV)) throw new Error('docs/excel-ribbon-flat.tsv が無い＝tools/ribbon-dump.ps1 で作る');
+});
+if (fs.existsSync(TSV)) {
+  const 三つ組 = Array.from(new Set(
+    fs.readFileSync(TSV, 'utf8').replace(/^﻿/, '').split(/\r?\n/).filter((l) => l.trim())
+  )).map((l) => l.split('\t')).filter((c) => c.length >= 3);
+  const タブ = new Set(三つ組.map((c) => c[0]));
+  const 群 = new Set(三つ組.map((c) => c[0] + ' ' + c[1]));
+  const 実測 = { tab: タブ.size, grp: 群.size, part: 三つ組.length };
+  const 本文 = fs.readFileSync(docPath, 'utf8');
+  const 拾う = (見出し) => {
+    const m = 本文.match(new RegExp('\\|\\s*\\*\\*' + 見出し + '\\*\\*\\s*\\|\\s*\\*\\*(\\d+)\\*\\*'));
+    return m ? Number(m[1]) : null;
+  };
+  T('★表のリボンの数が 正本と同じ（古くなっていない）', () => {
+    const 表 = { tab: 拾う('リボンのタブ'), grp: 拾う('リボンのグループ'), part: 拾う('リボンの部品') };
+    if (表.tab !== 実測.tab || 表.grp !== 実測.grp || 表.part !== 実測.part) {
+      throw new Error('表[' + 表.tab + '/' + 表.grp + '/' + 表.part + '] ≠ 正本['
+        + 実測.tab + '/' + 実測.grp + '/' + 実測.part + ']　→ docs/EXCEL_PARITY.md を直す');
+    }
+  });
+  T('★リボンが 空振りしていない（100個以上 在る）', () => {
+    if (実測.part < 100) throw new Error('部品が ' + 実測.part + '個しかない＝正本の取り方が おかしい');
+  });
+  /* ★見張りの作りに 注意★＝「撤回した」と 書き残した1行にも「人が書いた」の字は 出る。
+     ★字を探すのではなく「主張している場所」を 見る★＝数え方の表の リボンの行の 最後の欄。
+     （2026-08-29 実測：字で探したら 自分の撤回文に 当たって 赤になった） */
+  T('★数え方の表で リボンが「機械」に なっている（人に 戻っていない）', () => {
+    const 行 = 本文.split('\n').find((l) => /^\|\s*\*\*Excelのリボン\*\*\s*\|/.test(l));
+    if (!行) throw new Error('数え方の表に「Excelのリボン」の行が 無い');
+    const 欄 = 行.split('|').map((s) => s.trim()).filter(Boolean);
+    const 最後 = 欄[欄.length - 1];
+    if (!/機械/.test(最後) || /^人$/.test(最後)) {
+      throw new Error('リボンの行が「' + 最後 + '」＝2026-08-29 に 機械へ 差し替えた物が 戻っている');
+    }
+  });
+}
+
 try { win.close(); } catch (e) { /* 閉じられなくても検査は済んでいる */ }
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

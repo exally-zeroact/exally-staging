@@ -290,6 +290,12 @@ T('★一覧の決まりが在るセルでは 右クリックに 選ぶ物が出
   決まりを付ける(0, 0, 0, 0, 'list', 'りんご,みかん');
   win.sel(0, 0, 0, 0);
   win.showCtxMenu(10, 10);
+  /* ★2026-09-03 に 形が 増えた★＝一覧が 長くて「切り取り」が 押せなく なる時は
+     ★1行（ドロップダウン リストから選択）★に して、押すと その場で 一覧に なる。
+     ★jsdom は 高さを 持たない＝測れない★ ⇒ ★安全側＝1行★に なる。
+     ⇒ ここでは ★1行なら 1回 押してから★ 中身を 見る（見る物は 変えていない）。 */
+  const 一行 = doc.getElementById('ctx-valid-one');
+  if (一行) 一行.onclick.call(一行, { stopPropagation() {} });
   const 出た = [...doc.querySelectorAll('#ctx-valid-list [data-valid-pick]')].map((e) => e.getAttribute('data-valid-pick'));
   eq(出た.join(','), 'りんご,みかん', '選ぶ物が出ていない：' + 出た.join(','));
   win.hideCtxMenu();

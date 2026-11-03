@@ -1,0 +1,147 @@
+# ★★この 紙は `pwsh` 7.6.6 で 取りました★★（2026-09-18）
+#   ★同じ 日に `powershell.exe` 5.1 でも 取り直して います★
+#     ⇒ golden-kansuu-8kaime-2026-09-18.tsv
+#
+# ★★★2つは「同じ 数・違う 字」です＝どちらも 古く ありません★★★
+#   5.1 … 99.776476358001872 ／ 7.6 … 99.77647635800187
+#   ★double は bit まで 同じ★（4636721562276654862）
+#   ★訳★ `.ToString('R')` の 意味が 違う（5.1＝17桁 ／ 7.x＝最短 往復）
+#
+# ★★片方を 消さないで ください★★
+#   ＝「紙が 2つ 在る＝どちらかが 古い」と 読まれるのを 止める 為に これを 書いて います
+#   ★この 家の 決め★ … ★紙は `powershell.exe`（5.1）で 取る★（34本の 古い 紙に 揃える）
+#   ⇒★この 7.6 の 紙は ★訳の 証し★として 残します★
+#
+# ★溜まって いる 問いを 1枠に★（2026-09-18・8回目）
+#
+# ★94本は 7つの 紙から ★機械で 集めました★★（toi-atsumeru.py）
+# ＋ODDL の 割れ目 18本 ＋ 対照 3本 ＝ ★115本★
+#
+# ★材料★ A1:A5 = 1,2,3,4,5 ／ B1:B5 = 1,2,(=1/0),4,5
+#        C1:C5 = 1,3,5,7,9（昇順）／ D1:D5 = 9,7,5,3,1（降順）
+#
+# ★字は UNICHAR で 作って あります★（式の 中は ASCII だけ）
+#
+# ★2つ目の 窓★ =(式)=0 … .Value2 は 0 で ない 値に 0 を 返す
+#
+# ★外へ 出る 6個★ … ★0件★（門で 数えました）
+#
+# ★どの Excel か★ … 版 16.0 ／ build 20326
+#
+# 訳	式	答え	出る字	=(式)=0	型
+(紙)junretsu	=PERMUT(0,0)	1	1	False	Double
+(紙)junretsu	=PERMUTATIONA(0,0)	1	1	False	Double
+(紙)junretsu	=PERMUT(5,0)	1	1	False	Double
+(紙)junretsu	=PERMUTATIONA(5,0)	1	1	False	Double
+(紙)junretsu	=PERMUT(0,1)	-2146826252	#NUM!	-2146826252	Other
+(紙)junretsu	=PERMUTATIONA(0,1)	0	0	True	Double
+(紙)junretsu	=PERMUT(3,4)	-2146826252	#NUM!	-2146826252	Other
+(紙)junretsu	=PERMUTATIONA(3,4)	81	81	False	Double
+(紙)junretsu	=PERMUT(-1,1)	-2146826252	#NUM!	-2146826252	Other
+(紙)junretsu	=PERMUTATIONA(-1,1)	-2146826252	#NUM!	-2146826252	Other
+(紙)junretsu	=PERMUT(5,-1)	-2146826252	#NUM!	-2146826252	Other
+(紙)junretsu	=PERMUTATIONA(5,-1)	-2146826252	#NUM!	-2146826252	Other
+(紙)xmatch	=XMATCH("*b*",{"ab";"bc";"cd"},2)	1	1	False	Double
+(紙)xmatch	=XMATCH("B",{"a";"b";"c"},0)	2	2	False	Double
+(紙)xmatch	=XMATCH("b",{"a";"b";"c"},2)	2	2	False	Double
+(紙)xmatch	=XMATCH(3,A1:B5)	-2146826273	#VALUE!	-2146826273	Other
+(紙)xmatch	=XMATCH(4,C1:C5,0,7)	-2146826273	#VALUE!	-2146826273	Other
+(紙)xmatch	=XMATCH(4,C1:C5,-1,-1)	2	2	False	Double
+(紙)xmatch	=XMATCH(4,C1:C5,-1,2)	2	2	False	Double
+(紙)xmatch	=XMATCH(4,C1:C5,1,-2)	5	5	False	Double
+(紙)xmatch	=XMATCH(4,D1:D5,-1)	4	4	False	Double
+(紙)xmatch	=XMATCH(4,B1:B5,-1)	4	4	False	Double
+(紙)xmatch	=XMATCH(TRUE,{TRUE;FALSE},0)	1	1	False	Double
+(紙)xmatch	=XMATCH(1,{})	(★打てません★)	★Excel が 式を 受け付けません★ 0x800A03EC	(★打てません★)	(★打てません★)
+(紙)percentrank	=PERCENTRANK({1;2;3;4},2.6,1)	0.5	0.5	False	Double
+(紙)percentrank	=PERCENTRANK({1;2;3;4},2.9,1)	0.6	0.6	False	Double
+(紙)percentrank	=PERCENTRANK({1;2;3;4},3.9,1)	0.9	0.9	False	Double
+(紙)percentrank	=PERCENTRANK({1;2;3;4},3.8,2)	0.93	0.93	False	Double
+(紙)percentrank	=PERCENTRANK({1;2;3;4},3.9,2)	0.96	0.96	False	Double
+(紙)percentrank	=PERCENTRANK(C1:C5,4,0)	-2146826252	#NUM!	-2146826252	Other
+(紙)percentrank	=PERCENTRANK(C1:C5,4,-1)	-2146826252	#NUM!	-2146826252	Other
+(紙)percentrank	=PERCENTRANK(C1:C5,0)	-2146826246	#N/A	-2146826246	Other
+(紙)percentrank	=PERCENTRANK({1;3;3;5},3)	0.333	0.333	False	Double
+(紙)percentrank	=PERCENTRANK({5;3;1},3)	0.5	0.5	False	Double
+(紙)percentrank	=PERCENTRANK({1;"a";3},2)	0.5	0.5	False	Double
+(紙)percentrank	=PERCENTRANK({},1)	(★打てません★)	★Excel が 式を 受け付けません★ 0x800A03EC	(★打てません★)	(★打てません★)
+(紙)asc-dbcs	=UNICODE(ASC(UNICHAR(12539)))	65381	65381	False	Double
+(紙)asc-dbcs	=UNICODE(ASC(UNICHAR(12443)))	65438	65438	False	Double
+(紙)asc-dbcs	=LEN(ASC(UNICHAR(12443)))	1	1	False	Double
+(紙)asc-dbcs	=UNICODE(MID(ASC(UNICHAR(12460)),2,1))	65438	65438	False	Double
+(紙)asc-dbcs	=UNICODE(ASC(UNICHAR(12497)))	65418	65418	False	Double
+(紙)asc-dbcs	=LEN(ASC(UNICHAR(12497)))	2	2	False	Double
+(紙)asc-dbcs	=UNICODE(ASC(UNICHAR(12540)))	65392	65392	False	Double
+(紙)asc-dbcs	=UNICODE(ASC(UNICHAR(12532)))	12532	12532	False	Double
+(紙)asc-dbcs	=LEN(ASC(UNICHAR(12532)))	1	1	False	Double
+(紙)asc-dbcs	=UNICODE(ASC(UNICHAR(12354)))	12354	12354	False	Double
+(紙)asc-dbcs	=UNICODE(ASC(UNICHAR(65281)))	33	33	False	Double
+(紙)asc-dbcs	=UNICODE(ASC(UNICHAR(65509)))	92	92	False	Double
+(紙)asc-dbcs	=UNICODE(DBCS(UNICHAR(92)))	65509	65509	False	Double
+(紙)asc-dbcs	=UNICODE(DBCS(UNICHAR(126)))	65374	65374	False	Double
+(紙)lenb	=LENB(UNICHAR(26085))	2	2	False	Double
+(紙)lenb	=LENB(UNICHAR(12354))	2	2	False	Double
+(紙)lenb	=LENB(UNICHAR(65281))	2	2	False	Double
+(紙)lenb	=LENB(UNICHAR(8212))	1	1	False	Double
+(紙)lenb	=LENB(UNICHAR(9731))	1	1	False	Double
+(紙)lenb	=UNICODE(MIDB(UNICHAR(12354)&"A",2,2))	32	32	False	Double
+(紙)lenb	=UNICODE(MIDB(UNICHAR(12354)&"A",2,1))	32	32	False	Double
+(紙)lenb	=LEN(MIDB(UNICHAR(12354)&"A",2,1))	1	1	False	Double
+(紙)lenb	=LEFTB("ABC")	A	A	False	String
+(紙)lenb	=LEFTB("ABC",-1)	-2146826273	#VALUE!	-2146826273	Other
+(紙)lenb	=MIDB("ABC",9,2)			False	String
+(紙)lenb	=LENB(TRUE)	4	4	False	Double
+(紙)lenb	=LENB(123)	3	3	False	Double
+(紙)lenb	=RIGHTB(UNICHAR(12354),1)	 	 	False	String
+(紙)textafter	=TEXTAFTER("abc","x",1,0,1)			False	String
+(紙)textafter	=TEXTBEFORE("abc","x",1,0,1)	abc	abc	False	String
+(紙)textafter	=TEXTAFTER("abc","x",1,0,0,UNICHAR(12394)&UNICHAR(12375))	なし	なし	False	String
+(紙)textafter	=TEXTBEFORE("abc","x",1,0,0,UNICHAR(12394)&UNICHAR(12375))	なし	なし	False	String
+(紙)textafter	=TEXTAFTER("a-b","-",9,0,0,UNICHAR(12394)&UNICHAR(12375))	-2146826273	#VALUE!	-2146826273	Other
+(紙)textafter	=TEXTAFTER("abc","")	abc	abc	False	String
+(紙)textafter	=TEXTAFTER("a-b","-",0)	-2146826273	#VALUE!	-2146826273	Other
+(紙)textafter	=TEXTAFTER("aaa","aa",2)	-2146826246	#N/A	-2146826246	Other
+(紙)textafter	=TEXTBEFORE("aaa","aa",2)	-2146826246	#N/A	-2146826246	Other
+(紙)textafter	=TEXTAFTER("","x")	-2146826246	#N/A	-2146826246	Other
+(紙)textafter	=TEXTAFTER(123,"2")	3	3	False	String
+(紙)textafter	=TEXTAFTER(TRUE,"R")	UE	UE	False	String
+(紙)textafter	=TEXTAFTER("a-b-c",{"-";"b"})	b-c	b-c	False	String
+(紙)textafter	=TEXTAFTER("a-B-c","B")	-c	-c	False	String
+(紙)aggregate	=AGGREGATE(9,1,B1:B5)	-2146826281	#DIV/0!	-2146826281	Other
+(紙)aggregate	=AGGREGATE(9,3,B1:B5)	12	12	False	Double
+(紙)aggregate	=AGGREGATE(9,5,B1:B5)	-2146826281	#DIV/0!	-2146826281	Other
+(紙)aggregate	=AGGREGATE(9,1,A1:A5)	15	15	False	Double
+(紙)aggregate	=AGGREGATE(9,4,A1:A5)	15	15	False	Double
+(紙)aggregate	=AGGREGATE(9,5,A1:A5)	15	15	False	Double
+(紙)aggregate	=AGGREGATE(9,7,A1:A5)	15	15	False	Double
+(紙)aggregate	=AGGREGATE(9,0,A1:A5,AGGREGATE(9,0,A1:A5))	-2146826273	#VALUE!	-2146826273	Other
+(紙)aggregate	=AGGREGATE(9,0,A1:A2)	3	3	False	Double
+(紙)aggregate	=AGGREGATE(9,0,A1:C5)	-2146826281	#DIV/0!	-2146826281	Other
+(紙)aggregate	=AGGREGATE(0,6,A1:A5)	-2146826273	#VALUE!	-2146826273	Other
+(紙)aggregate	=AGGREGATE(20,6,A1:A5)	-2146826273	#VALUE!	-2146826273	Other
+(紙)aggregate	=AGGREGATE(9,8,A1:A5)	-2146826273	#VALUE!	-2146826273	Other
+(紙)aggregate	=AGGREGATE(14,6,B1:B5,99)	-2146826252	#NUM!	-2146826252	Other
+(紙)aggregate	=AGGREGATE(9,6,A1:A5,B1:B5,A1:A5)	42	42	False	Double
+(紙)aggregate	=AGGREGATE(3,6,B1:B5)	4	4	False	Double
+組3(f2 はみ1日 NC1) (ア)DSC 利率0 basis=0	=ODDLPRICE(DATE(2009,1,15),DATE(2009,5,31),DATE(2008,11,30),0,0.05,100,2,0)	98.15950920245399	98.15951	False	Double
+組3(f2 はみ1日 NC1) (イ)DC-A 利回り0 basis=0	=ODDLPRICE(DATE(2009,1,15),DATE(2009,5,31),DATE(2008,11,30),0.06,0,100,2,0)	102.25	102.25	False	Double
+組3(f2 はみ1日 NC1) (ア)DSC 利率0 basis=1	=ODDLPRICE(DATE(2009,1,15),DATE(2009,5,31),DATE(2008,11,30),0,0.05,100,2,1)	98.16949152542372	98.16949	False	Double
+組3(f2 はみ1日 NC1) (イ)DC-A 利回り0 basis=1	=ODDLPRICE(DATE(2009,1,15),DATE(2009,5,31),DATE(2008,11,30),0.06,0,100,2,1)	102.25414364640883	102.2541	False	Double
+組3(f2 はみ1日 NC1) (ア)DSC 利率0 basis=4	=ODDLPRICE(DATE(2009,1,15),DATE(2009,5,31),DATE(2008,11,30),0,0.05,100,2,4)	98.15950920245399	98.15951	False	Double
+組3(f2 はみ1日 NC1) (イ)DC-A 利回り0 basis=4	=ODDLPRICE(DATE(2009,1,15),DATE(2009,5,31),DATE(2008,11,30),0.06,0,100,2,4)	102.25	102.25	False	Double
+組4(f4 はみ48日 NC2) (ア)DSC 利率0 basis=0	=ODDLPRICE(DATE(2009,1,15),DATE(2009,7,15),DATE(2008,11,30),0,0.05,100,4,0)	97.5609756097561	97.56098	False	Double
+組4(f4 はみ48日 NC2) (イ)DC-A 利回り0 basis=0	=ODDLPRICE(DATE(2009,1,15),DATE(2009,7,15),DATE(2008,11,30),0.06,0,100,4,0)	103.03333333333333	103.0333	False	Double
+組4(f4 はみ48日 NC2) (ア)DSC 利率0 basis=1	=ODDLPRICE(DATE(2009,1,15),DATE(2009,7,15),DATE(2008,11,30),0,0.05,100,4,1)	97.54833237120202	97.54833	False	Double
+組4(f4 はみ48日 NC2) (イ)DC-A 利回り0 basis=1	=ODDLPRICE(DATE(2009,1,15),DATE(2009,7,15),DATE(2008,11,30),0.06,0,100,4,1)	103.0159420289855	103.0159	False	Double
+組4(f4 はみ48日 NC2) (ア)DSC 利率0 basis=4	=ODDLPRICE(DATE(2009,1,15),DATE(2009,7,15),DATE(2008,11,30),0,0.05,100,4,4)	97.54805812238462	97.54806	False	Double
+組4(f4 はみ48日 NC2) (イ)DC-A 利回り0 basis=4	=ODDLPRICE(DATE(2009,1,15),DATE(2009,7,15),DATE(2008,11,30),0.06,0,100,4,4)	103.01628787878788	103.0163	False	Double
+組6(f2 はみ1日 NC3) (ア)DSC 利率0 basis=0	=ODDLPRICE(DATE(2009,1,15),DATE(2010,5,31),DATE(2008,11,30),0,0.05,100,2,0)	93.56725146198829	93.56725	False	Double
+組6(f2 はみ1日 NC3) (イ)DC-A 利回り0 basis=0	=ODDLPRICE(DATE(2009,1,15),DATE(2010,5,31),DATE(2008,11,30),0.06,0,100,2,0)	108.25	108.25	False	Double
+組6(f2 はみ1日 NC3) (ア)DSC 利率0 basis=1	=ODDLPRICE(DATE(2009,1,15),DATE(2010,5,31),DATE(2008,11,30),0,0.05,100,2,1)	93.57632157166861	93.57632	False	Double
+組6(f2 はみ1日 NC3) (イ)DC-A 利回り0 basis=1	=ODDLPRICE(DATE(2009,1,15),DATE(2010,5,31),DATE(2008,11,30),0.06,0,100,2,1)	108.25414364640885	108.2541	False	Double
+組6(f2 はみ1日 NC3) (ア)DSC 利率0 basis=4	=ODDLPRICE(DATE(2009,1,15),DATE(2010,5,31),DATE(2008,11,30),0,0.05,100,2,4)	93.56725146198829	93.56725	False	Double
+組6(f2 はみ1日 NC3) (イ)DC-A 利回り0 basis=4	=ODDLPRICE(DATE(2009,1,15),DATE(2010,5,31),DATE(2008,11,30),0.06,0,100,2,4)	108.25	108.25	False	Double
+対照1(PERMUT・紙に在る)	=PERMUT(5,2)	20	20	False	Double
+対照2(ODDL f4・紙に在る)	=ODDLPRICE(DATE(2009,3,10),DATE(2009,8,31),DATE(2008,11,30),0.045,0.05,100,4,1)	99.77647635800187	99.77648	False	Double
+対照3(ODDF・前の枠と同じ)	=ODDFPRICE(DATE(2009,3,1),DATE(2013,1,1),DATE(2009,1,1),DATE(2010,1,1),0.06,0.05,100,2,1)	103.37232293583249	103.3723	False	Double
+# ★★押すのに かかった 秒 … 0.35★★（★Excel が 消えるのを 待つ 時間とは 別★）

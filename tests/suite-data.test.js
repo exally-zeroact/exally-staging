@@ -40,7 +40,7 @@ function setup(over) {
       { id: 'x9', account_id: 'u2', sort: 0, data: kyuallyEmp('x9', '他人 太郎'), updated_at: '2026-07-01T00:00:00.000Z' }
     ],
     pay_companies: [
-      { account_id: 'u1', data: { company: { name: '株式会社 ゼロアクト' }, confirmed: { '2026-06': true }, nencho: { 2026: {} } }, updated_at: '2026-07-01T00:00:00.000Z' }
+      { account_id: 'u1', data: { company: { name: '株式会社 見本' }, confirmed: { '2026-06': true }, nencho: { 2026: {} } }, updated_at: '2026-07-01T00:00:00.000Z' }
     ],
     pay_org: [], pay_partners: [], pay_ledger: [], exally_entitlements: [],
     ...over
@@ -175,20 +175,20 @@ test('E2 締め方: 読むだけで pay_companies を書き換えない', async 
 test('§3 org.save は pay_org に書く(pay_companies には絶対に書かない)', async () => {
   const { sd, tables } = setup();
   const coBefore = JSON.parse(JSON.stringify(tables.pay_companies[0]));
-  await sd.org.save({ yago: 'ゼロアクト', invoiceNo: 'T1234567890123' });
+  await sd.org.save({ yago: '見本', invoiceNo: 'T9000000000009' });
   assert.strictEqual(tables.pay_org.length, 1);
-  assert.strictEqual(tables.pay_org[0].data.yago, 'ゼロアクト');
+  assert.strictEqual(tables.pay_org[0].data.yago, '見本');
   assert.deepStrictEqual(tables.pay_companies[0], coBefore, 'pay_companies を触った');
 });
 
 test('§3 org.save は差分マージ(既存キーを消さない)', async () => {
   const { sd, tables } = setup();
-  await sd.org.save({ yago: 'ゼロアクト', addr: '愛媛県今治市' });
-  await sd.org.save({ invoiceNo: 'T1234567890123' });
+  await sd.org.save({ yago: '見本', addr: '東京都架空区' });
+  await sd.org.save({ invoiceNo: 'T9000000000009' });
   const d = tables.pay_org[0].data;
-  assert.strictEqual(d.yago, 'ゼロアクト');
-  assert.strictEqual(d.addr, '愛媛県今治市');
-  assert.strictEqual(d.invoiceNo, 'T1234567890123');
+  assert.strictEqual(d.yago, '見本');
+  assert.strictEqual(d.addr, '東京都架空区');
+  assert.strictEqual(d.invoiceNo, 'T9000000000009');
 });
 
 test('§3 org.get は未作成なら null(空オブジェクトを捏造しない)', async () => {

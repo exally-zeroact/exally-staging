@@ -118,8 +118,17 @@ T('★種類ごとの件数を 出す★', () => {
 });
 T('★画面も 既定は「今のファイルの分だけ」（開くたびに 今のファイルへ戻る）★', () => {
   const book = 注記を外す(読む('book.html'), { html: true });
-  ok(/_rirekiFile = \(\(BookOpen\.current\(\) \|\| \{\}\)\.name\) \|\| '';/.test(book),
+  /* ★2026-08-30 直した★＝BookOpen は ★後から 読み込む★ので 開いた 直後は 未着。
+     そのまま 読むと リボンの「履歴」で 落ちた（実ブラウザで 見つけた）。
+     ⇒ 見る 所を 「その 字の 形」から ★やっている 事★に 変える。 */
+  ok(/_rirekiFile = _bo \? \(\(\(_bo\.current\(\) \|\| \{\}\)\.name\) \|\| ''\) : '';/.test(book),
     '★開いた時に 今のファイルへ戻していない（前の「ぜんぶ」が 持ち越される）★');
+  ok(/var _bo = \(typeof BookOpen !== 'undefined'\) \? BookOpen : null;/.test(book),
+    '★BookOpen が まだ 来ていない 時に 落ちる★');
+  ok(/window\._rirekiまだ = !_bo;/.test(book),
+    '★まだ 来ていない 事を 覚えていない（黙って「ぜんぶ」に なる）★');
+  ok(/ファイルの 名前が まだ 分からないので ぜんぶ 出しています/.test(book),
+    '★まだ 来ていない 事を 画面に 出していない★');
   ok(/ファイル: _rirekiFile/.test(book), '★画面が ファイルで絞っていない★');
   ok(/「' \+ _rirekiFile \+ '」の分/.test(book), '★どのファイルの分かを 言っていない★');
   /* ★司さん 2026-08-26「このタブに全部だしてどうするんど」★
@@ -240,7 +249,9 @@ if (SELF) {
     ['lib/rireki.js', '★同じ名前で 中身が違う事を 言わない★',
       (s) => s.replace('var 同じ名前で違う物 = ファイル ? Math.max(0, Object.keys(バイトたち).length - 1) : 0;', 'var 同じ名前で違う物 = 0;')],
     ['book.html', '★開いた時に 今のファイルへ戻さない（前の「ぜんぶ」が 持ち越される）★',
-      (s) => s.replace("  _rirekiFile = ((BookOpen.current() || {}).name) || '';", '')],
+      /* ★2026-08-30 直した★＝BookOpen が 未着でも 落ちない 形に 変えた。
+         壊し方も その 形に 合わせる（★合わないと「置換できず」で 見張りが 空振りする★）。 */
+      (s) => s.replace("  _rirekiFile = _bo ? (((_bo.current() || {}).name) || '') : '';", '')],
     ['book.html', '★画面が ファイルで絞らない★',
       (s) => s.replace('ファイル: _rirekiFile,', '')],
     ['book.html', '★数を 食い違わせる（1件なのに ぜんぶ3）★',

@@ -3,7 +3,7 @@
  * 何を守る検査か（2026-08-18 に実物で分かった事）:
  *   司さんの実物（代行計算表2026.xlsb・式15,126本）のうち ★11,669本★ が Table[列名] の形で、
  *   ★1本残らず #ERROR★ になっていた。原因は計算エンジンではなく ★読み込みライブラリ★。
- *     実Excelの真値 =INDEX(R8.1[白石正人], MATCH(B4, R8.1[日付], 0))
+ *     実Excelの真値 =INDEX(R8.1[見本一四], MATCH(B4, R8.1[日付], 0))
  *     SheetJS の式  =INDEX(Table1[#Data],  MATCH(B4, Table1[#Data], 0))   ←列名が消えている
  *   .xlsx では消えない。★消えるのは .xlsb だけ★（下の ⑦ で両方 測る）。
  *
@@ -241,7 +241,32 @@ async function testProductionPath(page) {
   }
   if (!ok(typeof win.BookOpen !== 'undefined', 'BookOpen が載った')) return;
   if (!ok(typeof win.TableRefs !== 'undefined', '★TableRefs が載った')) return;
-  if (!ok(typeof win.initFormulaEngine === 'function' && typeof win.loadSheetIntoEngine === 'function',
+  /* ══ ★★計算の 口を 持たない 画面★★ ══（2026-09-21）
+       ★★理由つきで 名指し★★（★黙って 除きません★）
+       `mochikomi.html` ... ★持ち込んだ ファイルを 見て 保存する 画面★（ア②）
+         ★★わざと 計算させません★★（経営者1 の 決め・2026-09-21）
+         ★訳★ この 画面の 値打ちは ★元の ファイルを 1バイトも 触らない★ 事。
+           計算させると ★答えが 書き換わる 恐れ★ が 在ります
+           ＝借り物の 計算が 実Excel と ★1マスでも★ 違えば
+             ★お客さんの ファイルの 答えが 黙って 変わって 返ります★
+           ⇒★直したい 人は `book.html` へ★（そちらは 計算します＝道を 分ける）
+       ★★向こう側にも 門が 在ります★★
+         `tests/mochikomi-lib-order.test.mjs` が
+         `initFormulaEngine` / `loadSheetIntoEngine` / `recalcSheet` / `HyperFormula` を
+         ★1つでも 入れたら 赤★ に します（経営者1 が 割って 確かめ済み）
+         ⇒★ここで 除いても 「入れ放題」には なりません★
+       ★★戻す 条件★★ ... ★この 画面で 直せる ように すると 決めた 時★
+         ＝★その時は 「1バイトも 触らない」を 先に 取り下げる 事★ */
+  const 計算させない画面 = { 'mochikomi.html': 1 };
+  if (計算させない画面[page]) {
+    /* ★★ここで 止めます★★（2026-09-21）
+         ＝この 後の 段は ★計算の 口を 呼びます★（`win.initFormulaEngine(...)`）
+         ＝★止めないと 「口が 無い」と 数えた 直後に その 口を 呼んで 落ちます★
+         ＝★2026-09-21 実際に そう なりました★ */
+    return ok(typeof win.initFormulaEngine !== 'function' && typeof win.loadSheetIntoEngine !== 'function',
+      '★★' + page + ' は 計算の 口を 持たない★★（★わざと★・元の ファイルを 触らない為）'
+      + '／★口が 出来たら 赤に します★');
+  } else if (!ok(typeof win.initFormulaEngine === 'function' && typeof win.loadSheetIntoEngine === 'function',
     '★' + page + ' に計算する側へ流す口がある（initFormulaEngine / loadSheetIntoEngine）')) return;
 
   const bytes = fs.readFileSync(path.join(FIX, 'table-refs-sample.xlsb'));
@@ -291,18 +316,54 @@ function testWiring(pages, opens) {
   console.log('      ── 実測 ── 画面 ' + pages.length + '枚を見て、受け取り口を読んでいるのは ' + opens.length + '枚: ' + (opens.join(',') || '（無し）'));
   for (const p of opens) {
     const t = fs.readFileSync(path.join(ROOT, p), 'utf8');
-    const iTable = t.indexOf('lib/table-refs.js');
-    const iOpen = t.indexOf('js/book-open.js');
-    ok(iTable > 0, p + ' が lib/table-refs.js を読んでいる');
-    ok(iTable > 0 && iTable < iOpen, '★' + p + ' は table-refs.js を book-open.js より先に読む（後だと呼べない）');
+    /* ══ ★★「名前が 出て くる 所」では なく 「読み込む 所」を 見ます★★ ══（2026-09-21）
+         ★★何が 起きたか★★
+           前は `t.indexOf('js/book-open.js')` ＝ ★ファイルの 中で 最初に 出て くる 所★。
+           ⇒2026-09-21 に `book.html` の ★注（コメント）★ に
+             `js/book-open.js` と 書いた だけで ★門が 赤に なりました★
+             （注は 2843行目／読み込みは 18638行目）
+           ⇒★★読み込む 順は 1つも 変わって いません★★＝★嘘の 赤★
+         ★★逆も 起きます★★＝★注に 先に 書けば 順を 入れ替えても 緑の まま★
+           ⇒★それが 怖い 方です★（記憶「飾りの 字に 頼った 門は 黙って 割れる」）
+         ★★直し★★ ＝ `_loadScript('...')` の 所だけ 見ます。
+         ★守る 中身は 同じ★＝★table-refs を book-open より 先に 読む★ */
+    /* ★★読み込み方は 2通り 在ります★★（2026-09-21 ここで 1回 踏みました）
+         ①`_loadScript('lib/...')` ... `book.html`（押した 時に 読む）
+         ②`<script src="lib/...">` ... `mochikomi.html`（頭で 読む）
+       ★私は ①だけ 見る 形に 締めました★（注に 名前を 書いただけで 赤に なる のを 直す為）
+       ⇒経営者1 の 新しい 画面が ②だった ので ★3本 赤に なりました★
+       ⇒★★本番の 穴では なく 門の 見る 範囲の 話です★★
+       ⇒★どちらの 読み方でも 数えます★（★順だけ 見る★＝守る 中身は 同じ）
+       ★注の 中の 名前には 当たりません★＝`_loadScript('` か `src="` が 前に 要ります */
+    const 読む所 = (名) => {
+      const あ = t.indexOf("_loadScript('" + 名 + "'");
+      /* ★閉じ引用符まで 探すと `?v=...` が 付いた 時に 外れます★
+         ＝★前から 一致★で 探します（2026-09-21 ここで 1回 外しました） */
+      const い = t.indexOf('src=' + JSON.stringify(名).slice(0, -1));
+      const み = [あ, い].filter((x) => x >= 0);
+      return み.length ? Math.min(...み) : -1;
+    };
+    const iTable = 読む所('lib/table-refs.js');
+    const iOpen = 読む所('js/book-open.js');
+    ok(iTable > 0, p + ' が lib/table-refs.js を ★読み込んで★ いる');
+    ok(iOpen > 0, p + ' が js/book-open.js を ★読み込んで★ いる');
+    ok(iTable > 0 && iOpen > 0 && iTable < iOpen,
+      '★' + p + ' は table-refs.js を book-open.js より先に読む（後だと呼べない）'
+      + '／★読み込む 所で 数えて います★（table-refs ' + iTable + ' / book-open ' + iOpen + '）');
   }
   const open = fs.readFileSync(path.join(ROOT, 'js', 'book-open.js'), 'utf8');
   ok(/TableRefs\.resolve\(/.test(open), '★book-open.js が TableRefs.resolve を呼んでいる');
-  ok(/sheetToGrid\(wb\.Sheets\[nm\], nm, trFixes\)/.test(open), '★直した式が画面の形に渡っている');
+  /* ★★2026-09-11 … 字面から 中身の 検査に 変えました★★
+     ★変えた 訳★＝`sheetToGrid` に ★字体★を 渡す 引数が 増えた（.xlsb の 字体を 自分で 読む 為）。
+       `sheetToGrid(wb.Sheets[nm], nm, trFixes, 字体表 ? 字体表[nm] : null)`
+     ★守る 中身は 同じ★＝★直した 式（trFixes）が 画面の 形に 渡って いる★
+     ★字面だけ 見て いると 中身が 同じでも 赤に なります★（今日 4本目） */
+  ok(open.indexOf("sheetToGrid(wb.Sheets[nm], nm, trFixes") >= 0,
+    '★直した式が画面の形に渡っている');
   ok(fs.existsSync(path.join(ROOT, 'lib', 'table-refs.js')), 'lib/table-refs.js が実在する');
 }
 
-/* ── わざと壊して赤になるか ─────────────────────────────────── */
+/* ── この 見張りが 見ている物を 直に 確かめる（★壊して 赤を 見るのは tools/break-check.mjs★） ─────────────────────────────────── */
 async function selfTest() {
   console.log('\n★--self-test★ わざと壊して、赤になる通り数を数える');
   const ways = [];

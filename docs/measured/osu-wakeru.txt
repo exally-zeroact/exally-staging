@@ -1,0 +1,38 @@
+# ★『動く 491個』の 中身を 分けた★（2026-09-07）
+
+★同じ 押し方（17通りの 引数）で 押して、★何が 返ったか★で 分けた★
+
+★① 値が 返った ………………………………… 424個
+★② ★誤りしか 返らない★ …………………… 68個  ←★穴B で 緑に なっていた★
+★③ ★JS層が 投げただけ★ ………………… 0個  ←★穴A で 緑に なっていた★
+★④ #NAME? しか 返らない ………………… 0個  ←★本当は 動かない★
+
+★今の 台帳が「動く」と 言っている 数 …… 492個
+★★穴A・穴B を 塞ぐと 残る 数 ……………… 424個★★
+★★減る 数 ……………………………………… 68個★★
+
+★★ただし ★減った＝壊れている★では ありません★★
+  ⇒ 17通りの 引数が ★その 関数に 合っていない★だけの 物が 混ざります
+    （例 … 引数が 5つ 要る 関数に 4つまでしか 渡していない）
+  ⇒★★だから これは「動かない 数」では なく ★「押して 値が 出せなかった 数」★です★★
+  ⇒★1本ずつ 見ないと どちらか 分かりません★
+
+★② 誤りしか 返らない 68個★
+  ACCRINT(#NUM)  ACCRINTM(#NUM)  AMORDEGRC(#NUM)  AMORLINC(#NUM)  ARABIC(#VALUE)  BASE(#NA)
+  BETA.DIST(#NA)  BETADIST(#NA)  BINOM.INV(#NA)  CELL(#VALUE)  CONFIDENCE(#NA)  CONFIDENCE.NORM(#NA)
+  CONFIDENCE.T(#NA)  CONVERT(#NA)  CRITBINOM(#NA)  CUMIPMT(#NA)  CUMPRINC(#NA)  DATEDIF(#NA)
+  DATEVALUE(#VALUE)  DECIMAL(#NA)  DETECTLANGUAGE(#NA)  DISC(#NUM)  DSTDEV(#NA)  DURATION(#NUM)
+  DVAR(#NA)  FISHER(#NUM)  FORECAST(#NA)  FORECAST.LINEAR(#NA)  FORMULATEXT(#NA)  GAMMA.INV(#NA)
+  GAMMAINV(#NA)  HLOOKUP(#NA)  HYPGEOM.DIST(#NA)  INDIRECT(#REF)  INFO(#VALUE)  INTRATE(#NUM)
+  LOGINV(#NA)  LOGNORM.INV(#NA)  MDURATION(#NUM)  MIRR(#NA)  MODE(#NA)  MODE.SNGL(#NA)
+  NA(#NA)  NORM.INV(#NA)  NORM.S.INV(#NUM)  NORMINV(#NA)  NORMSINV(#NUM)  OFFSET(#ERROR)
+  PRICE(#NUM)  PRICEDISC(#NUM)  PRICEMAT(#NUM)  RATE(#NA)  RECEIVED(#NUM)  STEYX(#NA)
+  STOCKHISTORY(#NA)  T.INV(#NA)  T.TEST(#NA)  TBILLEQ(#NA)  TBILLPRICE(#NA)  TBILLYIELD(#NA)
+  TIMEVALUE(#VALUE)  TTEST(#NA)  VLOOKUP(#NA)  WEBSERVICE(#VALUE)  XIRR(#NA)  YIELD(#NUM)
+  YIELDDISC(#NUM)  YIELDMAT(#NUM)
+
+★③ JS層が 投げただけ 0個★
+  
+
+★④ #NAME? しか 返らない 0個★
+  

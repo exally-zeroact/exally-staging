@@ -1,0 +1,111 @@
+# ★ISFORMULA の 前（裸）と 後（_xlfn.）を 実Excel に 開かせた★（63）（2026-09-20）
+# ★読むだけ★（保存して いません）／★開けるのは 字で 書いた 2本だけ★
+# ★どの Excel か★ ... 版 16.0 ／ build 20326
+# ★どの 貝殻か★ ... PowerShell 5.1.26100.9278
+# ★生の 字★ C1 `ISFORMULA(A1:A3)`（裸）⇒ `_xlfn.ISFORMULA(A1:A3)`
+# ★材料★   A1 = 5（数）／A2 = =1+1（式）／A3 = abc（字）
+# ★対照★   E1 `_xlfn.FORMULATEXT(A2)`＝`=1+1`／G1 `SUMPRODUCT`＝25（裸で 正しい）／I1 `_xlfn.SEQUENCE(3)`／A10 `SUM`＝5
+# ★実Excel 自身は★ `_xlfn.ISFORMULA` と 書き ★cm 在り・ref=H1337:H1339＝3マスに 溢れます★（61 で 実測）
+# ★うちの 書き出しは cm 無し＝1つの 値（FALSE）だけ★ ⇒★後の C2 C3 が 埋まるかを 見ます★
+#
+# ═══ ★★mae(hadaka)★★ ... exally-kakidashi-isformula0.xlsx（16267 バイト）═══
+#
+# ★★①開いた 瞬間★★（★まだ 何も 打って いません★）
+# マス	値	出る字	式	型	溢れの一部か
+A1	5	5	5	Double	False
+A2	2	2	=1+1	Double	False
+A3	abc	abc	abc	String	False
+C1	-2146826259	#NAME?	=ISFORMULA(A1:A3)	Other	False
+C2	(kara)			(kara)	False
+C3	(kara)			(kara)	False
+C4	(kara)			(kara)	False
+D1	(kara)			(kara)	False
+E1	=1+1	=1+1	=FORMULATEXT(A2)	String	False
+E2	(kara)			(kara)	False
+G1	25	25	=SUMPRODUCT(A1:A1,A1:A1)	Double	False
+G2	(kara)			(kara)	False
+I1	1	1	=SEQUENCE(3)	Double	False
+I2	2	2		Double	False
+I3	3	3		Double	False
+I4	(kara)			(kara)	False
+A10	5	5	=SUM(A1:A1)	Double	False
+#
+# ★★②ISERROR / ISTEXT / ISNUMBER★★（★ここから 計算し直しが 起きます★）
+# マス	ISERROR	ISTEXT	ISNUMBER	窓に入っている式(3つ)
+C1	True	False	False	=ISERROR(C1) / =ISTEXT(C1) / =ISNUMBER(C1)
+C2	False	False	False	=ISERROR(C2) / =ISTEXT(C2) / =ISNUMBER(C2)
+E1	False	True	False	=ISERROR(E1) / =ISTEXT(E1) / =ISNUMBER(E1)
+G1	False	False	True	=ISERROR(G1) / =ISTEXT(G1) / =ISNUMBER(G1)
+I1	False	False	True	=ISERROR(I1) / =ISTEXT(I1) / =ISNUMBER(I1)
+A10	False	False	True	=ISERROR(A10) / =ISTEXT(A10) / =ISNUMBER(A10)
+#
+# ★★2つ目の 窓★★（★上の 読みの 後に 打って います★）
+# マス	値	型	=(マス)=0
+A1	5	Double	False
+A2	2	Double	False
+A3	abc	String	False
+C1	-2146826259	Other	-2146826259
+C2	(kara)	(kara)	True
+C3	(kara)	(kara)	True
+C4	(kara)	(kara)	True
+D1	(kara)	(kara)	True
+E1	=1+1	String	False
+E2	(kara)	(kara)	True
+G1	25	Double	False
+G2	(kara)	(kara)	True
+I1	1	Double	False
+I2	2	Double	False
+I3	3	Double	False
+I4	(kara)	(kara)	True
+A10	5	Double	False
+#
+# ═══ ★★ato(_xlfn. wo tashita)★★ ... exally-kakidashi-isformula.xlsx（16273 バイト）═══
+#
+# ★★①開いた 瞬間★★（★まだ 何も 打って いません★）
+# マス	値	出る字	式	型	溢れの一部か
+A1	5	5	5	Double	False
+A2	2	2	=1+1	Double	False
+A3	abc	abc	abc	String	False
+C1	False	FALSE	=ISFORMULA(A1:A3)	Boolean	False
+C2	(kara)			(kara)	False
+C3	(kara)			(kara)	False
+C4	(kara)			(kara)	False
+D1	(kara)			(kara)	False
+E1	=1+1	=1+1	=FORMULATEXT(A2)	String	False
+E2	(kara)			(kara)	False
+G1	25	25	=SUMPRODUCT(A1:A1,A1:A1)	Double	False
+G2	(kara)			(kara)	False
+I1	1	1	=SEQUENCE(3)	Double	False
+I2	2	2		Double	False
+I3	3	3		Double	False
+I4	(kara)			(kara)	False
+A10	5	5	=SUM(A1:A1)	Double	False
+#
+# ★★②ISERROR / ISTEXT / ISNUMBER★★（★ここから 計算し直しが 起きます★）
+# マス	ISERROR	ISTEXT	ISNUMBER	窓に入っている式(3つ)
+C1	False	False	False	=ISERROR(C1) / =ISTEXT(C1) / =ISNUMBER(C1)
+C2	False	False	False	=ISERROR(C2) / =ISTEXT(C2) / =ISNUMBER(C2)
+E1	False	True	False	=ISERROR(E1) / =ISTEXT(E1) / =ISNUMBER(E1)
+G1	False	False	True	=ISERROR(G1) / =ISTEXT(G1) / =ISNUMBER(G1)
+I1	False	False	True	=ISERROR(I1) / =ISTEXT(I1) / =ISNUMBER(I1)
+A10	False	False	True	=ISERROR(A10) / =ISTEXT(A10) / =ISNUMBER(A10)
+#
+# ★★2つ目の 窓★★（★上の 読みの 後に 打って います★）
+# マス	値	型	=(マス)=0
+A1	5	Double	False
+A2	2	Double	False
+A3	abc	String	False
+C1	False	Boolean	False
+C2	(kara)	(kara)	True
+C3	(kara)	(kara)	True
+C4	(kara)	(kara)	True
+D1	(kara)	(kara)	True
+E1	=1+1	String	False
+E2	(kara)	(kara)	True
+G1	25	Double	False
+G2	(kara)	(kara)	True
+I1	1	Double	False
+I2	2	Double	False
+I3	3	Double	False
+I4	(kara)	(kara)	True
+A10	5	Double	False

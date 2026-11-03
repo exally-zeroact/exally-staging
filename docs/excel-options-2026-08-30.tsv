@@ -1,0 +1,146 @@
+# 実Excel 16.0 の ★オプション（設定）と 組み込みスタイル★ 2026-08-30
+# 取り方: ★窓（ダイアログ）を 開けずに★ COM の プロパティを 直に 読む
+#   （窓を 開けたら 9分 止まった＝うちの決まり「窓を 開かせるな」を 破った）
+# ★お客さんの ファイルの 置き場（DefaultFilePath）は 伏せる★
+# 列: 種類 / 名前 / 値
+APP	AlertBeforeOverwriting	True
+APP	AskToUpdateLinks	False
+APP	AutoPercentEntry	True
+APP	AutoRecover	System.__ComObject
+APP	Calculation	-4105
+APP	CalculateBeforeSave	True
+APP	CellDragAndDrop	True
+APP	CopyObjectsWithCells	True
+APP	CutCopyMode	0
+APP	DecimalSeparator	.
+APP	DefaultFilePath	（伏せる）
+APP	DefaultSaveFormat	51
+APP	DeferAsyncQueries	False
+APP	DisplayAlerts	False
+APP	DisplayCommentIndicator	-1
+APP	DisplayDocumentActionTaskPane	False
+APP	DisplayFormulaAutoComplete	True
+APP	DisplayFormulaBar	True
+APP	DisplayFullScreen	False
+APP	DisplayFunctionToolTips	True
+APP	DisplayInsertOptions	True
+APP	DisplayNoteIndicator	True
+APP	DisplayPasteOptions	True
+APP	DisplayRecentFiles	True
+APP	DisplayScrollBars	True
+APP	DisplayStatusBar	True
+APP	EditDirectlyInCell	True
+APP	EnableAnimations	True
+APP	EnableAutoComplete	True
+APP	EnableCheckFileExtensions	True
+APP	EnableLargeOperationAlert	True
+APP	EnableLivePreview	True
+APP	EnableSound	False
+APP	ErrorCheckingOptions	System.__ComObject
+APP	ExtendList	True
+APP	FeatureInstall	0
+APP	FixedDecimal	False
+APP	FixedDecimalPlaces	2
+APP	GenerateGetPivotData	False
+APP	Iteration	False
+APP	LargeOperationCellThousandCount	33554
+APP	MaxChange	0.001
+APP	MaxIterations	100
+APP	MeasurementUnit	1
+APP	MoveAfterReturn	True
+APP	MoveAfterReturnDirection	-4121
+APP	PrecisionAsDisplayed	(null)
+APP	PromptForSummaryInfo	False
+APP	ReferenceStyle	1
+APP	RollZoom	False
+APP	SaveISO8601Dates	True
+APP	ScreenUpdating	True
+APP	SheetsInNewWorkbook	1
+APP	ShowChartTipNames	True
+APP	ShowChartTipValues	True
+APP	ShowDevTools	True
+APP	ShowMenuFloaties	True
+APP	ShowSelectionFloaties	True
+APP	ShowStartupDialog	False
+APP	StandardFont	游ゴシック
+APP	StandardFontSize	11
+APP	StatusBar	False
+APP	ThousandsSeparator	,
+APP	UseSystemSeparators	True
+APP	UserName	（伏せる）
+APP	WarnOnFunctionNameConflict	True
+APP	Version	16.0
+APP	Build	20326
+APP	OperatingSystem	Windows (64-bit) NT 10.00
+APP	ProductCode	{90160000-000F-0000-1000-0000000FF1CE}
+APP	LanguageSettings	System.__ComObject
+APP	Ready	True
+APP	Interactive	True
+APP	EnableEvents	True
+APP	Volatile	void Volatile (Variant Volatile)
+ERRCHK	BackgroundChecking	True
+ERRCHK	EmptyCellReferences	False
+ERRCHK	EvaluateToError	True
+ERRCHK	InconsistentFormula	True
+ERRCHK	IndicatorColorIndex	-4105
+ERRCHK	ListDataValidation	True
+ERRCHK	NumberAsText	True
+ERRCHK	OmittedCells	True
+ERRCHK	TextDate	True
+ERRCHK	UnlockedFormulaCells	True
+AUTOCORR	AutoExpandListRange	False
+AUTOCORR	AutoFillFormulasInLists	True
+AUTOCORR	CapitalizeNamesOfDays	True
+AUTOCORR	CorrectCapsLock	True
+AUTOCORR	CorrectSentenceCap	True
+AUTOCORR	DisplayAutoCorrectOptions	True
+AUTOCORR	ReplaceText	True
+AUTOCORR	TwoInitialCapitals	True
+AUTOCORR	置き換えの数	1830
+STYLE	20% - アクセント 1
+STYLE	20% - アクセント 2
+STYLE	20% - アクセント 3
+STYLE	20% - アクセント 4
+STYLE	20% - アクセント 5
+STYLE	20% - アクセント 6
+STYLE	40% - アクセント 1
+STYLE	40% - アクセント 2
+STYLE	40% - アクセント 3
+STYLE	40% - アクセント 4
+STYLE	40% - アクセント 5
+STYLE	40% - アクセント 6
+STYLE	60% - アクセント 1
+STYLE	60% - アクセント 2
+STYLE	60% - アクセント 3
+STYLE	60% - アクセント 4
+STYLE	60% - アクセント 5
+STYLE	60% - アクセント 6
+STYLE	アクセント 1
+STYLE	アクセント 2
+STYLE	アクセント 3
+STYLE	アクセント 4
+STYLE	アクセント 5
+STYLE	アクセント 6
+STYLE	タイトル
+STYLE	チェック セル
+STYLE	どちらでもない
+STYLE	Percent
+STYLE	メモ
+STYLE	リンク セル
+STYLE	悪い
+STYLE	計算
+STYLE	警告文
+STYLE	Comma [0]
+STYLE	Comma
+STYLE	見出し 1
+STYLE	見出し 2
+STYLE	見出し 3
+STYLE	見出し 4
+STYLE	集計
+STYLE	出力
+STYLE	説明文
+STYLE	Currency [0]
+STYLE	Currency
+STYLE	入力
+STYLE	Normal
+STYLE	良い

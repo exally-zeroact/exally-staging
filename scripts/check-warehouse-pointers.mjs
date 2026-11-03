@@ -1,3 +1,4 @@
+import { 注記を外す } from './lib/chuki.mjs';
 /* check-warehouse-pointers.mjs — ★倉庫(Supabase)の向き先を、6か所×全アプリで数える★
  *
  * なぜ必要か（2026-08-07・指示役）:
@@ -136,6 +137,80 @@ export function bareRefsIn(text) {
   return [PROD_REF, TEST_REF].filter((r) => new RegExp('\\b' + r + '\\b').test(text));
 }
 
+/** ★★その 住所が「何の 役目で」書いてあるか★★（2026-09-07・指示役の 裁定）
+ *
+ *  ★前は「在る／無い」で 分けていた★
+ *    ・繋ぐ形（URL・鍵）    … 🔴
+ *    ・裸の 文字列          … 🟡
+ *  ⇒★★これだと 2つとも 外す★★
+ *    ①`js/dk-config.js` の 住所は ★ただの 定数★（fetch の 引数では ない）
+ *      ⇒★一番 大事な 1本が すり抜ける★
+ *    ②`tests/…` の `not.toContain('…')` は ★反対側を 指していない事を 見る 試験★
+ *      ⇒★仲間を 敵と 数える★（2026-09-07 に 実際に 誤報した）
+ *  ⇒★★『在る／無い』では なく『何の 役目で 在るか』で 分ける★★
+ *
+ *  🔴 … ★設定の ファイル★の 中の 住所／`fetch`・`createClient`・`request` の 引数
+ *  🟡 … ★試験の 中の 期待値★（`not.toContain(...)`／`toBe(...)`／名前→住所 の 対応表）
+ *  ★どちらでも「なぜ そう 数えたか」を 1行 出す★
+ */
+export function 設定のファイルか(path) {
+  const p = String(path);
+  /* ★画面（.html）の 中に 直に 書いて ある 住所も「設定」★（2026-09-07 指示役）
+     ⇒ 代行請求は `daikou-seikyu.html` の 中に 住所を 直書きしている
+     ⇒★今は 本番も テスト線も 正しい★／★でも 明日 反対に なっても 誰も 気づかない★
+     ⇒★『起きていない』と『起きない』は 別★ */
+  if (/\.html?$/i.test(p)) return true;
+  return /(^|\/)[a-z0-9_-]*config[a-z0-9_-]*\.(m?js|ts|json)$/i.test(p);
+}
+export function 繋ぐ呼び出しの中か(text, ref) {
+  const 行 = String(text).split(/\r?\n/);
+  for (let i = 0; i < 行.length; i++) {
+    if (行[i].indexOf(ref) < 0) continue;
+    /* ★呼び出しは 前の 行に またがる★ので 2行 前まで 見る */
+    const 窓 = 行.slice(Math.max(0, i - 2), i + 1).join(' ');
+    if (/(fetch|createClient|request|axios|got|open)\s*\(/.test(窓)) return true;
+  }
+  return false;
+}
+export function 試験の期待値か(path, text, ref) {
+  if (!/(^|\/)(tests?|__tests__|spec)\//.test(String(path))) return false;
+  const 行 = String(text).split(/\r?\n/);
+  for (let i = 0; i < 行.length; i++) {
+    if (行[i].indexOf(ref) < 0) continue;
+    const 窓 = 行.slice(Math.max(0, i - 2), i + 1).join(' ');
+    /* 期待値の 書き方／名前→住所 の 対応表 */
+    if (/(expect|assert|to(Contain|Be|Equal|Match|StrictEqual)|not\.)/.test(窓)) continue;
+    if (/['\"][^'\"]+['\"]\s*:\s*['\"][^'\"]*/.test(行[i])) continue;
+    return false;                                   /* 期待値では ない 行が 1つでも 在れば false */
+  }
+  return true;
+}
+/** @returns {{mark:'🔴'|'🟡', 訳:string}} */
+export function 役目で分ける(path, text, ref) {
+  /* ★★注記（コメント）は 先に 外す★★（2026-09-07 実測で 踏んだ）
+     ⇒ 飲み屋の `js/supa-config.js` は 頭の 注記に
+       「テスト用DB(khaw…)とは 別の…」と ★訳を 書いている★
+     ⇒ 注記を 外さずに 数えると ★正しい 設定を 🔴 に する★＝誤報
+     ⇒★『書いてある』と『そこへ 繋いでいる』は 別★（前からの 決まり） */
+  let 動く = text;
+  try { 動く = 注記を外す(String(text)); } catch (e) { /* 外せなければ そのまま */ }
+  const 動く所に在る = String(動く).indexOf(ref) >= 0;
+  if (!動く所に在る) return { mark: '🟡', 訳: '注記（コメント）に 書いてあるだけ（繋いでいない）' };
+  /* ★★試験の 中は 先に 見る★★（2026-09-07 実測で 踏んだ）
+     ⇒ `nomiya-app-test/tests/supa-from-config.mjs` は
+       ★名前に config が 入っている★ので「設定の ファイル」に 数えられた
+     ⇒ 中身は `PROD_WAREHOUSE = "…"` ＝★本番では 走らせない為の 見張りの 定数★
+     ⇒★★仲間を 敵と 数えた★★（指示役が 前に 名指しした 形と 同じ）
+     ⇒★設定の ファイルは tests/ の 中には 置かない★ので 先に 外す */
+  const 試験の中 = /(^|\/)(tests?|__tests__|spec)\//.test(String(path));
+  if (!試験の中 && 設定のファイルか(path)) {
+    return { mark: '🔴', 訳: '設定の ファイルの 中の 住所（画面が 読む 物）' };
+  }
+  if (繋ぐ呼び出しの中か(動く, ref)) return { mark: '🔴', 訳: '繋ぐ 呼び出しの 引数（fetch/createClient ほか）' };
+  if (試験の期待値か(path, 動く, ref)) return { mark: '🟡', 訳: '試験の 期待値（not.toContain・名前→住所 の 対応表）' };
+  return { mark: '🟡', 訳: '名前を 持っているだけ（役目が 読み取れない・要確認）' };
+}
+
 /** 見つかったrefと「向くべきref」から、〇×を決める。★見つからない=🟡（緑にしない）★ */
 /** ④の判定（★純関数★＝倉庫を触らずに 自己確認できる）
  *  自分に … 自分が向いている倉庫の許可リストに 自分のURLが在るか（true/false/null=読めない）
@@ -187,6 +262,10 @@ async function redirectAllowed(ref, target) {
 
 const rows = { c1: [], c2: [], c3: [], c4: [], c5: [], c6: [] };
 let yellow = 0, red = 0;
+/* ★★読めなかった ファイルの 本数★★（2026-09-07 指示役の 注文）
+   ⇒ 印（🟢🔴🟡）の 数だけでは ★何本 見ていないか★が 表に 出ない
+   ⇒ 上限に 当たって こぼれた 分は ★広げた つもりで 狭く なっている★ 所 */
+const 読めず = { 上限で: 0, 木が切れた: 0, 取れなかった: 0 };
 const bump = (mark) => { if (mark === '🟡') yellow++; if (mark === '🔴') red++; };
 
 /* ── ① アプリのコード（＋アマかせは②の実効値も兼ねる） ── */
@@ -398,8 +477,56 @@ export const TOOL_ALLOWED = {
 };
 
 const TOOL_DIRS = /(^|\/)(scripts|tests|tools)\//;
-const MAX_FILES = 400;
+/* ★設定の ファイルは どこに 在っても 読む★（2026-09-07）
+   ⇒ 前は scripts/tests/tools しか 読んでいなかったので
+     ★`js/dk-config.js` は ここに 一度も 来なかった★＝一番 大事な 1本 */
+const 設定の道 = /(^|\/)[a-z0-9_-]*config[a-z0-9_-]*\.(m?js|ts|json)$/i;
+
+/** ★★見る 範囲を 先に 数えて 書く★★（2026-09-07 指示役の 決まり）
+ *
+ *  ★なぜ★ … この 見張りは ★倉庫の 向き先★を 見る 物なのに、
+ *    ★向き先が 書いてある `js/dk-config.js` を 一度も 読んでいませんでした★
+ *    （読んでいたのは scripts / tests / tools だけ）
+ *  ⇒★★『31個 見た』は『★見るべき 物を 見た★』では ない★★
+ *  ⇒★見張りを 作ったら「何を 範囲に したか」を 先に 出し、
+ *    ★一番 守りたい 物が その 範囲に 入っているか★を ★名指しで★ 確かめる★
+ *
+ *  @returns {{範囲:string, 入る:string[], 入らない:{道:string,訳:string}[]}}
+ */
+export function 見る範囲を数える(apps = APPS) {
+  const 入る = [], 入らない = [];
+  for (const a of apps) {
+    if (!a.cfg) continue;
+    const 道 = String(a.cfg).replace(/^\//, '');
+    if (設定の道.test(道) || /\.html?$/i.test(道) || (TOOL_DIRS.test(道) && /\.(m?js|ts)$/.test(道))) {
+      if (入る.indexOf(道) < 0) 入る.push(道);
+    } else if (!入らない.some((x) => x.道 === 道)) {
+      入らない.push({
+        道: 道,
+        訳: '配信の 口（repo の ファイルでは ない）',
+      });
+    }
+  }
+  return {
+    範囲: 'scripts/tests/tools の js・ts ＋ ★config の 名前の ファイル★ ＋ ★画面(.html)★ は どこでも',
+    入る: 入る, 入らない: 入らない,
+  };
+}
+/* ★上限を 上げた（2026-09-07）★＝`.html` を 範囲に 足したので
+   400 のままだと ★見ていない＝未測定★が 増えて 穴が 広がる */
+const MAX_FILES = 900;
 async function measureTools() {
+  /* ★★見る 範囲を 先に 出す★★（2026-09-07 指示役の 決まり） */
+  const 範 = 見る範囲を数える();
+  rows.c6.push({ repo: '★見る 範囲★', mark: 範.入らない.length ? '🟡' : '🟢',
+    text: 範.範囲
+      + '／★一番 守りたい 物★ … 入る ' + 範.入る.length + '本（' + 範.入る.join(' ') + '）'
+      + (範.入らない.length
+        ? '／★範囲の 外 ' + 範.入らない.length + '本: '
+          + 範.入らない.map((x) => x.道 + '（' + x.訳 + '）').join(' ') + '★'
+        : '') });
+  if (範.入らない.length) yellow++;
+
   const gh = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
   const usedAllow = new Set();
   for (const b of BATCH_REPOS) {
@@ -410,23 +537,31 @@ async function measureTools() {
     if (!tree.ok) tree = await ghGet(`https://api.github.com/repos/${b.repo}/git/trees/${def}?recursive=1`, gh, 60000); // 1回だけやり直す
     if (!tree.ok) { rows.c6.push({ repo: b.repo, mark: '🟡', text: `未測定（treeを読めない ${tree.status}${tree.err ? ' ' + tree.err : ''}）` }); yellow++; continue; }
     const t = JSON.parse(tree.text);
-    const all = (t.tree || []).filter((x) => x.type === 'blob' && TOOL_DIRS.test(x.path) && /\.(m?js|ts)$/.test(x.path));
+    const all = (t.tree || []).filter((x) => x.type === 'blob'
+      && ((TOOL_DIRS.test(x.path) && /\.(m?js|ts)$/.test(x.path))
+        || 設定の道.test(x.path)
+        /* ★画面（.html）も 読む★＝住所を 直に 書いて いる 画面が 在る */
+        || /\.html?$/i.test(x.path)));
     const look = all.slice(0, MAX_FILES);
     const hard = [], soft = [], known = [];
     for (const f of look) {
       const c = await ghGet(`https://raw.githubusercontent.com/${b.repo}/${def}/${f.path}`, gh);
-      if (!c.ok) continue;
-      const wrongShape = refsIn(c.text).filter((r) => r !== b.want);          // ★実際に繋ぐ形＝🔴候補
-      const wrongBare = bareRefsIn(c.text).filter((r) => r !== b.want && !wrongShape.includes(r)); // 🟡候補
-      if (!wrongShape.length && !wrongBare.length) continue;
+      if (!c.ok) { 読めず.取れなかった++; continue; }
+      /* ★役目で 分ける★（2026-09-07 指示役）＝「在る／無い」では 決めない */
+      const 違う = [...new Set([...refsIn(c.text), ...bareRefsIn(c.text)])].filter((r) => r !== b.want);
+      if (!違う.length) continue;
       const key = `${b.repo}|${f.path}`;
       const allow = TOOL_ALLOWED[key];
       if (allow) { usedAllow.add(key); known.push(`${f.path}[${allow.mark}]`); continue; }
-      if (wrongShape.length) hard.push(`${f.path}(${wrongShape.join(',')})`);
-      else soft.push(f.path);
+      const 判 = 違う.map((r) => ({ r, ...役目で分ける(f.path, c.text, r) }));
+      const 赤 = 判.filter((x) => x.mark === '🔴');
+      if (赤.length) hard.push(`${f.path}(${赤.map((x) => x.r).join(',')}／${赤[0].訳})`);
+      else soft.push(`${f.path}（${判[0].訳}）`);
     }
     const capped = all.length > look.length ? `／★${all.length - look.length}本は見ていない=未測定★` : '';
+    if (all.length > look.length) 読めず.上限で += all.length - look.length;
     const truncated = t.truncated ? '／★treeが途中で切れている=未測定★' : '';
+    if (t.truncated) 読めず.木が切れた++;
     const openHandover = known.some((k) => k.includes('🟡'));
     const mark = hard.length ? '🔴' : (soft.length || capped || truncated || openHandover) ? '🟡' : '🟢';
     bump(mark);
@@ -468,6 +603,75 @@ if (argv.includes('--self-test')) {
   T('★違う倉庫を見ていたら 🔴', () => eq(judge([TEST_REF], PROD_REF).mark, '🔴', '誤接続'));
   T('正しければ 🟢', () => eq(judge([PROD_REF], PROD_REF).mark, '🟢', '正常'));
   T('★④ 自分の倉庫から1本 外すと 赤', () => eq(judgeRedirect(false, false).mark, '🔴', '自分に無い'));
+
+  /* ══ ★役目で 分ける★（2026-09-07 指示役）══
+     ★わざと 両方 作って ★🔴 と 🟡 が どちらも 出る★のを 見る★
+     （前は「在る／無い」で 分けていて、★設定の ファイルを 見逃し／試験の 期待値を 誤報★した） */
+  T('★🔴 設定の ファイルの 中の 住所（fetch の 引数では ない）', () => {
+    const 中 = "const SUPA_URL = 'https://" + TEST_REF + ".supabase" + ".co';" + '\n' + "export const MY_SIDE = 'test';";
+    const r = 役目で分ける('js/dk-config.js', 中, TEST_REF);
+    eq(r.mark, '🔴', '設定の ファイル');
+    if (!/設定/.test(r.訳)) throw new Error('訳が 出ていない: ' + r.訳);
+  });
+  T('★🔴 繋ぐ 呼び出しの 引数', () => {
+    const 中 = "const c = createClient('https://" + TEST_REF + ".supabase" + ".co', key);";
+    const r = 役目で分ける('scripts/x.mjs', 中, TEST_REF);
+    eq(r.mark, '🔴', '繋ぐ 呼び出し');
+    if (!/引数/.test(r.訳)) throw new Error('訳が 出ていない: ' + r.訳);
+  });
+  T('★🟡 試験の 期待値（not.toContain）', () => {
+    const 中 = "expect(cfg).not.toContain('" + TEST_REF + "');";
+    const r = 役目で分ける('tests/unit/a.test.js', 中, TEST_REF);
+    eq(r.mark, '🟡', '期待値');
+    if (!/期待値/.test(r.訳)) throw new Error('訳が 出ていない: ' + r.訳);
+  });
+  T('★🟡 名前→住所 の 対応表（試験の 中）', () => {
+    const 中 = "const 表 = {" + '\n' + "  'Daikou-app-test': 'https://" + TEST_REF + ".supabase" + ".co'," + '\n' + "};";
+    eq(役目で分ける('tests/unit/b.test.js', 中, TEST_REF).mark, '🟡', '対応表');
+  });
+  T('★★試験の 中でも 繋いでいたら 🔴★★（仲間だからと 甘くしない）', () => {
+    const 中 = "await fetch('https://" + TEST_REF + ".supabase" + ".co/rest/v1/x');";
+    eq(役目で分ける('tests/unit/c.test.js', 中, TEST_REF).mark, '🔴', '試験でも 繋げば 赤');
+  });
+  T('★役目が 読み取れない 時は 🟢 に しない（🟡）', () => {
+    eq(役目で分ける('scripts/memo.mjs', "// メモ: " + TEST_REF, TEST_REF).mark, '🟡', '未確認');
+  });
+  T('★★注記に 書いてあるだけなら 🔴 に しない★★（実測で 踏んだ 誤報）', () => {
+    const 中 = '/* テスト用DB(' + TEST_REF + ')とは 別の 倉庫を 指す */' + '\n'
+      + "window.SUPA = { url: 'https://" + PROD_REF + ".supabase" + ".co' };";
+    const r = 役目で分ける('js/supa-config.js', 中, TEST_REF);
+    eq(r.mark, '🟡', '注記だけ');
+    if (!/注記/.test(r.訳)) throw new Error('訳が 出ていない: ' + r.訳);
+    /* ★同じ ファイルの 本物の 住所は 🔴★（甘くしすぎていない事） */
+    eq(役目で分ける('js/supa-config.js', 中, PROD_REF).mark, '🔴', '本物の 住所');
+  });
+  T('★★見る 範囲に「一番 守りたい 物」が 入っている★★（2026-09-07 の 一番 大きい 抜け）', () => {
+    const 範 = 見る範囲を数える();
+    if (範.入る.indexOf('js/dk-config.js') < 0) throw new Error('dk-config.js が 範囲の 外');
+    if (範.入る.indexOf('js/supa-config.js') < 0) throw new Error('supa-config.js が 範囲の 外');
+    /* ★範囲の 外の 物は 隠さず 訳を 付けて 数える★（0件に しない） */
+    for (const x of 範.入らない) if (!x.訳) throw new Error('範囲の 外なのに 訳が 無い: ' + x.道);
+  });
+  T('★★試験の 中の「config という 名前」を 設定と 数えない★★（実測で 踏んだ 誤報）', () => {
+    const 中 = 'export const PROD_WAREHOUSE = "' + PROD_REF + '";'
+      + ' if (url.includes(PROD_WAREHOUSE)) process.exit(1);';
+    const r = 役目で分ける('tests/supa-from-config.mjs', 中, PROD_REF);
+    eq(r.mark, '🟡', '見張りの 定数');
+    /* ★でも 試験の 外なら 同じ 名前で 🔴★（甘くしすぎていない事） */
+    eq(役目で分ける('js/supa-from-config.mjs', 中, PROD_REF).mark, '🔴', '試験の 外');
+  });
+  T('★★画面（.html）の 中の 直書きも 🔴★★（2026-09-07 指示役の 注文）', () => {
+    const 中 = "<script>const SUPA_URL='https://" + TEST_REF + ".supabase" + ".co';</" + "script>";
+    eq(役目で分ける('daikou-seikyu.html', 中, TEST_REF).mark, '🔴', '画面の 直書き');
+    /* ★試験の 中の .html は 先に tests/ で 外れる★ */
+    eq(役目で分ける('tests/fixtures/a.html', "expect(x).not.toContain('" + TEST_REF + "');", TEST_REF).mark,
+      '🟡', '試験の 中');
+  });
+  T('★設定の ファイルの 見分け（名前だけで 決める）', () => {
+    if (!設定のファイルか('js/dk-config.js')) throw new Error('dk-config.js を 設定と 見ていない');
+    if (!設定のファイルか('src/config.ts')) throw new Error('config.ts を 設定と 見ていない');
+    if (設定のファイルか('tests/unit/a.test.js')) throw new Error('試験を 設定と 見ている');
+  });
   T('★④ 別の倉庫に1本 居たら 赤（混ざり）', () => eq(judgeRedirect(true, true).mark, '🔴', '混ざり'));
   T('★④ 自分だけに在れば 緑', () => eq(judgeRedirect(true, false).mark, '🟢', '正常'));
   T('★④ 読めない時は 🟢 にしない（🟡）', () => {
@@ -498,7 +702,14 @@ if (argv.includes('--self-test')) {
   process.exit(f ? 1 : 0);
 }
 
-/* ══════════ 実行 ══════════ */
+/* ══════════ 実行 ══════════
+   ★import された時は 走らせない★（2026-08-29）
+     PROD_REF / TEST_REF を 借りたい道具が 出てきた。見分けを 付けないと
+     ★import しただけで 外へ GET を 何十本も 出し、最後の process.exit で
+      借りた側が その場で 死ぬ★（実測＝apply-supabase-sql.mjs が 何も言わずに 終わっていた）。
+     ＝ tests/run.js で 踏んだ物と 同じ型（あちらは require.main）。 */
+const 走らせ役 = /check-warehouse-pointers\.mjs$/.test(String(process.argv[1] || '').split('\\').join('/'));
+if (走らせ役) {
 console.log('\n[warehouse-pointers] 倉庫の向き先 6か所 × 全アプリ（★読むだけ★）');
 console.log(`  本番 = ${PROD_REF} / テスト = ${TEST_REF} / 引っ越しの日 = ${MIGRATION_DAY}\n`);
 
@@ -528,6 +739,19 @@ console.log(`  🟢 正しい : ${all.filter((r) => r.mark === '🟢').length}`)
 console.log(`  🔴 ★誤り : ${all.filter((r) => r.mark === '🔴').length}★`);
 console.log(`  🟡 ★未測定: ${all.filter((r) => r.mark === '🟡').length}★  ← 0件・異常なしにしない`);
 console.log(`  —  対象外 : ${all.filter((r) => r.mark === '—').length}`);
+/* ★★読めなかった 本数を 必ず 出す★★（2026-09-07 指示役）
+   ⇒★『31個 見た』は『見るべき 物を 見た』では ない★
+   ⇒★上限に 当たって こぼれた 分は「広げた つもりで 狭い」所★ */
+{
+  const 外 = 見る範囲を数える().入らない;
+  const 合 = 読めず.上限で + 読めず.取れなかった;
+  console.log(`  ★読めなかった ファイル : ${合}本★`
+    + (合 ? `（上限で ${読めず.上限で} ／ 取れなかった ${読めず.取れなかった}）` : '')
+    + (読めず.木が切れた ? `／★一覧が 途中で 切れた repo ${読めず.木が切れた}本★` : ''));
+  console.log(`  ★見る 範囲の 外 : ${外.length}本★`
+    + (外.length ? `（${外.map((x) => x.道 + '＝' + x.訳).join(' ／ ')}）` : ''));
+}
 if (JSON_OUT) console.log('\n' + JSON.stringify(rows, null, 2));
 console.log(red ? '\n★🔴があります。向き先が違う所を直すこと★' : '\n🔴は0件（🟡の本数は上を見ること）');
 process.exit(red ? 3 : 0);
+}

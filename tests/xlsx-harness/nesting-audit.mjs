@@ -141,11 +141,44 @@ async function main() {
     console.log(`  nesting-baseline.json を ${broken.length} で更新`);
   }
 
+  /* ══ ★★commit 済みの 紙と ずれたら 赤★★ ══（2026-09-22）
+       ★★何が 在ったか★★
+         `nesting-audit.json` は ★総なめの たびに 書き直されて います★（下の 行）。
+         でも ★誰かが commit するまで repo の 紙は 古いまま★ です。
+         ⇒2026-09-22 に `overrideCount` が ★27 のまま 4日 古かった★（実物は 24）。
+         ⇒09-18 の `55e230b` / `0c4ef2b` で MAP・SCAN・MAKEARRAY の
+           JS層の 横取りを 外した ぶん 3本 減って いたのに ★誰も 気づきませんでした★。
+       ★★なぜ 門を 足すか★★
+         ★生成物を commit するなら 「ずれたら 赤」まで 付けないと 意味が 無い★
+         ＝古い 紙は ★正しい 顔を して 嘘を 言います★（誰も 開かないので 気づかない）。
+       ★★数だけ 見ます★★＝`broken` の 中身（式の 字）は 見ません
+         ＝そこは ★baseline(`nesting-baseline.json`)が 別に 見張って います★。
+       ⇒★赤に なったら やる 事は 1つ★＝★書き直された 紙を commit する★ */
   const outPath = path.join(__dirname, 'nesting-audit.json');
-  fs.writeFileSync(outPath, JSON.stringify({
-    overrideCount: ov.length, pluginCount: plug.length, measured: rows.length,
-    brokenCount: broken.length, byFunc, broken: broken.map(r => ({ id: r.id, func: r.outer, f: r.f, top: r.top, nested: r.nested }))
-  }, null, 1) + '\n');
+  const 今の数 = {
+    overrideCount: ov.length, pluginCount: plug.length,
+    measured: rows.length, brokenCount: broken.length,
+  };
+  if (process.argv.includes('--check')) {
+    if (!fs.existsSync(outPath)) {
+      console.log('  ★nesting-audit.json が 無い★＝この 回で 作られます。★commit して ください★');
+      exitCode = 1;
+    } else {
+      const 古い = JSON.parse(fs.readFileSync(outPath, 'utf8'));
+      const ずれ = Object.keys(今の数).filter((k) => 古い[k] !== 今の数[k]);
+      if (ずれ.length) {
+        console.log('  ★★commit 済みの 紙が 古い★★＝'
+          + ずれ.map((k) => k + ' ' + 古い[k] + ' ⇒ ★' + 今の数[k] + '★').join(' / '));
+        console.log('  ★紙は この 回で 書き直しました★。★commit して ください★（tests/xlsx-harness/nesting-audit.json）');
+        exitCode = 1;
+      } else {
+        console.log('  ★commit 済みの 紙と 揃って います★（' + Object.keys(今の数).length + '個の 数）');
+      }
+    }
+  }
+  fs.writeFileSync(outPath, JSON.stringify(Object.assign({}, 今の数, {
+    byFunc, broken: broken.map(r => ({ id: r.id, func: r.outer, f: r.f, top: r.top, nested: r.nested }))
+  }), null, 1) + '\n');
   console.log(`\n  詳細: tests/xlsx-harness/nesting-audit.json`);
   return exitCode;
 }

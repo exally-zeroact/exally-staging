@@ -1,0 +1,101 @@
+{
+  "note": "String にすると指数になる値の TEXT 真値",
+  "cases": [
+    {
+      "id": "TEXT_E_1em7_f0",
+      "func": "TEXT",
+      "f": "=TEXT(1E-7,\"[h]:mm:ss\")",
+      "why": "指数の形の値の真値（経営者 2026-10-04・Exally1 依頼）値 1E-7 書式 [h]:mm:ss"
+    },
+    {
+      "id": "TEXT_E_1em7_f1",
+      "func": "TEXT",
+      "f": "=TEXT(1E-7,\"[h]:mm:ss.00\")",
+      "why": "指数の形の値の真値（経営者 2026-10-04・Exally1 依頼）値 1E-7 書式 [h]:mm:ss.00"
+    },
+    {
+      "id": "TEXT_E_1em7_f2",
+      "func": "TEXT",
+      "f": "=TEXT(1E-7,\"[s]\")",
+      "why": "指数の形の値の真値（経営者 2026-10-04・Exally1 依頼）値 1E-7 書式 [s]"
+    },
+    {
+      "id": "TEXT_E_1em7_f3",
+      "func": "TEXT",
+      "f": "=TEXT(1E-7,\"ge.m.d\")",
+      "why": "指数の形の値の真値（経営者 2026-10-04・Exally1 依頼）値 1E-7 書式 ge.m.d"
+    },
+    {
+      "id": "TEXT_E_m555em17_f0",
+      "func": "TEXT",
+      "f": "=TEXT(-5.55E-17,\"[h]:mm:ss\")",
+      "why": "指数の形の値の真値（経営者 2026-10-04・Exally1 依頼）値 -5.55E-17 書式 [h]:mm:ss"
+    },
+    {
+      "id": "TEXT_E_m555em17_f1",
+      "func": "TEXT",
+      "f": "=TEXT(-5.55E-17,\"[h]:mm:ss.00\")",
+      "why": "指数の形の値の真値（経営者 2026-10-04・Exally1 依頼）値 -5.55E-17 書式 [h]:mm:ss.00"
+    },
+    {
+      "id": "TEXT_E_m555em17_f2",
+      "func": "TEXT",
+      "f": "=TEXT(-5.55E-17,\"[s]\")",
+      "why": "指数の形の値の真値（経営者 2026-10-04・Exally1 依頼）値 -5.55E-17 書式 [s]"
+    },
+    {
+      "id": "TEXT_E_m555em17_f3",
+      "func": "TEXT",
+      "f": "=TEXT(-5.55E-17,\"ge.m.d\")",
+      "why": "指数の形の値の真値（経営者 2026-10-04・Exally1 依頼）値 -5.55E-17 書式 ge.m.d"
+    },
+    {
+      "id": "TEXT_E_1ep21_f0",
+      "func": "TEXT",
+      "f": "=TEXT(1E+21,\"[h]:mm:ss\")",
+      "why": "指数の形の値の真値（経営者 2026-10-04・Exally1 依頼）値 1E+21 書式 [h]:mm:ss"
+    },
+    {
+      "id": "TEXT_E_1ep21_f1",
+      "func": "TEXT",
+      "f": "=TEXT(1E+21,\"[h]:mm:ss.00\")",
+      "why": "指数の形の値の真値（経営者 2026-10-04・Exally1 依頼）値 1E+21 書式 [h]:mm:ss.00"
+    },
+    {
+      "id": "TEXT_E_1ep21_f2",
+      "func": "TEXT",
+      "f": "=TEXT(1E+21,\"[s]\")",
+      "why": "指数の形の値の真値（経営者 2026-10-04・Exally1 依頼）値 1E+21 書式 [s]"
+    },
+    {
+      "id": "TEXT_E_1ep21_f3",
+      "func": "TEXT",
+      "f": "=TEXT(1E+21,\"ge.m.d\")",
+      "why": "指数の形の値の真値（経営者 2026-10-04・Exally1 依頼）値 1E+21 書式 ge.m.d"
+    },
+    {
+      "id": "TEXT_E_hashuu_f0",
+      "func": "TEXT",
+      "f": "=TEXT(0.1+0.2-0.3,\"[h]:mm:ss\")",
+      "why": "指数の形の値の真値（経営者 2026-10-04・Exally1 依頼）値 0.1+0.2-0.3 書式 [h]:mm:ss"
+    },
+    {
+      "id": "TEXT_E_hashuu_f1",
+      "func": "TEXT",
+      "f": "=TEXT(0.1+0.2-0.3,\"[h]:mm:ss.00\")",
+      "why": "指数の形の値の真値（経営者 2026-10-04・Exally1 依頼）値 0.1+0.2-0.3 書式 [h]:mm:ss.00"
+    },
+    {
+      "id": "TEXT_E_hashuu_f2",
+      "func": "TEXT",
+      "f": "=TEXT(0.1+0.2-0.3,\"[s]\")",
+      "why": "指数の形の値の真値（経営者 2026-10-04・Exally1 依頼）値 0.1+0.2-0.3 書式 [s]"
+    },
+    {
+      "id": "TEXT_E_hashuu_f3",
+      "func": "TEXT",
+      "f": "=TEXT(0.1+0.2-0.3,\"ge.m.d\")",
+      "why": "指数の形の値の真値（経営者 2026-10-04・Exally1 依頼）値 0.1+0.2-0.3 書式 ge.m.d"
+    }
+  ]
+}

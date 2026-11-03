@@ -64,9 +64,18 @@ T('★画面が立ち上がっていて sortRange と GridSort が在る', () =>
   ok(win.GridSort && typeof win.GridSort.order === 'function', 'GridSort が無い');
 });
 T('★右クリックの中に 昇順・降順が在る（押す口が在る）', () => {
-  const items = [...doc.querySelectorAll('.ctx-item')].map((e) => (e.getAttribute('onclick') || '') + '|' + e.textContent.trim());
-  ok(items.some((x) => x.startsWith("sortRange('asc')")), '昇順の口が無い');
-  ok(items.some((x) => x.startsWith("sortRange('desc')")), '降順の口が無い');
+  /* ★2026-08-31：右クリックの 中身が ★開いた時に 作る★ 形に なった★
+     （実 Excel の 1,384命令に 合わせて 25→37個。組（▸）に した）
+     ⇒ ★開いてから 探す★。印は onclick では なく data-ctx。
+     ★昇順と 降順は 同じ 働き（sortRange）を 引数 違いで 呼ぶ★ので
+     ★字も 一緒に 見る★（口だけだと 2つを 見分けられない）。 */
+  win.sel(0, 0, 0, 0);
+  win.showCtxMenu(10, 10);
+  const items = [...doc.querySelectorAll('#ctx-menu .ctx-item')]
+    .map((e) => (e.getAttribute('data-ctx') || '') + '|' + e.textContent.trim());
+  ok(items.some((x) => x.startsWith('sortRange|') && x.indexOf('昇順') >= 0),
+    '昇順の口が無い：' + items.join(' / '));
+  ok(items.some((x) => x.startsWith('sortRange|') && x.indexOf('降順') >= 0), '降順の口が無い');
 });
 
 const A = (r, c) => win.sheets[win.activeSheet].data[r + ',' + c] || null;
@@ -166,15 +175,22 @@ T('★もう並んでいる時は 書き換えない（黙って動かさない�
 });
 
 /* ── ⑧ ★測っていない事を 台帳に書いてある★ ── */
-T('★見つけた違い（TRUE を true と出す）が golden に書いてある★', () => {
+T('★見つけた違い（TRUE の 出方）が golden と 実物で 合っている★', () => {
   const 違い = GOLD['うちとの違い（並べ替えで見つけた物）'];
   ok(違い && 違い['論理値の見せ方'], '見つけた違いが書かれていない');
-  /* ★本当に まだ小文字で出るか を実際に見る（直したのに台帳が古い、を防ぐ）★ */
+  /* ★台帳と 実物を 突き合わせる★＝どちらに ずれても 赤に する
+     （2026-08-21 に 見つけ、2026-08-30 に 直した。直したのに 台帳が 古い、も 防ぐ） */
   reset();
   win.setCell(0, 0, 'TRUE');
   const 出 = 出る(0, 0);
+  const 台帳は直した = /★直した（2026-08-30）★/.test(String(違い['論理値の見せ方']['直したか']));
   ok(出 === 'true' || 出 === 'TRUE', '思っていない出方: ' + 出);
-  if (出 === 'TRUE') throw new Error('★もう大文字で出ている＝golden の「まだ直していません」が古い★');
+  if (台帳は直した && 出 !== 'TRUE') {
+    throw new Error('★台帳は「直した」なのに 小文字で 出ている＝戻ってしまった★: ' + 出);
+  }
+  if (!台帳は直した && 出 === 'TRUE') {
+    throw new Error('★もう大文字で出ている＝golden の「まだ直していません」が古い★');
+  }
 });
 T('★測っていない事が golden に書いてある（全部 測った事にしない）★', () => {
   ok(Array.isArray(GOLD['測っていない事']) && GOLD['測っていない事'].length >= 2, '測っていない事が書かれていない');
@@ -189,7 +205,10 @@ if (SELF) {
   const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'exally-sort-'));
   console.log('\n[self-test] わざと壊して 赤くなるかを数える（★repo は読むだけ★）');
   const BREAKS = [
-    ['book.html', '右クリックの 昇順を消す', (s) => s.replace('<div class="ctx-item" onclick="sortRange(\'asc\')">⬆️ 昇順で並べ替え</div>', '')],
+    /* ★2026-08-31：中身の 正本が 画面から lib/ctx-menu.js へ 移った★
+       ★壊す 先も 一緒に 移す★（古いままだと ★素通り★＝見張りが 眠る） */
+    ['lib/ctx-menu.js', '右クリックの 昇順を消す',
+      (s) => s.split("画面: 'sortRange'").join("画面: 'ctxCopy'")],
     ['book.html', '★式を移った先の行に読み替えない★（相対参照が壊れる）', (s) => s.replace('next.f = shiftFormula(src.f, ずれ, 0);', 'next.f = src.f;')],
     ['book.html', '見出しを いつも動かす', (s) => s.replace('var 先頭 = rng.r1 + (見出し ? 1 : 0);', 'var 先頭 = rng.r1;')],
     ['book.html', '表を広げず 1セルだけ並べ替える', (s) => s.replace('rng = GridSort.region(中身がある, selR1, selC1, ROWS-1, COLS-1);', 'rng = { r1:selR1, c1:selC1, r2:selR1, c2:selC1 };')],

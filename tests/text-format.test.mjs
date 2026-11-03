@@ -39,10 +39,19 @@ new Function('self', 'window', fs.readFileSync(path.join(ROOT, 'js/book-open.js'
 const BookOpen = box.__BookOpen;
 
 /* ── 本番と同じ計算の入口（book.html の initFormulaEngine と同じ作り） ── */
+/* ★書式の 台（lib/shoshiki.js）★＝画面では book.html が 先に 読み込んで 全体に 置く（和暦・経過時間は ここへ 渡る・2026-10-02） */
+globalThis.Shoshiki = require(path.join(ROOT, 'lib/shoshiki.js'));
 F.registerExallyFunctions(HF);
 const hf = HF.HyperFormula.buildEmpty({ licenseKey: 'gpl-v3', useArrayArithmetic: true, smartRounding: false });
 hf.addSheet('S');
 const SID = hf.getSheetId('S');
+/* ★真値は 1版だけ★＝ファイル名に 版が 入るので 名指し しない（2026-10-02 20228→20430 で 落ちた） */
+function 真値() {
+  const dir = path.join(ROOT, 'tests/xlsx-harness/golden');
+  const f = fs.readdirSync(dir).filter((x) => /^excel-.*[.]json$/.test(x));
+  if (f.length !== 1) throw new Error('★真値の 版が 1本で ない★ ' + f.join(','));
+  return JSON.parse(fs.readFileSync(path.join(dir, f[0]), 'utf8'));
+}
 function TEXT(v, fmt) {
   hf.setSheetContent(SID, [[v, '=TEXT(A1,"' + String(fmt).replace(/"/g, '""') + '")']]);
   const r = hf.getCellValue({ sheet: SID, row: 0, col: 1 });
@@ -161,7 +170,7 @@ T('★読めない書式でもシリアル値を答えにしない（46023 が�
 });
 
 T('★ハーネスに曜日の真値ケースが残っている（真値ごと消されない）', () => {
-  const g = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests/xlsx-harness/golden/excel-365-16.0.20228.json'), 'utf8'));
+  const g = 真値();
   const need = ['TEXT_weekday_ja', 'TEXT_weekday_ja_long', 'TEXT_weekday_ja_locale',
     'TEXT_weekday_in_date', 'TEXT_weekday_section', 'TEXT_minute_vs_month'];
   const missing = need.filter((k) => !g.cases[k]);
@@ -169,12 +178,53 @@ T('★ハーネスに曜日の真値ケースが残っている（真値ごと�
   if (g.cases.TEXT_weekday_ja.v !== '土') throw new Error('goldenの真値が書き換わっている: ' + g.cases.TEXT_weekday_ja.v);
 });
 
-T('★まだ読めない書式は台帳に載っている（黙って放置しない）', () => {
-  const k = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests/xlsx-harness/known-diffs.json'), 'utf8'));
-  const ids = (k.diffs || []).map((d) => d.id);
-  for (const id of ['TEXT_era_wareki', 'TEXT_elapsed_hours']) {
-    if (ids.indexOf(id) < 0) throw new Error('known-diffs.json に ' + id + ' が無い');
+/* ★★和暦と 経過時間は 実Excel の 真値どおり★★（2026-10-02 に 実装・前は「台帳に 載っている」を 見ていた）
+     真値 ＝ 実Excel 16.0.20430 で 経営者が 取った 155本（tests/xlsx-harness/cases/61-text-wareki-keika.json）
+     ★通し 60 以前（1900/1/1）は 区分C★（借り物の DATE が 1日 ずれる＝書式の 話では ない）⇒ ここでは 外す */
+T('★★和暦（g/e）と 経過時間（[h][m][s]）が 実Excel の 真値どおり★★', () => {
+  const g = 真値();
+  const cs = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests/xlsx-harness/cases/61-text-wareki-keika.json'), 'utf8')).cases;
+  let 見た = 0; const ng = [];
+  for (const c of cs) {
+    if (/^TEXT_W_19000101_/.test(c.id)) continue;
+    const m = /^=TEXT\((.*),"(.*)"\)$/.exec(c.f);
+    if (!m || !g.cases[c.id]) { ng.push(c.id + ' 読めない'); continue; }
+    hf.setSheetContent(SID, [['=' + m[1], '=TEXT(A1,"' + m[2] + '")']]);
+    const r = hf.getCellValue({ sheet: SID, row: 0, col: 1 });
+    const got = (r && typeof r === 'object' && r.value) ? String(r.value) : String(r);
+    const want = g.cases[c.id].t === 'e' ? '#VALUE!' : g.cases[c.id].text;
+    見た++;
+    if (got !== want) ng.push(c.f + ' 出た=' + got + ' 真値=' + want);
   }
+  if (見た < 140) throw new Error('★見た 数が 少ない★ ' + 見た + '本（空振り）');
+  if (ng.length) throw new Error(ng.length + '/' + 見た + '本 違う: ' + ng.slice(0, 5).join(' / '));
+});
+
+/* ★★YEN は 打った人の 期待どおり 動く★★（2026-09-05 実測で 足した）
+   ★なぜ 要るか★
+     08-31 に「実Excel に YEN は 無い（#NAME?）」と 書いた ⇒★英語の 構文でだけ 測っていた★
+     09-05 に `.FormulaLocal` で 測り直したら ★¥1,234 が 出た★
+     ＝★日本語UIの 表示名で、本名は DOLLAR★（Excel 自身が 相互に 直す）
+   ★台帳(lib/formula-extra.js)の 字は 直したが、字は ★半分★★
+     ⇒★ここで engine に 通して「本当に ¥ が 出るか」を 押す★
+   ★直しているのは exally-formula.js の convertFormula★（YEN( → DOLLAR( ） */
+T('★★=YEN(…) が そのまま 動く（本名 DOLLAR に 直している）★★', () => {
+  const 直し = F.convertFormula('=YEN(1234.5)');
+  if (直し !== '=DOLLAR(1234.5)') throw new Error('★直していない★: ' + 直し);
+  hf.setSheetContent(SID, [[F.convertFormula('=YEN(1234.5)')], [F.convertFormula('=YEN(-1234.5)')]]);
+  const a = String(hf.getCellValue({ sheet: SID, row: 0, col: 0 }));
+  const b = String(hf.getCellValue({ sheet: SID, row: 1, col: 0 }));
+  /* ★実測（2026-09-05）★ … ¥1,235 / ¥-1,235（小数は 実Excel と 同じく 丸める） */
+  if (a !== '¥1,235') throw new Error('★¥ が 出ていない★: ' + a);
+  if (b !== '¥-1,235') throw new Error('★負の 数が 違う★: ' + b);
+});
+
+T('★この 試験が 空振りしていない（直しを 通さなければ 答えが 変わる）', () => {
+  /* ★「動いた」を 本当に 見張れているか★＝素の まま 渡したら ★¥ は 出ない★
+     ⇒ 出てしまうなら ★convertFormula を 通さなくても 通る＝何も 見ていない★ */
+  hf.setSheetContent(SID, [['=YEN(1234.5)']]);
+  const 素 = String(hf.getCellValue({ sheet: SID, row: 0, col: 0 }));
+  if (素 === '¥1,235') throw new Error('★直さなくても 通る＝この 試験は 何も 見ていない★');
 });
 
 console.log('\n── 実測（司さんの実物と同じ形） ──');

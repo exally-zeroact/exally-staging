@@ -1,0 +1,43 @@
+# ★受け取った ファイルを 保存し直した 物を 実Excel に 開かせた★（㊼）（2026-09-20）
+# ★開いた 物★ ... C:\Users\zeroa\AppData\Local\Temp\exally-uketotta-kakidashi.xlsx（8050 バイト）
+# ★読むだけ★（保存して いません）
+# ★どの Excel か★ ... 版 16.0 ／ build 20326
+# ★どの 貝殻か★ ... PowerShell 5.1.26100.9278
+# ★お客さんが した 事★ A1 を 3 ⇒ 99 ／ C1 の =SEQUENCE(3) を ⇒ =SEQUENCE(2) に
+# ★画面では★ C1=1 C2=2 ★C3 は 空★ に なって いました
+# ★生の 字では★ C1 の 式は ★=SEQUENCE(3) の まま★／C3 に ★3 が 残って います★
+# ★この 材料に 飾り（判子・罫線・塗り・図形）は 1つも 在りません＝そこは 測れません★
+#
+# ★★①開いた 瞬間★★（★まだ 何も 打って いません★）
+# マス	値	出る字	式	型	溢れの一部か
+A1	99	99	99	Double	False
+A2	1	1	1	Double	False
+A3	2	2	2	Double	False
+B1	102	102	=SUM(A1:A3)	Double	False
+C1	1	1	=SEQUENCE(3)	Double	False
+C2	2	2		Double	False
+C3	3	3		Double	False
+C4	(kara)			(kara)	False
+D1	abc	abc	abc	String	False
+E1	abc!	abc!	=D1&"!"	String	False
+#
+# ★★②飾り★★（★元の 材料に 無い＝「消えた」では なく「元から 無い」★）
+# 見た物	数
+罫線(A1 左) LineStyle	-4142
+塗り(B1) Color	16777215
+字(A1) Bold	False
+図形の数	0
+A列の幅	8.44
+#
+# ★★2つ目の 窓★★（★上の 読みの 後に 打って います★）
+# マス	値	型	=(マス)=0
+A1	99	Double	False
+A2	1	Double	False
+A3	2	Double	False
+B1	102	Double	False
+C1	1	Double	False
+C2	2	Double	False
+C3	3	Double	False
+C4	(kara)	(kara)	True
+D1	abc	String	False
+E1	abc!	String	False

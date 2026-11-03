@@ -1,0 +1,56 @@
+# ★塞がれた 溢れ（#SPILL!）を 書き出した 物を 実Excel に 開かせた★（㊺）（2026-09-20）
+# ★開いた 物★ ... C:\Users\zeroa\AppData\Local\Temp\exally-kakidashi-spill.xlsx（16067 バイト）
+# ★読むだけ★（保存して いません）
+# ★どの Excel か★ ... 版 16.0 ／ build 20326
+# ★どの 貝殻か★ ... PowerShell 5.1.26100.9278
+# ★生の 字★ D1 `<c r="D1" t="str" cm="1"><f t="array" ref="D1:D1">_xlfn.SEQUENCE(3)</f><v>#SPILL!</v></c>`
+# ★前（-mae- の 紙）★ D1 は `cm` も `ref` も 無く ⇒ ★値 1（Double）★ でした
+# ★生の 字★ F1 `<c r="F1" cm="1"><f t="array" ref="F1:F3">_xlfn.SEQUENCE(3)</f><v>1</v></c>`
+#
+# ★★①開いた 瞬間★★（★まだ 何も 打って いません★）
+# マス	値	出る字	式	型	溢れの一部か
+D1	-2146826243	#スピル!	=SEQUENCE(3)	Other	False
+D2	9	9	9	Double	False
+D3	(kara)			(kara)	False
+D4	(kara)			(kara)	False
+E1	(kara)			(kara)	False
+F1	1	1	=SEQUENCE(3)	Double	False
+F2	2	2		Double	False
+F3	3	3		Double	False
+F4	(kara)			(kara)	False
+G1	(kara)			(kara)	False
+#
+# ★★②文字列か 誤りかを 直に 訊く★★（★ここから 計算し直しが 起きます★）
+# =ISERROR(D1)	True
+# =ISTEXT(D1)	False
+# =ISNUMBER(D1)	False
+# =ISERROR(F1)	False
+# =ISTEXT(F1)	False
+# ★D1 を もう 一度★	-2146826243	#スピル!
+#
+# ★★③邪魔（D2）を 消したら D1 は 溢れ直すか★★
+# ★消した 結果★ ... ok（★変わりました★）
+# マス	値	出る字	式	型	溢れの一部か
+D1	1	1	=SEQUENCE(3)	Double	False
+D2	2	2		Double	False
+D3	3	3		Double	False
+D4	(kara)			(kara)	False
+E1	(kara)			(kara)	False
+F1	1	1	=SEQUENCE(3)	Double	False
+F2	2	2		Double	False
+F3	3	3		Double	False
+F4	(kara)			(kara)	False
+G1	(kara)			(kara)	False
+#
+# ★★2つ目の 窓★★（★上の 読みの 後に 打って います★）
+# マス	値	型	=(マス)=0
+D1	1	Double	False
+D2	2	Double	False
+D3	3	Double	False
+D4	(kara)	(kara)	True
+E1	(kara)	(kara)	True
+F1	1	Double	False
+F2	2	Double	False
+F3	3	Double	False
+F4	(kara)	(kara)	True
+G1	(kara)	(kara)	True

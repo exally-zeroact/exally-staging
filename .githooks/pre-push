@@ -1,0 +1,14 @@
+#!/bin/sh
+# 押す 前の 門 2つ（置き方: git config --local core.hooksPath .githooks）
+#   1. commit の メールを 公開 repo に 出さない（pre-push-author.mjs）
+#   2. 押す commit の 中身に 実在の 字が 無いか（pre-push-kinshi.mjs・一覧の 指紋は .githooks/kinshi-finger）
+# ★Exally だけ 1行 足した（逐語で ない・2026-10-20）★＝scripts/pre-push-noreply.sh も 呼ぶ。
+#   pre-push-author.mjs は 本文の Co-authored-by と 注釈付きの タグの tagger を 見ない（門の 外）。
+#   Exally の 門（10-11）は 2つとも 止めていた＝外すと 止める 物が 0 に なる（10-20 設計前の 対立役が 同じ 入力で 測った）。
+#   Exally の 置き方は core.hooksPath で なく .git/hooks/pre-push の 包み（共有の config に 置くと .githooks の 無い 古い 作業木の 押しが 門 無しで 通る）
+d="$(dirname "$0")"
+input=$(cat)
+# $1＝押す 先の 遠くの 名・$2＝その 道（新しい 枝の 範囲を 押す 先の 遠くの 今の 頭から 決める）
+printf '%s\n' "$input" | node "$d/pre-push-author.mjs" "$@" || exit 1
+printf '%s\n' "$input" | sh "$d/../scripts/pre-push-noreply.sh" "$@" || exit 1
+printf '%s\n' "$input" | node "$d/pre-push-kinshi.mjs" "$@" || exit 1

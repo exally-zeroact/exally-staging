@@ -1,0 +1,31 @@
+# ★実Excel に 打たせた AREAS の 答え（3回目・答えが 割れる 組）★
+# 取った 日 … 2026-09-07
+# ★どの Excel で 打ったか★ … 版 16.0 ／ build 20326
+# ★置いた 中身★ A1='あいう'（字）／A2='かきく'（字）／B1=11（数）／C1=空／D1==1/0（誤り）
+# ★聞きたい 事★ 『出てきた 値が 字なら #VALUE!』で よいか
+#   ⇒ A1 が ★字★でも マスを 指していれば 1 なら、その 決まりは ★間違い★
+# 関数	式	実Excel の 答え	型
+# ★★2026-09-21 追記（経営者1）── ★この 紙は `.Formula`（★昔の 道★）で 取って います★★
+#   ＝`docs/measured/kansuu46/` の 道具 21本は `Formula2` を ★1本も 使って いません★
+#   ＝`.Formula` は ★溢れません★（2026-09-19 実測）＝★暗黙の 交わりで 1マス★
+#   ⇒★範囲を 渡した 式の 答えは ★1マス目だけ★です（★間違いでは なく 足りない★）
+#   ⇒★実測（2026-09-21）★ この 紙の 範囲を 渡す 812本を `Formula2` で 打ち直すと
+#      ★昔と 同じ 809本／★違う 3本★（ISERR/ISERROR/ISNUMBER の A1:B5）／★溢れた 416本★
+#   ⇒★新しい 道の 紙★ ... docs/measured/golden-furui-kami-torinaoshi-2026-09-21.tsv
+#   ⇒★この 紙を 物差しに する 試験は ★昔の 道を 守って います★★
+AREAS	=AREAS(IF(TRUE,A1,A2))	1	Double
+AREAS	=AREAS(IF(TRUE,A1:A2,B1))	1	Double
+AREAS	=AREAS(INDEX(A1:A2,1))	1	Double
+AREAS	=AREAS(CHOOSE(1,A1,A2))	1	Double
+AREAS	=AREAS(INDIRECT("A1"))	1	Double
+AREAS	=AREAS(OFFSET(A1,0,0))	1	Double
+AREAS	=AREAS(IF(TRUE,C1,B1))	1	Double
+AREAS	=AREAS(INDEX(C1:C2,1))	1	Double
+AREAS	=AREAS(IF(TRUE,D1,B1))	1	Double
+AREAS	=AREAS(INDEX(D1:D2,1))	1	Double
+AREAS	=AREAS(IF(TRUE,"x","y"))	#VALUE!	error値
+AREAS	=AREAS(CHOOSE(1,"x","y"))	#VALUE!	error値
+AREAS	=AREAS(IF(TRUE,A1&"",B1))	#VALUE!	error値
+AREAS	=AREAS(IF(TRUE,1,2))	#VALUE!	error値
+AREAS	=AREAS(CHOOSE(1,1,2))	#VALUE!	error値
+AREAS	=AREAS(IF(TRUE,TRUE,FALSE))	#VALUE!	error値

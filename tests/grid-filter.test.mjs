@@ -77,9 +77,15 @@ T('★画面が立ち上がっていて filterByValue と GridFilter が在る',
   ok(win.GridFilter && typeof win.GridFilter.byValue === 'function', 'GridFilter が無い');
 });
 T('★右クリックの中に 絞り込みと 解除が在る（押す口が在る）', () => {
-  const items = [...doc.querySelectorAll('.ctx-item')].map((e) => e.getAttribute('onclick') || '');
-  ok(items.some((x) => x.startsWith('filterByValue()')), '絞り込みの口が無い');
-  ok(items.some((x) => x.startsWith('clearFilter()')), '解除の口が無い');
+  /* ★2026-08-31：右クリックの 中身が ★開いた時に 作る★ 形に なった★
+     （実 Excel の 1,384命令に 合わせて 25→37個。組（★）に した）
+     ⇒ ★開いてから 探す★。印は onclick ではなく data-ctx。 */
+  win.sel(0, 0, 0, 0);
+  win.showCtxMenu(10, 10);
+  const items = [...doc.querySelectorAll('#ctx-menu .ctx-item')]
+    .map((e) => e.getAttribute('data-ctx') || '');
+  ok(items.indexOf('filterByValue') >= 0, '絞り込みの口が無い：' + items.join(' / '));
+  ok(items.indexOf('clearFilter') >= 0, '解除の口が無い');
 });
 
 /* ── ① 隠れ方が実測どおりか ── */
@@ -191,7 +197,10 @@ if (SELF) {
   const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'exally-filter-'));
   console.log('\n[self-test] わざと壊して 赤くなるかを数える（★repo は読むだけ★）');
   const BREAKS = [
-    ['book.html', '右クリックの 絞り込みを消す', (s) => s.replace('<div class="ctx-item" onclick="filterByValue()">🔽 選んだセルの値で絞り込む</div>', '')],
+    /* ★2026-08-31：中身の 正本が 画面から lib/ctx-menu.js へ 移った★
+       ★壊す 先も 一緒に 移す★（古いままだと ★素通り★） */
+    ['lib/ctx-menu.js', '右クリックの 絞り込みを消す',
+      (s) => s.replace("画面: 'filterByValue'", "画面: 'ctxCopy'")],
     ['book.html', '★隠した行を 手で隠した所と混ぜる★（解除で人の行まで出る）', (s) => s.replace('  sh.filterHidden = {};\n  for(var i=0;i<res.hide.length;i++) sh.filterHidden[res.hide[i]] = true;', '  sh.hiddenRows = sh.hiddenRows || {};\n  for(var i=0;i<res.hide.length;i++) sh.hiddenRows[res.hide[i]] = true;')],
     ['book.html', '見出しの行でも絞れるようにする', (s) => s.replace("  if(見出し && selR1===rng.r1){ showToast('見出しの行では絞り込めません（下の行を選んでね）'); return; }", '')],
     ['book.html', '★隠すのではなく 中身を消す★', (s) => s.replace('  for(var i=0;i<res.hide.length;i++) sh.filterHidden[res.hide[i]] = true;', '  for(var i=0;i<res.hide.length;i++){ sh.filterHidden[res.hide[i]] = true; for(var c=rng.c1;c<=rng.c2;c++) delete data[res.hide[i]+","+c]; }')],

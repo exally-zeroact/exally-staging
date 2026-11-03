@@ -1,0 +1,146 @@
+name: WebKit（本物のブラウザで 描いた物を 測る）
+
+# ★★借り物★★（自分で 設計していません）
+#   ★出どころ★ … `rakually-test/.github/workflows/webkit.yml`（2026-09-03 に 写した）
+#   ★指示役の 決定（2026-09-03）★ … 正本は rakually-test／★Exally にも 入れる★
+#   ★同じに 出来ない所（理由を 1行ずつ）★
+#     ・`paths` … ★repo が 違う＝見る 場所が 違う★（seikyu/kyuyo は Exally に 無い）
+#     ・step の 中身 … ★測る 物が 違う★（Exally は ★canvas に 描いた 点★を 測る）
+#     ・chromium は 入れない … ★Exally は WebKit だけで 足りる★（自作PDFの 試験が 無い）
+#
+# ★なぜ 別のワークフローか★
+#   ・★毎回 ブラウザを 入れるのは 重い★（ダウンロードが 要る）
+#   ・かといって ★「毎回 未測定」は 見張りでは ない★＝★在るのに 0回★
+#   ⇒ ★週1（月曜 朝）★ と ★見た目に 関わる所を 触った時★ の 2つだけ ★本当に 測る★。
+#
+# ★測る物★ … ★画面が した 約束のうち「描いた物」でしか 見られない 物★
+#   1本目＝★コメントを 付けた セルに 赤い印が 出るか★（book.html の data-yakusoku="comment-mark"）
+#   ★測れない時は 赤にせず「未測定」と はっきり言う★（0件と 未測定を 混ぜない）
+#   ＝ scripts/_borrow-playwright.mjs（★判定は 1か所★・yml に 書き足さない）
+
+# ★★2026-09-21 ── 司さん「★お金かからんようにしろや★」★★
+#   ＝押し直すと ★前の 回が 止まらず 走り続けて いました★
+#   ＝2026-09-20 の 1日で ★15分 ぶんが 丸ごと 無駄★（実測）
+#   ⇒★同じ 枝の 古い 回は 止める★
+#   ★main は 止めません★（`github.ref` を 群れの 名に 入れる ので
+#     main の 回と 枝の 回は 別の 群れ＝main は 最後まで 走ります）
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  schedule:
+    # ★週1（日曜 22:00 UTC＝月曜 07:00 JST）★ … 誰も 押さなくても 週に 1回は 必ず 測る
+    - cron: '0 22 * * 0'
+  # ★★2026-09-03 に 足した（借り元には 無い・理由）★★
+  #   ★入れた後に 赤に なった★＝PR の CI では この 回が 走らず ★見えなかった★
+  #   （実測＝1d1e434 で main に 入った 直後に failure）
+  #   ⇒★PR でも 同じ 所を 触ったら 走らせる★＝★入れる前に 分かる★
+  pull_request:
+    paths:
+      - 'book.html'
+      - 'lib/**'
+      - 'js/**'
+      - 'css/**'
+      - 'tests/comment-mark-webkit.mjs'
+      - 'tests/hyou-no-soto-webkit.mjs'
+      - 'tests/fixtures/hyou-no-soto-sample.xlsx'
+      - 'tests/bahttext-webkit.mjs'
+      - 'tests/fixtures/bahttext-sample.xlsx'
+      - 'tests/karimono.test.mjs'
+      - 'lib/yakusoku-daicho.js'
+      - 'scripts/_borrow-playwright.mjs'
+      - '.github/workflows/webkit.yml'
+      # ★名簿の webkit の 見張りと その 物差し★（2026-10-04 夜）
+      - 'tests/*-webkit.mjs'
+      - 'tests/run.js'
+      - 'tests/fixtures/**'
+      - 'scripts/run-webkit-tests.mjs'
+      - 'docs/measured/*.tsv'
+      - 'docs/measured/hakaru-haba-no-gamen.mjs'
+      - 'docs/measured/_gamen-no-michi.mjs'
+  push:
+    branches: [main]
+    paths:
+      # ★見た目・約束に 関わる所を 触った時★＝直した日に その場で 分かる
+      - 'book.html'
+      - 'lib/**'
+      - 'js/**'
+      - 'css/**'
+      - 'tests/comment-mark-webkit.mjs'
+      - 'tests/karimono.test.mjs'
+      - 'lib/yakusoku-daicho.js'
+      - 'scripts/_borrow-playwright.mjs'
+      - '.github/workflows/webkit.yml'
+      - 'tests/*-webkit.mjs'
+      - 'tests/run.js'
+      - 'scripts/run-webkit-tests.mjs'
+  workflow_dispatch:
+
+jobs:
+  webkit:
+    runs-on: ubuntu-latest
+    # ★ここは「測る為に 用意した場所」＝道具が 無いのは 用意の失敗＝赤★
+    #   手元・毎回のCI では 同じ試験が ★未測定・緑（声は 出す）★ に なる。
+    #   ★判定は scripts/_borrow-playwright.mjs が 1か所で 持つ★（★yml に 書き足さない★）。
+    env:
+      MEASURE_REQUIRED: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install test deps
+        run: npm install --no-audit --no-fund
+      # ★★借り元と ここが 違う（理由）★★
+      #   借り元（rakually-test）は playwright を ★devDependency に 入れている★（2026-08-28 案A）。
+      #   ★Exally は 入れていません★＝★Vercel は 配信の たびに devDependencies を 全部 入れる★
+      #     （2026-08-29 実測＝$110.59/21日）⇒★重い 物を repo の 依存に 足さない★。
+      #   ⇒★この 回の 中だけ 借りる★（`--no-save`＝package.json を 汚さない）
+      #   ★これが 無いと `playwright(webkit) を 借りられる場所が 見つかりません＝赤★
+      #     （2026-09-03 実測＝PR#10 の 1回目）
+      #   ★版は x.y.z まで 書く★（2026-09-03・指示役）
+      #     ★版を 書かないと @latest と 同じ＝ある日 勝手に 中身が 入れ替わる／CIは 緑のまま★
+      #     （★CDN の 版を 固定した のと 同じ 病気★＝2026-09-02 に 全社 41か所で 出た）
+      #     ★playwright は 部品と ブラウザ本体の 版が 合わないと 黙って 転ぶ★
+      #   ★1.62.1 の 出どころ★＝借り元 rakually-test の node_modules に
+      #     ★実際に 入っている 版★（package.json は "^1.62.1"）＝★借り元に 合わせる★
+      - name: Install playwright 1.62.1 (この 回の 中だけ・package.json は 汚さない)
+        run: npm i --no-save playwright@1.62.1
+      # ★webkit だけ★ 入れる（chromium/firefox は 要らない＝そのぶん 速い）
+      - name: Install WebKit
+        run: npx playwright install --with-deps webkit
+      - name: ★借り物が 出どころと 同じか（写した後に ずれていないか）
+        run: node tests/karimono.test.mjs
+      - name: ★同 わざと 出どころ書きを 消して 赤に なるか
+        run: node tests/karimono.test.mjs --self-test
+      - name: ★コメントの 赤い印＝画面の 約束を 描いた物で 確かめる（物差しを 先に 疑う）
+        run: node tests/comment-mark-webkit.mjs
+      - name: ★同 わざと 描き終わる前に 読むと 0点に なるか（物差しの 自己確認）
+        run: node tests/comment-mark-webkit.mjs --self-test
+      # ★診断2本目★（2026-09-04）＝★実Excel に 作らせた 見本を 本物の ブラウザで 開いて 押す★
+      #   ★字合わせでは 分からない★＝知らせが 出るか／窓に ★直し方★が 出るか／その場所へ 飛ぶか
+      - name: ★ほかの表の その行＝見本を 開いて 直し方まで 出るか（本物のマウスで 押す）
+        run: node tests/hyou-no-soto-webkit.mjs
+      # ★BAHTTEXT（タイ語の 金額）★ 2026-09-04
+      #   ★実Excel が 作った ブック★を 本物の ブラウザで 開いて ★計算し直した 答え★と
+      #   ★実Excel が 出した 答え★を 1行ずつ 見比べる（部品だけ 緑では 足りない）
+      - name: ★タイ語の 金額＝実Excel の ブックを 開いて 答えが 同じか（実ブラウザ）
+        run: node tests/bahttext-webkit.mjs
+      # ★リボンの 重なり★（2026-09-07）＝★webkit だけ 潰れていた★
+      #   `.rb-items` は `flex-flow: column wrap`。★webkit は その 箱の 幅を 1列ぶんしか 数えない★
+      #   ⇒ 隣の 組が 上に 乗り、★見えている 55個 のうち 31個が「押すと 別の 物が 出る」★
+      #   ⇒★iPhone・iPad・Mac の Safari の お客さん 全員★が それを 見ていた
+      #   ★字合わせでは 分からない★＝★真ん中を 押して 何が 出るかを 見る★
+      - name: ★リボンが 重なっていないか（幅 5通りを 本物の Safari で 押す）
+        run: node tests/ribbon-kasanari-webkit.mjs
+      - name: ★同 わざと 直しを 剥がすと 赤に なるか（物差しの 自己確認）
+        run: node tests/ribbon-kasanari-webkit.mjs --self-test
+      # ★★名簿（tests/run.js）の webkit の 見張り 全部★★（2026-10-04 夜・経営者が 見つけた 穴）
+      #   ★前は ここに 名簿の 見張りが 1本も 無かった★＝名簿の 15本は ★CI の どこでも 本当に 走って いなかった★
+      #   （毎回の CI では webkit が 無いので 未測定・緑。本人は「ここで 本当に 測る」と 言って いた）
+      #   ⇒★1本ずつ 並べず 名簿から 拾う 道具を 1段で 呼ぶ★＝名簿に 足せば 勝手に 走る
+      #   ★上の 4本（comment-mark・hyou-no-soto・bahttext・ribbon-kasanari）は 名簿に 無い＝ここに 書いた まま★
+      #   ★門★ tests/webkit-hashiru.test.mjs（毎回の CI）＝この 段が 在るか・どの *-webkit.mjs も どこかで 走るか
+      - name: ★名簿の webkit の 見張り 全部（tests/run.js から 拾う）
+        run: node scripts/run-webkit-tests.mjs

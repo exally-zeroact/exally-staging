@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#52B788">
+<title>持ち込んだファイル（エクサリー）</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="img/icon-192.png">
+<link rel="icon" type="image/png" href="img/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@500&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/hub.css?v=203a99a9">
+<style>
+/* ★ログインが 済むまで 中身を 1バイトも 見せない★
+   `[hidden]` は class の display に 負けるので ★この 画面の style に 置きます★（hub.html と 同じ） */
+#app[hidden]{display:none !important;}
+.mk-wrap{max-width:760px;margin:0 auto;padding:16px;}
+.mk-lead{background:#F0FAF4;border:1px solid #C8ECD8;border-radius:10px;padding:12px 14px;
+  color:#1A2B22;font-size:13px;line-height:1.8;margin-bottom:16px;}
+/* ★ボタンは 裸で 並べない★＝箱に 入れる（09-04 の 決まり） */
+.mk-btns{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px;}
+.mk-btn{background:#3D9E72;border:none;color:#fff;border-radius:22px;padding:10px 20px;
+  font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;}
+.mk-btn[disabled]{background:#C8ECD8;color:#6B8F7D;cursor:default;}
+.mk-btn.sub{background:#F0FAF4;border:1px solid #C8ECD8;color:#3D9E72;}
+.shirase{border-radius:8px;padding:8px 12px;font-size:13px;margin-bottom:12px;
+  background:#F0FAF4;color:#2E7D54;line-height:1.7;}
+.shirase.akai{background:#FFF1F1;color:#9B3B3B;border:1px solid #E8B4B4;}
+.mk-card{border:1px solid #C8ECD8;border-radius:10px;padding:14px;background:#fff;}
+.mk-fname{font-size:15px;font-weight:700;color:#1A2B22;word-break:break-all;}
+.mk-fmeta{font-size:12px;color:#6B8F7D;margin-top:2px;}
+/* ★1文＝ここが 司さんの 言う「簡潔に 文にして」★ */
+.mk-hitokoto{margin:12px 0;padding:10px 12px;background:#F8FEFC;border-left:4px solid #3D9E72;
+  border-radius:6px;font-size:14px;line-height:1.8;color:#1A2B22;}
+/* ★★畳んだ 中身は ★自分で★ 隠す★★（2026-09-22・Exally1 が 先に 踏んだ 穴）
+   ブラウザ既定の `details:not([open])>*:not(summary){display:none}` は ★弱い★ので、
+   中の 部品が 自分で `display` を 持つと ★畳んだのに 見えたまま★に なります。
+   ⇒★自分で 書きます★（強さで 負けない ように 親を 名指し）
+   ⇒★試験も 「open が 付いたか」では なく ★高さ★で 数えます★ */
+#kuwashiku details:not([open]) > *:not(summary){display:none !important;}
+details{border:1px solid #C8ECD8;border-radius:8px;margin-top:8px;background:#F8FEFC;}
+summary{cursor:pointer;padding:8px 12px;font-size:13px;font-weight:700;color:#2E7D54;}
+details ul{margin:0;padding:4px 12px 10px 28px;}
+details li{font-size:12px;line-height:1.9;color:#1A2B22;font-family:'DM Mono',monospace;}
+details .chu{margin:0;padding:0 12px 8px;font-size:12px;color:#6B8F7D;line-height:1.7;}
+.mk-hkekka{margin-top:10px;font-size:12px;color:#2E7D54;line-height:1.7;}
+</style>
+</head>
+<body>
+<div class="app" id="app" hidden>
+  <header class="hd">
+    <div class="hd-logo">Exally</div>
+    <div class="hd-user" id="hd-user"></div>
+  </header>
+
+  <div class="mk-wrap">
+    <h1 style="font-size:18px;color:#1A2B22;margin:0 0 10px;">持ち込んだファイル</h1>
+
+    <!-- ★この 画面が 何を するか／しないかを 先に 書く★（押した 後で 驚かせない） -->
+    <div class="mk-lead">
+      お手元のExcelファイルを開いて、<b>どんな関数やマクロが組まれているか</b>をお見せします。<br>
+      この画面では<b>ファイルを直しません</b>。1マスも打てません。<br>
+      保存すると<b>お預かりしたまま</b>お返しします（判子・罫線・グラフはそのままです）。<br>
+      直すときは「表を開く」の画面をお使いください。
+    </div>
+
+    <div class="mk-btns">
+      <input type="file" id="finput" accept=".xlsx,.xlsm,.xlsb,.xls" style="display:none">
+      <button class="mk-btn" id="erabu">Excelファイルを選ぶ</button>
+      <button class="mk-btn sub" id="hozon" disabled>このまま保存する</button>
+    </div>
+
+    <div class="shirase" id="shirase" hidden></div>
+
+    <div class="mk-card" id="kekka" hidden>
+      <div class="mk-fname" id="fname"></div>
+      <div class="mk-fmeta" id="fmeta"></div>
+      <div class="mk-hitokoto" id="hitokoto"></div>
+      <div id="kuwashiku"></div>
+      <div class="mk-hkekka" id="hozon-kekka" hidden></div>
+    </div>
+  </div>
+</div>
+
+<!-- ★★読む 順は `book.html` の `_ensureXlsx()` と ★同じ★です★★
+     ＝あちらは 表の 画面を 軽く する ため 後から 読みますが、
+       この 画面は ★ファイルを 開く 事だけ★を するので 先に 全部 読みます。
+     ★順を 変えては いけません★（`xlsx-io.js` は 読まれた 瞬間に XLSX を 掴むので SheetJS が 先 …）
+     ★2か所に 同じ 順が 在るので 見張りを 付けました★
+       ⇒`tests/mochikomi-lib-order.test.mjs`（★ずれたら 赤★） -->
+<script src="lib/xlsx.full.min.js?v=203a99a9"></script>
+<script src="lib/xlsx-io.js?v=203a99a9"></script>
+<script src="lib/zip-surgeon.js?v=203a99a9"></script>
+<script src="lib/xlsx-edit.js?v=203a99a9"></script>
+<script src="lib/xlsb-edit.js?v=203a99a9"></script>
+<script src="lib/xlsb-jitai.js?v=203a99a9"></script>
+<script src="lib/table-refs.js?v=203a99a9"></script>
+<script src="lib/xlsx-kazari.js?v=203a99a9"></script>
+<script src="lib/xlsx-zukei.js?v=203a99a9"></script>
+<script src="js/book-open.js?v=203a99a9"></script>
+
+<!-- ★中身を 数えて 言葉に する 台★（0円・AIを 1回も 呼ばない） -->
+<script src="lib/excel-version.js?v=203a99a9"></script>
+<script src="lib/vba.js?v=203a99a9"></script>
+<script src="lib/vba-mikata.js?v=203a99a9"></script>
+<script src="lib/hon-no-nakami.js?v=203a99a9"></script>
+
+<!-- ★ファイルを 客に 渡す 唯一の 口★ -->
+<script src="js/file-out.js?v=203a99a9"></script>
+<script src="js/mochikomi.js?v=203a99a9"></script>
+<script>Mochikomi.つなぐ();</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4"></script>
+<script src="js/supa-config.js?v=203a99a9"></script>
+<script src="js/exally-login.js?v=203a99a9"></script>
+<script src="js/auth.js?v=203a99a9"></script>
+</body>
+</html>

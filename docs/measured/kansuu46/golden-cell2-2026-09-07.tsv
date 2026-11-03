@@ -1,0 +1,126 @@
+# ★実Excel に 打たせた CELL の 答え（2回目・見た目を 細かく）★
+# 取った 日 … 2026-09-07
+# ★どの Excel で 打ったか★ … 版 16.0 ／ build 20326 ／ UI の 言語 1041
+# ①A1〜 に 1234.5678 を 置いて 表示形式を 1つずつ 変えた（式は 英語の 記号で 入れた）
+# ②B100〜 に 字/数を 置いて そろえ方を 変えた
+# ③C1〜C6 は type/contents の 変わり種
+# 関数	式	実Excel の 答え	型	どんな 場面か
+# ★★2026-09-21 追記（経営者1）── ★この 紙は `.Formula`（★昔の 道★）で 取って います★★
+#   ＝`docs/measured/kansuu46/` の 道具 21本は `Formula2` を ★1本も 使って いません★
+#   ＝`.Formula` は ★溢れません★（2026-09-19 実測）＝★暗黙の 交わりで 1マス★
+#   ⇒★範囲を 渡した 式の 答えは ★1マス目だけ★です（★間違いでは なく 足りない★）
+#   ⇒★実測（2026-09-21）★ この 紙の 範囲を 渡す 812本を `Formula2` で 打ち直すと
+#      ★昔と 同じ 809本／★違う 3本★（ISERR/ISERROR/ISNUMBER の A1:B5）／★溢れた 416本★
+#   ⇒★新しい 道の 紙★ ... docs/measured/golden-furui-kami-torinaoshi-2026-09-21.tsv
+#   ⇒★この 紙を 物差しに する 試験は ★昔の 道を 守って います★★
+CELL	(表示形式を 付けられない)	★付かない★	-	表示形式 General
+CELL	=CELL("format",A2)	F0	String	表示形式 0
+CELL	=CELL("color",A2)	0	Double	表示形式 0
+CELL	=CELL("parentheses",A2)	0	Double	表示形式 0
+CELL	=CELL("format",A3)	F2	String	表示形式 0.00
+CELL	=CELL("color",A3)	0	Double	表示形式 0.00
+CELL	=CELL("parentheses",A3)	0	Double	表示形式 0.00
+CELL	=CELL("format",A4)	F3	String	表示形式 0.000
+CELL	=CELL("color",A4)	0	Double	表示形式 0.000
+CELL	=CELL("parentheses",A4)	0	Double	表示形式 0.000
+CELL	=CELL("format",A5)	,0	String	表示形式 #,##0
+CELL	=CELL("color",A5)	0	Double	表示形式 #,##0
+CELL	=CELL("parentheses",A5)	0	Double	表示形式 #,##0
+CELL	=CELL("format",A6)	,2	String	表示形式 #,##0.00
+CELL	=CELL("color",A6)	0	Double	表示形式 #,##0.00
+CELL	=CELL("parentheses",A6)	0	Double	表示形式 #,##0.00
+CELL	=CELL("format",A7)	,0	String	表示形式 $#,##0_);($#,##0)
+CELL	=CELL("color",A7)	0	Double	表示形式 $#,##0_);($#,##0)
+CELL	=CELL("parentheses",A7)	0	Double	表示形式 $#,##0_);($#,##0)
+CELL	=CELL("format",A8)	,2	String	表示形式 $#,##0.00_);($#,##0.00)
+CELL	=CELL("color",A8)	0	Double	表示形式 $#,##0.00_);($#,##0.00)
+CELL	=CELL("parentheses",A8)	0	Double	表示形式 $#,##0.00_);($#,##0.00)
+CELL	(表示形式を 付けられない)	★付かない★	-	表示形式 $#,##0_);[Red]($#,##0)
+CELL	(表示形式を 付けられない)	★付かない★	-	表示形式 $#,##0.00_);[Red]($#,##0.00)
+CELL	=CELL("format",A11)	P0	String	表示形式 0%
+CELL	=CELL("color",A11)	0	Double	表示形式 0%
+CELL	=CELL("parentheses",A11)	0	Double	表示形式 0%
+CELL	=CELL("format",A12)	P2	String	表示形式 0.00%
+CELL	=CELL("color",A12)	0	Double	表示形式 0.00%
+CELL	=CELL("parentheses",A12)	0	Double	表示形式 0.00%
+CELL	=CELL("format",A13)	S2	String	表示形式 0.00E+00
+CELL	=CELL("color",A13)	0	Double	表示形式 0.00E+00
+CELL	=CELL("parentheses",A13)	0	Double	表示形式 0.00E+00
+CELL	=CELL("format",A14)	G	String	表示形式 # ?/?
+CELL	=CELL("color",A14)	0	Double	表示形式 # ?/?
+CELL	=CELL("parentheses",A14)	0	Double	表示形式 # ?/?
+CELL	=CELL("format",A15)	G	String	表示形式 # ??/??
+CELL	=CELL("color",A15)	0	Double	表示形式 # ??/??
+CELL	=CELL("parentheses",A15)	0	Double	表示形式 # ??/??
+CELL	=CELL("format",A16)	D1	String	表示形式 m/d/yy
+CELL	=CELL("color",A16)	0	Double	表示形式 m/d/yy
+CELL	=CELL("parentheses",A16)	0	Double	表示形式 m/d/yy
+CELL	=CELL("format",A17)	D1	String	表示形式 d-mmm-yy
+CELL	=CELL("color",A17)	0	Double	表示形式 d-mmm-yy
+CELL	=CELL("parentheses",A17)	0	Double	表示形式 d-mmm-yy
+CELL	=CELL("format",A18)	D3	String	表示形式 d-mmm
+CELL	=CELL("color",A18)	0	Double	表示形式 d-mmm
+CELL	=CELL("parentheses",A18)	0	Double	表示形式 d-mmm
+CELL	=CELL("format",A19)	D2	String	表示形式 mmm-yy
+CELL	=CELL("color",A19)	0	Double	表示形式 mmm-yy
+CELL	=CELL("parentheses",A19)	0	Double	表示形式 mmm-yy
+CELL	=CELL("format",A20)	D3	String	表示形式 mm/dd
+CELL	=CELL("color",A20)	0	Double	表示形式 mm/dd
+CELL	=CELL("parentheses",A20)	0	Double	表示形式 mm/dd
+CELL	=CELL("format",A21)	D7	String	表示形式 h:mm AM/PM
+CELL	=CELL("color",A21)	0	Double	表示形式 h:mm AM/PM
+CELL	=CELL("parentheses",A21)	0	Double	表示形式 h:mm AM/PM
+CELL	=CELL("format",A22)	D6	String	表示形式 h:mm:ss AM/PM
+CELL	=CELL("color",A22)	0	Double	表示形式 h:mm:ss AM/PM
+CELL	=CELL("parentheses",A22)	0	Double	表示形式 h:mm:ss AM/PM
+CELL	=CELL("format",A23)	D9	String	表示形式 h:mm
+CELL	=CELL("color",A23)	0	Double	表示形式 h:mm
+CELL	=CELL("parentheses",A23)	0	Double	表示形式 h:mm
+CELL	=CELL("format",A24)	D8	String	表示形式 h:mm:ss
+CELL	=CELL("color",A24)	0	Double	表示形式 h:mm:ss
+CELL	=CELL("parentheses",A24)	0	Double	表示形式 h:mm:ss
+CELL	=CELL("format",A25)	D1	String	表示形式 m/d/yy h:mm
+CELL	=CELL("color",A25)	0	Double	表示形式 m/d/yy h:mm
+CELL	=CELL("parentheses",A25)	0	Double	表示形式 m/d/yy h:mm
+CELL	=CELL("format",A26)	G	String	表示形式 @
+CELL	=CELL("color",A26)	0	Double	表示形式 @
+CELL	=CELL("parentheses",A26)	0	Double	表示形式 @
+CELL	(表示形式を 付けられない)	★付かない★	-	表示形式 0;[Red]0
+CELL	=CELL("format",A28)	F0	String	表示形式 0;-0
+CELL	=CELL("color",A28)	0	Double	表示形式 0;-0
+CELL	=CELL("parentheses",A28)	0	Double	表示形式 0;-0
+CELL	=CELL("format",A29)	,0	String	表示形式 #,##0_);(#,##0)
+CELL	=CELL("color",A29)	0	Double	表示形式 #,##0_);(#,##0)
+CELL	=CELL("parentheses",A29)	0	Double	表示形式 #,##0_);(#,##0)
+CELL	(表示形式を 付けられない)	★付かない★	-	表示形式 #,##0.00_);[Red](#,##0.00)
+CELL	=CELL("prefix",B100)	'	String	そろえ 既定／中身 字
+CELL	=CELL("prefix",B101)		String	そろえ 既定／中身 数
+CELL	=CELL("prefix",B102)	'	String	そろえ 左／中身 字
+CELL	=CELL("prefix",B103)		String	そろえ 左／中身 数
+CELL	=CELL("prefix",B104)	^	String	そろえ 中央／中身 字
+CELL	=CELL("prefix",B105)		String	そろえ 中央／中身 数
+CELL	=CELL("prefix",B106)	"	String	そろえ 右／中身 字
+CELL	=CELL("prefix",B107)		String	そろえ 右／中身 数
+CELL	=CELL("prefix",B108)	\	String	そろえ 繰り返し／中身 字
+CELL	=CELL("prefix",B109)		String	そろえ 繰り返し／中身 数
+CELL	=CELL("type",C1)	l	String	式が 空の 字を 返す（=""）
+CELL	=CELL("contents",C1)		String	式が 空の 字を 返す（=""）
+CELL	=CELL("type",C2)	v	String	式が 誤りに なる（=1/0）
+CELL	=CELL("contents",C2)	#DIV/0!	error値	式が 誤りに なる（=1/0）
+CELL	=CELL("type",C3)	v	String	真偽（=TRUE）
+CELL	=CELL("contents",C3)	True	Boolean	真偽（=TRUE）
+CELL	=CELL("type",C4)	b	String	（打てないはず）（='abc'）
+CELL	=CELL("contents",C4)	0	Double	（打てないはず）（='abc'）
+CELL	=CELL("type",C5)	b	String	本当に 空（）
+CELL	=CELL("contents",C5)	0	Double	本当に 空（）
+CELL	=CELL("type",C6)	v	String	空でない セルを 指す 式（=A1）
+CELL	=CELL("contents",C6)	1234.5678	Double	空でない セルを 指す 式（=A1）
+CELL	=CELL("row")	1	Double	形の 変わり種
+CELL	=CELL("col")	1	Double	形の 変わり種
+CELL	=CELL("address")	$A$1	String	形の 変わり種
+CELL	=CELL("address",A1:C3)	$A$1	String	形の 変わり種
+CELL	=CELL("row",A1:C3)	1	Double	形の 変わり種
+CELL	=CELL("contents",A1:C3)	1234.5678	Double	形の 変わり種
+CELL	=CELL("type",Sheet1!A1)	v	String	形の 変わり種
+CELL	=CELL("ADDRESS",A1)	$A$1	String	形の 変わり種
+CELL	=CELL("Address",A1)	$A$1	String	形の 変わり種

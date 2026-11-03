@@ -1,0 +1,80 @@
+# ★実Excel に 打たせた 答え★（入 C:\Users\zeroa\exally-wt-46b\docs\measured\kansuu46\cases-convert2.txt）
+# 取った 日 … 2026-09-07
+# ★どの Excel で 打ったか★ … 版 16.0 ／ build 20326 ／ UI の 言語 1041
+# ★読み方★ … 数は .Value2 を 'R'（丸めない 書き方）で 出している
+# 関数	式	実Excel の 答え	型
+# ★★2026-09-21 追記（経営者1）── ★この 紙は `.Formula`（★昔の 道★）で 取って います★★
+#   ＝`docs/measured/kansuu46/` の 道具 21本は `Formula2` を ★1本も 使って いません★
+#   ＝`.Formula` は ★溢れません★（2026-09-19 実測）＝★暗黙の 交わりで 1マス★
+#   ⇒★範囲を 渡した 式の 答えは ★1マス目だけ★です（★間違いでは なく 足りない★）
+#   ⇒★実測（2026-09-21）★ この 紙の 範囲を 渡す 812本を `Formula2` で 打ち直すと
+#      ★昔と 同じ 809本／★違う 3本★（ISERR/ISERROR/ISNUMBER の A1:B5）／★溢れた 416本★
+#   ⇒★新しい 道の 紙★ ... docs/measured/golden-furui-kami-torinaoshi-2026-09-21.tsv
+#   ⇒★この 紙を 物差しに する 試験は ★昔の 道を 守って います★★
+CONVERT	=CONVERT(1,"kft","ft")	#N/A	error値
+CONVERT	=CONVERT(1,"kin","in")	#N/A	error値
+CONVERT	=CONVERT(1,"kmi","mi")	#N/A	error値
+CONVERT	=CONVERT(1,"kyd","yd")	#N/A	error値
+CONVERT	=CONVERT(1,"klbm","lbm")	#N/A	error値
+CONVERT	=CONVERT(1,"kozm","ozm")	#N/A	error値
+CONVERT	=CONVERT(1,"kg","g")	1000	Double
+CONVERT	=CONVERT(1,"mg","g")	0.001	Double
+CONVERT	=CONVERT(1,"km","m")	1000	Double
+CONVERT	=CONVERT(1,"cm","m")	0.01	Double
+CONVERT	=CONVERT(1,"ml","l")	0.001	Double
+CONVERT	=CONVERT(1,"kl","l")	1000	Double
+CONVERT	=CONVERT(1,"cm2","m2")	0.0001	Double
+CONVERT	=CONVERT(1,"km2","m2")	1000000	Double
+CONVERT	=CONVERT(1,"cm3","l")	0.001	Double
+CONVERT	=CONVERT(1,"km3","l")	1000000000000	Double
+CONVERT	=CONVERT(1,"ksec","sec")	1000	Double
+CONVERT	=CONVERT(1,"msec","sec")	0.001	Double
+CONVERT	=CONVERT(1,"khr","hr")	#N/A	error値
+CONVERT	=CONVERT(1,"kday","day")	#N/A	error値
+CONVERT	=CONVERT(1,"kPa","Pa")	1000	Double
+CONVERT	=CONVERT(1,"kN","N")	1000	Double
+CONVERT	=CONVERT(1,"kJ","J")	1000	Double
+CONVERT	=CONVERT(1,"kW","W")	1000	Double
+CONVERT	=CONVERT(1,"kT","T")	1000	Double
+CONVERT	=CONVERT(1,"kbyte","byte")	1000	Double
+CONVERT	=CONVERT(1,"kbit","bit")	1000	Double
+CONVERT	=CONVERT(1,"kcal","cal")	1000	Double
+CONVERT	=CONVERT(1,"kBTU","BTU")	#N/A	error値
+CONVERT	=CONVERT(1,"kyr","yr")	#N/A	error値
+CONVERT	=CONVERT(1,"katm","atm")	1000	Double
+CONVERT	=CONVERT(1,"keV","eV")	1000	Double
+CONVERT	=CONVERT(1,"kWh","Wh")	1000	Double
+CONVERT	=CONVERT(1,"kHP","HP")	#N/A	error値
+CONVERT	=CONVERT(1,"kmph","mph")	1000	Double
+CONVERT	=CONVERT(1,"kkn","kn")	#N/A	error値
+CONVERT	=CONVERT(1,"kar","ar")	1000	Double
+CONVERT	=CONVERT(1,"kha","ha")	#N/A	error値
+CONVERT	=CONVERT(1,"kton","ton")	#N/A	error値
+CONVERT	=CONVERT(1,"kgal","gal")	#N/A	error値
+CONVERT	=CONVERT(1,"kpt","pt")	#N/A	error値
+CONVERT	=CONVERT(1,"koz","oz")	#N/A	error値
+CONVERT	=CONVERT(1,"kmn","mn")	#N/A	error値
+CONVERT	=CONVERT(1,"kmin","min")	#N/A	error値
+CONVERT	=CONVERT(1,"ks","s")	1000	Double
+CONVERT	=CONVERT(1,"kd","d")	#N/A	error値
+CONVERT	=CONVERT(1,"kC","C")	#N/A	error値
+CONVERT	=CONVERT(1,"kK","K")	1000	Double
+CONVERT	=CONVERT(1,"KM","m")	#N/A	error値
+CONVERT	=CONVERT(1,"Km","m")	#N/A	error値
+CONVERT	=CONVERT(1,"KG","g")	#N/A	error値
+CONVERT	=CONVERT(1,"G","g")	#N/A	error値
+CONVERT	=CONVERT(1,"MI","m")	#N/A	error値
+CONVERT	=CONVERT(1,"LBM","g")	#N/A	error値
+CONVERT	=CONVERT(1,"Lbm","g")	#N/A	error値
+CONVERT	=CONVERT(100,"F","K")	310.92777777777775	Double
+CONVERT	=CONVERT(100,"K","F")	-279.66999999999996	Double
+CONVERT	=CONVERT(100,"Reau","F")	257	Double
+CONVERT	=CONVERT(100,"Rank","K")	55.55555555555556	Double
+CONVERT	=CONVERT(-40,"C","F")	-40	Double
+CONVERT	=CONVERT(0,"K","F")	-459.66999999999996	Double
+CONVERT	=CONVERT("a","m","cm")	#VALUE!	error値
+CONVERT	=CONVERT(TRUE,"m","cm")	#VALUE!	error値
+CONVERT	=CONVERT(,"m","cm")	#N/A	error値
+CONVERT	=CONVERT(1,"m","M")	#N/A	error値
+CONVERT	=CONVERT(1,"kkm","m")	#N/A	error値
+CONVERT	=CONVERT(1,"mkm","m")	#N/A	error値

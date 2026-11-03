@@ -164,7 +164,7 @@ function testWiring() {
   ok(!/isNaN\(v\.replace\(|replace\(\/,\/g/.test(html), '★book.html の中に カンマを外す規則を写していない（規則は1本だけ）');
 }
 
-/* ── わざと壊して赤になるか ─────────────────────────────────── */
+/* ── この 見張りが 見ている物を 直に 確かめる（★壊して 赤を 見るのは tools/break-check.mjs★） ─────────────────────────────────── */
 function selfTest() {
   console.log('\n★--self-test★ わざと壊して、赤になる通り数を数える');
   const ways = [];

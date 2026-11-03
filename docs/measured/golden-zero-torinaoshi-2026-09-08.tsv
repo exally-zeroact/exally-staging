@@ -1,0 +1,806 @@
+# ★取った 紙の「0」を ★2つ目の 窓★で 取り直した★（2026-09-08）
+#
+# ★★物差しの 欠陥★★
+#   `.Value2` は ★0 で ない 値に 0 を 返す★
+#   正体 …★最後の 演算が ＋か− の 時だけ、実Excel が ★見せる 時に★ 0 に する★
+#     =0.1+0.2-0.3    … .Value2 ★0★ ／ =(式)=0 ★False★ ／ (式)*1e17 5.55
+#     =11.1+22.2-33.3 … .Value2 0   ／ =(式)=0 ★True★  ／ (式)*1e17 0
+#   ⇒★.Value2 では この 2つが どちらも 0 に 見える★
+#
+# ★数えた 結果★ 紙 28枚／全 10,775行
+#   答えが 0 … ★697行★ ／ 足し引きで 終わる 式 … ★34行★ ／ 両方 … ★22行★
+#
+# ★★3つの 窓を 同じ 行に 並べた（★後の 人が どちらの 窓か 引き直せる ように★）★★
+#   窓① .Value2 ／ 窓② =(式)=0 の 真偽（★本当に 0 か★）／ 窓③ (式)*1e17（★残りの 大きさ★）
+#
+# ★★土台は 一番 広い 形を 1つ 置いた★★
+#   A1:I9 = 行*10+列 ／ A1:A5=1..5 ／ B1:B5=2,4,6,8,10 で 上書き
+#   ⇒★元の 紙は 土台が 違う 物が 混ざる★＝★窓①が 元の 紙と 違う 行には 印を 付けた★
+#   ⇒★その 行は「土台が 違う」だけかも しれない＝★判じを 保留★★
+# 元の紙	式	窓①.Value2	★型★	窓②=0の真偽	窓③*1e17	判じ
+# ★★材料（機械が 読む）★★ … `#材料<タブ>マス<タブ>値<タブ>型`
+#   ★2026-09-14 に 足しました★。★新しく 測った 物では ありません★＝
+#   上の「A1:I9 = 行*10+列 ／ A1:A5=1..5 ／ B1:B5=2,4,6,8,10 で 上書き」を
+#   ★機械で 組んだ★ だけ（★81マスを 手で 並べて いません★）。
+#   ★足した 訳★＝材料が 文章だけだと、押す 道具が ★空の 表★で 押して ★偽の 負け★が 出ます。
+#   ★注意★＝この 紙の 3列目（窓①.Value2）は ★紙 自身が「欠陥が 在る」と 書いて います★。
+#          突き合わせに 使う 時は ★窓②（=(式)=0 の 真偽）★も 見る事。
+#   ★答えの 行は 1行も 触って いません★（足したのは # の行だけ）
+#材料	A1	1
+#材料	B1	2
+#材料	C1	13
+#材料	D1	14
+#材料	E1	15
+#材料	F1	16
+#材料	G1	17
+#材料	H1	18
+#材料	I1	19
+#材料	A2	2
+#材料	B2	4
+#材料	C2	23
+#材料	D2	24
+#材料	E2	25
+#材料	F2	26
+#材料	G2	27
+#材料	H2	28
+#材料	I2	29
+#材料	A3	3
+#材料	B3	6
+#材料	C3	33
+#材料	D3	34
+#材料	E3	35
+#材料	F3	36
+#材料	G3	37
+#材料	H3	38
+#材料	I3	39
+#材料	A4	4
+#材料	B4	8
+#材料	C4	43
+#材料	D4	44
+#材料	E4	45
+#材料	F4	46
+#材料	G4	47
+#材料	H4	48
+#材料	I4	49
+#材料	A5	5
+#材料	B5	10
+#材料	C5	53
+#材料	D5	54
+#材料	E5	55
+#材料	F5	56
+#材料	G5	57
+#材料	H5	58
+#材料	I5	59
+#材料	A6	61
+#材料	B6	62
+#材料	C6	63
+#材料	D6	64
+#材料	E6	65
+#材料	F6	66
+#材料	G6	67
+#材料	H6	68
+#材料	I6	69
+#材料	A7	71
+#材料	B7	72
+#材料	C7	73
+#材料	D7	74
+#材料	E7	75
+#材料	F7	76
+#材料	G7	77
+#材料	H7	78
+#材料	I7	79
+#材料	A8	81
+#材料	B8	82
+#材料	C8	83
+#材料	D8	84
+#材料	E8	85
+#材料	F8	86
+#材料	G8	87
+#材料	H8	88
+#材料	I8	89
+#材料	A9	91
+#材料	B9	92
+#材料	C9	93
+#材料	D9	94
+#材料	E9	95
+#材料	F9	96
+#材料	G9	97
+#材料	H9	98
+#材料	I9	99
+golden-2026-09-06.tsv	=INDEX(MUNIT(3),1,2)	0	Number	TRUE	0	本当に 0
+golden-hikizan-zero-2026-09-08.tsv	=0.1+0.2-0.3	0	Number	FALSE	5.551115123125783	★★見せかけの 0★★
+golden-hikizan-zero-2026-09-08.tsv	=1.1+2.2-3.3	0	Number	FALSE	44.40892098500626	★★見せかけの 0★★
+golden-hikizan-zero-2026-09-08.tsv	=11.1+22.2-33.3	0	Number	TRUE	0	本当に 0
+golden-hikizan-zero-2026-09-08.tsv	=0.01+0.02-0.03	0	Number	TRUE	0	本当に 0
+golden-hikizan-zero-2026-09-08.tsv	=0.001+0.002-0.003	0	Number	TRUE	0	本当に 0
+golden-hikizan-zero-2026-09-08.tsv	=1000000.1+2000000.2-3000000.3	0	Number	TRUE	0	本当に 0
+golden-hikizan-zero-2026-09-08.tsv	=0.1+0.7-0.8	0	Number	FALSE	-11.102230246251565	★★見せかけの 0★★
+golden-hikizan-zero-2026-09-08.tsv	=0.3-0.1-0.2	0	Number	FALSE	-2.7755575615628914	★★見せかけの 0★★
+golden-hikizan-zero-2026-09-08.tsv	=1-0.9-0.1	0	Number	FALSE	-2.7755575615628914	★★見せかけの 0★★
+golden-hikizan-zero-2026-09-08.tsv	=-0.3+0.1+0.2	0	Number	FALSE	2.7755575615628914	★★見せかけの 0★★
+golden-hikizan-zero-2026-09-08.tsv	=(0.1+0.2)-0.3	0	Number	FALSE	5.551115123125783	★★見せかけの 0★★
+golden-hikizan-zero-2026-09-08.tsv	=0.1+(0.2-0.3)	0	Number	FALSE	2.7755575615628914	★★見せかけの 0★★
+golden-hikizan-zero-2026-09-08.tsv	=((0.1+0.2))-0.3	0	Number	FALSE	5.551115123125783	★★見せかけの 0★★
+golden-hikizan-zero-2026-09-08.tsv	=A1+A2-A3	0	Number	TRUE	0	本当に 0
+golden-hikizan-zero-2026-09-08.tsv	=(A1+A2)-A3	0	Number	TRUE	0	本当に 0
+golden-hikizan-zero-2026-09-08.tsv	=A1+A2-0.3	2.7	Number	FALSE	2.7000000000000003E+17	★土台が 違う（保留）★
+golden-hikizan-zero-2026-09-08.tsv	=0.1+0.2-A3	-2.7	Number	FALSE	-2.7000000000000003E+17	★土台が 違う（保留）★
+golden-hikizan-zero-2026-09-08.tsv	=SUM(0.1,0.2,-0.3)	0	Number	TRUE	0	本当に 0
+golden-hikizan-zero-2026-09-08.tsv	=SUM(A1:A2)-A3	0	Number	TRUE	0	本当に 0
+golden-hikizan-zero-2026-09-08.tsv	=1e16+1-1e16	0	Number	TRUE	0	本当に 0
+golden-hikizan-zero-2026-09-08.tsv	=0.0000001+0.0000002-0.0000003	0	Number	TRUE	0	本当に 0
+golden-hikizan-zero-2026-09-08.tsv	=1e-10+2e-10-3e-10	0	Number	TRUE	0	本当に 0
+golden-marume-A-2026-09-08.tsv	=0.1+0.2-0.3	0	Number	FALSE	5.551115123125783	★★見せかけの 0★★
+golden-tarinai-91-2026-09-08.tsv	=FREQUENCY("a","a")	0	Number	TRUE	0	本当に 0
+golden-tarinai-91-2026-09-08.tsv	=FREQUENCY("a",1)	0	Number	TRUE	0	本当に 0
+golden-tarinai-91-2026-09-08.tsv	=LOG10(1)	0	Number	TRUE	0	本当に 0
+golden-tarinai-91-2026-09-08.tsv	=LOG10(A1:A5)	0	Number	TRUE	0	本当に 0
+golden-tarinai-91-2026-09-08.tsv	=LOG10(A1:A5)	0	Number	TRUE	0	本当に 0
+golden-tarinai-91-2026-09-08.tsv	=LOG10(1)	0	Number	TRUE	0	本当に 0
+golden-tarinai-91-2026-09-08.tsv	=LOG10(1)	0	Number	TRUE	0	本当に 0
+golden-tarinai-91-2026-09-08.tsv	=N("a")	0	Number	TRUE	0	本当に 0
+golden-tarinai-91-2026-09-08.tsv	=N("a")	0	Number	TRUE	0	本当に 0
+golden-tarinai-91-2026-09-08.tsv	=PERCENTRANK.INC(A1:A5,A1:A5)	0	Number	TRUE	0	本当に 0
+golden-tarinai-91-2026-09-08.tsv	=PERCENTRANK.INC(A1:A5,1)	0	Number	TRUE	0	本当に 0
+golden-tarinai-91-2026-09-08.tsv	=PERCENTRANK.INC(A1:A5,A1:A5,A1:A5)	0	Number	TRUE	0	本当に 0
+golden-tarinai-91-2026-09-08.tsv	=PERCENTRANK.INC(A1:A5,1,1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=ABS(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=ACOS(A1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=ACOS(A1:A5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=ACOS(TRUE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=ACOSH(A1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=ACOSH(A1:A5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=ACOSH(TRUE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=ASIN(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=ASINH(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=ATAN(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=ATANH(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=AVEDEV(A1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=AVEDEV(A2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=AVEDEV(2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=AVEDEV(0.5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=AVEDEV("2024-01-15")	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=AVEDEV("12:30")	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=AVEDEV(D1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=AVEDEV(TRUE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=AVEDEV(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=AVEDEV(-2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=AVERAGE(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=AVERAGEA(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=BESSELK(D1,D2)	8.781798887148534	Number	FALSE	8.781798887148535E+17	★土台が 違う（保留）★
+golden-346-2026-09-08.tsv	=BESSELK(D1,2)	3.1697057027512585E-07	Number	FALSE	31697057027.512585	★土台が 違う（保留）★
+golden-346-2026-09-08.tsv	=BITAND("101",2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=BITAND(A1:A5,B1:B5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=BITAND(A1:A5,2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=BITAND(D1,2)	2	Number	FALSE	2E+17	★土台が 違う（保留）★
+golden-346-2026-09-08.tsv	=BITAND(2,TRUE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=BITRSHIFT(2,3)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=BITRSHIFT(A1:A5,B1:B5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=BITRSHIFT(A1:A5,2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=BITRSHIFT(A1:A5,A1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=BITXOR(A1:A5,A1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=CEILING.MATH(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=CEILING.PRECISE(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=CHIDIST(D1,2)	0.0009118819655545162	Number	FALSE	91188196555451.62	★土台が 違う（保留）★
+golden-346-2026-09-08.tsv	=CHIINV(A1:A5,B1:B5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=CHIINV(A1:A5,2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=CHIINV(A1:A5,A1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=CHISQ.DIST.RT(D1,2)	0.0009118819655545162	Number	FALSE	91188196555451.62	★土台が 違う（保留）★
+golden-346-2026-09-08.tsv	=CHISQ.INV.RT(A1:A5,B1:B5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=CHISQ.INV.RT(A1:A5,2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=CHISQ.INV.RT(A1:A5,A1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=COUNTBLANK(A1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=COUNTBLANK(A2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=COUNTBLANK(A1:A5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=COUNTBLANK(B1:B5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=COUNTBLANK(A1:B5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=COUNTBLANK(D1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=COUNTIFS(A1:A5,1,B1:B5,1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=COUNTIFS(D1,D2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=COUNTIFS(D1,2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=COVAR(2,3)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=COVAR(0.5,1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=COVAR(D1,D2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=COVAR(D1,2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=COVAR(2.5,1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=COVARIANCE.P(2,3)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=COVARIANCE.P(0.5,1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=COVARIANCE.P(D1,D2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=COVARIANCE.P(D1,2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=COVARIANCE.P(2.5,1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=CSCH("2024-01-15")	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=CSCH(D1)	1.6630574382082856E-06	Number	FALSE	166305743820.82855	★土台が 違う（保留）★
+golden-346-2026-09-08.tsv	=DAYS(A1:A5,A1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=DAYS360(A1:A5,A1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=DB(A1:A5,1,B1:B5,1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=DDB(A1:A5,1,B1:B5,1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=DEC2BIN(0.5)	0	String	FALSE	0	★字の "0"（数では ない）★
+golden-346-2026-09-08.tsv	=DEC2BIN(0.5,1)	0	String	FALSE	0	★字の "0"（数では ない）★
+golden-346-2026-09-08.tsv	=DEC2BIN("12:30")	0	String	FALSE	0	★字の "0"（数では ない）★
+golden-346-2026-09-08.tsv	=DEC2HEX(0.5)	0	String	FALSE	0	★字の "0"（数では ない）★
+golden-346-2026-09-08.tsv	=DEC2HEX(0.5,1)	0	String	FALSE	0	★字の "0"（数では ない）★
+golden-346-2026-09-08.tsv	=DEC2HEX("12:30")	0	String	FALSE	0	★字の "0"（数では ない）★
+golden-346-2026-09-08.tsv	=DEC2OCT(0.5)	0	String	FALSE	0	★字の "0"（数では ない）★
+golden-346-2026-09-08.tsv	=DEC2OCT(0.5,1)	0	String	FALSE	0	★字の "0"（数では ない）★
+golden-346-2026-09-08.tsv	=DEC2OCT("12:30")	0	String	FALSE	0	★字の "0"（数では ない）★
+golden-346-2026-09-08.tsv	=DEGREES(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=DELTA(A1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=DELTA(A2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=DELTA(2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=DELTA(2,3)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=DELTA(0.5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=DELTA(0.5,1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=DELTA("2024-01-15")	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=DELTA("12:30")	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=DELTA("101",2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=DELTA(D1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=DELTA(D1,D2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=DELTA(D1,2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=DELTA(-2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=DELTA(2.5,1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=DEVSQ(A1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=DEVSQ(A2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=DEVSQ(2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=DEVSQ(0.5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=DEVSQ("2024-01-15")	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=DEVSQ("12:30")	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=DEVSQ(D1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=DEVSQ(TRUE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=DEVSQ(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=DEVSQ(-2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=ERF(D1,D2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=ERFC("2024-01-15")	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=ERFC(D1)	3.0372298477503124E-87	Number	FALSE	3.037229847750312E-70	★土台が 違う（保留）★
+golden-346-2026-09-08.tsv	=EVEN(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=EXPON.DIST(D1,D2,0)	2.8659283081319253E-145	Number	FALSE	2.865928308131925E-128	★土台が 違う（保留）★
+golden-346-2026-09-08.tsv	=EXPONDIST(D1,D2,0)	2.8659283081319253E-145	Number	FALSE	2.865928308131925E-128	★土台が 違う（保留）★
+golden-346-2026-09-08.tsv	=F.INV.RT(A1:A5,2,3)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=F.INV.RT(A1:A5,B1:B5,1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=FINV(A1:A5,2,3)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=FINV(A1:A5,B1:B5,1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=FISHER(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=FISHERINV(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=FLOOR(2,3)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=FLOOR(0.5,1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=FLOOR(A1:A5,B1:B5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=FLOOR(A1:A5,2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=FLOOR(D1,D2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=FLOOR.MATH(2,3)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=FLOOR.MATH(2,3,4)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=FLOOR.MATH(0.5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=FLOOR.MATH(0.5,1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=FLOOR.MATH(0.5,1,2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=FLOOR.MATH("12:30")	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=FLOOR.MATH(A1:A5,B1:B5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=FLOOR.MATH(A1:A5,2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=FLOOR.MATH(A1:A5,2,3)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=FLOOR.MATH(D1,D2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=FLOOR.MATH(D1,D2,1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=FLOOR.MATH(D1,D2,0)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=FLOOR.MATH(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=FLOOR.MATH(2,3,TRUE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=FLOOR.MATH(A1:A5,B1:B5,1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=FLOOR.PRECISE(2,3)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=FLOOR.PRECISE(0.5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=FLOOR.PRECISE(0.5,1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=FLOOR.PRECISE("12:30")	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=FLOOR.PRECISE(A1:A5,B1:B5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=FLOOR.PRECISE(A1:A5,2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=FLOOR.PRECISE(D1,D2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=FLOOR.PRECISE(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=GAMMALN(A1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=GAMMALN(A2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=GAMMALN(A1:A5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=GAMMALN(B1:B5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=GAMMALN(2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=GAMMALN(TRUE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=GAMMALN.PRECISE(A1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=GAMMALN.PRECISE(A2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=GAMMALN.PRECISE(A1:A5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=GAMMALN.PRECISE(B1:B5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=GAMMALN.PRECISE(2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=GAMMALN.PRECISE(TRUE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=GAUSS(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=GCD(0.5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=GCD("12:30")	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=HOUR(A1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=HOUR(A2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=HOUR(A1:A5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=HOUR(B1:B5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=HOUR(2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=HOUR("2024-01-15")	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=HOUR(D1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=HOUR(TRUE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=HOUR(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=IMAGINARY(A1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=IMAGINARY(A2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=IMAGINARY(2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=IMAGINARY(0.5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=IMAGINARY("12:30")	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=IMAGINARY(D1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=IMAGINARY(-2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=IMARGUMENT(A1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=IMARGUMENT(A2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=IMARGUMENT(2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=IMARGUMENT(0.5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=IMARGUMENT("12:30")	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=IMARGUMENT(D1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=IMCSCH(D1)	1.66305743820829E-06	String	FALSE	166305743820.829	★土台が 違う（保留）★
+golden-346-2026-09-08.tsv	=IMLN(A1)	0	String	FALSE	0	★字の "0"（数では ない）★
+golden-346-2026-09-08.tsv	=IMLOG10(A1)	0	String	FALSE	0	★字の "0"（数では ない）★
+golden-346-2026-09-08.tsv	=IMLOG2(A1)	0	String	FALSE	0	★字の "0"（数では ない）★
+golden-346-2026-09-08.tsv	=IMPRODUCT(D1,D2,0)	0	String	FALSE	0	★字の "0"（数では ない）★
+golden-346-2026-09-08.tsv	=IMPRODUCT(D1,D2,0.05,0.1,100,2,0)	0	String	FALSE	0	★字の "0"（数では ない）★
+golden-346-2026-09-08.tsv	=IMSECH(D1)	1.66305743820599E-06	String	FALSE	166305743820.599	★土台が 違う（保留）★
+golden-346-2026-09-08.tsv	=INT(0.5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=INT("12:30")	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=INT(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=ISO.CEILING(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=LCM(0.5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=LCM(0.5,1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=LCM(0.5,1,2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=LCM(0.5,1,2,3)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=LCM(0.5,1,2,3,4)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=LCM("12:30")	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=LCM(D1,D2,0)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=LCM(D1,D2,0.05,0.1,100,2,0)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=LCM(D1,D2,0.05,0.1,2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=LCM(D1,D2,0.05,100,2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=LEFT(0.5)	0	String	FALSE	0	★字の "0"（数では ない）★
+golden-346-2026-09-08.tsv	=LEFT(0.5,1)	0	String	FALSE	0	★字の "0"（数では ない）★
+golden-346-2026-09-08.tsv	=LINEST(A1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=LINEST(A2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=LINEST(2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=LINEST(2,3)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=LINEST(2,3,4)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=LINEST(2,3,4,5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=LINEST(0.5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=LINEST(0.5,1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=LINEST(0.5,1,2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=LINEST(0.5,1,2,3)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=LINEST(D1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=LINEST(D1,D2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=LINEST(D1,2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=LINEST(D1,D2,1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=LINEST(2,3,TRUE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=LINEST(-2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=LINEST(2.5,1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=LN(A1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=LN(A1:A5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=LN(TRUE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=LOG(A1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=LOG(A1:A5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=LOG(A1:A5,B1:B5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=LOG(A1:A5,2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=LOG(TRUE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=LOGNORMDIST(D1,D2,1)	1.542610514164225E-101	Number	FALSE	1.5426105141642249E-84	★土台が 違う（保留）★
+golden-346-2026-09-08.tsv	=MAXA(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=MAXIFS(D1,D2,1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=MAXIFS(D1,D2,0)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=MAXIFS(A1:A5,B1:B5,1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=MEDIAN(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=MIN(A1:B5,2,FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=MIN(D1,D2,0)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=MIN(D1,D2,0.05,0.1,100,2,0)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=MIN(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=MINA(A1:B5,2,FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=MINA(D1,D2,0)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=MINA(D1,D2,0.05,0.1,100,2,0)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=MINA(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=MINIFS(D1,D2,1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=MINIFS(D1,D2,0)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=MINIFS(A1:A5,B1:B5,1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=MINUTE(A1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=MINUTE(A2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=MINUTE(A1:A5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=MINUTE(B1:B5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=MINUTE(2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=MINUTE(0.5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=MINUTE("2024-01-15")	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=MINUTE(D1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=MINUTE(TRUE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=MINUTE(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=NETWORKDAYS(0.5,1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=NETWORKDAYS(0.5,1,2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=NETWORKDAYS.INTL(0.5,1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=NORM.S.INV(0.5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=NORMSINV(0.5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=NPER(D1,D2,0)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=PHI("2024-01-15")	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=PHI(D1)	1.0966065593889713E-43	Number	FALSE	1.0966065593889712E-26	★土台が 違う（保留）★
+golden-346-2026-09-08.tsv	=PMT(D1,D2,0)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=PRODUCT(A1:B5,2,FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=PRODUCT(D1,D2,0)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=PRODUCT(D1,D2,0.05,0.1,100,2,0)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=PRODUCT(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=QUOTIENT(2,3)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=QUOTIENT(0.5,1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=QUOTIENT(D1,D2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=RADIANS(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=RIGHT("12:30")	0	String	FALSE	0	★字の "0"（数では ない）★
+golden-346-2026-09-08.tsv	=SECH("2024-01-15")	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SECH(D1)	1.663057438205986E-06	Number	FALSE	166305743820.5986	★土台が 違う（保留）★
+golden-346-2026-09-08.tsv	=SECOND(A1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SECOND(A2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SECOND(A1:A5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SECOND(B1:B5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SECOND(2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SECOND(0.5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SECOND("2024-01-15")	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SECOND("12:30")	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SECOND(D1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SECOND(TRUE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SECOND(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SEQUENCE(D1,D2)	1	Number	FALSE	1E+17	★土台が 違う（保留）★
+golden-346-2026-09-08.tsv	=SEQUENCE(D1,D2,1)	1	Number	FALSE	1E+17	★土台が 違う（保留）★
+golden-346-2026-09-08.tsv	=SEQUENCE(D1,D2,0)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SIGN(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SIN(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SINH(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SKEW(A1:A5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SKEW(B1:B5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SKEW(2,3,4)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SKEW(2,3,4,5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SKEW(1,2,3,4,5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SKEW(1,2,3,4,5,6)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SKEW(1,2,3,4,5,6,7)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SKEW(2,3,TRUE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SKEW(2,3,4,5,6)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SKEW.P(A1:A5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SKEW.P(B1:B5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SKEW.P(2,3,4)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SKEW.P(2,3,4,5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SKEW.P(1,2,3,4,5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SKEW.P(1,2,3,4,5,6)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SKEW.P(1,2,3,4,5,6,7)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SKEW.P(2,3,TRUE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SKEW.P(2,3,4,5,6)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SQRT(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=STDEV.P(A1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=STDEV.P(A2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=STDEV.P(2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=STDEV.P(0.5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=STDEV.P("2024-01-15")	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=STDEV.P("12:30")	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=STDEV.P(D1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=STDEV.P(TRUE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=STDEV.P(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=STDEV.P(-2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=STDEVP(A1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=STDEVP(A2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=STDEVP(2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=STDEVP(0.5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=STDEVP("2024-01-15")	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=STDEVP("12:30")	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=STDEVP(D1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=STDEVP(TRUE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=STDEVP(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=STDEVP(-2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=STDEVPA(A1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=STDEVPA(A2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=STDEVPA(2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=STDEVPA(0.5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=STDEVPA("2024-01-15")	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=STDEVPA("12:30")	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=STDEVPA(D1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=STDEVPA(TRUE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=STDEVPA(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=STDEVPA(-2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=STEYX(A1:A5,B1:B5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SUMIF(D1,D2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SUMIF(D1,2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SUMIFS(D1,D2,1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SUMIFS(D1,D2,0)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SUMIFS(A1:A5,B1:B5,1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SUMSQ(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=SYD(A1:A5,1,B1:B5,1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=T.DIST(D1,D2,0)	3.704626955229997E-13	Number	FALSE	37046.26955229997	★土台が 違う（保留）★
+golden-346-2026-09-08.tsv	=T.DIST.2T(D1,D2)	4.828743440379774E-13	Number	FALSE	48287.43440379774	★土台が 違う（保留）★
+golden-346-2026-09-08.tsv	=T.DIST.RT(D1,D2)	2.414371720189887E-13	Number	FALSE	24143.71720189887	★土台が 違う（保留）★
+golden-346-2026-09-08.tsv	=T.INV(0.5,1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=T.INV.2T(A1:A5,B1:B5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=T.INV.2T(A1:A5,2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=T.INV.2T(A1:A5,A1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=TAN(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=TANH(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=TDIST(D1,D2,1)	2.414371720189887E-13	Number	FALSE	24143.71720189887	★土台が 違う（保留）★
+golden-346-2026-09-08.tsv	=TIMEVALUE("2024-01-15")	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=TINV(A1:A5,B1:B5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=TINV(A1:A5,2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=TINV(A1:A5,A1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=TRUNC(0.5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=TRUNC("12:30")	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=TRUNC(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=VAR.P(A1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=VAR.P(A2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=VAR.P(2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=VAR.P(0.5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=VAR.P("2024-01-15")	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=VAR.P("12:30")	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=VAR.P(D1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=VAR.P(TRUE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=VAR.P(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=VAR.P(-2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=VARP(A1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=VARP(A2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=VARP(2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=VARP(0.5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=VARP("2024-01-15")	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=VARP("12:30")	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=VARP(D1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=VARP(TRUE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=VARP(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=VARP(-2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=VARPA(A1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=VARPA(A2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=VARPA(2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=VARPA(0.5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=VARPA("2024-01-15")	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=VARPA("12:30")	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=VARPA(D1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=VARPA(TRUE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=VARPA(FALSE)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=VARPA(-2)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=WEEKDAY(2,3)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=WEEKNUM(0.5)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=WEEKNUM(0.5,1)	0	Number	TRUE	0	本当に 0
+golden-346-2026-09-08.tsv	=WEEKNUM("12:30")	0	Number	TRUE	0	本当に 0
+golden-cell-2026-09-07.tsv	=CELL("contents",A4)	4	Number	FALSE	4E+17	★土台が 違う（保留）★
+golden-cell-2026-09-07.tsv	=CELL("color",A1)	0	Number	TRUE	0	本当に 0
+golden-cell-2026-09-07.tsv	=CELL("color",A2)	0	Number	TRUE	0	本当に 0
+golden-cell-2026-09-07.tsv	=CELL("color",A3)	0	Number	TRUE	0	本当に 0
+golden-cell-2026-09-07.tsv	=CELL("color",A4)	0	Number	TRUE	0	本当に 0
+golden-cell-2026-09-07.tsv	=CELL("color",B1)	0	Number	TRUE	0	本当に 0
+golden-cell-2026-09-07.tsv	=CELL("color",C1)	0	Number	TRUE	0	本当に 0
+golden-cell-2026-09-07.tsv	=CELL("color",D1)	0	Number	TRUE	0	本当に 0
+golden-cell-2026-09-07.tsv	=CELL("parentheses",A1)	0	Number	TRUE	0	本当に 0
+golden-cell-2026-09-07.tsv	=CELL("parentheses",A2)	0	Number	TRUE	0	本当に 0
+golden-cell-2026-09-07.tsv	=CELL("parentheses",A3)	0	Number	TRUE	0	本当に 0
+golden-cell-2026-09-07.tsv	=CELL("parentheses",A4)	0	Number	TRUE	0	本当に 0
+golden-cell-2026-09-07.tsv	=CELL("parentheses",B1)	0	Number	TRUE	0	本当に 0
+golden-cell-2026-09-07.tsv	=CELL("parentheses",C1)	0	Number	TRUE	0	本当に 0
+golden-cell-2026-09-07.tsv	=CELL("parentheses",D1)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("color",A2)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("parentheses",A2)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("color",A3)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("parentheses",A3)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("color",A4)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("parentheses",A4)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("color",A5)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("parentheses",A5)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("color",A6)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("parentheses",A6)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("color",A7)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("parentheses",A7)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("color",A8)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("parentheses",A8)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("color",A11)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("parentheses",A11)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("color",A12)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("parentheses",A12)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("color",A13)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("parentheses",A13)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("color",A14)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("parentheses",A14)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("color",A15)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("parentheses",A15)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("color",A16)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("parentheses",A16)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("color",A17)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("parentheses",A17)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("color",A18)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("parentheses",A18)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("color",A19)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("parentheses",A19)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("color",A20)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("parentheses",A20)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("color",A21)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("parentheses",A21)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("color",A22)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("parentheses",A22)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("color",A23)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("parentheses",A23)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("color",A24)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("parentheses",A24)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("color",A25)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("parentheses",A25)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("color",A26)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("parentheses",A26)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("color",A28)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("parentheses",A28)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("color",A29)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("parentheses",A29)	0	Number	TRUE	0	本当に 0
+golden-cell2-2026-09-07.tsv	=CELL("contents",C4)	43	Number	FALSE	4.3E+18	★土台が 違う（保留）★
+golden-cell2-2026-09-07.tsv	=CELL("contents",C5)	53	Number	FALSE	5.3E+18	★土台が 違う（保留）★
+golden-cell3-2026-09-07.tsv	=CELL("color",A1)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("parentheses",A1)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("color",A2)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("parentheses",A2)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("color",A3)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("parentheses",A3)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("parentheses",A4)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("parentheses",A5)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("parentheses",A6)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("parentheses",A7)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("parentheses",A8)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("parentheses",A9)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("color",A10)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("color",A11)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("color",A13)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("parentheses",A13)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("color",A14)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("parentheses",A14)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("color",A15)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("parentheses",A15)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("color",A16)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("parentheses",A16)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("color",A17)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("parentheses",A17)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("color",A18)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("parentheses",A18)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("color",A19)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("parentheses",A19)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("color",A20)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("parentheses",A20)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("color",A21)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("color",A22)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("parentheses",A22)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("color",A23)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("parentheses",A23)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("color",A24)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("parentheses",A24)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("color",A25)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("parentheses",A25)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("color",A26)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("parentheses",A26)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("color",A27)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("parentheses",A27)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("color",A28)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("parentheses",A28)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("color",A29)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("parentheses",A29)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("color",A30)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("parentheses",A30)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("color",A31)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("parentheses",A31)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("color",A32)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("parentheses",A32)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("color",A33)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("parentheses",A33)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("color",A34)	0	Number	TRUE	0	本当に 0
+golden-cell3-2026-09-07.tsv	=CELL("parentheses",A34)	0	Number	TRUE	0	本当に 0
+golden-cell4-2026-09-07.tsv	=CELL("width",D1)	8	Number	FALSE	8E+17	★土台が 違う（保留）★
+golden-cell4-2026-09-07.tsv	=CELL("protect",E1)	1	Number	FALSE	1E+17	★土台が 違う（保留）★
+golden-cell5-2026-09-07.tsv	=CELL("color",A1)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("parentheses",A1)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("color",A2)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("parentheses",A2)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("color",A3)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("parentheses",A3)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("color",A4)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("parentheses",A4)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("color",A5)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("parentheses",A5)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("color",A6)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("parentheses",A6)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("color",A7)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("parentheses",A7)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("color",A8)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("parentheses",A8)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("color",A9)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("parentheses",A9)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("color",A10)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("parentheses",A10)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("color",A11)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("parentheses",A11)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("color",A12)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("parentheses",A12)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("color",A13)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("parentheses",A13)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("color",A14)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("parentheses",A14)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("color",A15)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("parentheses",A15)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("color",A16)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("parentheses",A16)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("color",A17)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("parentheses",A17)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("color",A18)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("parentheses",A18)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("color",A19)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("parentheses",A19)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("color",A20)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("parentheses",A20)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("color",A21)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("parentheses",A21)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("color",A22)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("parentheses",A22)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("color",A23)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("parentheses",A23)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("color",A24)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("parentheses",A24)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("color",A25)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("parentheses",A25)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("color",A26)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("parentheses",A26)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("color",A27)	0	Number	TRUE	0	本当に 0
+golden-cell5-2026-09-07.tsv	=CELL("parentheses",A27)	0	Number	TRUE	0	本当に 0
+golden-cell7-2026-09-07.tsv	=CELL("color",A1)	0	Number	TRUE	0	本当に 0
+golden-cell7-2026-09-07.tsv	=CELL("parentheses",A1)	0	Number	TRUE	0	本当に 0
+golden-cell7-2026-09-07.tsv	=CELL("color",A2)	0	Number	TRUE	0	本当に 0
+golden-cell7-2026-09-07.tsv	=CELL("parentheses",A2)	0	Number	TRUE	0	本当に 0
+golden-cell7-2026-09-07.tsv	=CELL("color",A3)	0	Number	TRUE	0	本当に 0
+golden-cell7-2026-09-07.tsv	=CELL("parentheses",A3)	0	Number	TRUE	0	本当に 0
+golden-cell7-2026-09-07.tsv	=CELL("color",A4)	0	Number	TRUE	0	本当に 0
+golden-cell7-2026-09-07.tsv	=CELL("parentheses",A4)	0	Number	TRUE	0	本当に 0
+golden-cell7-2026-09-07.tsv	=CELL("color",A5)	0	Number	TRUE	0	本当に 0
+golden-cell7-2026-09-07.tsv	=CELL("parentheses",A5)	0	Number	TRUE	0	本当に 0
+golden-cell7-2026-09-07.tsv	=CELL("color",A6)	0	Number	TRUE	0	本当に 0
+golden-cell7-2026-09-07.tsv	=CELL("parentheses",A6)	0	Number	TRUE	0	本当に 0
+golden-cell7-2026-09-07.tsv	=CELL("color",A7)	0	Number	TRUE	0	本当に 0
+golden-cell7-2026-09-07.tsv	=CELL("parentheses",A7)	0	Number	TRUE	0	本当に 0
+golden-cell7-2026-09-07.tsv	=CELL("color",A8)	0	Number	TRUE	0	本当に 0
+golden-cell7-2026-09-07.tsv	=CELL("parentheses",A8)	0	Number	TRUE	0	本当に 0
+golden-cell7-2026-09-07.tsv	=CELL("color",A9)	0	Number	TRUE	0	本当に 0
+golden-cell7-2026-09-07.tsv	=CELL("parentheses",A9)	0	Number	TRUE	0	本当に 0
+golden-cell7-2026-09-07.tsv	=CELL("parentheses",A10)	0	Number	TRUE	0	本当に 0
+golden-cell7-2026-09-07.tsv	=CELL("parentheses",A11)	0	Number	TRUE	0	本当に 0
+golden-cell7-2026-09-07.tsv	=CELL("parentheses",A12)	0	Number	TRUE	0	本当に 0
+golden-convert-2026-09-07.tsv	=CONVERT(0,"C","C")	0	Number	TRUE	0	本当に 0
+golden-convert-2026-09-07.tsv	=CONVERT(0,"C","C")	0	Number	TRUE	0	本当に 0
+golden-convert-2026-09-07.tsv	=CONVERT(0,"cel","C")	0	Number	TRUE	0	本当に 0
+golden-convert-2026-09-07.tsv	=CONVERT(0,"C","cel")	0	Number	TRUE	0	本当に 0
+golden-convert-2026-09-07.tsv	=CONVERT(0,"Reau","C")	0	Number	TRUE	0	本当に 0
+golden-convert-2026-09-07.tsv	=CONVERT(0,"C","Reau")	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=COUPDAYBS(DATE(2008,2,29),DATE(2020,8,31),4,0)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=COUPDAYBS(DATE(2008,2,29),DATE(2020,8,31),4,1)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=COUPDAYBS(DATE(2008,2,29),DATE(2020,8,31),4,2)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=COUPDAYBS(DATE(2008,2,29),DATE(2020,8,31),4,3)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=COUPDAYBS(DATE(2008,2,29),DATE(2020,8,31),4,4)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=COUPDAYBS(DATE(2008,2,29),DATE(2020,8,31),4)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(2400,DATE(2008,8,19),DATE(2008,12,31),300,6,0.15,0)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(2400,DATE(2008,8,19),DATE(2008,12,31),300,6,0.15,1)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(2400,DATE(2008,8,19),DATE(2008,12,31),300,6,0.15,3)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(2400,DATE(2008,8,19),DATE(2008,12,31),300,6,0.15,4)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(2400,DATE(2008,8,19),DATE(2008,12,31),300,6,0.15)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(10000,DATE(2010,1,20),DATE(2010,12,31),500,4,0.25,0)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(10000,DATE(2010,1,20),DATE(2010,12,31),500,4,0.25,1)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(10000,DATE(2010,1,20),DATE(2010,12,31),500,4,0.25,3)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(10000,DATE(2010,1,20),DATE(2010,12,31),500,4,0.25,4)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(10000,DATE(2010,1,20),DATE(2010,12,31),500,4,0.25)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(10000,DATE(2010,1,20),DATE(2010,12,31),500,5,0.25,0)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(10000,DATE(2010,1,20),DATE(2010,12,31),500,5,0.25,1)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(10000,DATE(2010,1,20),DATE(2010,12,31),500,5,0.25,3)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(10000,DATE(2010,1,20),DATE(2010,12,31),500,5,0.25,4)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(10000,DATE(2010,1,20),DATE(2010,12,31),500,5,0.25)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(10000,DATE(2010,1,20),DATE(2010,12,31),500,6,0.25,0)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(10000,DATE(2010,1,20),DATE(2010,12,31),500,6,0.25,1)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(10000,DATE(2010,1,20),DATE(2010,12,31),500,6,0.25,3)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(10000,DATE(2010,1,20),DATE(2010,12,31),500,6,0.25,4)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(10000,DATE(2010,1,20),DATE(2010,12,31),500,6,0.25)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(10000,DATE(2010,1,20),DATE(2010,12,31),500,5,0.2,0)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(10000,DATE(2010,1,20),DATE(2010,12,31),500,5,0.2,1)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(10000,DATE(2010,1,20),DATE(2010,12,31),500,5,0.2,3)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(10000,DATE(2010,1,20),DATE(2010,12,31),500,5,0.2,4)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(10000,DATE(2010,1,20),DATE(2010,12,31),500,5,0.2)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(10000,DATE(2010,1,20),DATE(2010,12,31),500,6,0.2,0)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(10000,DATE(2010,1,20),DATE(2010,12,31),500,6,0.2,1)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(10000,DATE(2010,1,20),DATE(2010,12,31),500,6,0.2,3)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(10000,DATE(2010,1,20),DATE(2010,12,31),500,6,0.2,4)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(10000,DATE(2010,1,20),DATE(2010,12,31),500,6,0.2)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(10000,DATE(2010,1,20),DATE(2010,12,31),500,7,0.2,0)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(10000,DATE(2010,1,20),DATE(2010,12,31),500,7,0.2,1)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(10000,DATE(2010,1,20),DATE(2010,12,31),500,7,0.2,3)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(10000,DATE(2010,1,20),DATE(2010,12,31),500,7,0.2,4)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(10000,DATE(2010,1,20),DATE(2010,12,31),500,7,0.2)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(2400,DATE(2008,8,19),DATE(2008,12,31),300,6,0.15,0)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(2400,DATE(2008,8,19),DATE(2008,12,31),300,6,0.15,1)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(2400,DATE(2008,8,19),DATE(2008,12,31),300,6,0.15,3)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(2400,DATE(2008,8,19),DATE(2008,12,31),300,6,0.15,4)	0	Number	TRUE	0	本当に 0
+golden-kane-2026-09-07.tsv	=AMORDEGRC(2400,DATE(2008,8,19),DATE(2008,12,31),300,6,0.15)	0	Number	TRUE	0	本当に 0
+golden-yosoku-2026-09-07.tsv	=ERF.PRECISE(0)	0	Number	TRUE	0	本当に 0
+golden-yosoku-2026-09-07.tsv	=FORECAST.ETS.CONFINT(45658,{10;12;16;14;11;13;17;15;12;14;18;16},{45292;45323;45352;45383;45413;45444;45474;45505;45536;45566;45597;45627})	0	Number	TRUE	0	本当に 0
+golden-yosoku-2026-09-07.tsv	=FORECAST.ETS.STAT({10;12;16;14;11;13;17;15;12;14;18;16},{45292;45323;45352;45383;45413;45444;45474;45505;45536;45566;45597;45627},4)	0	Number	TRUE	0	本当に 0
+golden-yosoku-2026-09-07.tsv	=FORECAST.ETS.STAT({10;12;16;14;11;13;17;15;12;14;18;16},{45292;45323;45352;45383;45413;45444;45474;45505;45536;45566;45597;45627},5)	0	Number	TRUE	0	本当に 0
+golden-yosoku-2026-09-07.tsv	=FORECAST.ETS.STAT({10;12;16;14;11;13;17;15;12;14;18;16},{45292;45323;45352;45383;45413;45444;45474;45505;45536;45566;45597;45627},6)	0	Number	TRUE	0	本当に 0
+golden-yosoku-2026-09-07.tsv	=FORECAST.ETS.STAT({10;12;16;14;11;13;17;15;12;14;18;16},{45292;45323;45352;45383;45413;45444;45474;45505;45536;45566;45597;45627},7)	0	Number	TRUE	0	本当に 0

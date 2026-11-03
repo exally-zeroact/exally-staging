@@ -32,6 +32,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
+import { 倉庫の行を拾う, 読めなければ止まる } from '../scripts/lib/statutory-soko.mjs';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const require_ = createRequire(import.meta.url);
@@ -56,40 +57,50 @@ const KINDS = {
   tekiyo: { label: '社保 適用拡大', words: ['適用拡大', '特定適用', '短時間労働者', 'ShahoKanyu', 'shahoKanyu', 'WAGE_88K', 'TOKUTEI'] },
 };
 
-/* ── libから「実際の値」を集める ─────────────────────────────────── */
-function buildTable() {
-  const SHH = require_(path.join(ROOT, 'kyuyo/lib/shakaihoken-hyo.js'));
-  const KH = require_(path.join(ROOT, 'kyuyo/lib/koyo-hoken.js'));
-  const SHZ = require_(path.join(ROOT, 'kyuyo/lib/shouhizei-ritsu.js'));
-  const SAI = require_(path.join(ROOT, 'kyuyo/lib/saitei-chingin.js'));
-  const SK = require_(path.join(ROOT, 'kyuyo/lib/shaho-kanyu.js'));
+/* ── ★値の 出どころ＝倉庫(Supabase public.statutory)★ ────────────────────
+ *  ★2026-09-05★ 給与(kyuyo/)を Exally から 外し、★法定の lib は 1本も 残っていない★。
+ *    司さん「金関係のこと聞かれたりAIが入力する時だけSupabaseの共有から拾う」
+ *  ⇒★この 検査も 同じ 倉庫を 見る★＝★見張りと 本物が 同じ 数字を 見る★
+ *    （前は lib を 読んでいた。lib を 消したので そのままでは この 検査が 空振りに なる）
+ *
+ *  ★倉庫が 読めなかった 時は 緑に しない★
+ *    ⇒ 終了の 印 ★2★ で 止める（1＝直書きが 在った／★2＝検査が 走っていない★）
+ *    ⇒★「読めなかったので 素通し」は 一番 危ない★＝直書きが 素通りする
+ *
+ *  ★見られなく なった 物（正直に 書く）★
+ *    ・事業主負担の 雇用保険率 … ★倉庫は 労働者負担しか 持っていない★
+ *    ・最低賃金／社保の 適用拡大 … ★倉庫には 在るが Exally の 文に 出ないので 見ない★
+ *      （出て来たら 下の「出て行った 語」の 検査が 拾う）
+ */
+/* ★倉庫を 読む 部品は 1本に 寄せる★＝scripts/lib/statutory-soko.mjs
+   （★自前で 書くと、注記の外し方も 時計の止め方も 2通りに なる★
+     ＝2026-09-05 実測：自前の 注記外しを 書いて chuki の 見張りに 捕まった） */
 
+function buildTable(行たち) {
   const rates = { koyo: [], kenko: [], kaigo: [], kosei: [], shienkin: [], shouhizei: [] };
   const yen = { saitei: [], tekiyo: [] };
-  /* 適用拡大の賃金要件（88,000円）。★人数(51人→36人…)はここに入れない：
-     51/36/21/11 は普通の数と衝突しやすく、赤の信用を落とす。人数が lib から来ているかは
-     kyuyo/tests/shaho-kanyu.test.js と law-switchpoints が「文＝libの値」で見ている。 */
-  yen.tekiyo.push(SK.WAGE_88K);
-
-  Object.values(KH.RATES).forEach(r => Object.values(r).forEach(v => rates.koyo.push(v)));
-  Object.values(KH.EMPLOYER).forEach(r => Object.values(r).forEach(v => rates.koyo.push(v)));
-  Object.values(SHH.KENKO_RITSU).forEach(r => rates.kenko.push(r.total));
-  Object.values(SHH.KENKO_2026).forEach(v => rates.kenko.push(v));
-  Object.values(SHH.KAIGO_NENDO).forEach(k => { rates.kaigo.push(k.total); rates.kaigo.push(k.jugyoin); });
-  rates.kosei.push(SHH.KOSEI_NENKIN_RITSU_TOTAL, SHH.KOSEI_NENKIN_RITSU_JUGYOIN);
-  rates.shienkin.push(SHH.SHIENKIN_TOTAL_FROM_2026_04);
-  rates.shouhizei.push(SHZ.hyojun, SHZ.keigen);
-  Object.values(SAI.todofuken || {}).forEach(v => {
-    const n = (v && typeof v === 'object') ? v.chingin : v;
-    if (typeof n === 'number' && n > 0) yen.saitei.push(n);
-  });
-
-  // ★どれか1つでも空なら、その種類は「文に直書きされていないか」を一度も見ていない＝空振り。
-  //   libの形が変わって拾えなくなっても、緑のままになるのを止める。
-  const empty = [...Object.entries(rates), ...Object.entries(yen)].filter(([, v]) => !v.length).map(([k]) => k);
-  if (empty.length) throw new Error('★libから値を拾えていない種類がある（この検査が空振り）: ' + empty.join(', '));
-  if (yen.saitei.length !== 47) throw new Error('★最低賃金を47件拾えていない（' + yen.saitei.length + '件）＝この検査が空振り');
-
+  for (const r of 行たち || []) {
+    const d = r && r.data;
+    if (!d) continue;
+    if (r.kind === 'koyo') {
+      /* ★労働者負担のみ★（事業主負担は 倉庫に 無い＝Rakunally 側の 話） */
+      Object.values(d).forEach((v) => { if (typeof v === 'number') rates.koyo.push(v); });
+    } else if (r.kind === 'shakaihoken') {
+      if (d.kenko_total) Object.values(d.kenko_total).forEach((v) => { if (typeof v === 'number') rates.kenko.push(v); });
+      /* ★倉庫は 労使合計だけ 持つ★＝従業員負担(÷2)も 文に 書かれ得るので 両方 見る */
+      if (typeof d.kaigo_total === 'number') { rates.kaigo.push(d.kaigo_total, d.kaigo_total / 2); }
+      if (typeof d.kosei_total === 'number') { rates.kosei.push(d.kosei_total, d.kosei_total / 2); }
+      if (typeof d.shienkin_total === 'number' && d.shienkin_total > 0) rates.shienkin.push(d.shienkin_total, d.shienkin_total / 2);
+    } else if (r.kind === 'shouhizei') {
+      if (typeof d.hyojun === 'number') rates.shouhizei.push(d.hyojun);
+      if (typeof d.keigen === 'number') rates.shouhizei.push(d.keigen);
+    }
+  }
+  /* ★1つでも 空なら この 検査は 空振り★＝倉庫の 形が 変わっても 緑のままに しない */
+  const 要る = ['koyo', 'kenko', 'kaigo', 'kosei', 'shienkin', 'shouhizei'];
+  const 足りない = 要る.filter((k) => !rates[k].length);
+  if (足りない.length) throw new Error('★倉庫から 値を 拾えていない種類がある（この検査が空振り）: ' + 足りない.join(', '));
+  if (rates.kenko.length < 47) throw new Error('★健保の県が 足りない: ' + rates.kenko.length);
   return { rates, yen };
 }
 
@@ -173,6 +184,9 @@ export function findHardcoded(files, table) {
 }
 
 /* ══ self-test ═══════════════════════════════════════════════════════════ */
+/* ★倉庫は self-test でも 本番でも 1回だけ 読む★ */
+const 倉庫の行 = await 倉庫の行を拾う();
+
 if (process.argv.includes('--self-test')) {
   console.log('\n[no-hardcoded-statutory --self-test] わざと壊して赤になるか');
   const table = { rates: { koyo: [0.005], kenko: [0.1021] }, yen: { saitei: [1226] } };
@@ -227,11 +241,17 @@ if (process.argv.includes('--self-test')) {
     const h = findHardcoded({ 'js/a.js': '{ min: 0, max: 93000, hyojun: 88000, tokyu: 1 }' }, t2);
     if (h.length) throw new Error('誤検知: ' + JSON.stringify(h));
   });
-  T('libから作った表が空振りしていない（実物のlibを読めている）', () => {
-    const t = buildTable();
-    if (!t.yen.tekiyo.length) throw new Error('適用拡大の額を拾えていない');
+  T('★倉庫から作った表が空振りしていない（実物の倉庫を読めている）', () => {
+    if (!倉庫の行) throw new Error('★倉庫が読めなかった＝この検査は走っていない★');
+    const t = buildTable(倉庫の行);
+    /* ★2026-09-05★ 適用拡大の lib は 給与と 一緒に 出て行った＝★ここでは 拾えない★
+       （★その 語が Exally の 文に 出ていない事★は 本体の 検査が 見ている） */
     if (t.rates.kenko.length < 47) throw new Error('健保の県が足りない: ' + t.rates.kenko.length);
-    if (!t.rates.koyo.length || !t.rates.kaigo.length || !t.yen.saitei.length) throw new Error('分野が空です');
+    if (!t.rates.koyo.length || !t.rates.kaigo.length || !t.rates.shouhizei.length) throw new Error('分野が空です');
+    /* ★出て行った 物は 空で 正しい★＝★空でない なら 台帳の 直し忘れ★ */
+    if (t.yen.saitei.length || t.yen.tekiyo.length) {
+      throw new Error('★最賃・適用拡大は Exally から 出て行った筈なのに 拾えている★（台帳を 見直す）');
+    }
   });
 
   console.log('\n' + pass + ' passed, ' + fail + ' failed');
@@ -250,7 +270,9 @@ function walk(rel, out = []) {
   return out;
 }
 
-const table = buildTable();
+/* ★倉庫が 読めなければ 緑に しない★＝終了の印 2（★検査が 走っていない★／コードの赤ではない） */
+読めなければ止まる(倉庫の行, 'no-hardcoded-statutory');
+const table = buildTable(倉庫の行);
 const shipped = walk('');
 const files = {};
 for (const r of shipped) files[r] = fs.readFileSync(path.join(ROOT, r), 'utf8');

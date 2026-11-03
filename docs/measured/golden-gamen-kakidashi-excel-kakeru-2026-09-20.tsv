@@ -1,0 +1,80 @@
+# ★お客さんの 道で 書き出した .xlsx を 実Excel に 開かせた★（㊹）（2026-09-20）
+# ★開いた 物★ ... C:\Users\zeroa\AppData\Local\Temp\exally-kakidashi-gamen.xlsx（16366 バイト）
+# ★開き方★ ... ReadOnly=False（★保存して いません★）
+# ★どの Excel か★ ... 版 16.0 ／ build 20326
+# ★どの 貝殻か★ ... PowerShell 5.1.26100.9278
+# ★台本 4本★（縦3／横3／2次元／溢れない＝対照）
+#
+# ★★①開いた 直後★★
+# 番	名	マス	値	出る字	式	型	溢れの一部か
+1	tate3	D1	1	1	=SEQUENCE(3)	Double	False
+1	tate3	E1	(kara)			(kara)	False
+1	tate3	D2	2	2		Double	False
+1	tate3	E2	(kara)			(kara)	False
+1	tate3	D3	3	3		Double	False
+1	tate3	E3	(kara)			(kara)	False
+1	tate3	D4	(kara)			(kara)	False
+1	tate3	E4	(kara)			(kara)	False
+1	tate3	D5	(kara)			(kara)	False
+1	tate3	E5	(kara)			(kara)	False
+2	yoko3	F1	1	1	=SEQUENCE(1,3)	Double	False
+2	yoko3	G1	2	2		Double	False
+2	yoko3	H1	3	3		Double	False
+2	yoko3	I1	(kara)			(kara)	False
+2	yoko3	F2	(kara)			(kara)	False
+2	yoko3	G2	(kara)			(kara)	False
+2	yoko3	H2	(kara)			(kara)	False
+2	yoko3	I2	(kara)			(kara)	False
+3	2jigen	A20	1	1	=SEQUENCE(2,3)	Double	False
+3	2jigen	B20	2	2		Double	False
+3	2jigen	C20	3	3		Double	False
+3	2jigen	D20	(kara)			(kara)	False
+3	2jigen	A21	4	4		Double	False
+3	2jigen	B21	5	5		Double	False
+3	2jigen	C21	6	6		Double	False
+3	2jigen	D21	(kara)			(kara)	False
+3	2jigen	A22	(kara)			(kara)	False
+3	2jigen	B22	(kara)			(kara)	False
+3	2jigen	C22	(kara)			(kara)	False
+3	2jigen	D22	(kara)			(kara)	False
+4	koborenai	A10	3	3	=SUM(1,2)	Double	False
+4	koborenai	B10	(kara)			(kara)	False
+#
+# ★★②頭を 小さい 式に 書き換えた 後★★（★保存して いません★）
+# 番	名	マス	値	出る字	式	型	溢れの一部か
+# ★tate3 ... D1 を =SEQUENCE(2) に★ ⇒ ok（★変わりました★）
+1	tate3	D1	1	1	=SEQUENCE(2)	Double	False
+1	tate3	E1	(kara)			(kara)	False
+1	tate3	D2	2	2		Double	False
+1	tate3	E2	(kara)			(kara)	False
+1	tate3	D3	(kara)			(kara)	False
+1	tate3	E3	(kara)			(kara)	False
+1	tate3	D4	(kara)			(kara)	False
+1	tate3	E4	(kara)			(kara)	False
+1	tate3	D5	(kara)			(kara)	False
+1	tate3	E5	(kara)			(kara)	False
+# ★yoko3 ... F1 を =SEQUENCE(1,2) に★ ⇒ ok（★変わりました★）
+2	yoko3	F1	1	1	=SEQUENCE(1,2)	Double	False
+2	yoko3	G1	2	2		Double	False
+2	yoko3	H1	(kara)			(kara)	False
+2	yoko3	I1	(kara)			(kara)	False
+2	yoko3	F2	(kara)			(kara)	False
+2	yoko3	G2	(kara)			(kara)	False
+2	yoko3	H2	(kara)			(kara)	False
+2	yoko3	I2	(kara)			(kara)	False
+# ★2jigen ... A20 を =SEQUENCE(1,2) に★ ⇒ ok（★変わりました★）
+3	2jigen	A20	1	1	=SEQUENCE(1,2)	Double	False
+3	2jigen	B20	2	2		Double	False
+3	2jigen	C20	(kara)			(kara)	False
+3	2jigen	D20	(kara)			(kara)	False
+3	2jigen	A21	(kara)			(kara)	False
+3	2jigen	B21	(kara)			(kara)	False
+3	2jigen	C21	(kara)			(kara)	False
+3	2jigen	D21	(kara)			(kara)	False
+3	2jigen	A22	(kara)			(kara)	False
+3	2jigen	B22	(kara)			(kara)	False
+3	2jigen	C22	(kara)			(kara)	False
+3	2jigen	D22	(kara)			(kara)	False
+# ★koborenai ... A10 を =SUM(1,3) に★ ⇒ ok（★変わりました★）
+4	koborenai	A10	4	4	=SUM(1,3)	Double	False
+4	koborenai	B10	(kara)			(kara)	False

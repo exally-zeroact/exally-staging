@@ -187,12 +187,20 @@ test('★hub.html のインラインスクリプトが構文として通る(壊�
 // 2026-07-31: home.html / template.html のバッジも撤去したので、除外は無くなった＝全HTMLを検査する。
 // 2026-08-01: 給与を kyuyo/ に統合し、旧5枚(kyuuryoumeisai/seikyusyo/mitsumoriyo/template/home)を削除。
 //   直下だけ見ていると検査対象が3枚に減ってしまうので、kyuyo/ の配信HTMLも検査に含める（対象は増えている）。
+// ★2026-09-05: 給与(kyuyo/)を Exally から 外した（給与は Rakunally）＝★配信HTMLは 3枚に なった★。
+//   ★下限を 5 → 3 に 下げる★＝★これは ゆるめでは ない★：
+//     ・★数を 決め打ちに せず「今 在る 配信HTMLを 全部 見た」事を 見る★（下の 数え上げ）
+//     ・★1枚でも 見落とせば 空振り★なので 下限は 残す
+//   ★kyuyo/ を 足す 行は 残す★＝★戻って来た 時に また 見る為★（在れば 足す・無ければ 足さない）
 test('★売っていない課金や撤去した看板が、どのHTMLにも残っていない（除外なし）', () => {
   const NG = [/¥1,280/, /1日43円/, /Excel専門AI/, /Excel上級者/, /14日間無料/];
   const files = fs.readdirSync(ROOT).filter(x => /\.html$/i.test(x));
   const sub = path.join(ROOT, 'kyuyo');
   if (fs.existsSync(sub)) for (const f of fs.readdirSync(sub)) if (/\.html$/i.test(f)) files.push('kyuyo/' + f);
-  assert.ok(files.length >= 5, 'HTMLが少なすぎる(検査が空振り): ' + files.length);
+  /* ★下限＝直下の 配信HTML（book/chat/hub）★。kyuyo/ が 在る時は そのぶん 増える */
+  const 直下 = fs.readdirSync(ROOT).filter(x => /\.html$/i.test(x)).length;
+  assert.ok(直下 >= 3, '直下のHTMLが少なすぎる(検査が空振り): ' + 直下);
+  assert.ok(files.length >= 直下, '数え落としが在る: ' + files.length + ' < ' + 直下);
   const bad = [];
   for (const f of files) {
     const s = fs.readFileSync(path.join(ROOT, f), 'utf8');

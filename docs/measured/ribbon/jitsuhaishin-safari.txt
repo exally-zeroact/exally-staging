@@ -1,0 +1,35 @@
+# ★実配信を 本物の Safari（webkit）で 開いた★（2026-09-07）
+
+★配信先★ https://exally.vercel.app
+★ログインは 通していません★（合言葉は 1文字も 打っていない／覆いを 見えなく しただけ）
+
+  ★配信の 刻印（lib/ribbon.js）… 8640cf96★
+  ok   ★幅 1280 … 直した 版が 配信されている（組の幅を直す が 在る）★
+  ok   ★幅 1280 … 押した 物が そのまま 出る（重なり 0個）★
+  ok   ★幅 1280 … 組の 箱から 中身が はみ出していない★
+       … 見えた 43個 ／ 重なり 0個 ／ はみ出し 0px ／ 真ん中が 画面の 外 12個
+  ★配信を 叩いた 印（手元では 出せない 物）★
+    200 /book.html
+        x-vercel-id … kix1::cq7tn-1788785327798-25d8acbe5938
+        etag W/"6b55db049154402b6cf3c9c58a232c1c" ／ age 434 ／ server Vercel
+    200 /lib/ribbon.js?v=8640cf96
+        x-vercel-id … kix1::zhz27-1788785327884-8d1552bb56e9
+        etag W/"bc677718a3930a341f6e2928c0c6d340" ／ age 403 ／ server Vercel
+  ok   ★配信の 機械の 番号（x-vercel-id）が 取れた★
+       ★絵★ docs/measured/ribbon/jitsuhaishin-safari-1280.png
+  ★配信の 刻印（lib/ribbon.js）… 8640cf96★
+  ok   ★幅 1920 … 直した 版が 配信されている（組の幅を直す が 在る）★
+  ok   ★幅 1920 … 押した 物が そのまま 出る（重なり 0個）★
+  ok   ★幅 1920 … 組の 箱から 中身が はみ出していない★
+       … 見えた 55個 ／ 重なり 0個 ／ はみ出し 0px ／ 真ん中が 画面の 外 0個
+  ★配信を 叩いた 印（手元では 出せない 物）★
+    200 /book.html
+        x-vercel-id … kix1::km6mb-1788785331167-d26cc02a2bb1
+        etag W/"6b55db049154402b6cf3c9c58a232c1c" ／ age 437 ／ server Vercel
+    200 /lib/ribbon.js?v=8640cf96
+        x-vercel-id … kix1::4rvnx-1788785331216-04de2d7cac2a
+        etag W/"bc677718a3930a341f6e2928c0c6d340" ／ age 406 ／ server Vercel
+  ok   ★配信の 機械の 番号（x-vercel-id）が 取れた★
+       ★絵★ docs/measured/ribbon/jitsuhaishin-safari-1920.png
+
+jitsuhaishin-safari: 8 緑 / 0 赤

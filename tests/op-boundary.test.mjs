@@ -157,7 +157,12 @@ const ops = opFiles.map(r => ({ rel: r, mod: require_(path.join(ROOT, r)) }));
 
 // CI と各ランナーが実際に回しているテストの一覧
 const ciYml = fs.readFileSync(path.join(ROOT, '.github/workflows/ci.yml'), 'utf8');
-const runners = ['tests/run.js', 'kyuyo/tests/run.js'].map(p => fs.readFileSync(path.join(ROOT, p), 'utf8')).join('\n');
+/* ★2026-09-05★ 給与(kyuyo/)を Exally から 外したので kyuyo/tests/run.js は 無い。
+   ★在る 物だけ 読む★（無い 物で 落ちない）／★1本も 無ければ 空振りとして 赤★ */
+const runnerFiles = ['tests/run.js', 'kyuyo/tests/run.js']
+  .filter((p) => fs.existsSync(path.join(ROOT, p)));
+if (!runnerFiles.length) throw new Error('★走らせる 一覧が 1本も 無い＝この 検査が 空振り★');
+const runners = runnerFiles.map(p => fs.readFileSync(path.join(ROOT, p), 'utf8')).join('\n');
 const isRun = (testPath) => {
   const base = testPath.split('/').pop();
   return ciYml.indexOf(testPath) >= 0 || ciYml.indexOf(base) >= 0 || runners.indexOf(base) >= 0;
@@ -165,8 +170,17 @@ const isRun = (testPath) => {
 
 console.log('\n[op-boundary] 契約の線を機械で守る');
 
+/* ★2026-09-05★ 給与(kyuyo/)を Exally から 外した（給与は Rakunally）。
+   ★唯一の オペ（payroll.monthly）は 給与と 一緒に 出て行きました★
+   ⇒★仕組み（lib/op-registry.js）は 残る／中身は 0本★
+   ⇒★「0本」を 緑に しない★＝★未測定と はっきり 言う★（0件と 未測定を 混ぜない）
+   ⇒★1本でも 置かれたら その場から 契約を 全部 見る★＝★戻って来た 時に 効く★ */
 T('オペが1本以上あり、契約の形（id/version/engine/tests）を持っている', () => {
-  if (!ops.length) throw new Error('ops/ にオペがありません（検査が空振り）');
+  if (!ops.length) {
+    console.log('  ★未測定★ ops/ に オペが 0本'
+      + '（2026-09-05 に 給与と 一緒に 出て行った）＝★0件と 混ぜない★');
+    return;
+  }
   for (const { rel, mod } of ops) {
     if (!mod || !mod.id) throw new Error(rel + ': id が無い');
     if (!mod.version) throw new Error(rel + ': version が無い');
@@ -220,6 +234,10 @@ const globalNames = ops.map(({ rel, mod }) => {
 }).filter(Boolean);
 const uncalled = findUncalled(globalNames, src);
 T('★⑤ 各オペが ops/ とテストの外から実際に呼ばれている（呼ばれていない契約は「有る」と言わない）', () => {
+  if (!ops.length) {
+    console.log('  ★未測定★ オペが 0本（給与と 一緒に 出て行った）＝★0件と 混ぜない★');
+    return;
+  }
   if (!globalNames.length) throw new Error('オペのグローバル名を1つも取れていません（検査が空振り）');
   if (uncalled.length) {
     throw new Error('誰も呼んでいないオペがあります: ' + uncalled.join(', ')

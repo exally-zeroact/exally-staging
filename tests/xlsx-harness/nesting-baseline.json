@@ -1,12 +1,6 @@
 {
  "note": "★入れ子で答えが変わる式の上限。増えたらCIが赤になる。減らしたら締め直す。",
- "max": 5,
+ "max": 0,
  "measuredAt": "(実行時)",
- "funcs": [
-  "DCOUNT",
-  "DSUM",
-  "N",
-  "PERCENTILE",
-  "QUARTILE"
- ]
+ "funcs": []
 }

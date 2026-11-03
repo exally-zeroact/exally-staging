@@ -1,0 +1,23 @@
+# ★実Excel に 打たせた CELL の 答え（4回目・残りの 問い 4つ）★
+# 取った 日 … 2026-09-07
+# ★どの Excel で 打ったか★ … 版 16.0 ／ build 20326
+# ★保存した 先は 仮の 場所★（測り終わったら 消している）
+# 関数	式	実Excel の 答え	どんな 場面か
+# ★★2026-09-21 追記（経営者1）── ★この 紙は `.Formula`（★昔の 道★）で 取って います★★
+#   ＝`docs/measured/kansuu46/` の 道具 21本は `Formula2` を ★1本も 使って いません★
+#   ＝`.Formula` は ★溢れません★（2026-09-19 実測）＝★暗黙の 交わりで 1マス★
+#   ⇒★範囲を 渡した 式の 答えは ★1マス目だけ★です（★間違いでは なく 足りない★）
+#   ⇒★実測（2026-09-21）★ この 紙の 範囲を 渡す 812本を `Formula2` で 打ち直すと
+#      ★昔と 同じ 809本／★違う 3本★（ISERR/ISERROR/ISNUMBER の A1:B5）／★溢れた 416本★
+#   ⇒★新しい 道の 紙★ ... docs/measured/golden-furui-kami-torinaoshi-2026-09-21.tsv
+#   ⇒★この 紙を 物差しに する 試験は ★昔の 道を 守って います★★
+CELL	=CELL("address",二枚目!B3)	[Book3]二枚目!$B$3	別の シートを 指す
+CELL	=CELL("row",二枚目!B3)	3	別の シートを 指す
+CELL	=CELL("col",二枚目!B3)	2	別の シートを 指す
+CELL	=CELL("contents",二枚目!B3)	9	別の シートを 指す
+CELL	=CELL("width",D1)	0	列を 隠した
+CELL	=CELL("width",D1)	8	隠すのを やめた
+CELL	=CELL("protect",E1)	0	鍵を 外した セル（シートは 保護していない）
+CELL	=CELL("filename",A1)		保存する 前
+CELL	=CELL("filename",A1)	C:\Users\zeroa\AppData\Local\Temp\[cell-filename-33fdeab0.xlsx]Sheet1	保存した 後
+CELL	=CELL("filename",二枚目!B3)	C:\Users\zeroa\AppData\Local\Temp\[cell-filename-33fdeab0.xlsx]二枚目	保存した 後・別の シート

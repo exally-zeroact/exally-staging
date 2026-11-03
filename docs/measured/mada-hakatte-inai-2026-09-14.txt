@@ -1,0 +1,59 @@
+# ★実Excel の 答えを まだ 1本も 取って いない 関数★（2026-09-14）
+#
+#  ★出どころ★ … `docs/measured/karimono-keshi-no-ookisa.md` の 数え
+#    借り物（HyperFormula 3.4.0）が 出して いて、実Excel にも 在り、
+#    ★うち（土台7個＋皮61個）が まだ 出せず★、★docs の 紙に 式が 1本も 無い★ 物。
+#  ★手で 並べて いません★＝機械が 出した 名簿を そのまま 置きました。
+#
+#  ★なぜ 一番 よく 使う 物が 並ぶか★
+#    今まで ★借り物任せ★だったので、★答えを 確かめる 理由が 無かった★から。
+#
+#  ★取り方★
+#    pwsh -NoProfile -File docs/measured/kansuu46/toru-346.ps1 \
+#         -名簿 ../mada-hakatte-inai-2026-09-14.txt -出 golden-mada-2026-09-14.tsv
+#
+BINOM.DIST
+BINOM.INV
+BINOMDIST
+COUNTIF
+CRITBINOM
+CUMIPMT
+CUMPRINC
+DATEDIF
+DATEVALUE
+DAVERAGE
+DAY
+DCOUNT
+DCOUNTA
+DGET
+DMAX
+DMIN
+DPRODUCT
+DSTDEV
+DSTDEVP
+DSUM
+DVAR
+DVARP
+EOMONTH
+FILTER
+HLOOKUP
+IFERROR
+IFNA
+IFS
+MATCH
+MOD
+NEGBINOM.DIST
+NEGBINOMDIST
+NOT
+PERCENTILE
+PERCENTILE.EXC
+QUARTILE
+QUARTILE.EXC
+RATE
+ROUNDDOWN
+SUBTOTAL
+T.TEST
+TEXTJOIN
+TTEST
+VLOOKUP
+XLOOKUP

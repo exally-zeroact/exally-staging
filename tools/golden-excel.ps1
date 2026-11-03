@@ -1,4 +1,4 @@
-# golden-excel.ps1 - 実Excel(COM)で「真値」を作る。
+﻿# golden-excel.ps1 - 実Excel(COM)で「真値」を作る。
 #   使い方: pwsh -File tools/golden-excel.ps1            ... 既存goldenと比較して pending + DIFF を出す(上書きしない)
 #           pwsh -File tools/golden-excel.ps1 -Init      ... goldenが1つも無い時だけ、初回作成する
 #

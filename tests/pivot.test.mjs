@@ -1,0 +1,187 @@
+/* pivot.test.mjs — ★ピボットテーブル★ 2026-08-30
+ *
+ *  ★真値（実Excel 16.0 で 実測）★ … tools/measure-pivot.ps1
+ *    元の表（A1:D6）… 店 品 数 金 ／ 東A1,100 ／ 東B2,200 ／ 西A3,300 ／ 西B4,400 ／ 東A5,500
+ *
+ *    行＝店・列＝品・値＝金（合計）:
+ *      「合計 / 金」「列ラベル」
+ *      「行ラベル」  A     B     総計
+ *       西          300   400    700
+ *       東          600   200    800
+ *       総計        900   600   1500
+ *
+ *    列を 使わない時（行と 値だけ）:
+ *      「行ラベル」「合計 / 金」
+ *       西 700 ／ 東 800 ／ 総計 1500
+ *      ＝★2列だけ（「列ラベル」の 行も 総計の 列も 出ない）★
+ *
+ *    そのほか … 総計は 行も 列も True／空セルは ''／合計の 名前は「合計 / 金」
+ *
+ *  ★実Excelと 違う所★ 行の 並びが 実測は 西→東（★読みで 並べている★）。
+ *    うちは 読みの 辞書を 持たないので ★字の 順★（東→西）。lib/pivot.js に 書いた。
+ *
+ *  走らせ方: node tests/pivot.test.mjs [--self-test]
+ */
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { createRequire } from 'node:module';
+
+const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
+const require_ = createRequire(pathToFileURL(path.join(ROOT, 'package.json')));
+const 壊す = process.argv.includes('--self-test');
+let 緑 = 0, 赤 = 0;
+const ok = (名, 条件, 添え) => {
+  if (条件) { 緑++; console.log('  ok   ' + 名); }
+  else { 赤++; console.log('  ★NG★ ' + 名 + (添え !== undefined ? '  … ' + 添え : '')); }
+};
+
+const P = require_(path.join(ROOT, 'lib/pivot.js'));
+const book = fs.readFileSync(path.join(ROOT, 'book.html'), 'utf8');
+const lib = fs.readFileSync(path.join(ROOT, 'lib/pivot.js'), 'utf8');
+
+function 抜く(名) {
+  const i = book.indexOf('function ' + 名 + '(');
+  if (i < 0) return null;
+  let d = 0; const j = book.indexOf('{', i);
+  for (let k = j; k < book.length; k++) {
+    if (book[k] === '{') d++;
+    else if (book[k] === '}') { d--; if (d === 0) return book.slice(i, k + 1); }
+  }
+  return null;
+}
+
+const 元 = [['店', '品', '数', '金'], ['東', 'A', 1, 100], ['東', 'B', 2, 200],
+  ['西', 'A', 3, 300], ['西', 'B', 4, 400], ['東', 'A', 5, 500]];
+
+console.log('\n[① 測った 道具が 残っている]');
+ok('tools/measure-pivot.ps1 が 在る', fs.existsSync(path.join(ROOT, 'tools/measure-pivot.ps1')));
+ok('★読みで 並べない事を 書いてある★', /実Excel は 日本語を「読み」で 並べている/.test(lib));
+ok('★見えない字（NUL）を 素で 置いていない★', lib.indexOf('\u0000') < 0);
+
+console.log('\n[② 列を 使う形（実測の 数と 同じ）]');
+{
+  const r = P.作る(元, { 行: '店', 列: '品', 値: '金', 集計: '合計' });
+  ok('作れた', r.ok, r.なぜ);
+  const t = r.表;
+  ok('★左上は「合計 / 金」★', t[0][0] === '合計 / 金', String(t[0][0]));
+  ok('★その 右は「列ラベル」★', t[0][1] === '列ラベル', String(t[0][1]));
+  ok('★2行目の 左は「行ラベル」★', t[1][0] === '行ラベル', String(t[1][0]));
+  ok('★列の 見出しは A・B・総計★', t[1].slice(1).join(',') === 'A,B,総計', t[1].join(','));
+  const 見 = {};
+  for (let i = 2; i < t.length; i++) 見[t[i][0]] = t[i].slice(1).join(',');
+  ok('★東 … 600,200,800（実測）★', 見['東'] === '600,200,800', 見['東']);
+  ok('★西 … 300,400,700（実測）★', 見['西'] === '300,400,700', 見['西']);
+  ok('★総計 … 900,600,1500（実測）★', 見['総計'] === '900,600,1500', 見['総計']);
+  ok('★総計の 行が 一番 下★', t[t.length - 1][0] === '総計', t[t.length - 1][0]);
+}
+
+console.log('\n[③ 列を 使わない形（実測＝2列だけ）]');
+{
+  const t = P.作る(元, { 行: '店', 値: '金', 集計: '合計' }).表;
+  ok('★1行目は「行ラベル」「合計 / 金」★',
+    t[0].join(',') === '行ラベル,合計 / 金', t[0].join(','));
+  ok('★「列ラベル」の 行が 無い★', t[0][0] !== '合計 / 金', t[0].join(','));
+  ok('★どの 行も 2つだけ（総計の 列が 無い）★',
+    t.every((行) => 行.length === 2), JSON.stringify(t));
+  const 見 = {};
+  for (let i = 1; i < t.length; i++) 見[t[i][0]] = t[i][1];
+  ok('東 = 800（実測）', 見['東'] === 800, String(見['東']));
+  ok('西 = 700（実測）', 見['西'] === 700, String(見['西']));
+  ok('総計 = 1500（実測）', 見['総計'] === 1500, String(見['総計']));
+}
+
+console.log('\n[④ 集計の やり方]');
+{
+  const 取る = (集計) => {
+    const t = P.作る(元, { 行: '店', 値: '金', 集計: 集計 }).表;
+    const 見 = {};
+    for (let i = 1; i < t.length; i++) 見[t[i][0]] = t[i][1];
+    return 見;
+  };
+  ok('合計 … 東 800', 取る('合計')['東'] === 800);
+  ok('平均 … 東 (100+200+500)/3', Math.abs(取る('平均')['東'] - 800 / 3) < 1e-9, String(取る('平均')['東']));
+  ok('最大 … 東 500', 取る('最大')['東'] === 500);
+  ok('最小 … 東 100', 取る('最小')['東'] === 100);
+  ok('データの個数 … 東 3', 取る('個数')['東'] === 3);
+  ok('数値の個数 … 東 3', 取る('数値の個数')['東'] === 3);
+  ok('★数の 列は 合計を 当てる★', P.集計を当てる([1, 2, 3]) === '合計');
+  ok('★字の 列は 個数を 当てる★', P.集計を当てる(['あ', 'い']) === '個数');
+  ok('★空は 数えない（個数）★',
+    P.集計たち['個数'](['あ', '', null, 'い']) === 2,
+    String(P.集計たち['個数'](['あ', '', null, 'い'])));
+  ok('★けた区切りも 数として 足す★', P.集計たち['合計'](['1,000', 500]) === 1500,
+    String(P.集計たち['合計'](['1,000', 500])));
+  ok('★数が 1つも 無ければ null（0と 言わない）★', P.集計たち['合計'](['あ']) === null);
+}
+
+console.log('\n[⑤ 出来ない時は 理由を 返す]');
+ok('見出しだけ → 理由', P.作る([['店']], { 行: '店', 値: '店' }).なぜ !== undefined);
+ok('行の 列が 無い → 理由', /行に する 列が 見つかりません/.test(P.作る(元, { 行: 'なし', 値: '金' }).なぜ || ''));
+ok('値の 列が 無い → 理由', /値に する 列が 見つかりません/.test(P.作る(元, { 行: '店', 値: 'なし' }).なぜ || ''));
+ok('列の 列が 無い → 理由', /列に する 列が 見つかりません/.test(P.作る(元, { 行: '店', 列: 'なし', 値: '金' }).なぜ || ''));
+
+console.log('\n[⑥ おすすめ（どれを 行・列・値に するか 当てる）]');
+{
+  const 当 = P.おすすめ(元);
+  ok('当てられた', !!当, JSON.stringify(当));
+  ok('★値は 数の 列★', 当 && (当.値 === '数' || 当.値 === '金'), JSON.stringify(当));
+  ok('★行は 字の 列★', 当 && (当.行 === '店' || 当.行 === '品'), JSON.stringify(当));
+  ok('数だけの 表なら null（無理に 当てない）',
+    P.おすすめ([['a', 'b'], [1, 2], [3, 4]]) === null,
+    JSON.stringify(P.おすすめ([['a', 'b'], [1, 2], [3, 4]])));
+}
+
+console.log('\n[⑦ 画面に つながっている]');
+for (const n of ['ピボットの元の表', 'ピボットの窓を開く', 'ピボットの決め', 'ピボットの見本',
+  'ピボットを作る', 'ピボットグラフを作る']) ok(n + ' が 在る', !!抜く(n));
+ok('窓が 在る', /id="pivotOverlay"/.test(book));
+ok('部品を 読み込んでいる', /src="lib\/pivot\.js/.test(book));
+ok('★新しい シートに 出す（元の 表を 消さない）★',
+  /var 前 = activeSheet;\s*addSheet\(\);/.test(book) && /setCell\(i, j, String\(v\), true\)/.test(book));
+ok('★シートが 作れなかったら 何も しない★', /新しい シートを 作れませんでした/.test(book));
+ok('★作る前に 見本を 見せる★', /ピボットの見本\(\)/.test(book));
+ok('★範囲を 当てる（1マスなら まわり）★', /表のまわりを当てる\(r1, c1\)/.test(抜く('ピボットの窓を開く')));
+ok('★どれを 行・列・値に するかも 当てる★', /Pivot\.おすすめ\(表\)/.test(book));
+ok('★読みで 並べない事を 画面にも 書いた★', /読みの 辞書を 持っていないので/.test(book));
+ok('★alert / prompt / confirm を 使っていない★', !/\balert\(|\bprompt\(|\bconfirm\(/.test(book));
+
+console.log('\n[⑧ リボンから 押せる]');
+{
+  const ACT = require_(path.join(ROOT, 'lib/ribbon-actions.js'));
+  const g = globalThis, 前w = g.window;
+  for (const [ボタン, 呼ぶ名, 期待] of [
+    ['ピボットテーブル', 'ピボットの窓を開く', undefined],
+    ['おすすめピボットテーブル', 'ピボットの窓を開く', 'おすすめ'],
+    ['ピボットグラフ', 'ピボットグラフを作る', undefined],
+  ]) {
+    let 受け = 'よばれていない';
+    const w = {}; w[呼ぶ名] = function (a) { 受け = a; };
+    g.window = w;
+    ACT[ボタン]();
+    g.window = 前w;
+    ok('「' + ボタン + '」→ ' + 呼ぶ名 + (期待 ? '（' + 期待 + '）' : ''), 受け === 期待, String(受け));
+  }
+}
+
+console.log('\npivot: ' + 緑 + '/' + (緑 + 赤) + ' passed');
+
+if (壊す) {
+  console.log('\n★--self-test＝この 見張りが 見ている物を 直に 確かめる（★壊して 赤を 見るのは tools/break-check.mjs★）★');
+  let 素通り = 0;
+  /* 壊し① 列なしでも 総計の 列を 出していないか */
+  const t = P.作る(元, { 行: '店', 値: '金' }).表;
+  if (t.some((行) => 行.length !== 2)) { 素通り++; console.log('  ★素通り★ 列なしなのに 3列 出ている'); }
+  else console.log('  ok   列なしは 2列だけ');
+  /* 壊し② 数が 実測と ずれていないか */
+  const t2 = P.作る(元, { 行: '店', 列: '品', 値: '金', 集計: '合計' }).表;
+  const 総 = t2[t2.length - 1].slice(1).join(',');
+  if (総 !== '900,600,1500') { 素通り++; console.log('  ★素通り★ 総計が 実測（900,600,1500）と 違う … ' + 総); }
+  else console.log('  ok   総計は 900,600,1500');
+  /* 壊し③ 空を 0 と 言っていないか */
+  if (P.集計たち['合計'](['あ']) === 0) { 素通り++; console.log('  ★素通り★ 数が 無いのに 0 と 言った'); }
+  else console.log('  ok   数が 無ければ null');
+  if (素通り) { console.log('★抜け道 ' + 素通り + '件★'); process.exit(1); }
+  console.log('  ok   抜け道 0件');
+}
+process.exit(赤 ? 1 : 0);

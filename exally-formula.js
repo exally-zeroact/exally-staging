@@ -39,13 +39,61 @@ function addSheetToEngine(name) {
 // ================================================================
 // 内部ヘルパー
 // ================================================================
-function _hfGetDisplay(sheet, r, c) {
+/* ★式のセルが「空のセル」を指した時、Excelは 0 を返す★（2026-08-29 実Excel 16.0 で実測）
+ *
+ *   =C2（C2は空）         → ★0★（数）  画面に「0」
+ *   =INDEX(C1:C5,2)（空）  → ★0★（数）  画面に「0」
+ *   =IF(C2="","",1)       → ""（字）    画面は 空
+ *   =C2&""                → ""（字）    画面は 空
+ *   ⇒ ★決まり＝「数の場所なら 0・字の場所なら 空」★
+ *
+ *   HyperFormula は 前者で ★null★ を返す（後者は "" を返すので ★区別が つく★）。
+ *   ここで null を '' にしていたため、★司さんの実物 19,323本のうち 2,918本が
+ *   「Excelは 0・うちは 空」★ で 食い違っていた（Excelとの一致 84.6%）。
+ *
+ *   ★式のセルだけ★ 0 にする。ただの空セルまで 0 にすると 表が 0 だらけになる。
+ *   ⇒ 呼び手が 式かどうかを 渡す（★既定は false＝前と同じ動き★）。
+ */
+function _hfGetDisplay(sheet, r, c, 式のセルか) {
   try {
     var val = _hf.getCellValue({sheet:_hfSid(sheet), row:r, col:c});
-    if(val===null||val===undefined) return '';
+    if(val===null||val===undefined) return 式のセルか ? '0' : '';
     if(typeof val==='object'&&val.type) return HF_ERR[val.type]||('#'+val.type);
+    /* ★はい/いいえは 大文字★（実Excel 実測 2026-08-30＝Range.Text が "TRUE"/"FALSE"）。
+       String(true) は "true" に なるので ★ここで 直す★。
+       ★出口は この 1か所★＝画面も 紙も 書き出しも 同じ 字に なる。 */
+    if(typeof val==='boolean') return val ? 'TRUE' : 'FALSE';
     return String(val);
   } catch(e) { return '#ERR'; }
+}
+/* ★★答えが「文字」か「数」かを 返す★★（2026-09-11）
+ *
+ *  ★何が 起きて いたか★
+ *    `=TEXT(A1,"0.00")` の 答えは 実Excel では ★文字の "3.00"★
+ *      実測 … LEN=4 ／ ISTEXT=TRUE ／ 出る字 "3.00"（docs/measured/golden-moji-no-kotae-2026-09-11.tsv）
+ *    ★エンジンも 文字で 返して います★（typeof が 'string'）
+ *    ★でも `_hfGetDisplay` が `String(val)` に した 時点で ★型が 消える★★
+ *    ⇒ 画面が それを ★数として 読み直して★ ★"3" と 出して いました★
+ *
+ *  ★★TEXT だけの 話では ありません★★
+ *    `=LEFT("3.00",4)` `=RIGHT("12.50",5)` `=MID(...)` `=TRIM("  4.50  ")`
+ *    `=SUBSTITUTE("1,5",",",".")` `=CONCATENATE(...)` `=REPT("1",3)` `=A1&""`
+ *    ⇒★文字を 返す 式は 全部★（実Excel で 11本 確かめた・全部 String）
+ *    （`="007"` だけは ★頭の ゼロ★の 決まりで たまたま 守られて いた）
+ *
+ *  ★返す 物★ … 'string' / 'number' / 'boolean' / 'error' / 'empty'
+ *  ★`_hfGetDisplay` と 同じ 物を 見ます★＝ずれない
+ */
+function _hf答えの型(sheet, r, c) {
+  try {
+    var val = _hf.getCellValue({sheet:_hfSid(sheet), row:r, col:c});
+    if(val===null||val===undefined) return 'empty';
+    if(typeof val==='object'&&val.type) return 'error';
+    if(typeof val==='boolean') return 'boolean';
+    if(typeof val==='string') return 'string';
+    if(typeof val==='number') return 'number';
+    return 'other';
+  } catch(e) { return 'error'; }
 }
 function _toRC(addr) {
   var m = addr.match(/^([A-Z]+)(\d+)$/i);
@@ -279,6 +327,24 @@ function _fmtNumber(num, fmt) {
   if(grp) parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   return sign + _fmtLit(pre) + parts.join('.') + pct + _fmtLit(suf);
 }
+/* ══ ★★和暦（g・e）と 経過時間（[h] [m] [s]）は 書式の 台（lib/shoshiki.js）に 渡す★★ ══（2026-10-02）
+     ★この 層の 書式器は 和暦・経過時間を 知りません★（実測 `[h]:mm` → [12]:00 ／ `ge.m.d` → ge.1.31）
+     ★台は 実Excel 16.0.20430 の 真値 155本と 全部 一致★（tests/xlsx-harness/cases/61-text-wareki-keika.json）
+     ⇒★台に 渡します★＝★2か所で 解かない★（画面と 自前の 台の TEXT も 台を 呼ぶ）
+     ★返り★ undefined＝和暦でも 経過でも ない（今まで通り）／null＝★出せない（#VALUE!）★／字＝答え
+     ★判じは 台の 1つだけ★（2026-10-04・画面の fmtForDisplay も 同じ 判じを 呼ぶ）
+       ★前は ここに 自前の 判じが 在り `0.00E+00` の 指数の E を 和暦と 取り違えて いた★
+       （⇒ 台へ 渡って #VALUE!。台の 判じは 指数の E・General・引用符・逃がし・[Red] 等を 外す）
+     ★★日付の 最後の 日（通し 2958465）から 先も 台へ★★（10-04 夕・画面の fmtForDisplay と 同じ 決まり）
+       この 層の _fmtDate は 上限を 知らず `=TEXT(2958466,"yyyy/m/d")` を ★10000/1/1★ に して いた（実Excel #VALUE!） */
+function _和暦か経過なら台へ(num, fmt) {
+  if (typeof Shoshiki === 'undefined' || !Shoshiki || typeof Shoshiki.字にする !== 'function') return undefined;
+  var 和経 = typeof Shoshiki.和暦か経過か === 'function' && Shoshiki.和暦か経過か(String(fmt));
+  var 上限 = typeof num === 'number' && num >= 2958465
+    && typeof Shoshiki.日付の書式か === 'function' && Shoshiki.日付の書式か(String(fmt));
+  if (!和経 && !上限) return undefined;
+  return Shoshiki.字にする(num, String(fmt));
+}
 function _applyTextFormat(num, fmt) {
   var f = _fmtStripLocale(fmt);
   //  ★日付の書式は「正;負;ゼロ;文字」の1区画目だけを使う（実測 TEXT(46053,"aaa;@")="土"）
@@ -314,10 +380,19 @@ function _jsBinomDistRange(n,p,s1,s2){function bp(t,pr,k){var c=1;for(var i=0;i<
 function _jsSlope(ys,xs){var n=ys.length,sx=0,sy=0,sxx=0,sxy=0;for(var i=0;i<n;i++){sx+=xs[i];sy+=ys[i];sxx+=xs[i]*xs[i];sxy+=xs[i]*ys[i];}return(n*sxy-sx*sy)/(n*sxx-sx*sx);}
 function _jsIntercept(ys,xs){var slope=_jsSlope(ys,xs),n=ys.length,sx=ys.reduce(function(a,_,i){return a+xs[i];},0)/n,sy=ys.reduce(function(a,b){return a+b;})/n;return sy-slope*sx;}
 function _jsForecast(x,ys,xs){return _jsIntercept(ys,xs)+_jsSlope(ys,xs)*x;}
-function _jsLinest(ys,xs){return[_jsSlope(ys,xs),_jsIntercept(ys,xs)];}
-function _jsLogest(ys,xs){var lys=ys.map(function(v){return Math.log(v);});return[Math.exp(_jsSlope(lys,xs)),Math.exp(_jsIntercept(lys,xs))];}
-function _jsTrend(ys,xs,newXs){var s=_jsSlope(ys,xs),i=_jsIntercept(ys,xs);return newXs.map(function(x){return i+s*x;});}
-function _jsGrowth(ys,xs,newXs){var lg=_jsLogest(ys,xs);return newXs.map(function(x){return lg[1]*Math.pow(lg[0],x);});}
+/* ★★`_一本の並びか()` は 外しました（2026-09-09）★★
+   「x が 2本以上なら 断る」為に 作った 門でした。
+   ⇒★断るのを やめて 直した★ので ★誰からも 呼ばれません★
+   ⇒★呼ばれない 物を 置くと「そこで 見て いる」と 読まれる★＝消します
+   （今は `lib/formula-yosoku.js` の `直線の係数()` が x を 何本でも 解きます） */
+/* ★★LINEST／LOGEST／TREND／GROWTH の 下請け 4本は 外しました（2026-09-11）★★
+   ★誰からも 呼ばれて いませんでした★（数えた … 呼び出し 0本／試験 0本／道具 0本）
+     `_jsGrowth` が `_jsLogest` を 呼ぶ 1本だけが 4本の 中の 行き来でした。
+   ★今は `lib/formula-yosoku.js` の `直線の係数()` が ★表として★ 返します★
+     ・1つの 数しか 返せない 段では LINEST は 出せません（実測 … 実Excel 0.7708… ／ うち 7.390…）
+     ・実測 … docs/measured/golden-linest-hyou-2026-09-09.tsv（実Excel 119本）
+   ⇒★呼ばれない 物を 置くと「そこで 見て いる」と 読まれます★（上の `_一本の並びか()` と 同じ）
+   ★司さん（2026-09-02）「使わんもんは 消せや」★ */
 
 // --- 行列 ---
 function _jsMdeterm(m){var n=m.length;if(n===1)return m[0][0];if(n===2)return m[0][0]*m[1][1]-m[0][1]*m[1][0];var det=0;for(var c=0;c<n;c++){var sub=m.slice(1).map(function(r){return r.filter(function(_,ci){return ci!==c;});});det+=Math.pow(-1,c)*m[0][c]*_jsMdeterm(sub);}return det;}
@@ -542,7 +617,6 @@ function _jsLookup(val,lookupVals,resultVals){
   var r=resultVals[found];
   return (r===undefined||r===null)?'':r;
 }
-function _jsXlookup(val,lookupVals,returnVals,notFound){for(var i=0;i<lookupVals.length;i++){if(String(lookupVals[i])===String(val))return returnVals[i];}return notFound!==undefined?notFound:'#N/A';}
 // XMATCH(値, 配列, [一致モード], [検索モード])
 //   一致モード: 0=完全一致(既定・MATCHの既定と違う) / -1=完全一致か次に小さい / 1=完全一致か次に大きい / 2=ワイルドカード
 //   検索モード: 1=先頭から(既定) / -1=末尾から / 2,-2=二分探索(昇順前提。ここでは走査順としてだけ扱う)
@@ -604,7 +678,138 @@ function _jsChooserows(matrix,rows){return rows.map(function(r){return matrix[r-
 
 // --- 財務 ---
 function _jsIrr(values,guess){guess=guess===undefined?0.1:guess;var rate=guess;for(var iter=0;iter<1000;iter++){var npv=0,dnpv=0;values.forEach(function(v,i){var f=Math.pow(1+rate,i);npv+=v/f;dnpv-=i*v/Math.pow(1+rate,i+1);});if(Math.abs(dnpv)<1e-15)break;var nr=rate-npv/dnpv;if(Math.abs(nr-rate)<1e-10){rate=nr;break;}rate=nr;}return rate;}
-function _jsXirr(values,dates,guess){guess=guess===undefined?0.1:guess;var d0=dates[0],rate=guess;for(var iter=0;iter<1000;iter++){var npv=0,dnpv=0;values.forEach(function(v,i){var t=(dates[i]-d0)/365,f=Math.pow(1+rate,t);npv+=v/f;dnpv-=t*v/Math.pow(1+rate,t+1);});if(Math.abs(dnpv)<1e-15)break;var nr=rate-npv/dnpv;if(Math.abs(nr-rate)<1e-10){rate=nr;break;}rate=nr;}return rate;}
+/* ★★XIRR の 組を 作る（★門と 計算が 同じ 物を 見る 為★）★★（2026-09-09）
+ *   ★門と 計算で 別々に 組を 作ると 口裏が 合いません★
+ *     ⇒ 実際 踏みました … 門は 通したのに 計算側が `filter(typeof v==='number')` で
+ *       ★空の マスを 落として 日付と ずれた★
+ *       AA1=-1000／AA2=★空★／AA3=1100 … 実Excel 0.21063382029533387 ／ うち 0.46563424984948343
+ *   ★空の マスは 0★（実測）／★日付が 無い 組は 数えない★
+ *   @returns {{組:Array,値:Array,日:Array}}
+ */
+function _xirrの組(生値,生日){
+  var 組=[],値=[],日=[];
+  for(var i=0;i<生値.length;i++){
+    var v=生値[i],d=生日[i];
+    var 値が空=(v===null||v===undefined||v==='');
+    var 日が空=(d===null||d===undefined||d==='');
+    if(日が空)continue;
+    var a=値が空?0:Number(v),b=Number(d);
+    組.push([a,b]); 値.push(a); 日.push(b);
+  }
+  return {組:組,値:値,日:日};
+}
+
+/* ★★XIRR の 門★★（2026-09-09）
+ *   ★どこから 断るかは 私が 決めて いません＝実Excel に 打たせました★
+ *   実測 … `docs/measured/golden-xirr-sakaime-2026-09-09.tsv`（61本）
+ *
+ *   ★実Excel が 断る 条件★
+ *     ・字が 混ざる ………………………… ★#VALUE!★
+ *     ・値と 日付の 数が 違う …………… ★#NUM!★
+ *     ・お金が 1件だけ …………………… ★#N/A★
+ *     ・符号が 片方だけ（全部＋／全部−／全部0）… ★#NUM!★
+ *     ・日付が 昇順で ない（逆順・バラバラ）…… ★#NUM!★
+ *     ・日付に 負の 数 …………………… ★#NUM!★
+ *   ★実Excel が 断らない 条件（★止めては いけない★）★
+ *     ・空の マスが 混ざる ……… 値を 返す（0.21063382029533387）
+ *     ・同じ 日付が 2つ ………… 値を 返す（2.071931099891663）
+ *     ・0 を 含む ………………… 値を 返す（0.21063382029533387）
+ *
+ *   ★見当を 変えても 誤りは 変わりません★（0.1 / 0 / -0.9 / 10 の 4通りで 確かめた）
+ *   ⇒★繰り返し 計算の 失敗では なく ★入口の 門★★
+ *
+ *   @returns {string|null} 誤りの 字（'#NUM!' など）／断らないなら null
+ */
+function _xirrの門(生値,生日,見当){
+  var i;
+  /* ★字が 混ざる＝#VALUE!★（★空は 字では ない★＝下で 落とす） */
+  for(i=0;i<生値.length;i++){
+    var a=生値[i];
+    if(typeof a==='string'&&a!==''){ if(!isFinite(Number(a)))return '#VALUE!'; }
+    if(typeof a==='boolean')return '#VALUE!';
+  }
+  for(i=0;i<生日.length;i++){
+    var b=生日[i];
+    if(typeof b==='string'&&b!==''){ if(!isFinite(Number(b)))return '#VALUE!'; }
+    if(typeof b==='boolean')return '#VALUE!';
+  }
+  /* ★★範囲の 大きさが 違う＝#NUM!★★（★中身の 数では ない★）
+     実測 … `=XIRR(X1:X3,Y1:Y2)`（3マス と 2マス）… ★#NUM!★ */
+  if(生値.length!==生日.length)return '#NUM!';
+  /* ★★空の マスは ★0★ として 扱う（★落とさない★）★★
+     実測 … AA1=-1000／AA2=★空★／AA3=1100 と I1=-1000／I2=0／I3=1100 が
+            ★どちらも 0.21063382029533387★＝★空は 0★
+     ⇒★1回目 私は「空は 落とす」と 書き、★数が 違う→#NUM!★ に して いました★
+       ⇒ 実Excel は 値を 返すのに ★うちだけ 断る★＝★出来る 物を 止める★所でした */
+  var 組=_xirrの組(生値,生日).組;
+  /* ★1件だけ＝#N/A★（★#NUM! では ない★＝実測） */
+  if(組.length<2)return '#N/A';
+  /* ★日付に 負の 数＝#NUM!★ */
+  for(i=0;i<組.length;i++)if(!(組[i][1]>=0))return '#NUM!';
+  /* ★日付が 昇順で ない＝#NUM!★（★同じ 日付は 通る★＝実測） */
+  for(i=1;i<組.length;i++)if(組[i][1]<組[i-1][1])return '#NUM!';
+  /* ★符号が 片方だけ＝#NUM!★（★プラスと マイナスが 両方 要る★） */
+  var 正が在る=false,負が在る=false;
+  for(i=0;i<組.length;i++){ if(組[i][0]>0)正が在る=true; if(組[i][0]<0)負が在る=true; }
+  if(!正が在る||!負が在る)return '#NUM!';
+  /* ★★見当が 0 より 小さい＝#NUM!★★（実測）
+     ★1回目 私は「−1 以下」と 決めました★（−1／−2／−0.9 の 3つしか 打って いなかった）
+     ⇒★刻んで 打ち直したら ★−0.01 でも #NUM!★＝私の 決めが 間違い★
+     実測（`=XIRR(E1:E3,F1:F3,見当)`）
+       −0.99 −0.95 −0.9 −0.8 −0.7 −0.5 −0.3 −0.1 ★−0.01★ … 全部 ★#NUM!★
+       ★0★ … 値（1.0011933300781244）／0.01 0.5 1 2 5 100 10000 … 値
+     ⇒★境目は 0★（0 は 通る・0 より 小さいと 断る）
+     ⇒★境目は 私が 決めず ★刻んで 打ちました★★ */
+  if(見当!==undefined){
+    if(!isFinite(見当))return '#VALUE!';
+    if(見当<0)return '#NUM!';
+  }
+  return null;
+}
+/* ★★見当が 大きいと 発散して NaN に なって いた（2026-09-09 に 直した）★★
+ *   =XIRR(E1:E3,F1:F3,10)     … 実Excel 1.0011933278292418 ／ うち ★NaN★
+ *   =XIRR(G1:G2,H1:H2,10)     … 実Excel 0.1000000024214387 ／ うち ★-2038322207737022.2★
+ *   =XIRR(E1:E3,F1:F3,1000000)… 実Excel 1.0011933255782424 ／ うち ★NaN★
+ *   ⇒ ニュートン法が ★1+rate が 0 か 負★の 所へ 飛び、`Math.pow` が NaN に なる
+ *   ⇒★実Excel は どの 見当でも 同じ 所に 落ち着きます★（実測 … 0.01〜10000 で 全部 1.00119…）
+ *   ★直し方★
+ *     ①★1+rate が 0 以下に なったら 戻す★（−1 より 下へ 行かせない）
+ *     ②★NaN に なったら 打ち切って 見当を 0.1 から やり直す★
+ *     ⇒★★出来る 物を 止めない★★（断るのでは なく 落ち着かせる）
+ */
+function _jsXirr(values,dates,guess){
+  var 始め=(guess===undefined)?0.1:guess;
+  var r=_xirrを解く(values,dates,始め);
+  /* ★落ち着かなければ 0.1 から やり直す★（実Excel は 見当が 何でも 同じ 所に 落ちる） */
+  if(!isFinite(r)&&始め!==0.1)r=_xirrを解く(values,dates,0.1);
+  return r;
+}
+function _xirrを解く(values,dates,guess){
+  var d0=dates[0],rate=guess;
+  for(var iter=0;iter<1000;iter++){
+    var npv=0,dnpv=0,壊れた=false;
+    for(var i=0;i<values.length;i++){
+      var t=(dates[i]-d0)/365;
+      var 底=1+rate;
+      if(!(底>0)){壊れた=true;break;}      /* ★1+rate が 0 以下＝累乗が 成り立たない★ */
+      var f=Math.pow(底,t);
+      if(!isFinite(f)||f===0){壊れた=true;break;}
+      npv+=values[i]/f;
+      dnpv-=t*values[i]/Math.pow(底,t+1);
+    }
+    if(壊れた)return NaN;
+    if(!isFinite(npv)||!isFinite(dnpv))return NaN;
+    if(Math.abs(dnpv)<1e-15)break;
+    var nr=rate-npv/dnpv;
+    if(!isFinite(nr))return NaN;
+    /* ★★−1 より 下へ 行かせない★★（行くと 次の 回で 必ず 壊れる）
+       ⇒ 半分だけ 戻す＝★ゆっくり 近づける★ */
+    if(nr<=-1)nr=(rate-1)/2;
+    if(Math.abs(nr-rate)<1e-10){rate=nr;break;}
+    rate=nr;
+  }
+  return rate;
+}
 function _jsVdb(cost,salvage,life,start,end,factor){factor=factor||2;var total=0;for(var p=Math.floor(start);p<Math.ceil(end);p++){var s=Math.max(start,p),e2=Math.min(end,p+1);var book=cost;for(var i=0;i<p;i++)book-=Math.min(book*factor/life,book-salvage);total+=Math.min(book*factor/life,book-salvage)*(e2-s);}return total;}
 function _jsDisc(settlement,maturity,pr,redemption){var t=(maturity-settlement)/365;return(redemption-pr)/(redemption*t);}
 function _jsIntrate(settlement,maturity,investment,redemption){var t=(maturity-settlement)/365;return(redemption-investment)/(investment*t);}
@@ -614,11 +819,47 @@ function _jsAmordegrc(cost,date_purchased,first_period,salvage,period,rate){retu
 function _jsAmorlinc(cost,date_purchased,first_period,salvage,period,rate){return(cost-salvage)*rate;}
 
 // --- エンジニアリング ---
-function _jsConvert(num,from,to){var u={'g':1,'kg':1000,'mg':0.001,'lbm':453.592,'ozm':28.3495,'ton':1e6,'m':1,'km':1000,'cm':0.01,'mm':0.001,'mi':1609.344,'yd':0.9144,'ft':0.3048,'in':0.0254,'sec':1,'min':60,'hr':3600,'day':86400,'yr':31557600,'Pa':1,'atm':101325,'bar':100000,'psi':6894.76,'J':1,'cal':4.184,'eV':1.602e-19,'l':0.001,'ml':0.000001,'gal':0.003785,'qt':0.000946,'pt':0.000473};if(from==='C'&&to==='F')return num*9/5+32;if(from==='F'&&to==='C')return(num-32)*5/9;if(from==='C'&&to==='K')return num+273.15;if(from==='K'&&to==='C')return num-273.15;if(from==='F'&&to==='K')return(num-32)*5/9+273.15;if(from==='K'&&to==='F')return(num-273.15)*9/5+32;if(!u[from]||!u[to])return'#N/A';return num*u[from]/u[to];}
+/* ★_jsConvert は 2026-09-07 に 消した★
+   ⇒ 中の 表が ★手で 書いた 概数★だった（lbm 453.592／実Excel 453.59237、
+     cal 4.184／実Excel は 4.1868・4.184 は "c"、gal 0.003785／実Excel 0.003785411784）
+   ⇒★どこからも 呼ばれていない事を 確かめてから 消した★
+   ⇒ 今は lib/tanni-hyou.js（★実Excel から 機械で 作った 表★）を 使う */
 function _jsGestep(num,step){return num>=(step||0)?1:0;}
 
 // --- データベース ---
-function _jsDbFunc(func,sheet,dbRange,field,criteriaRange){if(!_hf)return'#VALUE!';var m=dbRange.match(/^([A-Z]+\d+):([A-Z]+\d+)$/i);if(!m)return'#VALUE!';var s=_toRC(m[1]),e=_toRC(m[2]);var headers=[];for(var c=s.c;c<=e.c;c++)headers.push(_hf.getCellValue({sheet:_hfSid(sheet),row:s.r,col:c}));var fieldIdx=typeof field==='number'?field-1:headers.indexOf(field);if(fieldIdx<0)return'#VALUE!';var cm=criteriaRange.match(/^([A-Z]+\d+):([A-Z]+\d+)$/i);if(!cm)return'#VALUE!';var cs=_toRC(cm[1]);var critField=_hf.getCellValue({sheet:_hfSid(sheet),row:cs.r,col:cs.c});var critVal=_hf.getCellValue({sheet:_hfSid(sheet),row:cs.r+1,col:cs.c});var critFieldIdx=headers.indexOf(critField);var results=[];for(var r=s.r+1;r<=e.r;r++){if(String(_hf.getCellValue({sheet:_hfSid(sheet),row:r,col:s.c+critFieldIdx}))===String(critVal)){results.push(_hf.getCellValue({sheet:_hfSid(sheet),row:r,col:s.c+fieldIdx}));}}var nums=results.filter(function(v){return typeof v==='number';});if(func==='SUM')return nums.reduce(function(a,b){return a+b;},0);if(func==='AVG')return nums.length?nums.reduce(function(a,b){return a+b;})/nums.length:'#DIV/0!';if(func==='CNT')return nums.length;if(func==='CNTA')return results.filter(function(v){return v!==null&&v!==undefined;}).length;if(func==='MAX')return nums.length?Math.max.apply(null,nums):'#NUM!';if(func==='MIN')return nums.length?Math.min.apply(null,nums):'#NUM!';if(func==='PROD')return nums.reduce(function(a,b){return a*b;},1);if(func==='GET')return results.length===1?results[0]:'#NUM!';if(func==='STD'){var n=nums.length;if(n<2)return'#DIV/0!';var mean=nums.reduce(function(a,b){return a+b;})/n;return Math.sqrt(nums.reduce(function(a,v){return a+Math.pow(v-mean,2);},0)/(n-1));}if(func==='STDP'){var n=nums.length;if(!n)return'#DIV/0!';var mean=nums.reduce(function(a,b){return a+b;})/n;return Math.sqrt(nums.reduce(function(a,v){return a+Math.pow(v-mean,2);},0)/n);}if(func==='VAR'){var n=nums.length;if(n<2)return'#DIV/0!';var mean=nums.reduce(function(a,b){return a+b;})/n;return nums.reduce(function(a,v){return a+Math.pow(v-mean,2);},0)/(n-1);}if(func==='VARP'){var n=nums.length;if(!n)return'#DIV/0!';var mean=nums.reduce(function(a,b){return a+b;})/n;return nums.reduce(function(a,v){return a+Math.pow(v-mean,2);},0)/n;}return'#VALUE!';}
+/* ★条件の マス 1つに 実の 値が 当てはまるか★（2026-09-15）
+   ★実 Excel の 実測★（tests/dkei6-honban.test.mjs の 26行）
+     `>3`  … 4,5 ⇒ ★9★ ／ `<>2` … 3,4,5 ⇒ ★12★ ／ `>=3` … 3,4,5 ⇒ ★12★
+   ★前は 字どうしの `===` だけ★＝`'>3'` が どの マスとも 合わず ★0★ を 返して いた
+   ★空の 条件は 縛らない★（実測 … 条件の マスが 空 ⇒ ★14★＝全部 足す） */
+function _jsDbAtehamaru(v,c){
+  if(c===null||c===undefined||c==='')return true;
+  if(typeof c==='string'){
+    var m=/^(>=|<=|<>|>|<|=)([\s\S]*)$/.exec(c);
+    if(m){
+      var r=m[2].trim(),rn=Number(r),vn=Number(v);
+      var 数どうし=(r!==''&&isFinite(rn)&&typeof v==='number');
+      var d=数どうし?(vn-rn):String(v).localeCompare(r);
+      if(m[1]==='>')return d>0;
+      if(m[1]==='<')return d<0;
+      if(m[1]==='>=')return d>=0;
+      if(m[1]==='<=')return d<=0;
+      if(m[1]==='<>')return d!==0;
+      return d===0;
+    }
+  }
+  return String(v)===String(c);
+}
+function _jsDbFunc(func,sheet,dbRange,field,criteriaRange){if(!_hf)return'#VALUE!';var m=dbRange.match(/^([A-Z]+\d+):([A-Z]+\d+)$/i);if(!m)return'#VALUE!';var s=_toRC(m[1]),e=_toRC(m[2]);var headers=[];for(var c=s.c;c<=e.c;c++)headers.push(_hf.getCellValue({sheet:_hfSid(sheet),row:s.r,col:c}));var fieldIdx=typeof field==='number'?field-1:headers.indexOf(field);/* ★field が 台帳の 列数より 大きい／0／負★ … 実 Excel は ★#VALUE!★ ★前は 門が `<0` だけで、5 を 渡すと ★台帳の 外の 列★を 読んで ★0★ を 返して いた ★実測★ `=DSUM(A1:B5,5,F1:F2)` … 前 ★0★ ／実 Excel ★#VALUE!★（tests/dkei6-honban.test.mjs の 26行） */if(fieldIdx<0||fieldIdx>=headers.length)return'#VALUE!';var cm=criteriaRange.match(/^([A-Z]+\d+):([A-Z]+\d+)$/i);if(!cm)return'#VALUE!';var cs=_toRC(cm[1]),ce=_toRC(cm[2]);/* ★条件は ★1列とは 限りません★★（2026-09-15・実 Excel の 実測） ★横に 並んだ 列は ★かつ★★ … `F1=1 G1=2 / F2=2 G2=4` ⇒ A=2 ★かつ★ B=4 ⇒ ★2★ `F2=2 G2=99` … 片方 外れ ⇒ ★0★（★前は 1列目しか 見ず 2 を 返して いた★） ★見出しが 台帳に 無い 列は 縛らない★（`G1=99` … ⇒ ★2★） */var 条列=[];for(var cc=cs.c;cc<=ce.c;cc++){var h=_hf.getCellValue({sheet:_hfSid(sheet),row:cs.r,col:cc});条列.push({先:headers.indexOf(h),列:cc});}/* ★★D系の 条件の 決め（2026-09-15・実 Excel 26行で 測って 直した）★★
+     紙 `docs/measured/kansuu46/golden-dkei6-kane3-2026-09-15.tsv`（16.0 build 20326）
+     見張り `tests/dkei6-honban.test.mjs`（★27 passed / 0 failed★）
+   ①★横に 並んだ 列は ★かつ★★（前は 1列目しか 見て いなかった）
+   ②★縦に 並んだ 行は ★または★★（前は 2行目しか 見て いなかった）
+   ③★見出しが 台帳に 無い 列は ★縛らない★★（前は -1 を 足して 範囲の 外を 読んで いた）
+   ④★空の マスも 縛らない★
+   ⑤★条件の 行が 無ければ 全部 採る★
+   ★台（`lib/shiki-kansuu.js` の `D系の値たち`）と ★同じ 向き★に 揃えて あります★
+     ＝★作る道が 2本 在る時は 両方 直せ★ */var results=[];for(var r=s.r+1;r<=e.r;r++){/* ★縦に 並んだ 行は ★または★★（2026-09-15・実 Excel の 実測） `F1=1 / F2=2 / F3=3` … A=2 ★または★ A=3 ⇒ ★5★ ★前は `cs.r+1`（2行目）しか 見ず ★2★ を 返して いた★ ★条件の 行が 無ければ 全部 採る★（＝見出しだけ の 四角） */var 合うか=(ce.r<=cs.r);for(var cr=cs.r+1;cr<=ce.r&&!合うか;cr++){var 全部=true;for(var k=0;k<条列.length&&全部;k++){if(条列[k].先<0)continue;var 条値=_hf.getCellValue({sheet:_hfSid(sheet),row:cr,col:条列[k].列});if(条値===null||条値===undefined||条値==='')continue;if(!_jsDbAtehamaru(_hf.getCellValue({sheet:_hfSid(sheet),row:r,col:s.c+条列[k].先}),条値))全部=false;}if(全部)合うか=true;}if(合うか){results.push(_hf.getCellValue({sheet:_hfSid(sheet),row:r,col:s.c+fieldIdx}));}}var nums=results.filter(function(v){return typeof v==='number';});if(func==='SUM')return nums.reduce(function(a,b){return a+b;},0);if(func==='AVG')return nums.length?nums.reduce(function(a,b){return a+b;})/nums.length:'#DIV/0!';if(func==='CNT')return nums.length;if(func==='CNTA')return results.filter(function(v){return v!==null&&v!==undefined;}).length;if(func==='MAX')return nums.length?Math.max.apply(null,nums):'#NUM!';if(func==='MIN')return nums.length?Math.min.apply(null,nums):'#NUM!';/* ★DPRODUCT は 0件の 時 ★0★★（実 Excel・実測） ★前は `reduce` の 元が 1 なので ★1★ を 返して いた★ ＝`=DPRODUCT(A1:B5,1,F1:F2)` 0件 … 前 ★1★ ／実 Excel ★0★ ★掛け算の 元は 1 なのに 0 を 返す★＝★当て推量では 出ない 形★（PRODUCT も 同じ） */if(func==='PROD')return nums.length?nums.reduce(function(a,b){return a*b;},1):0;/* ★DGET は 0件と 2件以上で ★誤りが 違います★（実 Excel・実測） 0件 … ★#VALUE!★ ／ 2件以上 … ★#NUM!★ ★前は どちらも #NUM!★（`=DGET(A1:B5,1,F1:F2)` 0件 … 前 #NUM! ／実 Excel #VALUE!） */if(func==='GET')return results.length===1?results[0]:(results.length===0?'#VALUE!':'#NUM!');if(func==='STD'){var n=nums.length;if(n<2)return'#DIV/0!';var mean=nums.reduce(function(a,b){return a+b;})/n;return Math.sqrt(nums.reduce(function(a,v){return a+Math.pow(v-mean,2);},0)/(n-1));}if(func==='STDP'){var n=nums.length;if(!n)return'#DIV/0!';var mean=nums.reduce(function(a,b){return a+b;})/n;return Math.sqrt(nums.reduce(function(a,v){return a+Math.pow(v-mean,2);},0)/n);}if(func==='VAR'){var n=nums.length;if(n<2)return'#DIV/0!';var mean=nums.reduce(function(a,b){return a+b;})/n;return nums.reduce(function(a,v){return a+Math.pow(v-mean,2);},0)/(n-1);}if(func==='VARP'){var n=nums.length;if(!n)return'#DIV/0!';var mean=nums.reduce(function(a,b){return a+b;})/n;return nums.reduce(function(a,v){return a+Math.pow(v-mean,2);},0)/n;}return'#VALUE!';}
 
 // --- Web ---
 // ENCODEURL。★JSの encodeURIComponent は ! ' ( ) * ~ を素通しするが、Excelはこれらも変換する。
@@ -765,9 +1006,41 @@ function _jsScanCompute(sheet, initial, rangeStr, lambdaFormula) {
   return first!==null ? String(first) : String(initial);
 }
 
+/* ★★かっこの 外の カンマで 割る★★（2026-09-18）
+     ＝`LAMBDA(x,y,x)` を `['x','y','x']` に する
+     ＝★かっこの 中の カンマ（`SUM(1,2)`）では 割りません★ */
+function _topLevelSplit(s) {
+  var 出=[],深=0,頭=0,中の字=null;
+  for(var i=0;i<s.length;i++){
+    var c=s.charAt(i);
+    if(中の字){ if(c===中の字) 中の字=null; continue; }
+    if(c==='"'||c==="'"){ 中の字=c; continue; }
+    if(c==='('||c==='['||c==='{') 深++;
+    else if(c===')'||c===']'||c==='}') 深--;
+    else if(c===','&&深===0){ 出.push(s.slice(頭,i)); 頭=i+1; }
+  }
+  出.push(s.slice(頭));
+  return 出;
+}
+
 // MAP(range, LAMBDA(x, body)) → 全件カンマ区切り
 function _jsMapCompute(sheet, rangeStr, lambdaFormula) {
   if(!_hf) return null;
+  /* ★★引数の 数が 違う LAMBDA を 飲み込んで いました★★（2026-09-18・★お客さんに 出て いた★）
+       `=MAP(A1:A5,LAMBDA(x,y,x))`
+         ★実Excel★ … `#VALUE!`（実測・`golden-kansuu-9kaime-2026-09-18.tsv` 55行目）
+         ★前の うち★ … `#ERROR!`（★実Excel に 無い 字★）
+       ★因★ … 下の ふるいが `([^,)]+)` で ★口を 1つだけ★ 取り、
+              残り `y,x` を ★そのまま 体★に して いました
+              ⇒ `=y,(1)` の ような 式を 借り物に 渡し ⇒ `#ERROR!`
+       ★直し★ … ★口の 数を 数え、1つで なければ JS層は 答えません★（`null`）
+              ⇒★台（`lib/shiki-hyou.js`）が 答えます★＝`#VALUE!`（実Excel と 同じ）
+              ⇒★半分 合う 答えを 出さない★
+       ★`#ERROR!`（`!` 有り）は JS層から／`#ERROR`（`!` 無し）は 借り物から★
+         ＝★字が 1文字 違うだけで 出どころが 違います★（経営者1 の 見つけ物） */
+  var 中=lambdaFormula.replace(/^LAMBDA\s*\(/i,'').replace(/\)\s*$/,'');
+  var 割=_topLevelSplit(中);
+  if(割.length!==2) return null;   /* ★口1つ ＋ 体1つ＝2つ以外は 答えません★ */
   var mL=lambdaFormula.match(/^LAMBDA\s*\(([^,)]+)\s*,\s*(.+)\)$/is);
   if(!mL) return '#VALUE!';
   var param=mL[1].trim(),body=mL[2].trim();
@@ -797,8 +1070,12 @@ function _jsMakearrayCompute(sheet, rows, cols, lambdaFormula) {
   return res===null?'0':String(res);
 }
 
-// ISOMITTED(arg) - 省略チェック
-function _jsIsomitted(v) { return v===undefined||v===null; }
+/* ★★`_jsIsomitted` は 2026-09-08 に 消した★★
+   ⇒ 中身は `v===undefined||v===null`＝★「マスが 空か」★を 見ていた
+   ⇒ ISOMITTED は「★LAMBDA の 引数が 省かれたか★」を 見る 関数で、★別物★
+     （実Excel … =ISOMITTED(空のマス) は ★False★／カンマで 省いた 時だけ True）
+   ⇒★間違った 意味の 物を 名前だけ 残すと ★次に 触る 人が 使う★★ので 消した
+   ⇒ 今の 作りは この ファイルの `ISOMITTED(` の 所（実測の 表を 隣に 書いた） */
 
 // ================================================================
 // convertFormula: 文字列変換
@@ -868,8 +1145,133 @@ function _rewriteIntMod(f) {
   return f;
 }
 
-function convertFormula(f) {
+/* ★範囲を「:」で つないだ物を 1つの四角に まとめる★（2026-08-29）
+ *
+ *  Excel の「:」は ★範囲演算子★＝2つの範囲を「囲む四角」に する。
+ *  司さんの実物に こう書いてある（★実Excel(COM)で 原本の複製を 読んだ 真値★）:
+ *      =SUM(ROUNDDOWN(FILTER(R8.1[見本一四]:R8.1[架空二]: … :R8.1[雛形八一], … )))
+ *  表の名前を A1 に 直すと `'歩合'!V2:V32:'歩合'!X2:X32: … :'歩合'!AJ2:AJ32` になる。
+ *
+ *  ★HyperFormula は この形を 読めない★（実測 2026-08-29）:
+ *      =SUM(A1:A3:C1:C3)              → Parsing error（RParen を待っていたら ':' が来た）
+ *      =SUM('歩合'!A1:A3:'歩合'!C1:C3) → #ERROR!
+ *      =SUM('歩合'!A1:C3)              → ★45（通る）★
+ *  ⇒ ★囲む四角に まとめてから 渡す★。
+ *
+ *  これを入れる前は 司さんの実物で ★52本が #ERROR!★ だった
+ *  （実Excel の答えは 177,523 / 211,558 / 279,558 / 668,639 ＝★金額★）。
+ *
+ *  ★同じシートの物だけ まとめる★（別シートを跨ぐ「:」は Excel でも 意味が違う）。
+ *  ★読めない形は 触らない★（部品が 奇数個・番地の形が 違う 等）。
+ */
+function _mergeRangeChains(f) {
+  var シート = "(?:'[^']+'|[A-Za-z_\\u3040-\\u30ff\\u4e00-\\u9fff][\\w\\u3040-\\u30ff\\u4e00-\\u9fff.]*)!";
+  var 番地 = '\\$?[A-Za-z]{1,3}\\$?[0-9]{1,7}';
+  var 一つ = '(?:' + シート + ')?' + 番地 + ':' + 番地;
+  var 鎖 = new RegExp('(' + 一つ + ')(?::(' + 一つ + ')){1,}', 'g');
+  return String(f).replace(鎖, function (whole) {
+    var 部品 = whole.split(':');
+    if (部品.length % 2 !== 0) return whole;        // 2つで1組。奇数なら 触らない
+    var 名 = null, r1 = Infinity, r2 = -Infinity, c1 = Infinity, c2 = -Infinity;
+    for (var i = 0; i < 部品.length; i++) {
+      var m = 部品[i].match(/^(?:(.+)!)?\$?([A-Za-z]{1,3})\$?([0-9]{1,7})$/);
+      if (!m) return whole;
+      var このシート = m[1] || '';
+      if (i === 0) 名 = このシート;
+      else if (このシート && このシート !== 名) return whole;   // ★別シートは まとめない★
+      var col = 0, L = m[2].toUpperCase();
+      for (var k = 0; k < L.length; k++) col = col * 26 + (L.charCodeAt(k) - 64);
+      var row = parseInt(m[3], 10);
+      if (col < c1) c1 = col;
+      if (col > c2) c2 = col;
+      if (row < r1) r1 = row;
+      if (row > r2) r2 = row;
+    }
+    function 列名(n) { var s = ''; while (n > 0) { var t = (n - 1) % 26; s = String.fromCharCode(65 + t) + s; n = (n - t - 1) / 26; } return s; }
+    return (名 ? 名 + '!' : '') + 列名(c1) + r1 + ':' + 列名(c2) + r2;
+  });
+}
+
+/* ★Excelが 新しい関数に 付ける 内部の印を 外す★（2026-08-29）
+ *   Excel は 新しい関数を ファイルの中で `_xlfn.` `_xlws.` `_xludf.` `_xlpm.` 付きで 持つ。
+ *   ★.xlsb を 読むと 裸の `_xlws.FILTER(` が そのまま 来る★（実測）。
+ *   HyperFormula は これを 読めない ⇒ `Parsing error`。
+ *   ★長い方から 順に★（先に短い方を外すと `_xlfn.` だけ 消えて `_xlws.` が 残る）。
+ *   ★同じ一覧を lib/xlsx-io.js の stripXlfn も 持つ★（あちらは 式バーの表示用）。
+ *     tests/xlfn-strip.test.mjs が ★両方が 同じ物を 外すか★ を 突き合わせる。 */
+function _stripXlPrefix(f) {
+  return String(f)
+    .replace(/_xlfn\._xlws\./g, '')
+    .replace(/_xlfn\./g, '')
+    .replace(/_xlws\./g, '')
+    .replace(/_xludf\./g, '')
+    .replace(/_xlpm\./g, '');
+}
+
+/* ★★指数の 大文字 E を 小文字 e に する（2026-09-10）★★
+ *
+ *  ★何が 起きて いたか★
+ *    お客さんが ★指数の 字を 打つと #ERROR★ に なって いました。
+ *      =1.64E-14 ／ =1E+20 ／ =1.5E+20 ／ =2E5 ／ =1E-5 ／ =1E-4 … 全部 ★#ERROR★
+ *      ★=1.64e-14（小文字）は 通る★
+ *    ⇒★エンジンの 式読みが ★大文字 E を 数と 読めない★★
+ *    ⇒★★プラグインでは 直りません（式を 読む 所＝借り物の 中）★★
+ *      ⇒★借り物の 中は 読まず、★渡す 前に 書き換える★★
+ *
+ *  ★「E14 という セル参照と ぶつかって いる」は ★外れ★でした★
+ *    押して 確かめました … `=E14` → 999 ／ `=SUM(E1:E14)` → 1002 ★どちらも 正しく 動く★
+ *    ⇒ ぶつかって いません。★大文字 E を 数として 読まないだけ★です
+ *
+ *  ★★一番 危ないのは ★セル参照を 壊す 事★★★
+ *    ⇒★壊れる 側から 試験を 書きました★（下の 見張り）
+ *    ⇒ 触らない 物 … `=E14` `=SUM(E1:E14)` `=$E$14` `=Sheet1!E14`
+ *                    `="1.64E-14"`（★字の 中★） `=TEXT(A1,"0.00E+00")`（★書式の 中★）
+ *                    `=A1E5`（★前に 英字＝セルの 名前かも★） `=EXP(2)`（関数名）
+ *
+ *  ★見て いない 範囲★
+ *    ・★出る 字は 直して いません★（うち `1.64e-14` ／ 実Excel `1.64E-14`）＝★別の 直し★
+ *    ・★一重引用符（'）の 中は 見て いません★（シート名の 囲み）
+ */
+function _指数のEを小文字に(f){
+  if(!f||f.indexOf('E')<0) return f;
+  var 配列=f.split(''), 字の中=false;
+  for(var i=0;i<配列.length;i++){
+    if(配列[i]==='"'){ 字の中=!字の中; continue; }
+    if(字の中) continue;                              /* ★字の 中は 触らない★ */
+    if(配列[i]!=='E') continue;
+    /* ★E の 前が 数字★（1.64E / 1E / 2E …） */
+    var 前=配列[i-1];
+    if(!(前>='0'&&前<='9')) continue;
+    /* ★その 数字の 頭まで 戻り、その 前に 英字が 在れば セルの 名前★（A1E5 など） */
+    var j=i-1;
+    while(j>=0&&配列[j]>='0'&&配列[j]<='9') j--;
+    if(j>=0&&配列[j]==='.'){ j--; while(j>=0&&配列[j]>='0'&&配列[j]<='9') j--; }
+    if(j>=0&&/[A-Za-z_$]/.test(配列[j])) continue;
+    /* ★E の 後ろ＝符号? ＋ 数字★（後ろに 英字が 続けば セルの 名前） */
+    var k=i+1;
+    if(配列[k]==='+'||配列[k]==='-') k++;
+    var 数=0;
+    while(k<配列.length&&配列[k]>='0'&&配列[k]<='9'){ k++; 数++; }
+    if(!数) continue;
+    if(k<配列.length&&/[A-Za-z_]/.test(配列[k])) continue;
+    配列[i]='e';
+  }
+  return 配列.join('');
+}
+
+function convertFormula(f, シート) {
   if(!f||f[0]!=='=') return f;
+  /* ★指数の 大文字 E は エンジンが 読めない★（上の 断り） */
+  f = _指数のEを小文字に(f);
+  /* ★名前の定義を 実際の範囲に 開く★（2026-08-29）
+     HyperFormula は ★日本語の名前を 受け付けない★（実測：売上／うりあげ／売上_2026 とも invalid）。
+     司さんの実物は 日本語の名前で 書かれているので ★エンジンに 入る前に 開く★。
+     開き方は lib/named-ranges.js（字の中は 触らない／長い名前から 先に 開く）。 */
+  if(typeof window !== 'undefined' && window.名前の箱 && typeof window.名前の箱.開く === 'function'){
+    f = window.名前の箱.開く(f, シート);
+  }
+  if(f.indexOf('_xl') >= 0) f = _stripXlPrefix(f);
+  if(f.indexOf(':') >= 0) f = _mergeRangeChains(f);
   if(/VALUE\s*\(/i.test(f))     f = _rewriteValueCalls(f);
   if(/\b(INT|MOD)\s*\(/i.test(f)) f = _rewriteIntMod(f);
   // LET展開
@@ -891,8 +1293,182 @@ function convertFormula(f) {
   f = f.replace(/\bBETADIST\s*\(([^,()]+,[^,()]+,[^,()]+)\)/gi, 'BETA.DIST($1,TRUE())');
   f = f.replace(/\bHYPGEOMDIST\s*\(([^()]+)\)/gi, function(m,args){return args.split(',').length===4?'HYPGEOMDIST('+args+',FALSE())':m;});
   f = f.replace(/\bNEGBINOMDIST\s*\(([^()]+)\)/gi, function(m,args){return args.split(',').length===3?'NEGBINOMDIST('+args+',FALSE())':m;});
-  f = f.replace(/\bISREF\s*\(([^)]+)\)/gi, function(m,arg){return /^[A-Z]+\d+(:[A-Z]+\d+)?$/i.test(arg.trim())?'TRUE()':'FALSE()';});
+  f = _rewriteIsRef(f);
+  f = _rewriteAreas(f);
   return f;
+}
+
+/* ★AREAS＝『範囲が 幾つに 分かれているか』を 数える★（2026-09-07）
+ *
+ *  ★★なぜ ここ（式の 字を 書き換える 段）で やるか★★
+ *    エンジンは ★とびとびの 範囲を ★式を 読む 所★で 断ります★
+ *      `=SUM((A1:B3,D1:D2))` … Parsing error（RParen を 待っていたら , が 来た）
+ *    ⇒★関数の 所まで 届かない＝プラグインでは 受け取れない★
+ *    ⇒★JS層も 駄目★＝★式の 一番 外側でしか 効かない★
+ *      （実測 … AREAS は 入れ子で 使われる
+ *        `=SUM(AREAS((A1,A2)),1)` → 3 ／ `=AREAS((A1,A2))+AREAS(B2:D4)` → 3）
+ *    ⇒★★字を 数に 置き換えれば 入れ子も そのまま 正しく なる★★
+ *      `=SUM(AREAS((A1,A2)),1)` → `=SUM(2,1)` → 3
+ *
+ *  ★答え★ 実Excel に 4回 打たせた ★89本★
+ *    `docs/measured/kansuu46/golden-areas*-2026-09-07.tsv`
+ *    ★決まり★＝★中身では なく ★マスを 指しているか★だけ★（ISREF と 同じ）
+ *      `AREAS(IF(TRUE,D1,B1))` … D1 が `#DIV/0!` でも ★1★
+ *
+ *  ★★出さない 形★★（★半分 合う 答えを 出さない★）
+ *    ★かっこが 入る 形は 全部★（`AREAS(INDEX(...))` ／ シート名の かっこ）
+ *    ⇒ 実測 … `AREAS(INDEX(D1:D2,1))` は ★1★／`AREAS(INDEX(A1:C3,99,1))` は ★#REF!★
+ *      ⇒★どちらも「計算したら 誤り」＝★値では 見分けられない★★
+ *    ⇒★★今の 作りでは 出せません★＝`AREAS.MADA()` に して `#NAME?`（＝まだです）
+ *      ★★そのまま 残しては いけない★★＝ISREF で 踏んだ
+ *        （エンジンは AREAS を 知らないので #NAME? に なるが、
+ *          ★とびとびは 式を 読む 所で 止まって #ERROR! に なる★）
+ *
+ *  ★`#NULL!` も 今は 出せません★
+ *    実測 … エンジンの 誤りの 種類に ★NULL が 無い★
+ *    ⇒ `AREAS(B2:D4 A1)`（重ならない 重なり）は ★まだ★に する
+ *      （★#ERROR! で 出すと 実Excel と 字が 違う★）
+ *
+ *  見張り: tests/formula-areas.test.mjs
+ */
+function _rewriteAreas(f){
+  if(!/\bAREAS\s*\(/i.test(f)) return f;
+  var A = null;
+  try{
+    A = (typeof module === 'object' && module.exports && typeof require === 'function')
+      ? require('./lib/formula-areas.js')
+      : (typeof self !== 'undefined' ? self.FormulaAreas : null);
+  }catch(e){ A = (typeof self !== 'undefined' ? self.FormulaAreas : null); }
+  if(!A || typeof A.区画を数える !== 'function') return f;   /* 部品が 無い＝触らない */
+  var 出='', i=0;
+  while(i < f.length){
+    var m = /\bAREAS\s*\(/i.exec(f.slice(i));
+    if(!m){ 出 += f.slice(i); break; }
+    var 頭 = i + m.index, 開 = 頭 + m[0].length;
+    出 += f.slice(i, 頭);
+    /* ★かっこを 数えて 閉じを 探す★（字の かたまりの 中の かっこは 数えない） */
+    var 深=1, j=開, 字中=false;
+    while(j < f.length){
+      var c = f.charAt(j);
+      if(字中){ if(c === '"') 字中 = false; }
+      else if(c === '"') 字中 = true;
+      else if(c === '(') 深++;
+      else if(c === ')'){ 深--; if(!深) break; }
+      j++;
+    }
+    if(深){ 出 += f.slice(頭); break; }               /* 閉じが 無い＝触らない */
+    var 答 = A.区画を数える(f.slice(開, j));
+    if(typeof 答 === 'number') 出 += String(答);
+    /* ★★#VALUE! は エンジンが 持っている＝★そのまま 出す★★
+       （実測 … `AREAS((Sheet1!A1,二枚目!A1))` は 実Excel も #VALUE!）
+       ⇒★出せる 答えを「まだ」に しない★＝それも 嘘に なる */
+    else if(答 && 答.誤り === 'VALUE') 出 += '#VALUE!';
+    /* ★★#NULL! は エンジンに 無い★★（実測 … 誤りの 種類に NULL が 無い）
+       ⇒ `#ERROR!` で 出すと ★実Excel と 字が 違う★
+       ⇒★だから ここだけ「まだです」に する★ */
+    else 出 += 'AREAS.MADA()';
+    i = j + 1;
+  }
+  return 出;
+}
+
+
+/* ★ISREF＝『マスを 指しているか』を 見る 関数★（2026-09-07 に 作り直した）
+ *
+ *  ★★前の 作りは 壊れていました（本番に 在りました）★★
+ *    `f.replace(/\bISREF\s*\(([^)]+)\)/gi, …)`
+ *    ⇒★`[^)]+` は ★最初の ) で 止まります★＝★入れ子を 数えません★
+ *      `=ISREF(SUM(A1:A2))` → `=FALSE())`      ←★閉じかっこが 1つ 多い＝#ERROR!★
+ *      `=ISREF(IF(TRUE,A1,B1))` → `=FALSE(),A1,B1))`
+ *    ⇒ さらに TRUE に する 形が ★A1 と A1:B2 だけ★でした
+ *      `=ISREF(A:A)` `=ISREF(1:1)` `=ISREF(Sheet1!A1)` … ★実Excel は TRUE／うちは FALSE★
+ *      ⇒★誤りも 出ない＝★黙って 逆の 答え★＝一番 見つけにくい★
+ *
+ *  ★★答えは 実Excel に 打たせて 取りました★★
+ *    `docs/measured/kansuu46/golden-isref-2026-09-07.tsv`（25本）
+ *    ★実Excel の 決まり★＝★中身では なく ★マスを 指しているか★だけ★
+ *      `ISREF(E5)` … E5 が `#DIV/0!` でも ★TRUE★（★誤りは 伝わらない★）
+ *      `ISREF(INDEX(A1:B2,1,1))` … ★TRUE★（INDEX は マスを 指す）
+ *      `ISREF(SUM(A1:A2))` …… FALSE（SUM は 値）
+ *      `ISREF(INDIRECT("zzz"))` … ★FALSE★（指せなかった）
+ *      `ISREF(INDEX(A1:B2,99,1))` … ★FALSE★（外を 指した）
+ *
+ *  ★★今回は「嘘を 止める」所までです★★（指示役 2026-09-07・2a）
+ *    ★字だけで ★確かに★ 決まる 形★ … TRUE / FALSE を 出す
+ *    ★関数が 中に 入る 形★ ………… ★出しません★
+ *      ⇒`INDIRECT("A1")` は TRUE ／`INDIRECT("zzz")` は FALSE
+ *        ＝★指せたかは 字だけでは 決まりません★（AREAS と 同じ）
+ *      ⇒★★間違った TRUE/FALSE より #NAME?（＝まだです）の 方が 良い★★
+ *      ⇒ ISREF の まま 残す＝エンジンが #NAME? を 返す
+ *    ★名前（なまえ）★ も 同じ＝★まだ 出しません★（名前の 一覧を 見ないと 決まらない）
+ *
+ *  見張り: tests/isref.test.mjs
+ */
+function _rewriteIsRef(f){
+  if(!/\bISREF\s*\(/i.test(f)) return f;
+  var 出='', i=0;
+  while(i < f.length){
+    var m = /\bISREF\s*\(/i.exec(f.slice(i));
+    if(!m){ 出 += f.slice(i); break; }
+    var 頭 = i + m.index;                 /* ISREF の 先頭 */
+    var 開 = 頭 + m[0].length;            /* ( の 次 */
+    出 += f.slice(i, 頭);
+    /* ★かっこを ★数えて★ 閉じを 探す★（字の かたまりの 中の かっこは 数えない） */
+    var 深 = 1, j = 開, 字中 = false;
+    while(j < f.length){
+      var c = f.charAt(j);
+      if(字中){ if(c === '"') 字中 = false; }
+      else if(c === '"') 字中 = true;
+      else if(c === '(') 深++;
+      else if(c === ')'){ 深--; if(!深) break; }
+      j++;
+    }
+    if(深){ 出 += f.slice(頭); break; }   /* 閉じが 無い＝触らない（式を 壊さない） */
+    var 中 = f.slice(開, j).trim();
+    var 答 = _isRefKotae(中);
+    /* ★★決められない 形は ★そのままに しては いけません★★（2026-09-07 実測）
+       ⇒ エンジンは ★自分の ISREF を 持っています★
+       ⇒ そのまま 渡すと ★エンジンが 答えを 出してしまう★
+         実測 … `ISREF(INDIRECT("A1"))` → ★false★（実Excel は TRUE）
+                `ISREF(INDIRECT("zzz"))` → ★true★（実Excel は FALSE）
+                `ISREF(A1:INDEX(…))` → ★#ERROR!★
+       ⇒★★『そのまま 残す＝黙る』では なく『別の 誰かが 嘘を 言う』でした★★
+       ⇒ だから ★無い 名前★に 置き換えて ★#NAME?（＝まだです）★を 出す
+         （お客さんに 見える 式は 元の まま＝書き換えた 字は 画面に 出ません） */
+    出 += (答 === null) ? 'ISREF.MADA()'
+                        : (答 ? 'TRUE()' : 'FALSE()');
+    i = j + 1;
+  }
+  return 出;
+}
+
+/** ★字だけで 決まる 形か★ true／false／★null＝決められない★ */
+function _isRefKotae(中){
+  if(!中) return null;
+  /* ★★TRUE()／FALSE() は かっこが 在っても ★値★★（2026-09-08 に 踏んだ）
+     ⇒ `convertFormula` は ★この 関数より 先に★ `TRUE` を `TRUE()` に 直している
+       （上の `f.replace(/\bTRUE\b(?!\s*\()/g, 'TRUE()')`）
+     ⇒ だから ここへ 来る 時には ★もう かっこが 付いている★
+     ⇒ 下の「かっこが 在れば 決められない」に 先に 引っかかり
+       `=ISREF(TRUE)` が ★#NAME?★に なっていた（★実Excel は False★）
+     ⇒★★#45 で 私が 本番に 入れた 戻り★★（★直す前は FALSE＝合っていた★）
+     ⇒★『かっこが 在る＝関数』は 早すぎる 決めつけだった★
+     ⇒★見つけ方★ 司さんの「答え確かめて」で 実Excel の 16本と 突き合わせて 出た */
+  if(/^(TRUE|FALSE)\s*\(\s*\)$/i.test(中.trim())) return false;
+  if(/[()]/.test(中)) return null;                 /* ★関数が 入る＝決められない★ */
+  var s = 中.replace(/\$/g, '');
+  /* ★シートの 名前が 付いていたら 外す★（'a b'!A1 も） */
+  s = s.replace(/^'[^']*'!/, '').replace(/^[A-Za-z0-9_　-鿿]+!/, '');
+  /* ★マスを 指す 形（実測で TRUE）★ */
+  if(/^[A-Za-z]{1,3}[0-9]{1,7}(:[A-Za-z]{1,3}[0-9]{1,7})?$/.test(s)) return true;  /* A1 / A1:B2 */
+  if(/^[A-Za-z]{1,3}:[A-Za-z]{1,3}$/.test(s)) return true;                          /* A:A */
+  if(/^[0-9]{1,7}:[0-9]{1,7}$/.test(s)) return true;                                /* 1:1 */
+  /* ★値そのもの（実測で FALSE）★ */
+  if(/^"[^"]*"$/.test(中)) return false;                                            /* "a" */
+  if(/^-?[0-9]+(\.[0-9]+)?$/.test(中)) return false;                                /* 1 / 1.5 */
+  if(/^(TRUE|FALSE)(\(\))?$/i.test(中)) return false;                               /* TRUE */
+  if(/[+\-*/&^]/.test(中)) return false;                                            /* 1+1 / A1&"" */
+  return null;                                     /* ★名前など＝まだ 決めない★ */
 }
 
 // ================================================================
@@ -920,13 +1496,59 @@ function _jsComputeFormula(sheet, v) {
   //  ★残る5つ(PERCENTILE/QUARTILE/N/DSUM/DCOUNT)は「版上げで不要になる可能性」枠。判断日 2026-09-30。
   var _jsSet = {PERCENTILE:1,QUARTILE:1,
     XIRR:1,
+    /* ★MIRR も 2026-09-09 に 足した★
+       ★エンジン（借り物）が ★実Excel が 答える 所で #DIV/0! を 返して いた★
+         =MIRR(全部マイナス,0.1,0.12) 実Excel ★−1★ ／ うち ★#DIV/0!★
+         =MIRR(A1:A3,-1,0.12)        実Excel ★0.17132403714770583★ ／ うち ★#DIV/0!★
+       ⇒★出来る 物を 止めて いた＝方針（全部 つける）に 反する★
+       ⇒★借り物の 中は 読まず、JS層で 先に 受けて 自分で 出す★ */
+    MIRR:1,
+    /* ★IRR と XNPV も 2026-09-09 に 足した★
+       ★エンジン（借り物）が 実Excel と 違う 答えを 返して いた★ので JS層で 先に 受ける
+         =IRR(全部プラス) … 実Excel #NUM! ／ エンジン 16693338463349.688
+         =XNPV(0,…)       … 実Excel #NUM! ／ エンジン 300
+       ⇒★関所に 入れないと ★私の 段まで 届きません★（★実際 1回 素通りした★）★ */
+    /* ★XNPV だけ 足した（2026-09-09）★
+       ★IRR は 足しませんでした★＝`_PLUGIN_FUNCS` に 既に 在り（EX.IRR）、
+       ★_jsSet にも 入れると 1つの 関数が 2か所に なる★
+       ⇒ 見張り `tests/xlsx-harness/compare.mjs` が
+         「★同じ 関数が 2箇所で 定義されている★」で 赤に して 教えて くれました
+       ⇒★IRR は エンジン側（下の EX.IRR）で 直します★ */
+    XNPV:1,
     DATESTRING:1,OFFSET:1,
     N:1,
-    CONVERT:1,
+    /* ★CONVERT は 2026-09-07 に ここから 外して lib/formula-yosoku-plug.js へ 移した★
+       ⇒ ここに 居た 物は ★答えを 4桁で 丸めていた★（0.4536／実Excel 0.45359237）
+       ⇒★1つの 関数は 1か所でだけ 定義する★（両方に 居ると 先に 当たった 方が 勝つ） */
     DSUM:1,DAVERAGE:1,DCOUNT:1,DCOUNTA:1,DMAX:1,DMIN:1,DPRODUCT:1,
     DGET:1,DSTDEV:1,DSTDEVP:1,DVAR:1,DVARP:1,
-    LINEST:1,BINOM:1,FREQUENCY:1,
-    REDUCE:1,SCAN:1,MAP:1,MAKEARRAY:1,ISOMITTED:1};
+    /* ★LINEST は 2026-09-09 に 外しました★＝JS層で 受けなく なった
+       （`lib/formula-yosoku.js` の `直線の係数()` が ★表として★ 返す）
+       ⇒★関所に 残すと「JS層に 段が 在る」と 読まれる★ */
+    BINOM:1,FREQUENCY:1,
+    /* == 2026-09-19 ... SCAN / MAP / MAKEARRAY を ここから 外しました ==
+         ★何が 起きて いたか★
+           この 段（JS層）は ★エンジンより 先★に 答えます（記憶「Exally の 式は 2階建て」）。
+           SCAN / MAP / MAKEARRAY は ここで ★先頭値だけ★ を 返して いました
+           ⇒★★溢れる 式なのに 1マスしか 出ません★★
+           ⇒経営者1 が 本番で 実測 ... 実Excel `6 / 2 / 4` ／ うち ★1x1（6 だけ）★
+         ★なぜ 今まで 出なかったか★
+           ★分母が 溢れの ★左上しか★ 見て いなかった★（`osu-dai-dake.mjs` 自身の 断り）
+         ★BYROW / BYCOL は ここに 居ませんでした★
+           ⇒★だから あの 2つだけ 溢れて いました★
+           ⇒★同じ LAMBDA の 一族で 割れて いた 訳が これです★
+         ★外して 良いと 決めた 訳（★測って から★）★
+           ⑴台が ★同じ 答えを 出す★ ... 紙で ★8 / 8★
+              MAP 2 ／ MAP(引数2つ) #VALUE! ／ SCAN 1 ／ MAKEARRAY(2,3) 1
+              ／ MAKEARRAY(2,2) 1 ／ REDUCE 15 ／ BYROW 3 ／ BYCOL 11
+           ⑵台の ★溢れた 先★が 実Excel と 同じ ... ★14 / 14★
+              （`docs/measured/golden-kobore-zenmasu-2026-09-19.tsv`）
+           ⇒★左上は 1本も 変わらず、★溢れた 先が 出る ように なります★★
+         ★REDUCE と ISOMITTED は 残します★ ... ★溢れません★（1つの 値を 返す）
+         ★下の 段（mScan / mMap / mMkarr）も 一緒に 消しました★
+           ＝関所から 外した のに 段を 残すと `js-sou-sekisho` が
+             ★「関所を 通らない 段が 在る」と 赤に します★（★門が 正しい★） */
+    REDUCE:1,ISOMITTED:1};
   if(!_jsSet[_fnBase]) return null; // JS非対象 → HFへ
 
   var f = v.slice(1).trim().toUpperCase();
@@ -940,33 +1562,13 @@ function _jsComputeFormula(sheet, v) {
   var mQuart=fOrig.match(/^QUARTILE(?:\.INC|\.EXC)?\s*\(([A-Z]+\d+:[A-Z]+\d+)\s*,\s*([0-4])\s*\)$/i);
   if(mQuart){var vals=_getRangeVals(sheet,mQuart[1]);if(vals.length)return String(_jsQuartile(vals,parseInt(mQuart[2])));}
 
-  // MODE / MODE.SNGL / MODE.MULT
-  var mMode=fOrig.match(/^MODE(?:\.SNGL|\.MULT)?\s*\(([A-Z]+\d+:[A-Z]+\d+)\)$/i);
-  if(mMode){var vals=_getRangeVals(sheet,mMode[1]);return String(_jsMode(vals));}
+  /* ★死にコードを 12か所 消した（2026-09-08）★＝入口の 関所を 通らない 段だった。訳と 名簿＝docs/measured/shini-code-2026-09-08.md */
 
-  // TRIMMEAN
-  var mTrim=fOrig.match(/^TRIMMEAN\s*\(([A-Z]+\d+:[A-Z]+\d+)\s*,\s*([0-9.]+)\s*\)$/i);
-  if(mTrim){var vals=_getRangeVals(sheet,mTrim[1]);return String(_jsTrimmean(vals,parseFloat(mTrim[2])));}
 
-  // PERCENTRANK / PERCENTRANK.INC / PERCENTRANK.EXC
-  var mPr=fOrig.match(/^PERCENTRANK(?:\.INC|\.EXC)?\s*\(([A-Z]+\d+:[A-Z]+\d+)\s*,\s*([A-Z]+\d+|[0-9.]+)\s*(?:,\s*(\d+))?\s*\)$/i);
-  if(mPr){var vals=_getRangeVals(sheet,mPr[1]);var x=_getSingleVal(sheet,mPr[2])||parseFloat(mPr[2]);return String(_jsPercentrank(vals,x,parseInt(mPr[3])||3));}
 
-  // KURT
-  var mKurt=fOrig.match(/^KURT\s*\(([A-Z]+\d+:[A-Z]+\d+)\)$/i);
-  if(mKurt){var vals=_getRangeVals(sheet,mKurt[1]);var r=_jsKurt(vals);return typeof r==='number'?String(Math.round(r*10000)/10000):r;}
 
-  // INTERCEPT
-  var mInter=fOrig.match(/^INTERCEPT\s*\(([A-Z]+\d+:[A-Z]+\d+)\s*,\s*([A-Z]+\d+:[A-Z]+\d+)\)$/i);
-  if(mInter){var ys=_getRangeVals(sheet,mInter[1]),xs=_getRangeVals(sheet,mInter[2]);return String(_jsIntercept(ys,xs));}
 
-  // FORECAST / FORECAST.LINEAR
-  var mFc=fOrig.match(/^FORECAST(?:\.LINEAR)?\s*\(([A-Z]+\d+|[0-9.]+)\s*,\s*([A-Z]+\d+:[A-Z]+\d+)\s*,\s*([A-Z]+\d+:[A-Z]+\d+)\)$/i);
-  if(mFc){var x=_getSingleVal(sheet,mFc[1])||parseFloat(mFc[1]);var ys=_getRangeVals(sheet,mFc[2]),xs=_getRangeVals(sheet,mFc[3]);return String(_jsForecast(x,ys,xs));}
 
-  // IRR
-  var mIrr=fOrig.match(/^IRR\s*\(([A-Z]+\d+:[A-Z]+\d+)(?:\s*,\s*[0-9.]+)?\s*\)$/i);
-  if(mIrr){var vals=_getRangeAll(sheet,mIrr[1]).filter(function(v){return typeof v==='number';});return String(Math.round(_jsIrr(vals)*10000)/10000);}
 
   // DATESTRING
   var mDs=fOrig.match(/^DATESTRING\s*\(([A-Z]+\d+|[0-9]+)\)$/i);
@@ -976,73 +1578,217 @@ function _jsComputeFormula(sheet, v) {
   var mOff=fOrig.match(/^OFFSET\s*\(([A-Z]+\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*\)$/i);
   if(mOff){var v=_jsOffset(sheet,mOff[1],parseInt(mOff[2]),parseInt(mOff[3]));return String(v);}
 
-  // XLOOKUP
-  var mXl=fOrig.match(/^XLOOKUP\s*\(([^,()]+)\s*,\s*([A-Z]+\d+:[A-Z]+\d+)\s*,\s*([A-Z]+\d+:[A-Z]+\d+)(?:\s*,\s*"([^"]*)")?\s*\)$/i);
-  if(mXl){var lv=_getSingleVal(sheet,mXl[1]);if(lv===null)lv=mXl[1].replace(/^["']|["']$/g,'');var la=_getRangeAll(sheet,mXl[2]),ra=_getRangeAll(sheet,mXl[3]);return String(_jsXlookup(lv,la,ra,mXl[4]));}
 
   // N
   var mN=fOrig.match(/^N\s*\(([^)]+)\)$/i);
   if(mN){var sv=_getSingleVal(sheet,mN[1]);return String(_jsN(sv!==null?sv:mN[1]));}
 
-  // CONVERT
-  var mCv=fOrig.match(/^CONVERT\s*\(([A-Z]+\d+|[0-9.\-]+)\s*,\s*"([^"]+)"\s*,\s*"([^"]+)"\s*\)$/i);
-  if(mCv){var n=_getSingleVal(sheet,mCv[1])||parseFloat(mCv[1]);var r=_jsConvert(n,mCv[2],mCv[3]);return typeof r==='number'?String(Math.round(r*10000)/10000):r;}
+  // CONVERT … ★2026-09-07 に ここから 外した★（lib/formula-yosoku-plug.js へ）
+  //   ここに 在った 物は 答えを 4桁で 丸めていた ⇒ =CONVERT(1,"lbm","kg") が ★0.4536★
+  //   実Excel は ★0.45359237★／単位も 足りなかった（kibyte が #N/A）
 
-  // GESTEP
-  var mGe=fOrig.match(/^GESTEP\s*\(([A-Z]+\d+|[0-9.\-]+)(?:\s*,\s*([A-Z]+\d+|[0-9.\-]+))?\s*\)$/i);
-  if(mGe){var n=_getSingleVal(sheet,mGe[1])||parseFloat(mGe[1]);var s=mGe[2]?(_getSingleVal(sheet,mGe[2])||parseFloat(mGe[2])):0;return String(_jsGestep(n,s));}
 
   // REDUCE(initial, range, LAMBDA(...))
   var mReduce=fOrig.match(/^REDUCE\s*\(([^,]+)\s*,\s*([A-Z]+\d+:[A-Z]+\d+)\s*,\s*(LAMBDA\s*\(.+\))\s*\)$/is);
   if(mReduce){var reduceInit=parseFloat(mReduce[1].trim())||0;var reduceR=_jsReduceCompute(sheet,reduceInit,mReduce[2],mReduce[3]);if(reduceR!==null)return reduceR;}
 
-  // SCAN(initial, range, LAMBDA(...))
-  var mScan=fOrig.match(/^SCAN\s*\(([^,]+)\s*,\s*([A-Z]+\d+:[A-Z]+\d+)\s*,\s*(LAMBDA\s*\(.+\))\s*\)$/is);
-  if(mScan){var scanInit=parseFloat(mScan[1].trim())||0;var scanR=_jsScanCompute(sheet,scanInit,mScan[2],mScan[3]);if(scanR!==null)return scanR;}
+  /* == 2026-09-19 ... SCAN / MAP / MAKEARRAY の 段を 消しました ==
+       ★訳は 上の 関所（_jsSet）の 注に 書いて あります★
+       ＝★溢れる 式を ここで 1マスに 潰して いました★
+       ⇒★台（lib/shiki-hyou.js）が 溢れごと 出します★
+       ★中の 関数（_jsScanCompute / _jsMapCompute / _jsMakearrayCompute）は 残して います★
+         ＝`__test` の 口から 試験が 呼んで います（★口を 黙って 消さない★）
+         ＝★お客さんの 道からは もう 呼ばれません★ */
 
-  // MAP(range, LAMBDA(...))
-  var mMap=fOrig.match(/^MAP\s*\(([A-Z]+\d+:[A-Z]+\d+)\s*,\s*(LAMBDA\s*\(.+\))\s*\)$/is);
-  if(mMap){var mapR=_jsMapCompute(sheet,mMap[1],mMap[2]);if(mapR!==null)return mapR;}
-
-  // MAKEARRAY(rows, cols, LAMBDA(...))
-  var mMkarr=fOrig.match(/^MAKEARRAY\s*\(([0-9]+)\s*,\s*([0-9]+)\s*,\s*(LAMBDA\s*\(.+\))\s*\)$/is);
-  if(mMkarr){var mkR=_jsMakearrayCompute(sheet,parseInt(mMkarr[1]),parseInt(mMkarr[2]),mMkarr[3]);if(mkR!==null)return mkR;}
-
-  // ISOMITTED(ref)
+  /* ★★ISOMITTED … ★『空の マス』と『省かれた 引数』は 別物★★（2026-09-08 実Excel 実測）
+     ★前は こう だった★ `_getSingleVal` が null なら true
+       ⇒★「マスが 空か」を 見ていた★／ISOMITTED は「★LAMBDA の 引数が 省かれたか★」を 見る 関数
+       ⇒ =ISOMITTED(A1) も =ISOMITTED(2) も =ISOMITTED("あ") も ★true★ を 返していた
+       ⇒★実Excel は 16本 とも False★（金の紙 golden-346-2026-09-08.tsv）
+     ★実Excel に 聞いた（docs/measured/kansuu46/toru-isomitted.ps1）★
+       =ISOMITTED(C1)（★空の マス★）               → ★False★
+       =LAMBDA(x,ISOMITTED(x))(C1)（空の マス）    → ★False★
+       =LAMBDA(x,y,ISOMITTED(y))(1,2)（渡した）   → False
+       =LET(x,1,ISOMITTED(x))                    → False
+       ★=LAMBDA(x,y,ISOMITTED(y))(1,)（カンマで 省く）→ True★  ←★ここだけ True★
+       ★=LAMBDA(x,y,ISOMITTED(x))(,2)★                → True★
+       ★=LAMBDA(x,y,z,ISOMITTED(y))(1,,3)★            → True★
+       =LAMBDA(x,y,ISOMITTED(y))(1)（数が 足りない）  → ★#VALUE!★
+       =ISOMITTED()（裸）                          → ★実Excel が 式ごと 受け付けない★
+     ⇒★★引数が 書いてあれば 実Excel は ★必ず False★★（空の マスでも）
+     ★カンマで 省いた 形は ★まだ★★＝`_jsLambdaExpand` が `ISOMITTED(())` に 展開し、
+       下の 型（かっこの 中に かっこ）に 当たらないので ★ここを 素通りして 誤りに なる★
+       ⇒★『まだ』は 誤りで 止まる＝★黙って 逆を 返さない★★（本番の 今も #ERROR）
+       ⇒ 直すのは ★別の 押し★（`_jsLambdaExpand` を 触る＝LAMBDA を 取る 6個 全部に 効く）
+     ★大文字★ … 画面には ★この 字が そのまま 出る★（book.html … cell.d = jsResult）
+       ⇒ 実Excel の 画面は ★FALSE（大文字）★（tests/boolean.test.mjs 2026-08-30 実測）
+       ⇒★前は 小文字 'false' を 返していた＝★出た 字が 違った★★
+       ⇒ このファイルで 小文字を 返していたのは ★ここ 1か所だけ★（他は 全部 'TRUE'/'FALSE'） */
   var mIso=fOrig.match(/^ISOMITTED\s*\(([^)]*)\)$/i);
-  if(mIso){var isoSv=_getSingleVal(sheet,mIso[1].trim());return String(_jsIsomitted(isoSv));}
+  if(mIso){
+    if(!mIso[1].trim()) return null;   /* =ISOMITTED() … 実Excel が 受け付けない ⇒ 答えを 出さない */
+    return 'FALSE';
+  }
 
   // DSUM / DAVERAGE / DCOUNT / DCOUNTA / DMAX / DMIN / DPRODUCT / DGET / DSTDEV / DSTDEVP / DVAR / DVARP
   var mDb=fOrig.match(/^(DSUM|DAVERAGE|DCOUNT|DCOUNTA|DMAX|DMIN|DPRODUCT|DGET|DSTDEV|DSTDEVP|DVAR|DVARP)\s*\(([A-Z]+\d+:[A-Z]+\d+)\s*,\s*([^,]+)\s*,\s*([A-Z]+\d+:[A-Z]+\d+)\s*\)$/i);
   if(mDb){var funcMap={'DSUM':'SUM','DAVERAGE':'AVG','DCOUNT':'CNT','DCOUNTA':'CNTA','DMAX':'MAX','DMIN':'MIN','DPRODUCT':'PROD','DGET':'GET','DSTDEV':'STD','DSTDEVP':'STDP','DVAR':'VAR','DVARP':'VARP'};var fn=funcMap[mDb[1].toUpperCase()];var fieldArg=mDb[3].trim().replace(/^["']|["']$/g,'');var fieldVal=parseInt(fieldArg)||fieldArg;return String(_jsDbFunc(fn,sheet,mDb[2],fieldVal,mDb[4]));}
 
-  // LINEST
-  var mLi=fOrig.match(/^LINEST\s*\(([A-Z]+\d+:[A-Z]+\d+)\s*,\s*([A-Z]+\d+:[A-Z]+\d+)\s*\)$/i);
-  if(mLi){var ys=_getRangeVals(sheet,mLi[1]),xs=_getRangeVals(sheet,mLi[2]);var r=_jsLinest(ys,xs);return String(Math.round(r[0]*10000)/10000);}
+  // ★★LINEST は ここで 受けません（2026-09-09 に 外しました）★★
+  //   ★前の 形★ 裸の =LINEST(範囲,範囲) だけを 拾い ★傾き 1つ★を 返して いた。
+  //     ⇒ `=INDEX(LINEST(…),1,1)` は ★#NAME?★（エンジンに 積んで いなかった）
+  //     ⇒★x が 2本以上（重回帰）で ★静かに 違う 答え★★
+  //         =LINEST(G1:G6,H1:I6) … 実Excel 0.7708333333333329 ／ うち ★7.390243902439025★
+  //     ⇒ LINEST は ★表を 返す 関数★なのに ★1つの 数★しか 返せない 場所だった
+  //   ★今★ `lib/formula-yosoku.js` の `直線の係数()` が ★表として★ 返します。
+  //     ・LOGEST と ★同じ 土台（回帰）★＝重回帰も 統計の 5行も 出せる
+  //     ・実測 … docs/measured/golden-linest-hyou-2026-09-09.tsv（実Excel 119本）
+  //   ⇒★ここで 受けると エンジンより 先に 答えて しまう★ので ★何も しません★
+  //   （下請けの `_jsLinest` `_jsLogest` `_jsTrend` `_jsGrowth` は ★2026-09-11 に 消しました★）
 
-  // PERMUT
-  var mPerm=fOrig.match(/^PERMUT\s*\(([0-9]+)\s*,\s*([0-9]+)\s*\)$/i);
-  if(mPerm)return String(_jsPermut(parseInt(mPerm[1]),parseInt(mPerm[2])));
 
-  // PERMUTATIONA
-  var mPa=fOrig.match(/^PERMUTATIONA\s*\(([0-9]+)\s*,\s*([0-9]+)\s*\)$/i);
-  if(mPa)return String(_jsPermutationa(parseInt(mPa[1]),parseInt(mPa[2])));
 
   // BINOM.DIST.RANGE
   var mBdr=fOrig.match(/^BINOM\.DIST\.RANGE\s*\(([0-9]+)\s*,\s*([0-9.]+)\s*,\s*([0-9]+)(?:\s*,\s*([0-9]+))?\s*\)$/i);
-  if(mBdr)return String(Math.round(_jsBinomDistRange(parseInt(mBdr[1]),parseFloat(mBdr[2]),parseInt(mBdr[3]),mBdr[4]?parseInt(mBdr[4]):undefined)*10000)/10000);
+  // ★4桁の 丸めを 外した（2026-09-08）★ 12本 測って ★3本が ちょうど 0★ に なって いた
+  //   実Excel 2.1426377248779138e-7 → 0 ／ 相対の ずれ 最大 1.807e-1
+  //   ⇒ docs/measured/golden-marume-A4-binom-2026-09-08.tsv
+  if(mBdr)return String(_jsBinomDistRange(parseInt(mBdr[1]),parseFloat(mBdr[2]),parseInt(mBdr[3]),mBdr[4]?parseInt(mBdr[4]):undefined));
 
   // FREQUENCY - 最初の値だけ返す（スピル）
   var mFreq=fOrig.match(/^FREQUENCY\s*\(([A-Z]+\d+:[A-Z]+\d+)\s*,\s*([A-Z]+\d+:[A-Z]+\d+)\)$/i);
   if(mFreq){var data=_getRangeVals(sheet,mFreq[1]),bins=_getRangeVals(sheet,mFreq[2]);var r=_jsFrequency(data,bins);return String(r[0]);}
 
-  // MDETERM
-  var mMd=fOrig.match(/^MDETERM\s*\(([A-Z]+\d+:[A-Z]+\d+)\)$/i);
-  if(mMd){var m2=mMd[1].match(/^([A-Z]+\d+):([A-Z]+\d+)$/i);if(m2){var s=_toRC(m2[1]),e=_toRC(m2[2]),n=e.r-s.r+1,mat=[];for(var r=0;r<n;r++){mat.push([]);for(var c=0;c<n;c++)mat[r].push(_hf.getCellValue({sheet:_hfSid(sheet),row:s.r+r,col:s.c+c})||0);}return String(Math.round(_jsMdeterm(mat)*10000)/10000);}}
 
   // IRR / XIRR (既存)
-  var mXirr=fOrig.match(/^XIRR\s*\(([A-Z]+\d+:[A-Z]+\d+)\s*,\s*([A-Z]+\d+:[A-Z]+\d+)\)$/i);
-  if(mXirr){var vals=_getRangeAll(sheet,mXirr[1]).filter(function(v){return typeof v==='number';});var dates=_getRangeAll(sheet,mXirr[2]).filter(function(v){return typeof v==='number';});return String(Math.round(_jsXirr(vals,dates)*10000)/10000);}
+  // ★4桁の 丸めを 外した（2026-09-08）★ 実Excel 0.5478870809078217 が 0.5479 に なって いた（相対 2.4e-5）
+  //   ⇒ docs/measured/golden-marume-A-2026-09-08.tsv（★お金の 利回り＝丸めては いけない★）
+  /* ══ ★MIRR★（2026-09-09）══════════════════════════════
+     ★★これは「断る」では なく「止めて いたのを 動かす」直しです★★
+     ★前は エンジンが 実Excel の 答える 所で 断って いました★
+       =MIRR(全部マイナス,0.1,0.12) 実Excel ★−1★ ／ うち ★#DIV/0!★
+       =MIRR(A1:A3,-1,0.12)        実Excel ★0.17132403714770583★ ／ うち ★#DIV/0!★
+     ⇒★出来る 物を 止めて いた＝方針（Excel の 最上級・全部 つける）に 反する★
+
+     ★実Excel の 実測★（docs/measured/golden-okane-4kansuu-2026-09-09.tsv・69本）
+       普通 …………………… 0.17132403714770583
+       ★全部 マイナス★ …… ★−1★（★断らない★）
+       全部 プラス ………… #DIV/0!
+       全部 0 ……………… #DIV/0!
+       1件だけ …………… #DIV/0!
+       空・字が 混ざる …… 0.10000000000000009（★落として 計算する★）
+       ★借りる 利率★ ……… −1／−0.5／−0.01／0／0.01 ★どれでも 同じ 答え★
+                            ⇒★答えに 効かない★（負の 流れが 1件で 0期に 在るから）
+       ★回す 利率★ ……… −1 だけ ★#DIV/0!★／−0.5 は 0／0 は 0.14017542509913805
+
+     ★★式は 実Excel の 定義から 自分で 書きました（借り物は 読んで いません）★★
+       MIRR ＝ ( −(正の 流れを 回す利率で 最後まで 育てた 合計)
+                 ÷ (負の 流れを 借りる利率で 今に 引き戻した 合計) )^(1/(n−1)) − 1
+       ⇒★手で 検算して 実Excel と 6通り 一致★してから 入れました */
+  var mMirr=fOrig.match(/^MIRR\s*\(([A-Z]+\d+:[A-Z]+\d+)\s*,\s*(-?[0-9.]+)\s*,\s*(-?[0-9.]+)\s*\)$/i);
+  if(mMirr){
+    var m生=_getRangeAll(sheet,mMirr[1]);
+    var m借=Number(mMirr[2]),m回=Number(mMirr[3]);
+    if(!isFinite(m借)||!isFinite(m回))return '#VALUE!';
+    var m数=[];
+    for(var mi=0;mi<m生.length;mi++){
+      var mv=m生[mi];
+      if(mv===null||mv===undefined||mv==='')continue;              /* ★空は 落とす★（実測） */
+      if(typeof mv==='boolean')continue;
+      if(typeof mv==='string'&&!isFinite(Number(mv)))continue;      /* ★字も 落とす★（実測） */
+      m数.push(Number(mv));
+    }
+    var mn=m数.length;
+    if(mn<2)return '#DIV/0!';                                       /* ★1件だけ★（実測） */
+    var m負=0,m正=0,m負が在る=false;
+    for(var mj=0;mj<mn;mj++){
+      if(m数[mj]<0){ m負が在る=true; m負+=m数[mj]/Math.pow(1+m借,mj); }
+      if(m数[mj]>0){ m正+=m数[mj]*Math.pow(1+m回,mn-1-mj); }
+    }
+    /* ★負の 流れが 1つも 無い＝割れない＝#DIV/0!★（実測 … 全部プラス・全部0） */
+    if(!m負が在る||m負===0)return '#DIV/0!';
+    if(!isFinite(m負)||!isFinite(m正))return '#DIV/0!';
+    /* ★★回す 利率が −1＝#DIV/0!★★（実測）
+       (1+回す利率) が 0 に なり ★正の 流れが 全部 0 に 潰れます★
+       ⇒ 実Excel は #DIV/0!（うちは 直す 前 -0.16333997346592444 を 返して いた）
+       ⇒★1回目 私は これを 見落として いました★＝★11通り 押して 1本だけ 違った★ */
+    if(1+m回===0)return '#DIV/0!';
+    var m比=-m正/m負;
+    if(!(m比>=0))return '#NUM!';
+    return String(Math.pow(m比,1/(mn-1))-1);
+  }
+
+  /* ★★見当（第3引数）も 受ける（2026-09-09）★★
+     ★前は 2つの 範囲だけ★の 形でした ⇒ `=XIRR(範囲,範囲,見当)` は ここを 素通り
+     ⇒ 実Excel は 見当が ★−1 以下★で ★#NUM!★ を 返しますが、うちは 数を 返して いた
+        =XIRR(E1:E3,F1:F3,-0.9) … 実Excel #NUM! ／ うち 1.0011933213132864
+     ⇒ 実測 … 見当 0.1 / 0 / 10 / 1e6 は ★値を 返す★／−1 と −2 は ★#NUM!★ */
+  /* ★★IRR は ここで 受けません（2026-09-09）★★
+     ★1回 ここに 段を 作りましたが 外しました★
+     ⇒ IRR は `_PLUGIN_FUNCS` に 在り ★エンジン側（EX.IRR）で 既に 自分たちが 計算して います★
+     ⇒ ここにも 置くと ★1つの 関数が 2か所★に なる（見張りが 赤に した）
+     ⇒★直すのは エンジン側 1か所★（下の `statFn('exIrr', 'EX.IRR', …)`） */
+
+  /* ══ ★XNPV★（2026-09-09）══════════════════════════════
+     ★エンジンは 実Excel が 断る 所で 数を 返して いました★
+       =XNPV(0,…)      実Excel #NUM! ／ うち ★300★
+       =XNPV(-0.01,…)  実Excel #NUM! ／ うち ★305.022090126012★
+       =XNPV(-0.99,…)  実Excel #NUM! ／ うち ★7847.371130821853★
+       空が 混ざる・字が 混ざる … 実Excel #NUM! ／ うち #VALUE!（★誤りの 種類が 違う★）
+     ★★利率の 境目は 刻んで 詰めました★★
+       −2／−1.01／−1／−0.99／−0.5／−0.1／−0.01／−0.001／★0★ … 全部 #NUM!
+       ★0.0001★ から 値（299.9501405358503）
+       ⇒★境目は 0（0 は 断る）★
+       ⇒★★XIRR の 見当（0 は 通る）とは 逆＝1つの 関数で 決めた 線を 家族に 広げない★★ */
+  var mXnpv=fOrig.match(/^XNPV\s*\((-?[0-9.]+)\s*,\s*([A-Z]+\d+:[A-Z]+\d+)\s*,\s*([A-Z]+\d+:[A-Z]+\d+)\s*\)$/i);
+  if(mXnpv){
+    var x利=Number(mXnpv[1]);
+    var x値=_getRangeAll(sheet,mXnpv[2]),x日=_getRangeAll(sheet,mXnpv[3]);
+    if(!isFinite(x利))return '#VALUE!';
+    /* ★範囲の 大きさが 違う＝#NUM!★ */
+    if(x値.length!==x日.length)return '#NUM!';
+    /* ★★空も 字も #NUM!★★（★XIRR は 空を 0 と 見て 通す＝ここが 違う★） */
+    for(var xi=0;xi<x値.length;xi++){
+      var xv=x値[xi],xd=x日[xi];
+      if(xv===null||xv===undefined||xv==='')return '#NUM!';
+      if(xd===null||xd===undefined||xd==='')return '#NUM!';
+      if(typeof xv==='boolean'||typeof xd==='boolean')return '#NUM!';
+      if(!isFinite(Number(xv))||!isFinite(Number(xd)))return '#NUM!';
+    }
+    if(x値.length<1)return '#NUM!';
+    /* ★日付が 昇順で ない＝#NUM!★ */
+    for(var xj=1;xj<x日.length;xj++)if(Number(x日[xj])<Number(x日[xj-1]))return '#NUM!';
+    /* ★利率が 0 以下＝#NUM!★（★刻んで 詰めた 境目★） */
+    if(!(x利>0))return '#NUM!';
+    var x0=Number(x日[0]),x和=0;
+    for(var xk=0;xk<x値.length;xk++){
+      x和+=Number(x値[xk])/Math.pow(1+x利,(Number(x日[xk])-x0)/365);
+    }
+    return String(x和);
+  }
+
+  var mXirr=fOrig.match(/^XIRR\s*\(([A-Z]+\d+:[A-Z]+\d+)\s*,\s*([A-Z]+\d+:[A-Z]+\d+)(?:\s*,\s*(-?[0-9.]+))?\s*\)$/i);
+  // ★★実Excel と 同じ 条件で 同じ 誤りを 返す（2026-09-09）★★
+  //   ★前は 断らずに 数を 返して いた★
+  //     =XIRR(全部プラス)  … 実Excel #NUM! ／ うち ★375686054239746.3★
+  //     =XIRR(日付が逆順)  … 実Excel #NUM! ／ うち ★-0.5002981524324954★
+  //   ⇒★誤りに ならず 数が 出る＝お客さんは 気づけない★（★お金の 利回り★）
+  //   ⇒★これは「機能を 減らす」では ありません＝★実Excel と 同じに する★★
+  //   ⇒ 条件は ★私が 決めず 実Excel に 打たせました★
+  //      docs/measured/golden-xirr-sakaime-2026-09-09.tsv（61本）
+  if(mXirr){
+    var 生値=_getRangeAll(sheet,mXirr[1]),生日=_getRangeAll(sheet,mXirr[2]);
+    var 見当=(mXirr[3]===undefined||mXirr[3]==='')?undefined:Number(mXirr[3]);
+    var 判=_xirrの門(生値,生日,見当);
+    if(判)return 判;                       /* ★実Excel と 同じ 誤り★ */
+    /* ★★門が 作った 組を そのまま 使う★★
+       ★前は ここで `filter(typeof v==='number')` を して いました★
+       ⇒★空の マスが 落ちて 日付と ずれる★＝門が 通しても 答えが 変わって いた
+         AA1=-1000／AA2=★空★／AA3=1100 … 実Excel 0.21063382029533387 ／ うち ★0.46563424984948343★
+       ⇒★門と 計算で ★同じ 組★を 見る★（★口裏を 合わせる★） */
+    var 組=_xirrの組(生値,生日);
+    return String(_jsXirr(組.値,組.日,見当));
+  }
 
   // DATESTRING
   var mDstr=fOrig.match(/^DATESTRING\s*\(([A-Z]+\d+|[0-9]+)\)$/i);
@@ -1066,7 +1812,7 @@ if (typeof module !== 'undefined' && module.exports) {
     // 補助・内部
     _hfSid: _hfSid, _toRC: _toRC, _getRangeVals: _getRangeVals,
     _getRangeAll: _getRangeAll, _getSingleVal: _getSingleVal,
-    _hfGetDisplay: _hfGetDisplay, _applyTextFormat: _applyTextFormat,
+    _hfGetDisplay: _hfGetDisplay, _hf答えの型: _hf答えの型, _applyTextFormat: _applyTextFormat,
     addSheetToEngine: addSheetToEngine,
     // 統計
     _jsRank: _jsRank, _jsPercentile: _jsPercentile, _jsQuartile: _jsQuartile,
@@ -1075,7 +1821,6 @@ if (typeof module !== 'undefined' && module.exports) {
     _jsPermutationa: _jsPermutationa, _jsProb: _jsProb, _jsBinomDistRange: _jsBinomDistRange,
     // 回帰
     _jsSlope: _jsSlope, _jsIntercept: _jsIntercept, _jsForecast: _jsForecast,
-    _jsLinest: _jsLinest, _jsLogest: _jsLogest, _jsTrend: _jsTrend, _jsGrowth: _jsGrowth,
     // 行列
     _jsMdeterm: _jsMdeterm, _jsMinverse: _jsMinverse,
     // 文字列
@@ -1091,7 +1836,7 @@ if (typeof module !== 'undefined' && module.exports) {
     _xlRound: _xlRound, _xlCmp: _xlCmp, _xlWildRe: _xlWildRe,
     // 参照系
     _jsIndirect: _jsIndirect, _jsOffset: _jsOffset,
-    _jsLookup: _jsLookup, _jsXlookup: _jsXlookup, _jsXmatch: _jsXmatch,
+    _jsLookup: _jsLookup, _jsXmatch: _jsXmatch,
     // 配列
     _jsSequence: _jsSequence, _jsRandarray: _jsRandarray, _jsSort: _jsSort,
     _jsUnique: _jsUnique, _jsFilter: _jsFilter, _jsTake: _jsTake, _jsDrop: _jsDrop,
@@ -1103,9 +1848,9 @@ if (typeof module !== 'undefined' && module.exports) {
     _jsIntrate: _jsIntrate, _jsDuration: _jsDuration, _jsAccrint: _jsAccrint,
     _jsAmordegrc: _jsAmordegrc, _jsAmorlinc: _jsAmorlinc,
     // その他
-    _jsConvert: _jsConvert, _jsGestep: _jsGestep, _jsDbFunc: _jsDbFunc,
+    _jsGestep: _jsGestep, _jsDbFunc: _jsDbFunc,
     _jsEncodeUrl: _jsEncodeUrl, _jsAggregate: _jsAggregate,
-    _jsIsomitted: _jsIsomitted,
+    /* _jsIsomitted は 2026-09-08 に 消した（「マスが 空か」を 見ていた＝別物） */
     // LET/LAMBDA系
     _parseFuncArgs: _parseFuncArgs,
     _jsLetExpand: _jsLetExpand, _jsLambdaExpand: _jsLambdaExpand,
@@ -1113,6 +1858,9 @@ if (typeof module !== 'undefined' && module.exports) {
     _jsMapCompute: _jsMapCompute, _jsMakearrayCompute: _jsMakearrayCompute,
     // ルーター
     convertFormula: convertFormula,
+    /* ★見張りが 中を1つずつ 試せるように 出す★（入口だけ見て 緑にしない） */
+    _stripXlPrefix: _stripXlPrefix, _mergeRangeChains: _mergeRangeChains,
+    _hf答えの型: _hf答えの型,
     _jsComputeFormula: _jsComputeFormula
   };
 }
@@ -1216,6 +1964,15 @@ function registerExallyFunctions(HFns) {
     } catch(e){}
     return 1;
   }
+  /* ★幅も 読む★（FILTER は 形を保つので 幅の申告が 要る）。読めない時は 1（＝スカラー扱い） */
+  function rangeWidth(argAst){
+    try {
+      if(argAst && argAst.type === 'CELL_RANGE' && argAst.start && argAst.end){
+        return Math.abs(argAst.end.col - argAst.start.col) + 1;
+      }
+    } catch(e){}
+    return 1;
+  }
   function sizeFromFirstArg(ast){
     if(!ArraySize) return null;
     var args = (ast && ast.args) || [];
@@ -1246,29 +2003,100 @@ function registerExallyFunctions(HFns) {
   //  ★配列を返す関数の「出力の大きさ」。SORT/UNIQUE/FILTER はいずれも
   //    第1引数の範囲と同じ高さの縦1列を返すので、1つの実装で足りる。
   ExallyPlugin.prototype.exArraySize = function(ast){ return sizeFromFirstArg(ast) || new ArraySize(1,1); };
+  /* ★FILTER は 形を保つ★＝出す大きさも 入力の 高さ×幅 で 申告する。
+     幅1 と 申告したままだと、2列以上を 返しても ★1列しか 展開されない★（2026-08-29）。 */
+  ExallyPlugin.prototype.exFilterArraySize = function(ast){
+    if(!ArraySize) return null;
+    var a = (ast && ast.args) || [];
+    return new ArraySize(rangeWidth(a[0]), rangeHeight(a[0]));
+  };
 
+  /* ★SORT / UNIQUE も 形を保つ★（2026-08-29 実Excel 16.0 で 測り直した）
+   *   A1:B4 = [[300,1],[100,2],[200,3],[100,2]] の 真値:
+   *     =COLUMNS(SORT(A1:B4))            → ★2★   （★行ごと★ 並べ替え・列は そのまま）
+   *     =ROWS(SORT(A1:B4))               → ★4★
+   *     =INDEX(SORT(A1:B4),1,1)          → ★100★
+   *     =INDEX(SORT(A1:B4,2),1,1)        → ★300★（2列目で 並べ替え）
+   *     =INDEX(SORT(A1:B4,2,-1),1,1)     → ★200★（降順）
+   *     =INDEX(SORT(A1:B4,1,1,TRUE),1,1) → ★1★  （by_col＝★列ごと★ 並べ替え）
+   *     =ROWS(UNIQUE(A1:B4))             → ★3★  （★行の重複★を 消す）
+   *     =COLUMNS(UNIQUE(A1:B4,TRUE))     → ★2★
+   *     =ROWS(UNIQUE(A1:B4,FALSE,TRUE))  → ★2★  （1度だけ出る行）
+   *   ★直す前は FILTER と 同じ作り★＝平らにして 縦1列で 返していたので
+   *   2列以上で 中身も 形も 壊れていた（実測 10項目中 6件が 実Excelと 違った）。
+   *
+   *   ★1列の時は 今までどおり★（空を落として 縦1列）。
+   *   ＝実Excel は 空を 残して 後ろに 置く（`=ROWS(SORT(D1:D4))` → 4）が、
+   *     ★ここは 突き合わせ台 tests/xlsx-harness の 見本値が 決めている所★なので
+   *     ★測っただけで 今回は 変えていない★（変えるなら 見本値ごと 取り直す）。 */
+  function 並び比べ(a, b, dir){
+    var A = (a===null||a===undefined||a==='');
+    var B = (b===null||b===undefined||b==='');
+    if(A && B) return 0;
+    if(A) return 1;            // ★空は いつも 後ろ★（実Excelで実測）
+    if(B) return -1;
+    if(typeof a==='number' && typeof b==='number') return (a-b)*dir;
+    return String(a).localeCompare(String(b))*dir;
+  }
+  function 転置(m){
+    var out=[], 幅=(m[0]?m[0].length:0);
+    for(var c=0;c<幅;c++){ var 行=[]; for(var r=0;r<m.length;r++) 行.push(m[r][c]); out.push(行); }
+    return out;
+  }
   ExallyPlugin.prototype.exSort = function(ast, state){
-    return this.runFunction(ast.args, state, this.metadata('EX.SORT'), function(range, idx, order){
-      var arr = flat(range).filter(function(v){ return v!==null && v!==undefined && v!==''; });
-      var e = firstErr(arr); if(e) return e;
+    return this.runFunction(ast.args, state, this.metadata('EX.SORT'), function(range, idx, order, byCol){
+      var e = firstErr(flat(range)); if(e) return e;
+      var M = rect(range);
+      var 幅 = M[0] ? M[0].length : 0;
+      if(幅 <= 1){
+        var arr = flat(range).filter(function(v){ return v!==null && v!==undefined && v!==''; });
+        var d1 = (toNum(order)===-1) ? -1 : 1;
+        arr.sort(function(a,b){ return 並び比べ(a,b,d1); });
+        return col(arr);
+      }
+      var 列で = (byCol===true || toNum(byCol)===1);
+      var 表 = 列で ? 転置(M) : M;
+      var k = Math.max(1, Math.round(toNum(idx)||1)) - 1;
       var dir = (toNum(order)===-1) ? -1 : 1;
-      arr.sort(function(a,b){
-        if(typeof a==='number' && typeof b==='number') return (a-b)*dir;
-        return String(a).localeCompare(String(b))*dir;
-      });
-      return col(arr);
+      表 = 表.slice().sort(function(x, y){ return 並び比べ(x[k], y[k], dir); });
+      return rectOut(列で ? 転置(表) : 表);
     });
   };
   ExallyPlugin.prototype.exUnique = function(ast, state){
-    return this.runFunction(ast.args, state, this.metadata('EX.UNIQUE'), function(range){
-      var arr = flat(range).filter(function(v){ return v!==null && v!==undefined && v!==''; });
-      var e = firstErr(arr); if(e) return e;
-      var seen = [], out = [];
-      for(var i=0;i<arr.length;i++){
-        var key = (typeof arr[i]) + ' ' + String(arr[i]);
-        if(seen.indexOf(key)<0){ seen.push(key); out.push(arr[i]); }
+    return this.runFunction(ast.args, state, this.metadata('EX.UNIQUE'), function(range, byCol, once){
+      var e = firstErr(flat(range)); if(e) return e;
+      var M = rect(range);
+      var 幅 = M[0] ? M[0].length : 0;
+      if(幅 <= 1 && !(byCol===true || toNum(byCol)===1)){
+        /* ★1列は 今までどおり★（見本値が 決めている） */
+        var arr = flat(range).filter(function(v){ return v!==null && v!==undefined && v!==''; });
+        var seen = [], out = [];
+        for(var i=0;i<arr.length;i++){
+          var key = (typeof arr[i]) + ' ' + String(arr[i]);
+          if(seen.indexOf(key)<0){ seen.push(key); out.push(arr[i]); }
+        }
+        if(once===true || toNum(once)===1){
+          var 数={};
+          for(var j=0;j<arr.length;j++){ var k2=(typeof arr[j])+' '+String(arr[j]); 数[k2]=(数[k2]||0)+1; }
+          out = out.filter(function(v){ return 数[(typeof v)+' '+String(v)]===1; });
+        }
+        return col(out);
       }
-      return col(out);
+      var 列で = (byCol===true || toNum(byCol)===1);
+      var 一度だけ = (once===true || toNum(once)===1);
+      var 表 = 列で ? 転置(M) : M;
+      var 鍵 = 表.map(function(行){ return 行.map(function(v){ return (typeof v)+' '+String(v); }).join(''); });
+      var 数え = {};
+      for(var m=0;m<鍵.length;m++) 数え[鍵[m]] = (数え[鍵[m]]||0) + 1;
+      var 見た = {}, 残り = [];
+      for(var n=0;n<表.length;n++){
+        if(見た[鍵[n]]) continue;
+        見た[鍵[n]] = true;
+        if(一度だけ && 数え[鍵[n]] !== 1) continue;
+        残り.push(表[n]);
+      }
+      if(!残り.length) return 0;
+      return rectOut(列で ? 転置(残り) : 残り);
     });
   };
   ExallyPlugin.prototype.exText = function(ast, state){
@@ -1276,8 +2104,30 @@ function registerExallyFunctions(HFns) {
       if(isErr(v)) return v;
       if(isErr(fmt)) return fmt;
       var raw = flat(v)[0];
+      /* ★★空の マスは 0★★（2026-09-11 実Excel に 打たせて 測った）
+         ★空の マス★と ★空の 字★は ★別物★です
+           =TEXT(空のマス,"0.00") → ★"0.00"★   （0 として 書式を 掛ける）
+           =TEXT("","0.00")      → ★""★       （字の まま）
+           =TEXT("abc","0.00")   → "abc"      （数に ならない 字は そのまま）
+           =TEXT(" ","0.00")     → " "
+           =TEXT(TRUE,"0.00")    → "TRUE"
+           =TEXT("12","0.00")    → "12.00"    （数に なる 字は 数として）
+         ★見つけ方★＝司さんの 実物（計算の 板）を 1マスずつ 突き合わせた
+           B299 `=TEXT(A299,"aaa")`（A299 は 空）… 実Excel「土」／うち「」
+           （0日目＝1900/1/0 は 土曜） */
+      /* ★★空の マスは ★記号★で 来ます★★（2026-09-11 実測）
+         `unwrap` が 記号を `''` に するので、★空の 字と 見分けが 付かなく なります★。
+         ⇒★記号の うちに 見ます★ */
+      var 生 = (v && typeof v==='object' && v.data) ? [].concat.apply([], v.data)[0]
+             : (Array.isArray(v) ? [].concat.apply([], v)[0] : v);
+      if(typeof 生 === 'symbol') raw = 0;              /* ★空の マス＝0★ */
+      /* ★真偽は 字の まま★（実測 … =TEXT(TRUE,"0.00") → 「TRUE」／うちは 1.00 に して いた） */
+      if(typeof raw === 'boolean') return raw ? 'TRUE' : 'FALSE';
       var n = toNum(raw);
-      if(n===null) return raw===null||raw===undefined ? '' : String(raw);
+      if(n===null) return raw==='' ? '' : String(raw);
+      /* ★和暦・経過時間は 書式の 台へ★（出せない＝#VALUE!・実測 -1.5 の `[h]:mm`） */
+      var 台r = _和暦か経過なら台へ(n, String(fmt));
+      if(台r !== undefined) return 台r === null ? err(ErrorType.VALUE) : 台r;
       var r = _applyTextFormat(n, String(fmt));
       return r===null ? String(n) : r;
     });
@@ -1334,20 +2184,60 @@ function registerExallyFunctions(HFns) {
       return flat(ifnf)[0];
     });
   };
+  /* ★FILTER は「行を残す／列を残す」＝形を保つ★（2026-08-29 実Excel 16.0 で 測り直した）
+   *
+   *   =SUM(FILTER(A1:B4,{1;0;0;1}))     → ★505★（縦の条件＝★行★を選ぶ・2列とも 残る）
+   *   =COLUMNS(FILTER(A1:B4,{1;0;0;1})) → ★2★
+   *   =SUM(FILTER(A1:B4,{1,0}))         → ★1000★（横の条件＝★列★を選ぶ）
+   *   =SUM(FILTER(A1:A4,{2;0;0;0}))     → ★100★（0以外の数は 真）
+   *   =SUM(FILTER(A1:A4,{-1;0;0;0}))    → ★100★（負の数も 真）
+   *   =FILTER(A1:A4,{0;0;0;0},"なし")    → ★なし★
+   *
+   *   ★直す前は 平らにして 1つずつ 拾い、縦1列で 返していた★＝
+   *   2列以上だと ★中身も 形も 壊れる★（実測 =FILTER(A1:B4,{1;0;0;1}) が [[100],[2]]・COLUMNS=1）。
+   *   これで 司さんの実物の 月別合計が ★177,523 などの金額 → 0★ に なっていた。 */
+  function rect(v){
+    if(v && typeof v==='object' && v.data) return v.data.map(function(row){ return row.map(unwrap); });
+    return [[unwrap(v)]];
+  }
+  function 真か(c){
+    if(c===true) return true;
+    if(typeof c==='number') return c !== 0;              // ★0以外は 真（負も 真）★実Excelで実測
+    if(typeof c==='string') return c.toUpperCase()==='TRUE';
+    return false;
+  }
+  function rectOut(rows2d){
+    if(!rows2d.length || !rows2d[0].length) return 0;    // col() と同じ理由（空は スカラー）
+    return SRV.onlyValues(rows2d);
+  }
   ExallyPlugin.prototype.exFilter = function(ast, state){
     return this.runFunction(ast.args, state, this.metadata('EX.FILTER'), function(range, cond, ifEmpty){
-      var A = flat(range), C = flat(cond);
-      var e = firstErr(A) || firstErr(C); if(e) return e;
+      var A = rect(range), C = rect(cond);
+      var e = firstErr(flat(range)) || firstErr(flat(cond)); if(e) return e;
+      var 高 = A.length, 幅 = A[0] ? A[0].length : 0;
+      var C高 = C.length, C幅 = C[0] ? C[0].length : 0;
       var out = [];
-      for(var i=0;i<A.length;i++){
-        var c = C[i];
-        if(c===true || c===1 || (typeof c==='string' && c.toUpperCase()==='TRUE')) out.push(A[i]);
+      /* ★縦の条件（1列）＝行を選ぶ★ ／ ★横の条件（1行）＝列を選ぶ★
+         どちらとも 決められない形は ★触らずに #VALUE!★（黙って違う数字を出さない） */
+      if(C幅 === 1 && C高 === 高){
+        for(var r=0;r<高;r++) if(真か(C[r][0])) out.push(A[r].slice());
+      } else if(C高 === 1 && C幅 === 幅){
+        var 残す = [];
+        for(var c2=0;c2<幅;c2++) if(真か(C[0][c2])) 残す.push(c2);
+        for(var r2=0;r2<高;r2++){
+          var 行 = [];
+          for(var k2=0;k2<残す.length;k2++) 行.push(A[r2][残す[k2]]);
+          out.push(行);
+        }
+        if(!残す.length) out = [];
+      } else {
+        return err(ErrorType.VALUE);
       }
-      if(!out.length){
+      if(!out.length || !out[0] || !out[0].length){
         if(ifEmpty===undefined || ifEmpty===null) return err(ErrorType.NA);
         return col(flat(ifEmpty));
       }
-      return col(out);
+      return rectOut(out);
     });
   };
   ExallyPlugin.prototype.exMatch = function(ast, state){
@@ -1654,8 +2544,40 @@ function registerExallyFunctions(HFns) {
     if(v===null) return '#N/A';
     return _jsPercentrank(arr, v, (sig===undefined||sig===null) ? undefined : optNum(sig, 3));
   });
+  /* ★★IRR … 実Excel と 同じ 条件で 同じ 誤りを 返す（2026-09-09）★★
+     ★前は 断らずに 数を 返して いました★
+       =IRR(全部プラス)   実Excel #NUM! ／ うち ★16693338463349.688★
+       =IRR(全部マイナス) 実Excel #NUM! ／ うち ★16693338463349.688★
+       =IRR(全部0)        実Excel #NUM! ／ うち 0.1
+       =IRR(1件だけ)      実Excel #NUM! ／ うち 0.1
+       =IRR(A1:A3,10)     実Excel 0.18881944173101095 ／ うち ★-2168772783.613375★
+       =IRR(A1:A3,100)    実Excel 0.18881944173155896 ／ うち ★-336432261411301570★
+     ⇒ 条件は ★私が 決めず 実Excel に 打たせました★
+        docs/measured/golden-okane-4kansuu-2026-09-09.tsv（69本）
+     ★実Excel は 見当が 何でも 同じ 答え★（−0.99〜100 の 11通りで 全部 0.1888…）
+     ★空・字は 落として 計算する★（実測 0.10000000000000009＝−1000 と 1100 の 2件）
+     ★1件だけ は #NUM!★（★XIRR は #N/A＝同じ 家族でも 違う★） */
   statFn('exIrr', 'EX.IRR', function(arr, guess){
-    return _jsIrr(arr, (guess===undefined||guess===null) ? undefined : optNum(guess, 0.1));
+    var 数=[];
+    for(var i=0;i<arr.length;i++){
+      var v=arr[i];
+      if(v===null||v===undefined||v==='')continue;            /* ★空は 落とす★ */
+      if(typeof v==='boolean')continue;
+      if(typeof v==='string'&&!isFinite(Number(v)))continue;   /* ★字も 落とす★ */
+      数.push(Number(v));
+    }
+    if(数.length<2)return '#NUM!';                             /* ★1件だけ★ */
+    var 正=false,負=false;
+    for(var j=0;j<数.length;j++){ if(数[j]>0)正=true; if(数[j]<0)負=true; }
+    if(!正||!負)return '#NUM!';                                /* ★符号が 片方だけ★ */
+    /* ★★期間を 日付に 直して XIRR の 落ち着かせ方を 使う★★
+       ⇒ `_jsXirr` は ★−1 より 下へ 行かせない／落ち着かなければ やり直す★を 持って いる
+       ⇒★同じ 計算を 2つ 書かない★ */
+    var 日=[];
+    for(var k=0;k<数.length;k++)日.push(k*365);
+    var g=(guess===undefined||guess===null)?0.1:optNum(guess,0.1);
+    if(!isFinite(g))return '#VALUE!';
+    return _jsXirr(数,日,g);
   });
   //  ys と xs の2範囲を取る物
   function twoRangeFn(name, key, calc){
@@ -1712,15 +2634,15 @@ function registerExallyFunctions(HFns) {
   var OPT = { argumentType: T.ANY, optionalArg: true };
   ExallyPlugin.implementedFunctions = {
     //  ★arraySizeMethod = 出力の大きさの申告(R19)。これが無いと素の =SORT(A1:A10) が #VALUE! になる。
-    'EX.SORT':       { method: 'exSort',       parameters: [ANY, OPT, OPT, OPT], arrayFunction: true, arraySizeMethod: 'exArraySize' },
-    'EX.UNIQUE':     { method: 'exUnique',     parameters: [ANY, OPT, OPT],      arrayFunction: true, arraySizeMethod: 'exArraySize' },
+    'EX.SORT':       { method: 'exSort',       parameters: [ANY, OPT, OPT, OPT], arrayFunction: true, arraySizeMethod: 'exFilterArraySize' },
+    'EX.UNIQUE':     { method: 'exUnique',     parameters: [ANY, OPT, OPT],      arrayFunction: true, arraySizeMethod: 'exFilterArraySize' },
     'EX.TEXT':       { method: 'exText',       parameters: [ANY, ANY] },
     'EX.TEXTJOIN':   { method: 'exTextjoin',   parameters: [ANY, ANY, ANY], repeatLastArgs: 1 },
     'EX.INT':        { method: 'exInt',        parameters: [ANY] },
     'EX.MOD':        { method: 'exMod',        parameters: [ANY, ANY] },
     'EX.VALUE':      { method: 'exValue',      parameters: [ANY] },
     'EX.XLOOKUP':    { method: 'exXlookup',    parameters: [ANY, ANY, ANY, OPT, OPT, OPT] },
-    'EX.FILTER':     { method: 'exFilter',     parameters: [ANY, ANY, OPT],      arrayFunction: true, arraySizeMethod: 'exArraySize' },
+    'EX.FILTER':     { method: 'exFilter',     parameters: [ANY, ANY, OPT],      arrayFunction: true, arraySizeMethod: 'exFilterArraySize' },
     'EX.MATCH':      { method: 'exMatch',      parameters: [ANY, ANY, OPT] },
     'EX.SUMPRODUCT': { method: 'exSumproduct', parameters: [ANY], repeatLastArgs: 1 },
     // ★第3波P1(2026-08-01)
