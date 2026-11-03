@@ -258,7 +258,9 @@ T_('★写す＝実際に セルが 写る（丸ごとは 式も 運ぶ・値だ
   const 当 = R.手順を当てる(sh, 読.手順, { 見出しの行: 0 });
   eq(Object.keys(当.変える).length, 4, '写した数');
   eq(当.変える['0,3'].v, 'あ', 'D1');
-  eq(当.変える['1,3'].f, '=A1', '★式を 値に 潰している★');
+  /* A2 の =A1 を D2 へ .Copy ⇒ ★=D1★（列 +3。相対の参照は 動いた量だけ ずれる＝実Excel 16.0・COM 2026-11-03）
+     ★前は '=A1' を 正しいと 書いていた★＝写した先が 元の所を 指したまま（黙って 違う数） */
+  eq(当.変える['1,3'].f, '=D1', '★式を 値に 潰している か ずらしていない★');
   const 出2 = 読む(['Sub b()', '  Range("D1:E2").Value = Range("A1:B2").Value', 'End Sub']);
   const 当2 = R.手順を当てる(sh, R.手順を読む(JSON.stringify({ 手順: 出2.手順 })).手順, { 見出しの行: 0 });
   eq(当2.変える['1,3'].f, undefined, '★値だけの はずが 式を 運んでいる★');
@@ -352,15 +354,32 @@ if (SELF) {
     ['vba-tejun.js', '★1つも 取り出せない時に 出来たように 言う★',
       (s) => s.replace("      return '表を 変える所が ' + 出.数.変える行 + 'か所 ありますが、'", "      return '手順に 出来ました。'; //")],
   ];
+  /* ★壊した写しの 隣に lib を 丸ごと 置く★（2026-11-03）
+     ＝前は 壊した写し だけを TMP に 置いていたので ★require('./chizu.js') 等で 落ちて 何を壊しても 赤★
+       （★壊していない 写しでも 赤＝recipe.js を 壊す 1本は 効いていなかった（vba-tejun.js は 他を 読まないので 効いていた）★・tests/recipe.test.mjs と 同じ穴）。
+     ⇒ ★先に 壊していない 写しが 緑か を見る★。緑でなければ 数えずに 止める。 */
+  fs.cpSync(path.join(ROOT, 'lib'), path.join(TMP, 'lib'), { recursive: true });
+  const 回す = (対象, f) => spawnSync(process.execPath, [path.join(__dirname, 'vba-tejun.test.mjs')], { encoding: 'utf8',
+    env: Object.assign({}, process.env, { EXALLY_VBATEJUN_OVERRIDE: JSON.stringify({ ['lib/' + 対象]: f }) }) });
+  for (const 対象 of ['vba-tejun.js', 'recipe.js']) {
+    const 素 = 回す(対象, path.join(TMP, 'lib', 対象));
+    if (素.status !== 0) {
+      console.log('  ★壊していない 写し（' + 対象 + '）が 赤★＝壊し方を 数えても 意味が ありません');
+      console.log(String(素.stdout || '').slice(-800) + String(素.stderr || '').slice(-800));
+      try { fs.rmSync(TMP, { recursive: true, force: true }); } catch (e) { /* 消せなくても 結果は 赤 */ }
+      process.exit(1);
+    }
+  }
+  console.log('  壊していない 写しは 緑（見張りが 効く 状態）');
   let red = 0;
   for (const [対象, name, brk] of BREAKS) {
     const 元 = fs.readFileSync(path.join(ROOT, 'lib', 対象), 'utf8');
     const 壊 = brk(元);
     if (壊 === 元) { console.log('  ★置換できず★  ' + name); continue; }
-    const f = path.join(TMP, 対象);
+    const f = path.join(TMP, 'lib', 対象);
     fs.writeFileSync(f, 壊, 'utf8');
-    const env = Object.assign({}, process.env, { EXALLY_VBATEJUN_OVERRIDE: JSON.stringify({ ['lib/' + 対象]: f }) });
-    const r = spawnSync(process.execPath, [path.join(__dirname, 'vba-tejun.test.mjs')], { encoding: 'utf8', env });
+    const r = 回す(対象, f);
+    fs.writeFileSync(f, 元, 'utf8');   /* ★次の壊しの 隣に 壊れた物を 残さない★ */
     if (r.status !== 0) { red++; console.log('  赤くなった  ' + name); }
     else console.log('  ★素通り★  ' + name);
   }

@@ -364,15 +364,35 @@ if (SELF) {
       (s2) => s2.replace("if(typeof Kikan !== 'undefined' && cell.numFmt && /[ymd]/i.test(String(cell.numFmt))",
                          "if(typeof Kikan !== 'undefined' && (true)")],
   ];
+  /* ★壊した写しの 隣に lib を 丸ごと 置く★（2026-11-03）
+     ＝前は lib/recipe.js の 壊した写し だけを TMP に 置いていたので ★require('./chizu.js') で 落ちて 何を壊しても 赤★
+       （★壊していない 写しでも 赤＝lib/recipe.js を 壊す 2本は 効いていなかった（book.html を 壊す 21本は 効いていた）★・tests/recipe.test.mjs と 同じ穴）。
+     ⇒ ★先に 壊していない 写しが 緑か を見る★（book.html も lib/recipe.js も）。緑でなければ 数えずに 止める。 */
+  fs.cpSync(path.join(ROOT, 'lib'), path.join(TMP, 'lib'), { recursive: true });
+  const 置き場 = (rel) => rel.startsWith('lib/') ? path.join(TMP, rel) : path.join(TMP, rel.replace(/[\\/]/g, '_'));
+  const 回す = (rel, f) => spawnSync(process.execPath, ['--max-old-space-size=4096', path.join(__dirname, 'recipe-ui.test.mjs')], { encoding: 'utf8',
+    env: Object.assign({}, process.env, { EXALLY_RECIPEUI_OVERRIDE: JSON.stringify({ [rel]: f }) }) });
+  for (const rel of [...new Set(BREAKS.map((b) => b[0]))]) {
+    const f0 = 置き場(rel);
+    fs.writeFileSync(f0, fs.readFileSync(path.join(ROOT, rel), 'utf8'), 'utf8');
+    const 素 = 回す(rel, f0);
+    if (素.status !== 0) {
+      console.log('  ★壊していない 写し（' + rel + '）が 赤★＝壊し方を 数えても 意味が ありません');
+      console.log(String(素.stdout || '').slice(-800) + String(素.stderr || '').slice(-800));
+      try { fs.rmSync(TMP, { recursive: true, force: true }); } catch (e) { /* 消せなくても 結果は 赤 */ }
+      process.exit(1);
+    }
+  }
+  console.log('  壊していない 写しは 緑（見張りが 効く 状態）');
   let red = 0;
   for (const [rel, name, brk] of BREAKS) {
     const orig = fs.readFileSync(path.join(ROOT, rel), 'utf8');
     const bad = brk(orig);
     if (bad === orig) { console.log('  ★置換できず★  ' + name); continue; }
-    const f = path.join(TMP, rel.replace(/[\\/]/g, '_'));
+    const f = 置き場(rel);
     fs.writeFileSync(f, bad, 'utf8');
-    const env = Object.assign({}, process.env, { EXALLY_RECIPEUI_OVERRIDE: JSON.stringify({ [rel]: f }) });
-    const r = spawnSync(process.execPath, ['--max-old-space-size=4096', path.join(__dirname, 'recipe-ui.test.mjs')], { encoding: 'utf8', env });
+    const r = 回す(rel, f);
+    fs.writeFileSync(f, orig, 'utf8');   /* ★次の壊しの 隣に 壊れた物を 残さない★ */
     if (r.status !== 0) { red++; console.log('  赤くなった  ' + name); }
     else console.log('  ★素通り★  ' + name);
   }

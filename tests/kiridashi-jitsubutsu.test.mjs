@@ -80,6 +80,8 @@ if (!対応表) {
 console.log('       … 本の 字を 作り物に 替えた: ' + 本の字を作り物に(sheets, 対応表) + ' か所');
 const 給料表 = sheets.find((s) => s.name === '給料表');
 ok(給料表, '★給料表が 無い★');
+/* ★読んだ 直後の 元の表★（どの 試験も 切り出す 前）＝後で 1セルも 触っていないかを 比べる */
+const 給料表の最初 = JSON.stringify(給料表.data);
 
 /* ★別の道で 数え直す（うちの切り出しを 使わない）★ */
 function 別の道で数える(人, 期間) {
@@ -204,9 +206,12 @@ T('★12月分まで 出せる（月をまたぐ所で 落ちない）★', () =
 T('★元の表は 1セルも 触っていない★', () => {
   const 前 = Object.keys(給料表.data).length;
   const 印 = JSON.stringify(給料表.data['2,1']);
+  /* ★1か所だけ 見ても 他の所の 書き換えは 素通りする★（2026-11-03 self-test で 素通りして 分かった＝'0,0' を 書き換えても 緑だった）
+     ⇒ ★表の 全部を 読んだ 直後（前の 試験が 切り出す 前）と 比べる★ */
   Recipe.切り出す(給料表, { 人: '見本一四', 月: '2026-01', 始まりの日: 1 });
   eq(Object.keys(給料表.data).length, 前, '★セルが 増えた／減った★');
   eq(JSON.stringify(給料表.data['2,1']), 印, '★中身が 書き換わった★');
+  ok(JSON.stringify(給料表.data) === 給料表の最初, '★元の表の どこかが 書き換わった★');
 });
 
 T('★居ない人・1日も無い月は はっきり断る（黙って 空を出さない）★', () => {
@@ -242,16 +247,31 @@ if (SELF) {
     ['★1日も無い月でも 出す★',
       (s) => s.replace('if (!出す行.length) {', 'if (false) {')],
   ];
+  /* ★壊した写しの 隣に lib を 丸ごと 置く★（2026-11-03）
+     ＝前は 壊した写し だけを TMP に 置いていたので ★require('./chizu.js') で 落ちて 何を壊しても 赤★
+       （★壊していない 写しでも 赤＝見張りが 1つも 効いていなかった★・tests/recipe.test.mjs と 同じ穴）。
+     ⇒ ★先に 壊していない 写しが 緑か を見る★。緑でなければ 数えずに 止める。 */
+  fs.cpSync(path.join(ROOT, 'lib'), path.join(TMP, 'lib'), { recursive: true });
+  const rel = 'lib/recipe.js';
+  const f = path.join(TMP, rel);
+  const 回す = () => spawnSync(process.execPath, ['--max-old-space-size=4096', path.join(__dirname, 'kiridashi-jitsubutsu.test.mjs')], { encoding: 'utf8',
+    env: Object.assign({}, process.env, { EXALLY_KIRIDASHI_OVERRIDE: JSON.stringify({ [rel]: f }) }) });
+  const 素 = 回す();
+  if (素.status !== 0) {
+    console.log('  ★壊していない 写しが 赤★＝壊し方を 数えても 意味が ありません');
+    console.log(String(素.stdout || '').slice(-800) + String(素.stderr || '').slice(-800));
+    try { fs.rmSync(TMP, { recursive: true, force: true }); } catch (e) { /* 消せなくても 結果は 赤 */ }
+    process.exit(1);
+  }
+  console.log('  壊していない 写しは 緑（見張りが 効く 状態）');
   let red = 0;
   for (const [name, brk] of BREAKS) {
-    const rel = 'lib/recipe.js';
     const orig = fs.readFileSync(path.join(ROOT, rel), 'utf8');
     const bad = brk(orig);
     if (bad === orig) { console.log('  ★置換できず★  ' + name); continue; }
-    const f = path.join(TMP, rel.replace(/[\\/]/g, '_'));
     fs.writeFileSync(f, bad, 'utf8');
-    const env = Object.assign({}, process.env, { EXALLY_KIRIDASHI_OVERRIDE: JSON.stringify({ [rel]: f }) });
-    const r = spawnSync(process.execPath, ['--max-old-space-size=4096', path.join(__dirname, 'kiridashi-jitsubutsu.test.mjs')], { encoding: 'utf8', env });
+    const r = 回す();
+    fs.writeFileSync(f, orig, 'utf8');   /* ★次の壊しの 隣に 壊れた物を 残さない★ */
     if (r.status !== 0) { red++; console.log('  赤くなった  ' + name); }
     else console.log('  ★素通り★  ' + name);
   }
