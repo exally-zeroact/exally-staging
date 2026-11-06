@@ -411,6 +411,82 @@ T('★画面より大きい分割（行だけ・列だけ）も 側を ちょう
   囲いが在る(描いた囲い({ 分C: win.COLS - 1 }).囲い, 900, 600, '列だけの分割＝左の側');
 });
 
+/* ── ⑬ ★選んだ見出しの強調は 見えている行・列だけ塗る★（2026-11-07 測った：A列丸ごと選ぶと 描くたび fillRect 1,048,610回・599ms）
+   ★見出しの色（C_SEL_HDR）の fillRect に 上限を置き 超えたら throw★＝打ち切りを外すと すぐ赤。
+   ★打ち切りすぎも見る★＝行の見出しの塗りが 画面の上（HDR_H）から下（600）まで 隙間なく 届いているか */
+const 見出し上限 = 3000;
+function 見出しの塗り(設定) {
+  const sh0 = sh(); const 元ctx = win.ctx, 元H = win.wrapH, 元W = win.wrapW, 元T = win.scrollTop, 元L = win.scrollLeft;
+  const 元分割 = Object.assign({}, win.分割);
+  win.sel(設定.r1, 設定.c1, 設定.r2, 設定.c2);
+  if (設定.足す) win.eval('selRanges=' + JSON.stringify(設定.足す) + ';');
+  sh0.freezeRow = 設定.fzR || 0; sh0.freezeCol = 設定.fzC || 0;
+  win.分割.行 = 設定.分R || 0; win.分割.列 = 設定.分C || 0; win.分割.上のずれ = 0; win.分割.左のずれ = 0;
+  win.wrapH = 600; win.wrapW = 900; win.scrollTop = 設定.top || 0; win.scrollLeft = 0;
+  const 行 = [], 列 = []; let 色 = '', n = 0;
+  win.ctx = new Proxy(元ctx, {
+    get(t, k) {
+      if (k === 'fillRect') return (x, y, w, h) => {
+        if (色 !== win.C_SEL_HDR) return;
+        if (++n > 見出し上限) throw new 描きすぎ('見出しの fillRect ' + 見出し上限 + ' 回を越えた');
+        if (x === 0 && w === win.HDR_W) 行.push([y, y + h]); else if (y === 0) 列.push([x, x + w]);
+      };
+      return t[k];
+    },
+    set(t, k, v) { if (k === 'fillStyle') 色 = v; return true; },
+  });
+  let 越えた = false;
+  try { win._doRender(); }
+  catch (e) { if (!(e instanceof 描きすぎ)) throw e; 越えた = true; }
+  finally {
+    win.ctx = 元ctx; win.wrapH = 元H; win.wrapW = 元W; win.scrollTop = 元T; win.scrollLeft = 元L;
+    Object.assign(win.分割, 元分割); sh0.freezeRow = 0; sh0.freezeCol = 0;
+    win.eval('selRanges=[];');
+  }
+  return { 行, 列, n, 越えた };
+}
+/* 画面の a〜b が 塗りの並びで 隙間なく 埋まっているか（行の見出しは 縦・列の見出しは 横） */
+const 埋まる = (並び, a, b, 名) => {
+  const s = 並び.filter((p) => p[1] > a && p[0] < b).sort((p, q) => p[0] - q[0]);
+  let 端 = a;
+  for (const [p0, p1] of s) { if (p0 > 端) break; 端 = Math.max(端, p1); }
+  ok(端 >= b, '★' + 名 + '：' + a + '〜' + b + ' のうち ' + 端 + ' までしか塗っていない＝打ち切りすぎ★ 塗り ' + s.length + ' 個');
+};
+const 見出し見る = (r, 名, 列も) => {
+  ok(!r.越えた, '★' + 名 + '：見出しの fillRect ' + 見出し上限 + ' 回を越えた＝画面の外まで塗っている★');
+  ok(r.n > 0, '★' + 名 + '：1回も塗っていない＝試験が空振り★');
+  埋まる(r.行, win.HDR_H, 600, 名 + '・行の見出し');
+  if (列も) 埋まる(r.列, win.HDR_W, 900, 名 + '・列の見出し');
+};
+const 全行 = () => win.ROWS - 1, 全列 = () => win.COLS - 1;
+T('★A列を丸ごと選んでも 見出しの塗りは 画面の分だけ・上から下まで届く★', () => {
+  reset();
+  見出し見る(見出しの塗り({ r1: 0, c1: 0, r2: 全行(), c2: 0 }), 'A列丸ごと');
+  見出し見る(見出しの塗り({ r1: 0, c1: 0, r2: 全行(), c2: 0, top: 5000 * win.ROW_H * win.scale + 7 }), 'A列丸ごと・下へ動かした（半端な位置）');
+});
+T('★全部選んでも 行・列の見出しが 画面の分だけ・端まで届く★', () => {
+  reset();
+  見出し見る(見出しの塗り({ r1: 0, c1: 0, r2: 全行(), c2: 全列() }), '全部', true);
+});
+T('★固定3行×2列・分割で 下へ動かしても 見出しの塗りが 帯の下まで届く★', () => {
+  reset();
+  const top = 5000 * win.ROW_H * win.scale;
+  見出し見る(見出しの塗り({ r1: 0, c1: 0, r2: 全行(), c2: 全列(), fzR: 3, fzC: 2, top }), '固定3×2', true);
+  見出し見る(見出しの塗り({ r1: 0, c1: 0, r2: 全行(), c2: 全列(), fzR: 全行(), top }), '固定 1048575行', true);
+  見出し見る(見出しの塗り({ r1: 0, c1: 0, r2: 全行(), c2: 全列(), 分R: 3, 分C: 2, top }), '分割3×2', true);
+});
+T('★Ctrl で足した範囲（selRanges）も 見出しの塗りは 画面の分だけ★', () => {
+  reset();
+  const 足す = [{ r1: 0, c1: 3, r2: 全行(), c2: 3, sheet: sh().name }, { r1: 2, c1: 0, r2: 2, c2: 全列(), sheet: sh().name }];
+  見出し見る(見出しの塗り({ r1: 0, c1: 0, r2: 0, c2: 0, 足す }), '足した範囲', true);
+});
+T('★隠れた行が 多くても 見出しの塗りが 下まで届く★', () => {
+  reset();
+  for (let r = 10; r < 2010; r++) sh().hiddenRows[r] = true;
+  try { 見出し見る(見出しの塗り({ r1: 0, c1: 0, r2: 全行(), c2: 0 }), '2000行 隠した'); }
+  finally { sh().hiddenRows = {}; }
+});
+
 /* ── ⑨ ★作っていない物を 台帳に書いてある★ ── */
 T('★作っていない物が golden に書いてある（全部 作った事にしない）★', () => {
   ok(Array.isArray(GOLD['作っていない物']) && GOLD['作っていない物'].length >= 2, '作っていない物が書かれていない');
@@ -449,6 +525,13 @@ if (SELF) {
     ['book.html', '★縦の境目の線を 打ち切った幅で引く★', (s) => s.replace('var _lx=Math.round(HDR_W+_fWall)+0.5', 'var _lx=Math.round(HDR_W+_fW)+0.5')],
     ['book.html', '★分割の側を 打ち切りすぎる★', (s) => s.replace('var _h = Math.min(分割の高さ(), Math.max(0, _wH - HDR_H)),', 'var _h = Math.min(分割の高さ(), Math.max(0, _wH - HDR_H - 200)),')],
     ['book.html', '★分割の側を 画面で打ち切らない★', (s) => s.replace('var _h = Math.min(分割の高さ(), Math.max(0, _wH - HDR_H)), _w = Math.min(分割の幅(), Math.max(0, _wW - HDR_W));', 'var _h = 分割の高さ(), _w = 分割の幅();')],
+    ['book.html', '★見出しの強調（行）を 打ち切らない★', (s) => s.replace('for(var r=Math.max(sR,selR1);r<=Math.min(eR+1,selR2);r++) ctx.fillRect(0,rowY(r),HDR_W,rH(r));', 'for(var r=selR1;r<=selR2;r++) ctx.fillRect(0,rowY(r),HDR_W,rH(r));')],
+    ['book.html', '★見出しの強調（列）を 打ち切らない★', (s) => s.replace('for(var c=Math.max(sC,selC1);c<=Math.min(eC+1,selC2);c++) ctx.fillRect(colX(c),0,cW(c),HDR_H);', 'for(var c=selC1;c<=selC2;c++) ctx.fillRect(colX(c),0,cW(c),HDR_H);')],
+    ['book.html', '★足した範囲の見出し（行）を 打ち切らない★', (s) => s.replace('for(var _hrr=Math.max(sR,_hr.r1);_hrr<=Math.min(eR+1,_hr.r2);_hrr++)', 'for(var _hrr=_hr.r1;_hrr<=_hr.r2;_hrr++)')],
+    ['book.html', '★足した範囲の見出し（列）を 打ち切らない★', (s) => s.replace('for(var _hc=Math.max(sC,_hr.c1);_hc<=Math.min(eC+1,_hr.c2);_hc++)', 'for(var _hc=_hr.c1;_hc<=_hr.c2;_hc++)')],
+    ['book.html', '★見出しの強調を 打ち切りすぎる（下）★', (s) => s.replace('r<=Math.min(eR+1,selR2);r++) ctx.fillRect(0,rowY(r)', 'r<=Math.min(eR-3,selR2);r++) ctx.fillRect(0,rowY(r)')],
+    ['book.html', '★見出しの強調を 打ち切りすぎる（上）★', (s) => s.replace('for(var r=Math.max(sR,selR1);r<=Math.min(eR+1,selR2);r++) ctx.fillRect(0,rowY(r)', 'for(var r=Math.max(sR+1,selR1);r<=Math.min(eR+1,selR2);r++) ctx.fillRect(0,rowY(r)')],
+    ['book.html', '★見出しの強調（列）を 打ち切りすぎる（右）★', (s) => s.replace('c<=Math.min(eC+1,selC2);c++) ctx.fillRect(colX(c),0', 'c<=Math.min(eC-3,selC2);c++) ctx.fillRect(colX(c),0')],
     ['book.html', '★Alt+= が どちらを取ったか 出さない★', (s) => s.replace('  if(got.ambiguous){', '  if(false){')],
     ['lib/autosum.js', '★上と左の両方が在る事に 気づかない★', (s) => s.replace('    var まよう = 上あり && 左あり;', '    var まよう = false;')],
   ];

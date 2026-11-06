@@ -7282,17 +7282,21 @@ function _renderPass() {
   ctx.fillRect(0,0,HDR_W,wrapH);
 
   // 6. 選択ヘッダー強調 ※autoMainReset時はメインスキップ
+  /* ★描く行・列（sR〜eR+1・sC〜eC+1）だけ塗る★＝3. 選択セル背景・8. 見出しの字と同じ範囲
+     （列見出しを押す＝100万行を選ぶと 描くたび fillRect 1,048,610回・599ms 回っていた＝2026-11-07 測った）。
+     上へ出た行は 9. 左上角が上から塗る。★eR・eC は 既定の高さ・幅で数えた端★＝低い行・細い列が並ぶと
+     画面の端より手前で止まる（その先は 前からセルも字も描いていない＝別件） */
   ctx.fillStyle=C_SEL_HDR;
   if(!multiSelectAutoMainReset){
-    for(var c=selC1;c<=selC2;c++) ctx.fillRect(colX(c),0,cW(c),HDR_H);
-    for(var r=selR1;r<=selR2;r++) ctx.fillRect(0,rowY(r),HDR_W,rH(r));
+    for(var c=Math.max(sC,selC1);c<=Math.min(eC+1,selC2);c++) ctx.fillRect(colX(c),0,cW(c),HDR_H);
+    for(var r=Math.max(sR,selR1);r<=Math.min(eR+1,selR2);r++) ctx.fillRect(0,rowY(r),HDR_W,rH(r));
   }
   // STEP2: 追加範囲(selRanges)のヘッダーも強調（現在シートの範囲のみ）
   for(var _hi=0;_hi<selRanges.length;_hi++){
     var _hr=selRanges[_hi];
     if(_hr.sheet && _hr.sheet !== sheets[activeSheet].name) continue; // 別シート範囲はスキップ
-    for(var _hc=_hr.c1;_hc<=_hr.c2;_hc++) ctx.fillRect(colX(_hc),0,cW(_hc),HDR_H);
-    for(var _hrr=_hr.r1;_hrr<=_hr.r2;_hrr++) ctx.fillRect(0,rowY(_hrr),HDR_W,rH(_hrr));
+    for(var _hc=Math.max(sC,_hr.c1);_hc<=Math.min(eC+1,_hr.c2);_hc++) ctx.fillRect(colX(_hc),0,cW(_hc),HDR_H);
+    for(var _hrr=Math.max(sR,_hr.r1);_hrr<=Math.min(eR+1,_hr.r2);_hrr++) ctx.fillRect(0,rowY(_hrr),HDR_W,rH(_hrr));
   }
 
   // 7. ヘッダー線
