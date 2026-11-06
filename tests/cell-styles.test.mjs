@@ -104,7 +104,7 @@ console.log('\n[④ 画面に 繋がっている]');
 ok('部品を 読み込んでいる', /lib\/cell-styles\.js/.test(book));
 ok('窓が 在る', /id="styleOverlay"/.test(book));
 ok('当てる働きが 在る', /function セルのスタイルを当てる\(/.test(book));
-ok('★元に戻せる（控えを 積む）★', /undoStack\.push\(\{ type: 'format', snap: snap \}\)/.test(book));
+ok('★元に戻せる（控えを 板の番号つきで 積む）★', /undoStack\.push\(\{ type: 'format', sheet: activeSheet, snap: snap \}\)/.test(book));
 ok('★alert / prompt / confirm を 使っていない★', !/\balert\(|\bprompt\(|\bconfirm\(/.test(book));
 
 console.log('\n[⑤ リボンから 押せる]');

@@ -11008,6 +11008,12 @@ function setCell(r,c,v,noUndo){
 function doUndo(){
   if(!undoStack.length) return;
   var op = undoStack.pop();
+  /* ★控えを取った板へ移ってから戻す★（2026-11-07・前は 開いている板へ 書き戻した＝別の板で Ctrl+Z すると
+     その板が 前の板の控えで 上書きされ 中身が消えた・書式は 別の板に 空のマスを 作った）＝実Excel も 戻す板へ 移る */
+  if((op.type==='rowcol'||op.type==='format') && op.sheet!=null && op.sheet!==activeSheet){
+    if(!sheets[op.sheet]){ notify('戻す板が 見つかりません（取り消しを 止めました）'); return; }
+    switchSheet(op.sheet);
+  }
   redoStack.push({type:op.type, snap:op.type==='rowcol'?JSON.parse(JSON.stringify(sheets[activeSheet])):op.snap, kind:op.kind, sheet:op.sheet, idx:op.idx, old:op.old, nw:op.nw, key:op.key, new_:op.new_});
   // 行列操作Undo（スナップショット復元）
   if(op.type==='rowcol'){
@@ -11050,6 +11056,12 @@ function doUndo(){
 function doRedo(){
   if(!redoStack.length) return;
   var op = redoStack.pop();
+  /* ★控えを取った板へ移ってから戻す★（2026-11-07・前は 開いている板へ 書き戻した＝別の板で Ctrl+Z すると
+     その板が 前の板の控えで 上書きされ 中身が消えた・書式は 別の板に 空のマスを 作った）＝実Excel も 戻す板へ 移る */
+  if((op.type==='rowcol'||op.type==='format') && op.sheet!=null && op.sheet!==activeSheet){
+    if(!sheets[op.sheet]){ notify('戻す板が 見つかりません（取り消しを 止めました）'); return; }
+    switchSheet(op.sheet);
+  }
   undoStack.push(op);
   // 行列操作Redo
   if(op.type==='rowcol'){
@@ -12680,7 +12692,7 @@ function 書式を消す(){
       delete cell[key];
     }
   }
-  if(snap.length){ undoStack.push({type:'format', snap:snap}); redoStack=[]; }
+  if(snap.length){ undoStack.push({type:'format', sheet:activeSheet, snap:snap}); redoStack=[]; }
   render(); updateBar(); hideCtxMenu();
 }
 function すべて消す(){ 書式を消す(); 中身を消す(); }
@@ -13769,7 +13781,7 @@ function セルのスタイルを当てる(i){
       数++;
     }
   }
-  if (snap.length) { undoStack.push({ type: 'format', snap: snap }); redoStack = []; }
+  if (snap.length) { undoStack.push({ type: 'format', sheet: activeSheet, snap: snap }); redoStack = []; }
   セルのスタイルを閉じる();
   render(); updateBar();
   notify(数 + '個の セルを 「' + st.名 + '」に しました');
@@ -17375,7 +17387,7 @@ function _snapRowCol(){
   return JSON.parse(JSON.stringify(sheets[activeSheet]));
 }
 function _pushRowColUndo(){
-  undoStack.push({type:'rowcol', snap:_snapRowCol()});
+  undoStack.push({type:'rowcol', sheet:activeSheet, snap:_snapRowCol()});
   redoStack=[];
 }
 /* ★行や列を 入れたり消したりした時、入力の決まりも 一緒に動かす★
@@ -18382,7 +18394,7 @@ function 書式を貼る(){
     }
     数++;
   }
-  if(snap.length){ undoStack.push({type:'format', snap:snap}); redoStack=[]; }
+  if(snap.length){ undoStack.push({type:'format', sheet:activeSheet, snap:snap}); redoStack=[]; }
   render(); updateBar();
   notify(数 + '個の セルに 書式を 貼りました（中身は 変えていません）');
   return 数;
@@ -18400,7 +18412,7 @@ function applyBorderOuter(style) {
     if(c===selC1) b.left=style; if(c===selC2) b.right=style;
     sheets[activeSheet].data[k].border = style===0?{}:b;
   }
-  undoStack.push({type:'format',snap:snap}); redoStack=[];
+  undoStack.push({type:'format', sheet:activeSheet, snap:snap}); redoStack=[];
   render();
 }
 
@@ -18417,7 +18429,7 @@ function applyBorderInner(style) {
     if(c>selC1) b.left=style; if(c<selC2) b.right=style;
     sheets[activeSheet].data[k].border = b;
   }
-  undoStack.push({type:'format',snap:snap}); redoStack=[];
+  undoStack.push({type:'format', sheet:activeSheet, snap:snap}); redoStack=[];
   render();
 }
 
@@ -18451,7 +18463,7 @@ function applyMergeCells() {
   snap.push({key:pk,prop:'mergeEnd',old:sheets[activeSheet].data[pk].mergeEnd});
   sheets[activeSheet].data[pk].mergeEnd={r:selR2,c:selC2};
   sheets[activeSheet].data[pk].align='center';
-  undoStack.push({type:'format',snap:snap}); redoStack=[];
+  undoStack.push({type:'format', sheet:activeSheet, snap:snap}); redoStack=[];
   render();
 }
 
@@ -18481,7 +18493,7 @@ function applyFormat(key, value) {
     if(!sheets[activeSheet].data[k]) sheets[activeSheet].data[k]={v:'',f:'',d:''};
     sheets[activeSheet].data[k][key] = value;
   }
-  undoStack.push({type:'format', snap:snap}); redoStack=[];
+  undoStack.push({type:'format', sheet:activeSheet, snap:snap}); redoStack=[];
   render(); updateBar();
 }
 
@@ -18506,7 +18518,7 @@ function applyBorderAll(style) {
     if(!sheets[activeSheet].data[k]) sheets[activeSheet].data[k]={v:'',f:'',d:''};
     sheets[activeSheet].data[k].border = style===0 ? {} : {top:style,bottom:style,left:style,right:style};
   }
-  undoStack.push({type:'format', snap:snap}); redoStack=[];
+  undoStack.push({type:'format', sheet:activeSheet, snap:snap}); redoStack=[];
   render();
 }
 
@@ -20321,6 +20333,8 @@ function openBookFile(file){
     return _本を読み直しながら開く(file, 2);   /* ★合わせて 3回まで★ */
   }).then(function(res){
     sheets = res.sheets;
+    /* ★前の本の 取り消しの控えを 捨てる★（残すと 前の本の板が 開いた本の板を 上書きする・2026-11-07） */
+    undoStack = []; redoStack = [];
     /* ★マクロが入っているかは 提案でも使う★（開いた時に こちらから 代わりの道を言う） */
     _bookHasVba = !!res.hasVba;
     activeSheet = 0;

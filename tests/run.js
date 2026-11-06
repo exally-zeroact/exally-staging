@@ -248,6 +248,8 @@ const FILES = [
   ['shouko-no-okiba.test.mjs', '--self-test'], //  ＝同じ日に 2回 落ちた（507個が 消えた／YENの控え）
   'hyou-ireru-ui.test.mjs',               // ★AIの表を入れて★1押しで元に戻る★（本物の画面をjsdomで押す）
   ['hyou-ireru-ui.test.mjs', '--self-test'],// ＝前は1セルずつ積み★16回押さないと戻らなかった★
+  'torikeshi-ita.test.mjs',               // ★取り消し／やり直しは 控えを取った板へ（別の板で Ctrl+Z すると その板が消えていた・2026-11-07）
+  ['torikeshi-ita.test.mjs', '--self-test'],// ★控えから 板の番号を 消すと 赤に なるか
   'formula-nokori.test.mjs',              // ★2026-09-06に作った14個＝答えは全部★実Excelの実測★
   ['formula-nokori.test.mjs', '--self-test'],
   'formula-kane.test.mjs',                // ★お金の関数22個＝実Excelの答え700本と1本残らず突き合わせ(09-07)
