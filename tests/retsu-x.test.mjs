@@ -53,7 +53,8 @@ const まだ = {
 };
 
 /* ★実Excel の 置き方と 同じ★＝式は 別の 板 CALC・材料は SHEET1（板の 名の 無い 帯は Sheet1! に 書き換える＝tools/retsu-marugoto-excel.ps1） */
-const 書換 = f => f.replace(/(?<![!A-Za-z$])(\$?[A-Z]{1,3}:\$?[A-Z]{1,3}|\$?\d+:\$?\d+)(?![0-9(])/g, 'Sheet1!$1').replace(/Sheet1!Sheet1!/g, 'Sheet1!');
+/* ★後読みは 使わない★（古い Safari が 読めない＝no-lookbehind の 決まり）＝前の 字を 捕まえて そのまま 戻す */
+const 書換 = f => f.replace(/(^|[^!A-Za-z$])(\$?[A-Z]{1,3}:\$?[A-Z]{1,3}|\$?\d+:\$?\d+)(?![0-9(])/g, '$1Sheet1!$2').replace(/Sheet1!Sheet1!/g, 'Sheet1!');
 function 板を作る() {
   const h = H.表();
   h.板を足す('SHEET1'); h.板を足す('CALC');
