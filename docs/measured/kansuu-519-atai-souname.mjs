@@ -127,7 +127,7 @@ for (const 名 of ['kansuu46/golden-346-2026-09-08.tsv', 'kansuu46/golden-mada-2
     if (打ち直しD12.has(式) && 打ち直しD12.get(式) !== 答) { 答 = 打ち直しD12.get(式); D12置き換え += 1; }
     if (答 === '#NAME?') continue;
     if (式 === '=ABS(A2)' && 答 === '2') C対照 = true;
-    /* ★実Excel は H1 に .Formula で 打った（toru-346.ps1:185-209）・D1/D2 は 式 =DATE(…)★ */
+    /* ★実Excel は H1 に .Formula で 打った（toru-346.ps1:185-209）・D1/D2 は 式 =DATE(...)★ */
     行C.push([式, 押す(盤面C式, 'H1', 式), 答, 名.includes('346') ? '346の紙・昔の道' : 'まだの紙・昔の道']);
   }
 }
