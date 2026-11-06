@@ -1978,7 +1978,8 @@ function putNowValue(kind){
 /** 1画面 上下（PageUp / PageDown） */
 function movePage(dir){
   /* ★今 画面に見えている行を数える★（行の高さがバラバラでも合う） */
-  var top = yToR(HDR_H+1), bot = yToR(wrapH-1);
+  /* ★固定した帯の下＝流れる所だけを数える★（帯の0行目を一番上と取ると 下の方で 1回に100行以上 飛んだ＝2026-11-07） */
+  var top = yToR(HDR_H+_freezeH()+1, true), bot = yToR(wrapH-1, true);
   var n = Math.max(1, bot - top);
   var r = Math.max(0, Math.min(ROWS-1, selR1 + dir*n));
   sel(r, selC1, r, selC1);   /* sel が scrollToCell と render を呼ぶ */
@@ -7187,7 +7188,8 @@ function 分割をやめる(){
 
 function _renderPass() {
   _cfBeginPass();                      /* ★条件付き書式：1回の描き直しの間だけ 範囲の値を覚える★ */
-  var sC=xToC(HDR_W), sR=yToR(HDR_H), eC=sC, eR=sR;
+  /* ★描き始めは 流れる所の左上★（帯の行・列から始めると 画面1枚分で止まり 動かした先が描かれない＝2026-11-07） */
+  var sC=xToC(HDR_W, true), sR=yToR(HDR_H, true), eC=sC, eR=sR;
   /* ★隠れている行が 多いと ここで 100万行 歩いて 画面が 真っ白になる★
      （実測 2026-08-28＝切り替えで 334行 隠したら 表が 消えた）
      ＝隠れた行は 高さ0なので rowY が 進まず、eR が ROWS-1 まで 伸びる。
@@ -7341,7 +7343,7 @@ function _renderPass() {
 
   // 9.5 列リサイズハンドル（列ヘッダー境界に細い縦線）
   ctx.strokeStyle='#7DB89A'; ctx.lineWidth=1;
-  var sC2=xToC(HDR_W), eC2=xToC(wrapW);
+  var sC2=xToC(HDR_W, true), eC2=xToC(wrapW, true);
   for(var c=sC2;c<=eC2+1;c++){
     var bx=colX(c)+cW(c);
     if(bx<=HDR_W||bx>wrapW) continue;
@@ -7351,7 +7353,7 @@ function _renderPass() {
   }
   // 9.6 行リサイズグリップ（行ヘッダー下端中央に横線）
   ctx.strokeStyle='#9EC8B0'; ctx.lineWidth=1;
-  var sR2=yToR(HDR_H), eR2=yToR(wrapH);
+  var sR2=yToR(HDR_H, true), eR2=yToR(wrapH, true);
   var gx1=Math.round(HDR_W*0.25), gx2=Math.round(HDR_W*0.75);
   for(var r=sR2;r<=eR2+1;r++){
     var gby=rowY(r)+rH(r)-1;
@@ -11237,9 +11239,11 @@ function rowY(r){
   for(var k in rh){ var kk = parseInt(k); if(kk < r && rH(kk) > 0) y += (rh[k] - ROW_H) * scale; }
   return Math.round(y);
 }
-function xToC(x){
-  /* ★固定した帯の中を押した時は 固定した列を返す★ */
-  var fzc = sheets[activeSheet].freezeCol||0;
+function xToC(x, 帯を見ない){
+  /* ★固定した帯の中を押した時は 固定した列を返す★
+     ★帯を見ない＝流れる所の「その位置に描かれる列」を返す★（描きの頭・見えている端を数える時。
+       帯の列を返すと 動かした先の列が描かれず 帯の右が空白になる＝2026-11-07 実WebKit で見た） */
+  var fzc = 帯を見ない ? 0 : (sheets[activeSheet].freezeCol||0);
   if(fzc > 0){
     var fx = HDR_W;
     for(var fj = 0; fj < fzc; fj++){
@@ -11277,9 +11281,10 @@ function xToC(x){
   }
   return COLS - 1;
 }
-function yToR(y){
-  /* ★固定した帯の中を押した時は 固定した行を返す★（帯はスクロールしていない） */
-  var fz = sheets[activeSheet].freezeRow||0;
+function yToR(y, 帯を見ない){
+  /* ★固定した帯の中を押した時は 固定した行を返す★（帯はスクロールしていない）
+     ★帯を見ない＝流れる所の「その位置に描かれる行」を返す★（xToC と同じ・2026-11-07） */
+  var fz = 帯を見ない ? 0 : (sheets[activeSheet].freezeRow||0);
   if(fz > 0){
     var fy = HDR_H;
     for(var fi = 0; fi < fz; fi++){

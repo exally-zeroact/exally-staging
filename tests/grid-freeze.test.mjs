@@ -277,6 +277,42 @@ T('★迷わない時は 余計な知らせを出さない★（ⓐ 上だけ）
   eq(出た.length, 0, '余計な知らせが出た: ' + 出た.join('／'));
 });
 
+/* ── ⑩ ★固定したまま 下・右へ動かすと 帯の下・右に 動かした先が描かれる★（2026-11-07 実WebKit で 空白を見た） ──
+   描き始めを 帯の0行目から取っていた＝画面1枚分（約30行）で止まり、101行目より下が描かれず 帯の下が空白だった。
+   ★描く時に getCell へ来た 行・列を 数える★（ctx は作り物＝絵ではなく「どの行を描きに行ったか」で見る） */
+function 描いた行と列(fzR, fzC, sT, sL) {
+  const sh0 = sh(); const 元 = win.getCell, 元H = win.wrapH, 元W = win.wrapW;
+  sh0.freezeRow = fzR; sh0.freezeCol = fzC; win.scrollTop = sT; win.scrollLeft = sL;
+  win.wrapH = 600; win.wrapW = 900;                  /* jsdom は 0＝置かないと 何も描かれず 空振りする */
+  const 行 = new Set(), 列 = new Set();
+  win.getCell = function (r, c) { 行.add(r); 列.add(c); return 元.apply(this, arguments); };
+  try { win._doRender(); } finally { win.getCell = 元; win.wrapH = 元H; win.wrapW = 元W; }
+  return { 行, 列 };
+}
+T('★固定3行で 2400px 下へ動かすと 流れる所の行（101〜120）を描きに行く★', () => {
+  reset();
+  const { 行 } = 描いた行と列(3, 0, 2400, 0);
+  const 見える = Math.floor(2400 / (win.ROW_H * win.scale));
+  for (let r = 見える + 4; r < 見える + 20; r++) ok(行.has(r), '★' + (r + 1) + '行目を 描いていない＝帯の下が空白★');
+  ok(行.has(0) && 行.has(2), '固定した帯（1〜3行目）を描いていない');
+});
+T('★固定3列で 右へ動かすと 流れる所の列を描きに行く★', () => {
+  reset();
+  const { 列 } = 描いた行と列(0, 3, 0, 3000);
+  const 見える = Math.floor(3000 / (win.COL_W * win.scale));
+  for (let c = 見える + 4; c < 見える + 8; c++) ok(列.has(c), '★' + (c + 1) + '列目を 描いていない＝帯の右が空白★');
+});
+T('★PageDown は 帯の下に見えている行の数だけ 動く★（帯の0行目を一番上と取ると 100行以上 飛んだ）', () => {
+  reset();
+  const 元H = win.wrapH; win.wrapH = 600;
+  try {
+    const 動き = (fz) => { sh().freezeRow = fz; win.sel(110, 0, 110, 0); win.scrollTop = 2400; const 前 = win.selR1; win.movePage(1); return win.selR1 - 前; };
+    const 無し = 動き(0), 有り = 動き(3);
+    /* ★帯の下に見えている行＝固定なしより ちょうど3行少ない★（多いと飛びすぎ・同じだと帯に隠れた3行を毎回飛ばす） */
+    eq(無し - 有り, 3, '★固定3行で ' + 有り + '行 動いた（固定なしは ' + 無し + '行）★');
+  } finally { win.wrapH = 元H; sh().freezeRow = 0; }
+});
+
 /* ── ⑨ ★作っていない物を 台帳に書いてある★ ── */
 T('★作っていない物が golden に書いてある（全部 作った事にしない）★', () => {
   ok(Array.isArray(GOLD['作っていない物']) && GOLD['作っていない物'].length >= 2, '作っていない物が書かれていない');
@@ -299,9 +335,14 @@ if (SELF) {
     ['book.html', '固定する行を 1つ ずらす', (s) => s.replace('  sh.freezeRow = selR1;                    /* 選んだセルの ★上の行★ を固定 */', '  sh.freezeRow = selR1 + 1;')],
     ['book.html', '固定する列を 1つ ずらす', (s) => s.replace('  sh.freezeCol = selC1;                    /* 選んだセルの ★左の列★ を固定 */', '  sh.freezeCol = selC1 + 1;')],
     ['book.html', '取り消しの控えを取らない', (s) => s.replace('  _pushRowColUndo();                       /* ★取り消し1回で戻る★ */', '')],
-    ['book.html', '★押した所の読み取りが 帯を見ない★（固定した行を押せない）', (s) => s.replace('  var fz = sheets[activeSheet].freezeRow||0;\n  if(fz > 0){', '  var fz = 0;\n  if(fz > 0){')],
-    ['book.html', '★左の帯の読み取りが 効かない★', (s) => s.replace('  var fzc = sheets[activeSheet].freezeCol||0;\n  if(fzc > 0){', '  var fzc = 0;\n  if(fzc > 0){')],
+    ['book.html', '★押した所の読み取りが 帯を見ない★（固定した行を押せない）', (s) => s.replace('  var fz = 帯を見ない ? 0 : (sheets[activeSheet].freezeRow||0);\n  if(fz > 0){', '  var fz = 0;\n  if(fz > 0){')],
+    ['book.html', '★左の帯の読み取りが 効かない★', (s) => s.replace('  var fzc = 帯を見ない ? 0 : (sheets[activeSheet].freezeCol||0);\n  if(fzc > 0){', '  var fzc = 0;\n  if(fzc > 0){')],
     ['book.html', '★帯をもう一度 描かない★（固定しても画面が変わらない）', (s) => s.replace('  _renderPass();                                       /* ① 流れる所（今までどおり） */', '  _renderPass(); return;')],
+    ['book.html', '★描き始めを 帯の行から取る★（固定して下へ動かすと 帯の下が空白）', (s) => s.replace('var sC=xToC(HDR_W, true), sR=yToR(HDR_H, true)', 'var sC=xToC(HDR_W, true), sR=yToR(HDR_H)')],
+    ['book.html', '★描き始めを 帯の列から取る★（固定して右へ動かすと 帯の右が空白）', (s) => s.replace('var sC=xToC(HDR_W, true), sR=yToR(HDR_H, true)', 'var sC=xToC(HDR_W), sR=yToR(HDR_H, true)')],
+    ['book.html', '★PageDown が 帯の0行目を一番上と取る★', (s) => s.replace('var top = yToR(HDR_H+_freezeH()+1, true)', 'var top = yToR(HDR_H+1)')],
+    ['book.html', '★PageDown が 帯の高さを引かない★（帯に隠れた行を毎回飛ばす）', (s) => s.replace('var top = yToR(HDR_H+_freezeH()+1, true)', 'var top = yToR(HDR_H+1, true)')],
+    ['book.html', '★帯を見ない が 効かない★（yToR）', (s) => s.replace("var fz = 帯を見ない ? 0 : (sheets[activeSheet].freezeRow||0);", "var fz = sheets[activeSheet].freezeRow||0;")],
     ['book.html', '★Alt+= が どちらを取ったか 出さない★', (s) => s.replace('  if(got.ambiguous){', '  if(false){')],
     ['lib/autosum.js', '★上と左の両方が在る事に 気づかない★', (s) => s.replace('    var まよう = 上あり && 左あり;', '    var まよう = false;')],
   ];
