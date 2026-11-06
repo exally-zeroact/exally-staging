@@ -1,0 +1,118 @@
+{
+ "測った日": "2026-11-04",
+ "道具": "Excel 16.0 COM（tools/retsu-marugoto-excel.ps1 と 同じ・Formula2・別の板 Calc に 式・材料は Sheet1 A1:A5=1..5 B1:B5=10..50・D9 は Calc の 空のマス）",
+ "行": [
+  {
+   "式": "=MATCH(D9,A:A,0)",
+   "Excel": "#N/A"
+  },
+  {
+   "式": "=MATCH(\"\",A:A,0)",
+   "Excel": "#N/A"
+  },
+  {
+   "式": "=VLOOKUP(D9,A:B,2,FALSE)",
+   "Excel": "#N/A"
+  },
+  {
+   "式": "=XLOOKUP(D9,A:A,B:B)",
+   "Excel": "0"
+  },
+  {
+   "式": "=XLOOKUP(\"\",A:A,B:B)",
+   "Excel": "#N/A"
+  },
+  {
+   "式": "=MATCH(D9,Sheet1!A1:A6,0)",
+   "Excel": "#N/A"
+  },
+  {
+   "式": "=XLOOKUP(D9,Sheet1!A1:A6,Sheet1!B1:B6)",
+   "Excel": "0"
+  },
+  {
+   "式": "=COUNTIF(Sheet1!A1:A6,\"\")",
+   "Excel": "1"
+  },
+  {
+   "式": "=COUNTIF(Sheet1!A1:A6,\"<>3\")",
+   "Excel": "5"
+  },
+  {
+   "式": "=COUNTIFS(A:A,\">2\",B:B,\">10\")",
+   "Excel": "3"
+  },
+  {
+   "式": "=SUMIFS(B:B,A:A,\">2\")",
+   "Excel": "120"
+  },
+  {
+   "式": "=HLOOKUP(2,1:2,2,FALSE)",
+   "Excel": "#N/A"
+  },
+  {
+   "式": "=INDEX(A:B,7,2)",
+   "Excel": "0"
+  },
+  {
+   "式": "=INDEX(A:A,1048576)",
+   "Excel": "0"
+  },
+  {
+   "式": "=AREAS((A:A,C:C))",
+   "Excel": "2"
+  },
+  {
+   "式": "=SUMPRODUCT(A:A,Sheet1!B1:B5)",
+   "Excel": "#VALUE!"
+  },
+  {
+   "式": "=XLOOKUP(4,A:A,Sheet1!B1:B5)",
+   "Excel": "#VALUE!"
+  },
+  {
+   "式": "=COUNTIF(A:A,\">2\")",
+   "Excel": "3"
+  },
+  {
+   "式": "=COUNTIF(A:A,\"abc\")",
+   "Excel": "0"
+  },
+  {
+   "式": "=COUNTIF(A:A,3)",
+   "Excel": "1"
+  },
+  {
+   "式": "=PRODUCT(A:A)",
+   "Excel": "120"
+  },
+  {
+   "式": "=MATCH(6,A:A,1)",
+   "Excel": "5"
+  },
+  {
+   "式": "=MATCH(0,A:A,1)",
+   "Excel": "#N/A"
+  },
+  {
+   "式": "=VLOOKUP(9,A:B,2,FALSE)",
+   "Excel": "#N/A"
+  },
+  {
+   "式": "=SUMIF(A:A,3,B:B)",
+   "Excel": "30"
+  },
+  {
+   "式": "=XLOOKUP(9,A:A,B:B,\"x\")",
+   "Excel": "x"
+  },
+  {
+   "式": "=INDEX(A:A,0)",
+   "Excel": "#スピル!"
+  },
+  {
+   "式": "=SUM(INDEX(A:A,0))",
+   "Excel": "15"
+  }
+ ]
+}

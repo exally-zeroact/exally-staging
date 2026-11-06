@@ -1,0 +1,178 @@
+{
+ "測った日": "2026-11-04",
+ "道具": "Excel 16.0 COM（Formula2・別の板 Calc に 式・材料は Sheet1 A1:A5=1..5 B1:B5=10..50）",
+ "行": [
+  {
+   "式": "=SUM(A:A)",
+   "Excel": "15"
+  },
+  {
+   "式": "=COUNT(A:A)",
+   "Excel": "5"
+  },
+  {
+   "式": "=COUNTA(B:B)",
+   "Excel": "5"
+  },
+  {
+   "式": "=COUNTIF(A:A,1)",
+   "Excel": "1"
+  },
+  {
+   "式": "=SUM(1:1)",
+   "Excel": "11"
+  },
+  {
+   "式": "=VLOOKUP(3,A:B,2,FALSE)",
+   "Excel": "30"
+  },
+  {
+   "式": "=MATCH(4,A:A,0)",
+   "Excel": "4"
+  },
+  {
+   "式": "=MATCH(4,A:A,1)",
+   "Excel": "4"
+  },
+  {
+   "式": "=MATCH(2.5,A:A)",
+   "Excel": "2"
+  },
+  {
+   "式": "=SUMIF(A:A,\">2\",B:B)",
+   "Excel": "120"
+  },
+  {
+   "式": "=ROWS(A:A)",
+   "Excel": "1048576"
+  },
+  {
+   "式": "=COLUMNS(1:1)",
+   "Excel": "16384"
+  },
+  {
+   "式": "=COLUMNS(A:C)",
+   "Excel": "3"
+  },
+  {
+   "式": "=ROWS(1:3)",
+   "Excel": "3"
+  },
+  {
+   "式": "=COUNTBLANK(A:A)",
+   "Excel": "1048571"
+  },
+  {
+   "式": "=COUNTIF(A:A,\"\")",
+   "Excel": "1048571"
+  },
+  {
+   "式": "=COUNTIF(A:A,\"<>3\")",
+   "Excel": "1048575"
+  },
+  {
+   "式": "=SUMPRODUCT(--(A:A=\"\"))",
+   "Excel": "1048571"
+  },
+  {
+   "式": "=INDEX(A:A,10)",
+   "Excel": "0"
+  },
+  {
+   "式": "=INDEX(A:A,3)",
+   "Excel": "3"
+  },
+  {
+   "式": "=INDEX(1:1,2)",
+   "Excel": "10"
+  },
+  {
+   "式": "=ISREF(A:A)",
+   "Excel": "TRUE"
+  },
+  {
+   "式": "=AVERAGE(A:A)",
+   "Excel": "3"
+  },
+  {
+   "式": "=MAX(B:B)",
+   "Excel": "50"
+  },
+  {
+   "式": "=MIN(A:A)",
+   "Excel": "1"
+  },
+  {
+   "式": "=XLOOKUP(4,A:A,B:B)",
+   "Excel": "40"
+  },
+  {
+   "式": "=SUM($A:$B)",
+   "Excel": "165"
+  },
+  {
+   "式": "=SUM(Sheet1!A:A)",
+   "Excel": "15"
+  },
+  {
+   "式": "=SUM(Sheet1!1:2)",
+   "Excel": "33"
+  },
+  {
+   "式": "=SUM($1:$2)",
+   "Excel": "33"
+  },
+  {
+   "式": "=AREAS(A:A)",
+   "Excel": "1"
+  },
+  {
+   "式": "=IFERROR(VLOOKUP(3,A:B,2,FALSE),\"\")",
+   "Excel": "30"
+  },
+  {
+   "式": "=IFNA(MATCH(4,A:A,0),0)",
+   "Excel": "4"
+  },
+  {
+   "式": "=ROWS(UNIQUE(A:A))",
+   "Excel": "6"
+  },
+  {
+   "式": "=INDEX(UNIQUE(A:A),6)",
+   "Excel": "0"
+  },
+  {
+   "式": "=ROWS(SORT(A:A))",
+   "Excel": "1048576"
+  },
+  {
+   "式": "=INDEX(SORT(A:A),1)",
+   "Excel": "1"
+  },
+  {
+   "式": "=ROWS(FILTER(A:A,A:A>2))",
+   "Excel": "3"
+  },
+  {
+   "式": "=SUMPRODUCT(A:A,B:B)",
+   "Excel": "550"
+  },
+  {
+   "式": "=ROWS(OFFSET(A:A,0,1))",
+   "Excel": "1048576"
+  },
+  {
+   "式": "=SUM(OFFSET(A:A,0,1))",
+   "Excel": "150"
+  },
+  {
+   "式": "=ROW(A:A)",
+   "Excel": "#スピル!"
+  },
+  {
+   "式": "=A:A",
+   "Excel": "#スピル!"
+  }
+ ]
+}
