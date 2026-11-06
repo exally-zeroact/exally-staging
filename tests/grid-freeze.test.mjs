@@ -313,6 +313,104 @@ T('★PageDown は 帯の下に見えている行の数だけ 動く★（帯の
   } finally { win.wrapH = 元H; sh().freezeRow = 0; }
 });
 
+/* ── ⑪ ★固定・分割が 画面より大きくても 描くのは 画面に入る分だけ★（2026-11-07 測った：固定1048575行で 1回 64秒・getCell 4194万回） ──
+   ★getCell の数に 上限を置き 超えたら throw★＝直しを外しても 固まらずに すぐ赤になる。
+   ★比べるのは 同じ形同士★（行だけ同士・行＋列同士・分割同士）。wrapH/wrapW は jsdom で0＝置かないと 空振り */
+const 上限 = 50000;
+class 描きすぎ extends Error {}
+function 描いた数(設定) {
+  const sh0 = sh(); const 元 = win.getCell, 元H = win.wrapH, 元W = win.wrapW, 元T = win.scrollTop, 元L = win.scrollLeft;
+  const 元分割 = Object.assign({}, win.分割);
+  sh0.freezeRow = 設定.fzR || 0; sh0.freezeCol = 設定.fzC || 0;
+  win.分割.行 = 設定.分R || 0; win.分割.列 = 設定.分C || 0; win.分割.上のずれ = 0; win.分割.左のずれ = 0;
+  win.scrollTop = 0; win.scrollLeft = 0; win.wrapH = 600; win.wrapW = 900;
+  let n = 0;
+  win.getCell = function () { if (++n > 上限) throw new 描きすぎ('getCell ' + 上限 + ' 回を越えた'); return 元.apply(this, arguments); };
+  try { win._doRender(); }
+  catch (e) { if (!(e instanceof 描きすぎ)) throw e; }
+  finally {
+    win.getCell = 元; win.wrapH = 元H; win.wrapW = 元W; win.scrollTop = 元T; win.scrollLeft = 元L;
+    Object.assign(win.分割, 元分割); sh0.freezeRow = 0; sh0.freezeCol = 0;
+  }
+  return n;
+}
+const 同じ程度 = (大, 小, 名) => {
+  ok(大 <= 上限, '★' + 名 + '：getCell ' + 上限 + ' 回を越えた＝画面の外まで描いている★');
+  ok(大 <= 小 * 2 + 200, '★' + 名 + '：大きい時 ' + 大 + ' 回・小さい時 ' + 小 + ' 回＝画面の外まで描いている★');
+  ok(小 > 0, '★' + 名 + '：小さい時 1回も描いていない＝試験が空振り★');
+};
+T('★固定 1048575行でも 描く数は 固定30行と同じ程度★', () => {
+  reset();
+  同じ程度(描いた数({ fzR: win.ROWS - 1 }), 描いた数({ fzR: 30 }), '行の固定');
+});
+T('★固定 1048575行×16383列でも 描く数は 固定30×30と同じ程度★', () => {
+  reset();
+  同じ程度(描いた数({ fzR: win.ROWS - 1, fzC: win.COLS - 1 }), 描いた数({ fzR: 30, fzC: 30 }), '行と列の固定');
+});
+T('★分割 1048575行×16383列でも 描く数は 分割30×30と同じ程度★', () => {
+  reset();
+  同じ程度(描いた数({ 分R: win.ROWS - 1, 分C: win.COLS - 1 }), 描いた数({ 分R: 30, 分C: 30 }), '分割');
+});
+
+/* ── ⑫ ★帯の囲い（clip）は「本当の高さ」と「画面」の小さい方・境目の線は 本当の位置★（2026-11-07 taiketsu 任意1・3）
+   ⑪ は描く数の上の端しか見ない＝打ち切りすぎ（帯の下に流れる所が出る）・画面より小さい固定が変わる・線が画面の端に出る に気づかない。
+   ★ctx を 書き留める作り物に 差し替えて rect と moveTo を 数で見る★ */
+function 描いた囲い(設定) {
+  const sh0 = sh(); const 元ctx = win.ctx, 元H = win.wrapH, 元W = win.wrapW, 元T = win.scrollTop, 元L = win.scrollLeft;
+  const 元分割 = Object.assign({}, win.分割);
+  sh0.freezeRow = 設定.fzR || 0; sh0.freezeCol = 設定.fzC || 0;
+  win.分割.行 = 設定.分R || 0; win.分割.列 = 設定.分C || 0; win.分割.上のずれ = 0; win.分割.左のずれ = 0;
+  win.scrollTop = 0; win.scrollLeft = 0; win.wrapH = 600; win.wrapW = 900;
+  const 囲い = [], 線 = []; let 前 = null, 色 = '';
+  win.ctx = new Proxy(元ctx, {
+    get(t, k) {
+      if (k === 'rect') return (x, y, w, h) => { 前 = [x, y, w, h]; };
+      if (k === 'clip') return () => { if (前) 囲い.push(前); };
+      if (k === 'moveTo') return (x, y) => { if (色 === '#3D9E72') 線.push([x, y]); };
+      return t[k];
+    },
+    set(t, k, v) { if (k === 'strokeStyle') 色 = v; return true; },
+  });
+  let 高さ, 幅, n = 0; const 元getCell = win.getCell;
+  win.getCell = function () { if (++n > 上限) throw new 描きすぎ('getCell ' + 上限 + ' 回を越えた'); return 元getCell.apply(this, arguments); };   /* 壊した時も 固まらずに赤 */
+  try { 高さ = 設定.分R || 設定.分C ? win.分割の高さ() : win._freezeH(); 幅 = 設定.分R || 設定.分C ? win.分割の幅() : win._freezeW(); win._doRender(); }
+  finally {
+    win.getCell = 元getCell; win.ctx = 元ctx; win.wrapH = 元H; win.wrapW = 元W; win.scrollTop = 元T; win.scrollLeft = 元L;
+    Object.assign(win.分割, 元分割); sh0.freezeRow = 0; sh0.freezeCol = 0;
+  }
+  return { 囲い, 線, 高さ, 幅 };
+}
+const 囲いが在る = (囲い, w, h, 名) => ok(囲い.some((r) => r[0] === 0 && r[1] === 0 && r[2] === w && r[3] === h), '★' + 名 + '：囲い 0,0,' + w + ',' + h + ' が無い★ 在ったのは ' + JSON.stringify(囲い));
+T('★画面より小さい固定（5行×2列）は 帯も線も 今まで通り★', () => {
+  reset();
+  const { 囲い, 線, 高さ, 幅 } = 描いた囲い({ fzR: 5, fzC: 2 });
+  ok(高さ > 0 && 高さ < 600 - win.HDR_H && 幅 > 0 && 幅 < 900 - win.HDR_W, '試験の前提（画面より小さい）が崩れた ' + 高さ + '×' + 幅);
+  囲いが在る(囲い, 900, win.HDR_H + 高さ, '上の帯');
+  囲いが在る(囲い, win.HDR_W + 幅, 600, '左の帯');
+  囲いが在る(囲い, win.HDR_W + 幅, win.HDR_H + 高さ, '左上の角');
+  ok(線.some((p) => p[0] === 0 && p[1] === Math.round(win.HDR_H + 高さ) + 0.5), '★横の境目の線が 本当の位置に無い★ ' + JSON.stringify(線));
+  ok(線.some((p) => p[1] === 0 && p[0] === Math.round(win.HDR_W + 幅) + 0.5), '★縦の境目の線が 本当の位置に無い★ ' + JSON.stringify(線));
+});
+T('★画面より大きい固定は 帯を ちょうど画面まで描き・線は画面の外（本当の位置）★', () => {
+  reset();
+  const { 囲い, 線, 高さ, 幅 } = 描いた囲い({ fzR: win.ROWS - 1, fzC: win.COLS - 1 });
+  囲いが在る(囲い, 900, 600, '上の帯＝画面まで（短いと 帯の下に流れる所が出る）');
+  ok(線.length === 2, '線が2本でない ' + JSON.stringify(線));
+  ok(線.every((p) => p[0] > 900 + 2 || p[1] > 600 + 2), '★境目の線が 画面の中か端に出た★（打ち切った高さで引くと 600.5／900.5＝端に かかる） ' + JSON.stringify(線));
+  ok(線.some((p) => p[1] === Math.round(win.HDR_H + 高さ) + 0.5) && 線.some((p) => p[0] === Math.round(win.HDR_W + 幅) + 0.5), '★線が 本当の位置に無い★');
+});
+/* ★行だけ・列だけで見る★（両方だと 左の帯の囲いが ちょうど 900×600 になり 上の帯の短さを隠す＝self-test で素通りした） */
+T('★画面より大きい固定（行だけ・列だけ）も 帯を ちょうど画面まで描く★', () => {
+  reset();
+  囲いが在る(描いた囲い({ fzR: win.ROWS - 1 }).囲い, 900, 600, '行だけの固定＝上の帯');
+  囲いが在る(描いた囲い({ fzC: win.COLS - 1 }).囲い, 900, 600, '列だけの固定＝左の帯');
+});
+T('★画面より大きい分割（行だけ・列だけ）も 側を ちょうど画面まで描く★', () => {
+  reset();
+  囲いが在る(描いた囲い({ 分R: win.ROWS - 1 }).囲い, 900, 600, '行だけの分割＝上の側');
+  囲いが在る(描いた囲い({ 分C: win.COLS - 1 }).囲い, 900, 600, '列だけの分割＝左の側');
+});
+
 /* ── ⑨ ★作っていない物を 台帳に書いてある★ ── */
 T('★作っていない物が golden に書いてある（全部 作った事にしない）★', () => {
   ok(Array.isArray(GOLD['作っていない物']) && GOLD['作っていない物'].length >= 2, '作っていない物が書かれていない');
@@ -343,6 +441,14 @@ if (SELF) {
     ['book.html', '★PageDown が 帯の0行目を一番上と取る★', (s) => s.replace('var top = yToR(HDR_H+_freezeH()+1, true)', 'var top = yToR(HDR_H+1)')],
     ['book.html', '★PageDown が 帯の高さを引かない★（帯に隠れた行を毎回飛ばす）', (s) => s.replace('var top = yToR(HDR_H+_freezeH()+1, true)', 'var top = yToR(HDR_H+1, true)')],
     ['book.html', '★帯を見ない が 効かない★（yToR）', (s) => s.replace("var fz = 帯を見ない ? 0 : (sheets[activeSheet].freezeRow||0);", "var fz = sheets[activeSheet].freezeRow||0;")],
+    ['book.html', '★固定の帯の高さを 画面で打ち切らない★', (s) => s.replace('var _fH=Math.min(_fHall, Math.max(0,_wH-HDR_H)), _fW=Math.min(_fWall, Math.max(0,_wW-HDR_W));', 'var _fH=_fHall, _fW=Math.min(_fWall, Math.max(0,_wW-HDR_W));')],
+    ['book.html', '★固定の帯の幅を 画面で打ち切らない★', (s) => s.replace('var _fH=Math.min(_fHall, Math.max(0,_wH-HDR_H)), _fW=Math.min(_fWall, Math.max(0,_wW-HDR_W));', 'var _fH=Math.min(_fHall, Math.max(0,_wH-HDR_H)), _fW=_fWall;')],
+    ['book.html', '★帯を 打ち切りすぎる★（帯の下に 流れる所が出る）', (s) => s.replace('var _fH=Math.min(_fHall, Math.max(0,_wH-HDR_H)),', 'var _fH=Math.min(_fHall, Math.max(0,_wH-HDR_H-200)),')],
+    ['book.html', '★画面より小さい固定まで 削る★', (s) => s.replace('var _fH=Math.min(_fHall, Math.max(0,_wH-HDR_H)), _fW=Math.min(_fWall, Math.max(0,_wW-HDR_W));', 'var _fH=Math.min(_fHall-1, Math.max(0,_wH-HDR_H)), _fW=Math.min(_fWall-1, Math.max(0,_wW-HDR_W));')],
+    ['book.html', '★横の境目の線を 打ち切った高さで引く★（画面の下の端に線が出る）', (s) => s.replace('var _ly=Math.round(HDR_H+_fHall)+0.5', 'var _ly=Math.round(HDR_H+_fH)+0.5')],
+    ['book.html', '★縦の境目の線を 打ち切った幅で引く★', (s) => s.replace('var _lx=Math.round(HDR_W+_fWall)+0.5', 'var _lx=Math.round(HDR_W+_fW)+0.5')],
+    ['book.html', '★分割の側を 打ち切りすぎる★', (s) => s.replace('var _h = Math.min(分割の高さ(), Math.max(0, _wH - HDR_H)),', 'var _h = Math.min(分割の高さ(), Math.max(0, _wH - HDR_H - 200)),')],
+    ['book.html', '★分割の側を 画面で打ち切らない★', (s) => s.replace('var _h = Math.min(分割の高さ(), Math.max(0, _wH - HDR_H)), _w = Math.min(分割の幅(), Math.max(0, _wW - HDR_W));', 'var _h = 分割の高さ(), _w = 分割の幅();')],
     ['book.html', '★Alt+= が どちらを取ったか 出さない★', (s) => s.replace('  if(got.ambiguous){', '  if(false){')],
     ['lib/autosum.js', '★上と左の両方が在る事に 気づかない★', (s) => s.replace('    var まよう = 上あり && 左あり;', '    var まよう = false;')],
   ];
