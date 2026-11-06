@@ -50,7 +50,7 @@ function 台(選) {
   let 控え = 0;
   const f = new Function('sheets', 'activeSheet', 'selR1', 'selR2', 'selC1', 'selC2',
     '_pushRowColUndo', 'render', 'updateBar', 'notify',
-    抜く('セルを挿入') + '\n' + 抜く('セルを削除') + '\nreturn { 入: セルを挿入, 消: セルを削除 };');
+    抜く('_選びを揃える') + '\n' + 抜く('セルを挿入') + '\n' + 抜く('セルを削除') + '\nreturn { 入: セルを挿入, 消: セルを削除 };');
   const api = f([s], 0, 選[0], 選[1], 選[2], 選[3],
     function () { 控え++; }, function () {}, function () {}, function (m) { 出た.push(m); });
   return { s, api, 出た, 控え: () => 控え, 見る: (r, c) => (s.data[r + ',' + c] ? s.data[r + ',' + c].v : '') };

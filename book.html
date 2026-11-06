@@ -13517,6 +13517,7 @@ function 枠線の表示を切り替える(){
  *   ⇒ 行や列を まるごと 動かす物とは 別（あちらは ctxInsertRow など）
  */
 function セルを挿入(向き){
+  _選びを揃える();
   var s = sheets[activeSheet];
   _pushRowColUndo();
   var 下へ = (向き !== 'right');
@@ -13632,6 +13633,7 @@ function 詰める向きを決める(){
   for (var i = 0; i < 一覧.length; i++) {
     if (一覧[i].値 !== 値) continue;
     var r = 一覧[i].呼ぶ();
+    if (r === false) return r;   /* ★断った（外へ 押し出す）＝断りの 知らせを 「しました」で 上書きしない★ */
     notify('「' + 一覧[i].字 + '」で ' + どっち + 'しました');
     return r;
   }
@@ -13639,6 +13641,7 @@ function 詰める向きを決める(){
 }
 
 function セルを削除(向き){
+  _選びを揃える();
   var s = sheets[activeSheet];
   _pushRowColUndo();
   var 上へ = (向き !== 'left');
@@ -17304,8 +17307,9 @@ function 表を決める(){
     if (!今) {
       var 前R1 = selR1, 前R2 = selR2, 前C1 = selC1, 前C2 = selC2;
       selR1 = selR2 = r1;
-      ctxInsertRow();                    /* ★1行 足す（行ごと 下へ ずらす＝実測②と 同じ）★ */
+      var 足せた = ctxInsertRow();       /* ★1行 足す（行ごと 下へ ずらす＝実測②と 同じ）★ */
       selR1 = 前R1; selR2 = 前R2; selC1 = 前C1; selC2 = 前C2;
+      if (足せた === false) return 0;    /* ★外へ 押し出すので 断った＝表も 作らない★ */
       r2 = r2 + 1;
       for (var i = 0; i < 列名.length; i++) setCell(r1, 場所.c1 + i, 列名[i], true);
     }
@@ -17396,7 +17400,35 @@ function _pushRowColUndo(){
    ここに 名前を 書き忘れると ★その棚だけ 元の場所に 置いていかれる★
    ＝付箋が 別の行に 付く／リンクが 別のセルを 指す、という ★黙って ずれる★事故に なる。
    ★新しく セルごとの 棚を 増やしたら ここにも 足す★（見張り: tests/shift-keeps-everything.test.mjs） */
-var セルごとの棚 = ['validations', 'links', 'sparklines', 'comments'];
+var セルごとの棚 = ['validations', 'links', 'sparklines', 'comments', 'ruby'];
+
+/* ★板の 鍵 全部の 行き先（押し0b・2026-11-07）★
+   見張り tests/shift-keeps-everything.test.mjs が book.html と js/ の 板の 鍵を 字で 数え、
+   ★ここに 無い 鍵が 1つでも 在れば 赤★（棚を 増やして 書き忘れる＝黙って ずれる を 止める）。
+   値＝どう 動かすか（動かさない物は ★訳★）。
+   ★実Excel 16.0 で 測った★（scratchpad hakaru0b*.ps1）：
+     足した 行・列は ★上の行（左の列）と 同じ★を 継ぐ＝高さ・幅・グループの段・入力の決まり・条件付き書式。
+     ★継がない★＝隠す（行も列も）・メモ。結合・許可範囲・表は 真下に 足しても 広がらない。
+     固定枠は 固定した 行の 中に 足すと 伸び、すぐ下に 足しても 変わらない／消すと 減るが 1より 少なくならない。
+     図形は Placement=1（セルに 合わせて 移動と サイズ変更）＝中に 足すと 伸び、上を 消すと 縮む。 */
+var 板の鍵の行き先 = {
+  data: '動かす（鍵の 番地・結合の 印 mergeEnd/merged・溢れの 印）',
+  rowH: '動かす（行の 番号・足した 行は 上の 高さを 継ぐ）',
+  colW: '動かす（列の 番号・足した 列は 左の 幅を 継ぐ）',
+  hiddenRows: '動かす（行の 番号・継がない）', hiddenCols: '動かす（列の 番号・継がない）',
+  filterHidden: '動かす（行の 番号）', kirikaeRows: '動かす（行の 番号）', kirikaeCols: '動かす（列の 番号）',
+  outline: '動かす（行の 番号・足した 行は 上の 段を 継ぐ）',
+  validations: '動かす（番地・足した 所は 上／左の 決まりを 継ぐ）',
+  links: '動かす（番地）', sparklines: '動かす（番地・元の 範囲の 字は 押し0c）', comments: '動かす（番地）',
+  ruby: '動かす（番地）',
+  tables: '動かす（四角）', condFormats: '動かす（範囲の 四角・真下に 足すと 広がる・式の 字は 押し0c）',
+  allowEdit: '動かす（四角と 範囲の 字・丸ごと 消えたら #REF!＝実Excel も 残す）',
+  freezeRow: '動かす（固定の 行数）', freezeCol: '動かす（固定の 列数）',
+  objects: '動かす（画面の 座標・セルに 合わせて 移動と サイズ変更）', ink: '動かす（線の 点の 座標）',
+  name: '動かさない（板の 名前＝番地を 持たない）',
+  _fromFile: '動かさない（開いた 本の 印）',
+  rows: '動かさない（行の 数＝見て 回る 終わりに 使うだけ）'
+};
 
 function _moveValidations(s, 縦, 入れる){
   var 上 　= 縦 ? selR1 : selC1;
@@ -17411,13 +17443,185 @@ function _moveValidations(s, 縦, 入れる){
       var p = k.split(','), r = parseInt(p[0]), c = parseInt(p[1]);
       if (isNaN(r) || isNaN(c)) { out[k] = v[k]; return; }   /* 番地でない鍵は そのまま */
       var n = 縦 ? r : c;
-      if(入れる){ if(n >= 上) n += 1; }
+      if(入れる){ if(n >= 上) n += 幅; if(n >= (縦 ? ROWS : COLS)) return; }   /* 外へ 出る 鍵は 落とす */
       else { if(n >= 上 && n <= 下) return; if(n > 下) n -= 幅; }
       out[(縦 ? n : r) + ',' + (縦 ? c : n)] = v[k];
     });
     s[名] = out;
   }
+  if (入れる) _決まりを継ぐ(s, 縦, 上, 幅);
   _表を動かす(s, 縦, 入れる, 上, 下);
+  _番号の棚を動かす(s, 縦, 入れる, 上, 下);
+  _四角の棚を動かす(s, 縦, 入れる, 上, 下);
+  _溢れの印を動かす(s, 縦, 入れる, 上, 下);
+}
+
+/* ★足した 行（列）は 上の 行（左の 列）の 入力の 決まりを 継ぐ★（実測 C6・E11・D20） */
+function _決まりを継ぐ(s, 縦, 上, 幅){
+  var v = s.validations;
+  if (!v || 上 < 1) return;
+  Object.keys(v).forEach(function(k){
+    var p = k.split(','), r = parseInt(p[0]), c = parseInt(p[1]);
+    if (isNaN(r) || isNaN(c)) return;
+    if ((縦 ? r : c) !== 上 - 1) return;
+    for (var i = 0; i < 幅; i++) {
+      var 先 = 縦 ? ((上 + i) + ',' + c) : (r + ',' + (上 + i));
+      v[先] = JSON.parse(JSON.stringify(v[k]));
+    }
+  });
+}
+
+/* 番号（行か 列）を 1つ 写す。消えたら -1 */
+function _番号を写す(n, 入れる, 上, 下){
+  var 幅 = 下 - 上 + 1;
+  if (入れる) return n >= 上 ? n + 幅 : n;
+  if (n >= 上 && n <= 下) return -1;
+  return n > 下 ? n - 幅 : n;
+}
+function _番号の箱を写す(箱, 入れる, 上, 下){
+  if (!箱) return 箱;
+  var 出 = {};
+  Object.keys(箱).forEach(function(k){
+    var n = parseInt(k, 10);
+    if (isNaN(n)) { 出[k] = 箱[k]; return; }
+    var m = _番号を写す(n, 入れる, 上, 下);
+    if (m >= 0) 出[m] = 箱[k];
+  });
+  return 出;
+}
+/* ★行（列）の 番号で 持つ 棚★＝絞り込みで 隠した 行・切り替えで 隠した 行と 列・グループの 段・固定枠 */
+function _番号の棚を動かす(s, 縦, 入れる, 上, 下){
+  var 幅 = 下 - 上 + 1;
+  if (縦) {
+    if (s.filterHidden) s.filterHidden = _番号の箱を写す(s.filterHidden, 入れる, 上, 下);
+    if (s.kirikaeRows) s.kirikaeRows = _番号の箱を写す(s.kirikaeRows, 入れる, 上, 下);
+    if (s.outline) {
+      var 上の段 = s.outline[上 - 1];
+      s.outline = _番号の箱を写す(s.outline, 入れる, 上, 下);
+      if (入れる && 上の段 !== undefined) for (var i = 0; i < 幅; i++) s.outline[上 + i] = 上の段;
+    }
+  } else {
+    if (s.kirikaeCols) s.kirikaeCols = _番号の箱を写す(s.kirikaeCols, 入れる, 上, 下);
+  }
+  var 固 = 縦 ? 'freezeRow' : 'freezeCol';
+  var f = s[固] || 0;
+  if (f > 0) {
+    if (入れる) { if (上 < f) f += 幅; }
+    else {
+      var 消えた = Math.max(0, Math.min(下, f - 1) - 上 + 1);
+      f = Math.max(1, f - 消えた);                       /* ★実測＝固定の 行を 全部 消しても 1★ */
+    }
+    s[固] = f;
+  }
+}
+
+/* ★四角（r1..r2 / c1..c2）を 動かす★ 戻り＝残るか。
+   上を継ぐ＝真下に 足した 行も 中に 入れる（条件付き書式＝実測 B3:B5→B3:B6） */
+function _四角を動かす(q, 縦, 入れる, 上, 下, 上を継ぐ){
+  var 幅 = 下 - 上 + 1;
+  var a = 縦 ? q.r1 : q.c1, b = 縦 ? q.r2 : q.c2;
+  if (入れる) {
+    if (a >= 上) a += 幅;
+    if (b >= 上 || (上を継ぐ && b === 上 - 1)) b += 幅;
+  } else {
+    if (a >= 上 && b <= 下) return false;
+    if (a > 下) a -= 幅; else if (a >= 上) a = 上;
+    if (b > 下) b -= 幅; else if (b >= 上) b = 上 - 1;
+    if (b < a) return false;
+  }
+  if (縦) { q.r1 = a; q.r2 = b; } else { q.c1 = a; q.c2 = b; }
+  return true;
+}
+function _四角の棚を動かす(s, 縦, 入れる, 上, 下){
+  if (s.condFormats && s.condFormats.length) {
+    s.condFormats = s.condFormats.filter(function(ru){
+      return !ru.範囲 || _四角を動かす(ru.範囲, 縦, 入れる, 上, 下, true);
+    });
+  }
+  if (s.allowEdit && s.allowEdit.length) {
+    s.allowEdit.forEach(function(e){
+      if (!(e.r1 >= 0)) return;                          /* もう #REF! の 物 */
+      if (_四角を動かす(e, 縦, 入れる, 上, 下, false)) {
+        e.範囲 = cellAddr(e.r1, e.c1) + ':' + cellAddr(e.r2, e.c2);
+      } else {
+        e.範囲 = '#REF!'; e.r1 = e.c1 = e.r2 = e.c2 = -1; /* ★実測＝実Excel も 消さずに 残す（範囲は 読めない）★ */
+      }
+    });
+  }
+}
+
+/* ★溢れの 印（'行,列'＝元の 式の 場所）も 写す★（元が 消えた 物は そのまま＝次の 計算で 消える） */
+function _溢れの印を動かす(s, 縦, 入れる, 上, 下){
+  var d = s.data;
+  Object.keys(d).forEach(function(k){
+    var t = d[k];
+    if (!t) return;
+    [溢れの印, 台の溢れの印].forEach(function(印){
+      if (typeof t[印] !== 'string') return;
+      var p = t[印].split(','), r = parseInt(p[0], 10), c = parseInt(p[1], 10);
+      var m = _番号を写す(縦 ? r : c, 入れる, 上, 下);
+      if (m < 0) return;
+      t[印] = 縦 ? (m + ',' + c) : (r + ',' + m);
+    });
+  });
+}
+
+/* ★結合は マスの 中に 印で 持つ★（元＝mergeEnd・中＝merged）。動かす 前に 外して 四角で 集め、
+   動かした 後に 四角を 写して 付け直す（実測＝中に 足すと 広がる・上を 消すと 縮む・1マスに なったら 外れる） */
+function _結合を外して集める(data){
+  var 出 = [];
+  Object.keys(data).forEach(function(k){
+    var t = data[k];
+    if (!t) return;
+    if (t.mergeEnd) {
+      var p = k.split(',');
+      出.push({ r1: parseInt(p[0], 10), c1: parseInt(p[1], 10), r2: t.mergeEnd.r, c2: t.mergeEnd.c });
+    }
+    delete t.mergeEnd; delete t.merged;
+  });
+  return 出;
+}
+function _結合を付け直す(data, 四角たち, 縦, 入れる, 上, 下){
+  四角たち.forEach(function(q){
+    if (!_四角を動かす(q, 縦, 入れる, 上, 下, false)) return;
+    if (q.r1 === q.r2 && q.c1 === q.c2) return;          /* ★1マスは 結合では ない★ */
+    var 元 = data[q.r1 + ',' + q.c1] || (data[q.r1 + ',' + q.c1] = { v: '', f: '', d: '' });
+    元.mergeEnd = { r: q.r2, c: q.c2 };
+    for (var r = q.r1; r <= q.r2; r++) for (var c = q.c1; c <= q.c2; c++) {
+      if (r === q.r1 && c === q.c1) continue;
+      var 子 = data[r + ',' + c] || (data[r + ',' + c] = { v: '', f: '', d: '' });
+      子.merged = { r: q.r1, c: q.c1 };
+    }
+  });
+}
+
+/* ★浮かぶ 物（図形・画像 ほか）と 手書きの 線も セルに 合わせて 動かす★（実測 Placement=1）
+   座標は 板の 左上からの 点（物の画面Y＝rowY(0)+o.y）。★動かす 前に★ 作る（消す 行の 高さが 要る） */
+function _座標の写しを作る(縦, 入れる){
+  var 上 = 縦 ? selR1 : selC1, 下 = 縦 ? selR2 : selC2, 幅 = 下 - 上 + 1;
+  var 位置 = 縦 ? function(i){ return rowY(i) - rowY(0); } : function(i){ return colX(i) - colX(0); };
+  var 始 = 位置(上);
+  if (入れる) {
+    var 足す = 幅 * (縦 ? ROW_H : COL_W) * scale;      /* 足した 行は 既定の 高さ（隠れない） */
+    var 継ぐ = 縦 ? sheets[activeSheet].rowH[上 - 1] : sheets[activeSheet].colW[上 - 1];
+    if (継ぐ !== undefined && 上 >= 1) 足す = 幅 * 継ぐ * scale;
+    return function(v, 下の辺){ return (下の辺 ? v > 始 : v >= 始) ? v + 足す : v; };
+  }
+  var 終 = 位置(下 + 1), 抜く = 終 - 始;
+  return function(v){ return v >= 終 ? v - 抜く : (v >= 始 ? 始 : v); };
+}
+function _浮かぶ物を動かす(s, 縦, 写す){
+  var 軸 = 縦 ? 'y' : 'x', 長さ = 縦 ? 'h' : 'w';
+  (s.objects || []).forEach(function(o){
+    if (typeof o[軸] !== 'number') return;
+    var 上辺 = 写す(o[軸], false);
+    var 下辺 = typeof o[長さ] === 'number' ? 写す(o[軸] + o[長さ], true) : null;
+    o[軸] = 上辺;
+    if (下辺 !== null) o[長さ] = Math.max(0, 下辺 - 上辺);
+  });
+  (s.ink || []).forEach(function(線){
+    (線.点 || []).forEach(function(p){ if (typeof p[軸] === 'number') p[軸] = 写す(p[軸], false); });
+  });
 }
 
 /* ★テーブルは 四角なので 別に 動かす★（消した所に すっぽり 入っていたら 表ごと 消す） */
@@ -17429,8 +17633,8 @@ function _表を動かす(s, 縦, 入れる, 上, 下){
     var t = s.tables[i];
     var a = 縦 ? t.r1 : t.c1, b = 縦 ? t.r2 : t.c2;
     if (入れる) {
-      if (a >= 上) a += 1;
-      if (b >= 上) b += 1;
+      if (a >= 上) a += 幅;
+      if (b >= 上) b += 幅;
     } else {
       if (a >= 上 && b <= 下) continue;                 /* ★丸ごと 消えた＝表も 消す★ */
       if (a > 下) a -= 幅; else if (a >= 上) a = 上;
@@ -17442,45 +17646,85 @@ function _表を動かす(s, 縦, 入れる, 上, 下){
   }
   s.tables = 残り;
 }
+/* ★選びを 揃える★（上へ・左へ 引いて 選ぶと selR1>selR2 の まま 残る＝onMM。幅が マイナスに なって 足すと 上書きで 消えた＝本番前 taiketsu 0b 止め1） */
+function _選びを揃える(){
+  var t;
+  if (selR1 > selR2) { t = selR1; selR1 = selR2; selR2 = t; }
+  if (selC1 > selC2) { t = selC1; selC1 = selC2; selC2 = t; }
+}
+/* ★中身の 在る マスが シートの 外へ 出るなら 断る★（実Excel＝空でない セルを 外へ 押し出す 挿入は できない。
+   列を 丸ごと 選んで 行の挿入＝幅 1,048,576 で 中身が 全部 外へ 出て 画面が 空に なっていた＝止め2）
+   中身の 無い 書式だけの マスは 断らず 落とす。断ったら 控えも 積まず false */
+function _外へ押し出すなら断る(縦, 上, 幅){
+  var 端 = (縦 ? ROWS : COLS) - 幅, d = sheets[activeSheet].data;
+  var 出る = Object.keys(d).some(function(k){
+    var p = k.split(','), n = parseInt(縦 ? p[0] : p[1]);
+    if (n < 上 || n < 端) return false;
+    var x = d[k];
+    return !!x && ((x.v !== undefined && x.v !== null && x.v !== '') || !!x.f);
+  });
+  if (出る) notify('空でない セルが シートの 外へ 押し出されるので、' + (縦 ? '行' : '列') + 'を 挿入できません（Excel と 同じ）');
+  return 出る;
+}
+/* ★選んだ 行（列）の 数だけ 入れる★（実Excel＝B2:B4 を 選んで 行の 挿入＝3行。前は 何行 選んでも 1行＝押し0b） */
 function ctxInsertRow(){
+  _選びを揃える();
+  if (_外へ押し出すなら断る(true, selR1, selR2-selR1+1)) { hideCtxMenu(); return false; }
   _pushRowColUndo();
+  var 幅=selR2-selR1+1, 写す=_座標の写しを作る(true, true);
   var s=sheets[activeSheet], nd={}, nrh={};
+  var 結合=_結合を外して集める(s.data);
   Object.keys(s.data).forEach(function(k){
     var p=k.split(','),r=parseInt(p[0]),c=parseInt(p[1]);
-    nd[(r>=selR1?r+1:r)+','+c]=s.data[k];
+    var nr=r>=selR1?r+幅:r; if(nr>=ROWS) return;  /* 外へ 出る 書式だけの マスは 落とす */
+    nd[nr+','+c]=s.data[k];
   });
   Object.keys(s.rowH).forEach(function(k){
-    var r=parseInt(k); nrh[r>=selR1?r+1:r]=s.rowH[k];
+    var r=parseInt(k), nr=r>=selR1?r+幅:r; if(nr<ROWS) nrh[nr]=s.rowH[k];
   });
+  if(selR1>=1 && s.rowH[selR1-1]!==undefined) for(var i=0;i<幅;i++) nrh[selR1+i]=s.rowH[selR1-1];  /* ★上の 高さを 継ぐ（実測）★ */
   var nhr={};
   Object.keys(s.hiddenRows||{}).forEach(function(k){
-    var r=parseInt(k); nhr[r>=selR1?r+1:r]=true;
+    var r=parseInt(k), nr=r>=selR1?r+幅:r; if(nr<ROWS) nhr[nr]=true;
   });
   s.data=nd; s.rowH=nrh; s.hiddenRows=nhr;
   _moveValidations(s, true, true);
+  _結合を付け直す(s.data, 結合, true, true, selR1, selR2);
+  _浮かぶ物を動かす(s, true, 写す);
   render(); hideCtxMenu();
 }
 function ctxInsertCol(){
+  _選びを揃える();
+  if (_外へ押し出すなら断る(false, selC1, selC2-selC1+1)) { hideCtxMenu(); return false; }
   _pushRowColUndo();
+  var 幅=selC2-selC1+1, 写す=_座標の写しを作る(false, true);
   var s=sheets[activeSheet], nd={}, ncw={};
+  var 結合=_結合を外して集める(s.data);
   Object.keys(s.data).forEach(function(k){
     var p=k.split(','),r=parseInt(p[0]),c=parseInt(p[1]);
-    nd[r+','+(c>=selC1?c+1:c)]=s.data[k];
+    var nc=c>=selC1?c+幅:c; if(nc>=COLS) return;  /* 外へ 出る 書式だけの マスは 落とす */
+    nd[r+','+nc]=s.data[k];
   });
   Object.keys(s.colW).forEach(function(k){
-    var c=parseInt(k); ncw[c>=selC1?c+1:c]=s.colW[k];
+    var c=parseInt(k), nc=c>=selC1?c+幅:c; if(nc<COLS) ncw[nc]=s.colW[k];
   });
+  if(selC1>=1 && s.colW[selC1-1]!==undefined) for(var i=0;i<幅;i++) ncw[selC1+i]=s.colW[selC1-1];  /* ★左の 幅を 継ぐ（実測 D=20）★ */
   var nhc={};
   Object.keys(s.hiddenCols||{}).forEach(function(k){
-    var c=parseInt(k); nhc[c>=selC1?c+1:c]=true;
+    var c=parseInt(k), nc=c>=selC1?c+幅:c; if(nc<COLS) nhc[nc]=true;
   });
   s.data=nd; s.colW=ncw; s.hiddenCols=nhc;
   _moveValidations(s, false, true);
+  _結合を付け直す(s.data, 結合, false, true, selC1, selC2);
+  _浮かぶ物を動かす(s, false, 写す);
   render(); hideCtxMenu();
 }
 function ctxDeleteRow(){
+  _選びを揃える();
   _pushRowColUndo();
+  var 写す=_座標の写しを作る(true, false);
   var s=sheets[activeSheet], nd={}, nrh={};
+  var 結合=_結合を外して集める(s.data);
   Object.keys(s.data).forEach(function(k){
     var p=k.split(','),r=parseInt(p[0]),c=parseInt(p[1]);
     if(r>=selR1&&r<=selR2) return;
@@ -17499,12 +17743,17 @@ function ctxDeleteRow(){
   });
   s.data=nd; s.rowH=nrh; s.hiddenRows=nhr;
   _moveValidations(s, true, false);
+  _結合を付け直す(s.data, 結合, true, false, selR1, selR2);
+  _浮かぶ物を動かす(s, true, 写す);
   sel(Math.max(0,selR1),selC1,Math.max(0,selR1),selC2);
   render(); hideCtxMenu();
 }
 function ctxDeleteCol(){
+  _選びを揃える();
   _pushRowColUndo();
+  var 写す=_座標の写しを作る(false, false);
   var s=sheets[activeSheet], nd={}, ncw={};
+  var 結合=_結合を外して集める(s.data);
   Object.keys(s.data).forEach(function(k){
     var p=k.split(','),r=parseInt(p[0]),c=parseInt(p[1]);
     if(c>=selC1&&c<=selC2) return;
@@ -17523,28 +17772,34 @@ function ctxDeleteCol(){
   });
   s.data=nd; s.colW=ncw; s.hiddenCols=nhc;
   _moveValidations(s, false, false);
+  _結合を付け直す(s.data, 結合, false, false, selC1, selC2);
+  _浮かぶ物を動かす(s, false, 写す);
   sel(selR1,Math.max(0,selC1),selR2,Math.max(0,selC1));
   render(); hideCtxMenu();
 }
 function ctxHideRow(){
+  _選びを揃える();
   _pushRowColUndo();
   if(!sheets[activeSheet].hiddenRows) sheets[activeSheet].hiddenRows={};
   for(var r=selR1;r<=selR2;r++) sheets[activeSheet].hiddenRows[r]=true;
   render(); hideCtxMenu();
 }
 function ctxHideCol(){
+  _選びを揃える();
   _pushRowColUndo();
   if(!sheets[activeSheet].hiddenCols) sheets[activeSheet].hiddenCols={};
   for(var c=selC1;c<=selC2;c++) sheets[activeSheet].hiddenCols[c]=true;
   render(); hideCtxMenu();
 }
 function ctxUnhideRow(){
+  _選びを揃える();
   _pushRowColUndo();
   var hr=sheets[activeSheet].hiddenRows||{};
   for(var r=Math.max(0,selR1-1);r<=Math.min(ROWS-1,selR2+1);r++) delete hr[r];
   render(); hideCtxMenu();
 }
 function ctxUnhideCol(){
+  _選びを揃える();
   _pushRowColUndo();
   var hc=sheets[activeSheet].hiddenCols||{};
   for(var c=Math.max(0,selC1-1);c<=Math.min(COLS-1,selC2+1);c++) delete hc[c];
