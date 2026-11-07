@@ -1,0 +1,72 @@
+{
+ "測った日": "2026-11-07",
+ "道具": "Excel 16.0 build 20527 COM（Formula2・別の板 Calc の A3,A6,… に 式）",
+ "材料": "Sheet1 A1:A5=1..5 B1:B5=10..50 C1:C5=100..500 D1=1 D2=2 D3=空 D4=4 D5=5 F1=200（1行目 E1 は空）／S2 A1:A3=7,8,9",
+ "行": [
+  {
+   "式": "=MATCH(3,Sheet1!D:D,1)",
+   "Excel": "2"
+  },
+  {
+   "式": "=MATCH(9,Sheet1!D:D,1)",
+   "Excel": "5"
+  },
+  {
+   "式": "=MATCH(4.5,Sheet1!D:D,1)",
+   "Excel": "4"
+  },
+  {
+   "式": "=MATCH(9999,Sheet1!1:1,1)",
+   "Excel": "6"
+  },
+  {
+   "式": "=MATCH(150,Sheet1!1:1,1)",
+   "Excel": "4"
+  },
+  {
+   "式": "=MATCH(3,Sheet1!D1:D1048576,1)",
+   "Excel": "2"
+  },
+  {
+   "式": "=MATCH(9,Sheet1!D1:D1048576,1)",
+   "Excel": "5"
+  },
+  {
+   "式": "=SUMIF(Sheet1!A:A,\">2\",Sheet1!B:C)",
+   "Excel": "120"
+  },
+  {
+   "式": "=SUMIF(Sheet1!A:B,\">2\",Sheet1!C:C)",
+   "Excel": "1212"
+  },
+  {
+   "式": "=SUMIF(Sheet1!A1:A5,\">2\",Sheet1!B1:C5)",
+   "Excel": "120"
+  },
+  {
+   "式": "=XLOOKUP(3,Sheet1!A:A,Sheet1!B:C)",
+   "Excel": "30",
+   "溢れ": "1x2"
+  },
+  {
+   "式": "=XLOOKUP(3,Sheet1!A:A,Sheet1!B:B)",
+   "Excel": "30"
+  },
+  {
+   "式": "=INDEX(S2!A:A,2):Sheet1!A3",
+   "Excel": "#VALUE!"
+  },
+  {
+   "式": "=SUM(INDEX(S2!A:A,2):Sheet1!A3)",
+   "Excel": "#VALUE!"
+  },
+  {
+   "式": "=SUM(INDEX(S2!A1:A100,2):Sheet1!A3)",
+   "Excel": "#VALUE!"
+  },
+  {
+   "式": "=SUM(INDEX(S2!A:A,2):A3)",
+   "Excel": "#VALUE!"
+  }
+ ]
+}
