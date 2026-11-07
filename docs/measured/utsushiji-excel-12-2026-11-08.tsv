@@ -1,0 +1,23 @@
+# Excel 16.0 build 20527 / ban14 A1:A5=1..5 B1:B5=10,20,1,1,50 / kansuu ga kaesu sanshou wo hani ni (INDEX IF CHOOSE LET OFFSET INDIRECT kousa) / .Formula to .Formula2 onaji / toru-utsushiji-11.ps1 (ban14)
+=SUMIF(INDEX(A1:A5,0),">2",B1)	52	z0=False	kata=Double
+=SUMIF(A1:A5,">2",INDEX(B1:B2,1))	52	z0=False	kata=Double
+=SUMIF(A1:A5,">2",INDEX(B1:B2,1):B1)	52	z0=False	kata=Double
+=SUMIF(A1:A5,">2",B1:INDEX(B1:B2,1))	52	z0=False	kata=Double
+=SUMIF(A1:A5,">2",B1 B1:B2)	52	z0=False	kata=Double
+=SUMIF(A1:A3 A1:A5,">2",B1)	1	z0=False	kata=Double
+=LET(x,A1:A5,SUMIF(x,">2",B1))	52	z0=False	kata=Double
+=AVERAGEIF(INDEX(A1:A5,0),">2",B1)	17.3333333333333	z0=False	kata=Double
+=SUMIF(INDEX(A1:A5,0),">2",B1:B5)	52	z0=False	kata=Double
+=SUMIF(A1:A5,">2",IF(TRUE,B1:B5))	52	z0=False	kata=Double
+=SUMIF(A1:A5,">2",CHOOSE(2,B1,B2:B3))	51	z0=False	kata=Double
+=SUMIF(IF(TRUE,A1:A5),">2",B1:B5)	52	z0=False	kata=Double
+=COUNTIF(IF(TRUE,A1:A5),">2")	3	z0=False	kata=Double
+=COUNTIF(CHOOSE(1,A1:A5),">2")	3	z0=False	kata=Double
+=LET(r,A1:A5,COUNTIF(r,">2"))	3	z0=False	kata=Double
+=SUMIFS(IF(TRUE,B1:B5),A1:A5,">2")	52	z0=False	kata=Double
+=SUMIFS(B1:B5,IF(TRUE,A1:A5),">2")	52	z0=False	kata=Double
+=AVERAGEIF(A1:A5,">2",IF(TRUE,B1))	17.3333333333333	z0=False	kata=Double
+=SUMIF(A1:A5,">2",IF(FALSE,B1,B2))	51	z0=False	kata=Double
+=SUMIF(A1:A5,">2",OFFSET(B1,0,0))	52	z0=False	kata=Double
+=SUMIF(A1:A5,">2",INDIRECT("B1"))	52	z0=False	kata=Double
+=COUNTIF(IF(TRUE,{1,2,3}),">1")	#VALUE!	z0=-2146826243	kata=Error

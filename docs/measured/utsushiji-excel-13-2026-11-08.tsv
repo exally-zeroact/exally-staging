@@ -1,0 +1,127 @@
+# Excel 16.0 build 20527 / ban15 A1:A5=1..5 B1:B5=10,20,1,1,50 E1=shiki-moji5 E2=7 C2=TRUE / kansuu ga kaesu sanshou / .Formula to .Formula2 onaji dake / toru-utsushiji-13.ps1
+=SUM(IF(TRUE,B1:B5))	82	z0=False	kata=Double
+=ROWS(IF(TRUE,B1:B5))	5	z0=False	kata=Double
+=SUM(CHOOSE(1,B1:B5))	82	z0=False	kata=Double
+# (F to F2 ga chigau) =SUM(INDEX(B1:B5,0)*2) F=#VALUE! F2=164
+# (F to F2 ga chigau) =SUM(IF(A1:A5>2,B1:B5)) F=#VALUE! F2=52
+=ROWS(CHOOSE(2,B1,B1:B3))	3	z0=False	kata=Double
+=SUM(IF(TRUE,B1):B3)	31	z0=False	kata=Double
+=ISREF(IF(TRUE,B1))	True	z0=False	kata=Boolean
+=CELL("address",IF(TRUE,B2))	$B$2	z0=False	kata=String
+# (F to F2 ga chigau) =ROW(IF(TRUE,B2:B4)) F=2 F2=2
+=COUNTIF(LET(r,A1:A5,r),">2")	3	z0=False	kata=Double
+# (F to F2 ga chigau) =SUM(LET(r,B1:B5,r)*2) F=#VALUE! F2=164
+=LET(r,B1,SUMIF(A1:A5,">2",r))	52	z0=False	kata=Double
+=SUMIF(A1:A5,">2",LET(r,B1,r))	52	z0=False	kata=Double
+=AVERAGEIFS(IF(TRUE,B1:B5),A1:A5,">2")	17.3333333333333	z0=False	kata=Double
+=MAXIFS(IF(TRUE,B1:B5),A1:A5,">2")	50	z0=False	kata=Double
+=COUNTIFS(IF(TRUE,A1:A5),">2",CHOOSE(1,B1:B5),">5")	1	z0=False	kata=Double
+=SUMIF(A1:A5,">2",IF(TRUE,B1,B2:B3))	52	z0=False	kata=Double
+# (utenai) =SUMIF(A1:A5,">2",IFERROR(B1,0))
+=SUMIF(A1:A5,">2",IFS(TRUE,B1))	52	z0=False	kata=Double
+=SUMIF(A1:A5,">2",SWITCH(1,1,B1))	52	z0=False	kata=Double
+# (utenai) =SUMIF(A1:A5,">2",IFNA(B1,0))
+=SUMIF(A1:A5,">2",XLOOKUP(10,B1:B5,B1:B5))	52	z0=False	kata=Double
+# (F to F2 ga chigau) =SUM(IF(TRUE,B1:B5)*1) F=#VALUE! F2=82
+# (F to F2 ga chigau) =IF(TRUE,B1:B5) F=#VALUE! F2=10
+=SUM(IF(FALSE,1,B1:B5))	82	z0=False	kata=Double
+=SUMPRODUCT(IF(TRUE,B1:B5))	82	z0=False	kata=Double
+=AVERAGEIF(A:A,">2",B:B)	17.3333333333333	z0=False	kata=Double
+=MAXIFS(B:B,A:A,">2")	50	z0=False	kata=Double
+=MINIFS(B:B,A:A,">2")	1	z0=False	kata=Double
+=AVERAGEIFS(B:B,A:A,">2")	17.3333333333333	z0=False	kata=Double
+=INDEX(IF(TRUE,B1:B5),2)	20	z0=False	kata=Double
+=SUM(OFFSET(IF(TRUE,B1),0,0,2))	30	z0=False	kata=Double
+=SUMIF(A1:A5,">2",LAMBDA(x,x)(B1))	52	z0=False	kata=Double
+=COUNTIF(IF(TRUE,B1:B5,{1,2}),">5")	3	z0=False	kata=Double
+=SUM(LET(r,IF(TRUE,B1:B5),r))	82	z0=False	kata=Double
+# (utenai) =COUNTIF(IFERROR(A1:A5,0),">2")
+=ISREF(LET(r,B1,r))	True	z0=False	kata=Boolean
+=ISREF(CHOOSE(1,B1:B2))	True	z0=False	kata=Boolean
+=SUM(XLOOKUP(10,B1:B5,A1:A5):A3)	6	z0=False	kata=Double
+=COUNTBLANK(IF(TRUE,B9))	1	z0=False	kata=Double
+=ISBLANK(IF(TRUE,B9))	True	z0=False	kata=Boolean
+# (F to F2 ga chigau) =TYPE(IF(TRUE,B1:B5)) F=16 F2=64
+# (F to F2 ga chigau) =SUM(COUNTIF(A1:A5,IF(TRUE,A1:A2))) F=0 F2=2
+# (F to F2 ga chigau) =ABS(IF(TRUE,B1:B5)) F=#VALUE! F2=10
+# (F to F2 ga chigau) =SUM(ABS(IF(TRUE,B1:B5))) F=#VALUE! F2=82
+=N(IF(TRUE,B1))	10	z0=False	kata=Double
+=ROWS(LET(r,A1:A5,r))	5	z0=False	kata=Double
+# (F to F2 ga chigau) =SUM(LET(r,A1:A5,r*2)) F=#VALUE! F2=30
+# (F to F2 ga chigau) =LET(r,A1:A5,r) F=#VALUE! F2=1
+=LET(r,A1:A5,ROWS(r))	5	z0=False	kata=Double
+=SUM(LET(r,B1,r:B3))	31	z0=False	kata=Double
+=SUMIF(A1:A5,">2",LAMBDA(x,x)(B1:B5))	52	z0=False	kata=Double
+=LAMBDA(x,SUM(x))(B1:B5)	82	z0=False	kata=Double
+=LAMBDA(x,ROWS(x))(B1:B5)	5	z0=False	kata=Double
+# (F to F2 ga chigau) =LAMBDA(x,SUM(x*2))(B1:B5) F=#VALUE! F2=164
+=INDEX(LET(r,B1:B5,r),2)	20	z0=False	kata=Double
+=CELL("address",LET(r,B2,r))	$B$2	z0=False	kata=String
+=SUM(IFS(FALSE,1,TRUE,B1:B5))	82	z0=False	kata=Double
+=SUM(SWITCH(2,1,1,2,B1:B5))	82	z0=False	kata=Double
+# (F to F2 ga chigau) =SUM(IF(TRUE,B1:B5,0)+0) F=#VALUE! F2=82
+=IF(TRUE,B1)	10	z0=False	kata=Double
+=AVERAGE(CHOOSE(2,A1:A5,B1:B5))	16.4	z0=False	kata=Double
+=COUNTA(IF(TRUE,B1:B9))	5	z0=False	kata=Double
+=XLOOKUP(20,B1:B5,A1:A5)	2	z0=False	kata=Double
+=SUM(XLOOKUP(20,B1:B5,A1:A5):A5)	14	z0=False	kata=Double
+=MATCH(20,IF(TRUE,B1:B5),0)	2	z0=False	kata=Double
+=VLOOKUP(3,IF(TRUE,A1:B5),2,0)	1	z0=False	kata=Double
+=SUMPRODUCT(IF(TRUE,A1:A5),B1:B5)	307	z0=False	kata=Double
+=MAX(CHOOSE(1,B1:B5))	50	z0=False	kata=Double
+=OFFSET(IF(TRUE,B1),1,0)	20	z0=False	kata=Double
+=SUMIF(A1:A5,">2",OFFSET(IF(TRUE,B1),0,0))	52	z0=False	kata=Double
+=SUM(IF(TRUE,{1,2,3}))	6	z0=False	kata=Double
+=ROWS(IF(TRUE,{1;2;3}))	3	z0=False	kata=Double
+=SUM(LET(r,{1,2,3},r))	6	z0=False	kata=Double
+# (F to F2 ga chigau) =COUNTIF(LET(r,{1,2,3},r),">1") F=#VALUE! F2=#VALUE!
+=LET(r,B1:B5,SUMIF(A1:A5,">2",r))	52	z0=False	kata=Double
+=SUMIF(A1:A5,">2",LET(r,B1:B5,r))	52	z0=False	kata=Double
+=SUM(LET(x,B1,y,x,y:B3))	31	z0=False	kata=Double
+# (F to F2 ga chigau) =LET(r,B1:B5,r*2) F=#VALUE! F2=20
+=SUM(IF(TRUE,E1))	0	z0=True	kata=Double
+=MAX(IF(TRUE,E1),1)	1	z0=False	kata=Double
+=AND(IF(TRUE,C2))	True	z0=False	kata=Boolean
+# (F to F2 ga chigau) =SUM(IF(A1:A5<3,B1:B5)) F=#VALUE! F2=30
+# (F to F2 ga chigau) =SUM(CHOOSE(A1:A2,B1:B5,A1:A5)) F=#VALUE! F2=#N/A
+=COUNTIF(A:A,IF(TRUE,A1))	1	z0=False	kata=Double
+=SUMIF(A:A,IF(TRUE,A1),B:B)	10	z0=False	kata=Double
+=SUMIFS(B:B,A:A,CHOOSE(1,A3))	1	z0=False	kata=Double
+=COUNTIFS(A:A,IF(TRUE,A1))	1	z0=False	kata=Double
+=COUNTIF(A:A,INDEX(A1:A5,1))	1	z0=False	kata=Double
+=COUNTIF(A:A,A1:A1)	1	z0=False	kata=Double
+=SUM(E1)	0	z0=True	kata=Double
+=SUM(INDEX(E1:E2,1))	0	z0=True	kata=Double
+=COUNT(IF(TRUE,E1))	0	z0=True	kata=Double
+=COUNTA(IF(TRUE,D1))	0	z0=True	kata=Double
+=AND(C2)	True	z0=False	kata=Boolean
+=AND(INDEX(C1:C2,2))	True	z0=False	kata=Boolean
+=AVERAGE(IF(TRUE,E1),2)	2	z0=False	kata=Double
+=SUM(IF(TRUE,E1:E2))	7	z0=False	kata=Double
+=SUM(IF(TRUE,"5"))	5	z0=False	kata=Double
+=SUM(CHOOSE(1,E1))	0	z0=True	kata=Double
+=SUM(IFS(TRUE,E1))	0	z0=True	kata=Double
+=SUM(SWITCH(1,1,E1))	0	z0=True	kata=Double
+=COUNTIF(A1:A5,IF(TRUE,A3))	1	z0=False	kata=Double
+=SUMIF(A1:A5,IF(TRUE,A3),B1:B5)	1	z0=False	kata=Double
+=SUMIF(A1:A5,">2",IF(TRUE,D1))	0	z0=True	kata=Double
+=SUMIF(A1:A5,">2",CHOOSE(1,D1))	0	z0=True	kata=Double
+=AVERAGEIF(A1:A5,">2",IF(TRUE,D1))	#DIV/0!	z0=-2146826281	kata=Error
+=SUMIF(A1:A5,">2",IF(TRUE,B1:B2))	52	z0=False	kata=Double
+=SUMIF(A1:A5,">2",SWITCH(2,1,B1,2,B2))	51	z0=False	kata=Double
+=SUMIF(A1:A5,">2",IFS(FALSE,B1,TRUE,B2))	51	z0=False	kata=Double
+=ISBLANK(IF(TRUE,D1))	True	z0=False	kata=Boolean
+=SUM(IF(TRUE,A1:A5,B1:B5))	15	z0=False	kata=Double
+=SUM(IF(FALSE,A1:A5,B1:B5))	82	z0=False	kata=Double
+=ROWS(CHOOSE(2,A1:A2,B1:B3))	3	z0=False	kata=Double
+=SUMIF(A1:A5,">2",IF("TRUE",B1))	52	z0=False	kata=Double
+=SUM(IF(TRUE,B2):B5)	72	z0=False	kata=Double
+=SUM(B1:CHOOSE(1,B3))	31	z0=False	kata=Double
+# (F to F2 ga chigau) =COUNTIF(A:A,IF(TRUE,A1:A2)) F=0 F2=1
+=SUM(IF(TRUE,B1:B5,0))	82	z0=False	kata=Double
+=COUNT(CHOOSE(1,E1:E2))	1	z0=False	kata=Double
+=SUM(IF(1,B1:B5))	82	z0=False	kata=Double
+=SUM(IF(TRUE,B1:B5) B2:B3)	21	z0=False	kata=Double
+=SUM(SWITCH(A1,1,B1:B5,0))	82	z0=False	kata=Double
+=IF(TRUE,B1)+1	11	z0=False	kata=Double
+# (F to F2 ga chigau) =SUM(IFERROR(IF(TRUE,B1:B5),0)) F=0 F2=82
