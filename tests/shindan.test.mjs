@@ -136,6 +136,68 @@ T('★「調べた時間」と「出るまでの時間」を 混ぜない★', (
   ok(r.value.かかった秒 <= r.value.出るまでの秒 + 0.01, '★調べた時間が 出るまでの時間より 長い★');
 });
 
+/* ══ ★合計が 黙って 小さくなっている所（作り物と 実物で 同じ 数え方）★ ══ */
+const 列の番号 = (s) => { const m = /^\$?([A-Z]{1,3})\$?([0-9]{1,7})$/.exec(s); if (!m) return null; let c = 0; for (const ch of m[1]) c = c * 26 + (ch.charCodeAt(0) - 64); return { r: +m[2] - 1, c: c - 1 }; };
+function 黙って小さくなる合計(sheets, r) {
+  const 計算 = sheets.find((s) => s.name === '計算');
+  if (!計算) return [];
+  const 隠れ = r.見つけた.filter((x) => x.シート === '計算');
+  const 出 = [];
+  for (const rc of Object.keys(計算.data)) {
+    const f = 計算.data[rc].f;
+    if (!f || !/SUBTOTAL|SUM\(/i.test(f)) continue;
+    const m = /(\$?[A-Z]{1,3}\$?[0-9]{1,7}):(\$?[A-Z]{1,3}\$?[0-9]{1,7})/.exec(f);
+    if (!m) continue;
+    const a = 列の番号(m[1]), b = 列の番号(m[2]);
+    if (!a || !b) continue;
+    const 何行 = 隠れ.filter((x) => x.r >= Math.min(a.r, b.r) && x.r <= Math.max(a.r, b.r) && x.c >= Math.min(a.c, b.c) && x.c <= Math.max(a.c, b.c)).length;
+    if (何行) 出.push({ セル: Shindan.セルの名(rc), 何行: 何行, いまの値: 計算.data[rc].v });
+  }
+  return 出;
+}
+
+/* ══ ★作り物の「計算」シート＝この診断の 値打ちを 実物に 頼らずに 見る（CI でも 毎回 走る）★ ══
+   ★2026-11-07 に 足した★ … 司さんが 11-04 に 本を 直した（隠れた #REF! 92→0）＝実物の 節は もう 見る 物が 無い。
+     その前から CI には 実物が 無く ★④⑤ は 1回も CI で 走っていなかった★。
+   ★答えを 名指しで 持つ★（どこが 何本・どの 合計が 何行）＝数を 比べるだけの 試験に しない（自分で 決めた 数どうしは 噛まない）。
+   ★包まれていない #REF!（Excel自身が エラー＝競合でも 見つかる）を わざと 混ぜる★＝それを 拾ったら 赤。 */
+const 作り物_別物 = '★作り物：競合が見つけられる物（Excel自身がエラー）とは 別物を 見つける★';
+const 作り物_値打ち = '★作り物：合計が 黙って 小さくなっている 所を 名指しで 出す（この診断の値打ち）★';
+const 作り物 = () => [
+  { name: '計算', data: {
+    '2,5': { f: '=IFERROR((K3-Q3-#REF!)+C3,"")', v: '' },     /* F3 隠れた（空） */
+    '3,5': { f: '=IFERROR((K4-Q4-#REF!)+C4,"")', v: '' },     /* F4 隠れた（空） */
+    '4,5': { f: '=IFNA(VLOOKUP(A5,#REF!,2,0),"")', v: '' },   /* F5 隠れた（空） */
+    '5,5': { f: '=K6-Q6', v: 100 },                           /* F6 ふつう */
+    '6,5': { f: '=INDEX(#REF!,1)', v: '#REF!', t: 'e' },      /* F7 包まれていない＝Excel自身が エラー */
+    '7,6': { f: '=IFERROR(A1,0)+INDEX(#REF!,1)', v: '#REF!', t: 'e' }, /* G8 同じ式に IFERROR は 在るが 包まれていない */
+    '10,5': { f: '=SUM(F3:F6)', v: 100 },                     /* F11 隠れた 3行を 足す＝黙って 小さい */
+    '11,5': { f: '=SUM(F6:F6)', v: 100 },                     /* F12 隠れた 行を 足さない */
+    '12,6': { f: '=SUM(G1:G8)', v: 0 },                       /* G13 包まれていない 物しか 無い 列 */
+  } },
+  { name: '別', data: { '0,0': { f: '=1+1', v: 2 } } },
+];
+{
+  const sheets = 作り物();
+  const r = Shindan.調べる(sheets);
+  let e = 0;
+  for (const sh of sheets) for (const k of Object.keys(sh.data)) if (sh.data[k].t === 'e') e++;
+  T(作り物_別物, () => {
+    const 所 = r.見つけた.map((x) => x.シート + '!' + x.セル + '@' + x.r + ',' + x.c).sort();
+    eq(JSON.stringify(所), JSON.stringify(['計算!F3@2,5', '計算!F4@3,5', '計算!F5@4,5']), '★見つけた 場所が 違う★');
+    for (const x of r.見つけた) {
+      const cell = sheets.find((s) => s.name === x.シート).data[x.r + ',' + x.c];
+      ok(cell && cell.t !== 'e', '★' + x.セル + ' は Excel自身が エラー＝競合でも 見つかる 物を 数えた★');
+    }
+    eq(r.式の本数, 3, '式の本数');
+    eq(e, 2, '作り物の Excel自身が エラー');
+  });
+  T(作り物_値打ち, () => {
+    eq(JSON.stringify(黙って小さくなる合計(sheets, r)), JSON.stringify([{ セル: 'F11', 何行: 3, いまの値: 100 }]),
+      '★隠れた 行を 足す 合計だけを 出す（F12・G13 は 出さない）★');
+  });
+}
+
 /* ══ ★実物（司さんの .xlsb）★ ══ */
 const 実物 = GOLDEN.本.場所;
 if (!fs.existsSync(実物)) {
@@ -197,42 +259,24 @@ if (!fs.existsSync(実物)) {
       + ' ＋ 包まれていない ' + 包まれず);
     eq(r.式の本数 + 包まれず, 全部, '★足して 合わない＝取りこぼしが 在る★');
   });
-  T('★出たシートが 散らばっていない（1枚に まとまっている）★', () => {
+  /* ★2026-11-07 に 判定を やめて 記録に した★（③ 1枚に まとまる／④ エラーの数より 多い／⑤ 合計が 黙って 小さい）
+     ★訳★ … どれも「本に 隠れた 物が 在る」と いう ★本の 事実★ に 頼った 判定だった（09-04 に やめた「数で 判定」と 同じ 型）。
+              司さんが 11-04 に 本を 直した（隠れた #REF! 92→0）＝本が 良くなった のに 赤 ＝見張りの 作りが 悪い。
+     ★値打ちの 判定は 上の「作り物」の 2本へ 移した★（CI でも 毎回 走る・答えを 名指し）。
+     ★実物で 判定に 使うのは ①② の 辻褄だけ★（司さんが 触っても 変わらない／取りこぼしが 出た 瞬間に 崩れる）。 */
+  {
     const bys = {};
     for (const x of r.見つけた) bys[x.シート] = (bys[x.シート] || 0) + 1;
-    console.log('       … ' + JSON.stringify(bys));
-    ok(Object.keys(bys).length <= 1, '★別の シートにも 出た＝台帳を 読み直すこと★');
-  });
-  T('★競合が見つけられる数（Excel自身がエラー）とは 別物★', () => {
     let e = 0;
     for (const nm of wb.SheetNames) {
       const ws = wb.Sheets[nm] || {};
       for (const k of Object.keys(ws)) { if (k[0] !== '!' && ws[k].t === 'e') e++; }
     }
-    console.log('       … Excel自身がエラーの セル ' + e + '個（台帳を 書いた日は '
-      + GOLDEN.本.Excel自身がエラーのセル + '個）');
-    ok(r.式の本数 > e, '★診断の数が エラーの数以下＝新しく見つけた物が無い★');
-  });
-  T('★実際に 合計が黙って小さくなっている所を 数える（この診断の値打ち）★', () => {
-    const 隠れ = r.見つけた.filter((x) => x.シート === '計算');
-    const A1 = (s) => { const m = /^\$?([A-Z]{1,3})\$?([0-9]{1,7})$/.exec(s); if (!m) return null; let c = 0; for (const ch of m[1]) c = c * 26 + (ch.charCodeAt(0) - 64); return { r: +m[2] - 1, c: c - 1 }; };
-    const 計算 = sheets.find((s) => s.name === '計算');
-    const 出 = [];
-    for (const rc of Object.keys(計算.data)) {
-      const f = 計算.data[rc].f;
-      if (!f || !/SUBTOTAL|SUM\(/i.test(f)) continue;
-      const m = /(\$?[A-Z]{1,3}\$?[0-9]{1,7}):(\$?[A-Z]{1,3}\$?[0-9]{1,7})/.exec(f);
-      if (!m) continue;
-      const a = A1(m[1]), b = A1(m[2]);
-      if (!a || !b) continue;
-      const 何行 = 隠れ.filter((x) => x.r >= Math.min(a.r, b.r) && x.r <= Math.max(a.r, b.r) && x.c >= Math.min(a.c, b.c) && x.c <= Math.max(a.c, b.c)).length;
-      if (何行) 出.push({ セル: Shindan.セルの名(rc), 何行: 何行, いまの値: 計算.data[rc].v });
-    }
-    ok(出.length > 0, '★1つも 出ない＝この 試験が 空振りしている★');
-    for (const x of 出) ok(x.いまの値 === 0 || x.いまの値 === '' || x.いまの値 === null || x.いまの値 === undefined,
-      '★' + x.セル + ' は ' + JSON.stringify(x.いまの値) + '＝隠れた行が 在るのに 0 で ない★');
-    console.log('       … ' + 出.map((x) => x.セル + '=' + JSON.stringify(x.いまの値) + '（' + x.何行 + '行が空）').join(' / '));
-  });
+    const 出 = 黙って小さくなる合計(sheets, r);
+    console.log('       … 記録（判定に 使わない）: シート別 ' + JSON.stringify(bys)
+      + '／Excel自身がエラーの セル ' + e + '個（台帳を 書いた日は ' + GOLDEN.本.Excel自身がエラーのセル + '個）'
+      + '／黙って 小さい 合計 ' + (出.length ? 出.map((x) => x.セル + '=' + JSON.stringify(x.いまの値) + '（' + x.何行 + '行が空）').join(' / ') : '0本'));
+  }
   T('★速い（0円・AIを1回も呼ばない）★', () => {
     ok(r.かかった秒 <= GOLDEN.本.何秒以内, '★' + r.かかった秒 + '秒（' + GOLDEN.本.何秒以内 + '秒以内）★');
     console.log('       … 見たセル ' + r.見たセル.toLocaleString() + ' ／ ' + r.かかった秒 + '秒');
@@ -249,7 +293,7 @@ if (SELF) {
   console.log('[self-test] わざと壊して 赤くなるかを数える（★repo は読むだけ★）');
   const BREAKS = [
     ['★包まれていない物まで 数える（素朴なやり方に戻す）★',
-      (s) => s.replace('  function 隠している所(f) {', '  function 隠している所(f) {\n    if (/IFERROR|IFNA/i.test(String(f)) && /#REF!/.test(String(f))) return [{ 関数: "IFERROR", 中身: "", 数: (String(f).match(/#REF!/g) || []).length }];')],
+      (s) => s.replace('  function 隠している所(f) {', '  function 隠している所(f) {\n    if (/IFERROR|IFNA/i.test(String(f)) && /#REF!/.test(String(f))) return [{ 関数: "IFERROR", 中身: "", 数: (String(f).match(/#REF!/g) || []).length }];'), [作り物_別物]],
     ['★2つ目の引数の側まで 数える★', (s) => s.replace("else if (ch === ',' && 深さ === 1) break;", '')],
     ['★式でない字（打った字）まで 見る★', (s) => s.replace("if (!f || String(f).charAt(0) !== '=') continue;", 'if (!f) continue;')],
     ['★のべ と 式の本数を 同じにする★', (s) => s.replace('式の本数: Object.keys(本).length,', '式の本数: のべ,')],
@@ -264,9 +308,12 @@ if (SELF) {
     ['★調べた時間と 出るまでの時間を 混ぜる★',
       (s) => s.replace('かかった秒: Math.max(0.01, Math.round(仕事 / 10) / 100),   /* ★実際に調べた時間★ */', 'かかった秒: Math.round((t1 - t0) / 10) / 100,')
         .replace('出るまでの秒: Math.round((t1 - t0) / 10) / 100,            /* ★待っていた時間も含む★ */', '')],
+    /* ★2026-11-07 足した★ 作り物の 2本が ★名指しで★ 赤に なるかを 見る（ファイル全体の exit だけでは 空振りが 隠れる） */
+    ['★場所の 行・列を 1つ ずらす★', (s) => s.replace("r: Number(String(rc).split(',')[0]),", "r: Number(String(rc).split(',')[0]) + 1,"), [作り物_別物, 作り物_値打ち]],
+    ['★いつも 何も 見つけない★', (s) => s.replace('if (!所.length) continue;', 'if (所.length || !所.length) continue;'), [作り物_別物, 作り物_値打ち]],
   ];
   let red = 0;
-  for (const [name, brk] of BREAKS) {
+  for (const [name, brk, 名指し] of BREAKS) {
     const orig = fs.readFileSync(path.join(ROOT, 'lib/shindan.js'), 'utf8');
     const bad = brk(orig);
     if (bad === orig) { console.log('  ★置換できず★  ' + name); continue; }
@@ -274,8 +321,9 @@ if (SELF) {
     fs.writeFileSync(f, bad, 'utf8');
     const env = Object.assign({}, process.env, { EXALLY_SHINDAN_OVERRIDE: JSON.stringify({ 'lib/shindan.js': f }) });
     const r2 = spawnSync(process.execPath, ['--max-old-space-size=4096', path.join(__dirname, 'shindan.test.mjs')], { encoding: 'utf8', env });
-    if (r2.status !== 0) { red++; console.log('  赤くなった  ' + name); }
-    else console.log('  ★素通り★  ' + name);
+    const 黙った = (名指し || []).filter((t) => (r2.stdout || '').indexOf('  NG   ' + t) < 0);
+    if (r2.status !== 0 && !黙った.length) { red++; console.log('  赤くなった  ' + name + (名指し ? '（名指し ' + 名指し.length + '本とも NG）' : '')); }
+    else console.log('  ★素通り★  ' + name + (黙った.length ? '（★名指しが 赤に ならない★ ' + 黙った.join(' / ') + '）' : ''));
   }
   try { fs.rmSync(TMP, { recursive: true, force: true }); } catch (e) { /* 消せなくても検査は済んでいる */ }
   console.log('');
