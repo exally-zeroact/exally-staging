@@ -6,7 +6,14 @@
      ①★同じ 答え★＝溢れ（索引の 道）の 1マスずつ と、同じ 条件を 1つずつ 打った 式（索引を 使わない 道）が 全部 同じ
        盤は 型を 混ぜる（数・数と 読める 字・%・時刻・日付の 字・大小の 字・写し字・真偽・空・="" ・誤り）
        ★物差しは 実Excel では なく 前からの 道★（実Excel との 合いは utsushiji・jouken-hairetsu の 紙が 見る）
-     ②★重さ★＝N を 4倍に して 1本あたりが 4倍を 超えたら 赤（shiki-hyou-omosa と 同じ 線）
+     ②★重さ★＝N=4000 で ★条件を 1マスずつ 見た 回数★（lib の 条件を見た数）が 20×N を 超えたら 赤（叩き直し2 止めB）
+       ★時間では 測らない★＝前の「N を 4倍で 1本あたり 4倍まで」は N×N でも ちょうど 4倍で 見分けられず（索引を 切った 写しで 3.71・3.94倍 緑）
+         2倍の 線に 下げても 溢れの 土台の 揺れ（1本 数µs）で N×N で ない 物まで 赤（2.0〜4.1倍）＝時間は 書くだけ
+       ★回数は 揺れない★＝N×N なら 1600万回・直って いれば 数万回
+       ★盤は 違う 値が 1種類・5種類・全部 違う の 3つ★＝前の i%97 は 速い 側だけで 遅い 型が 隠れた
+       空振りの 確かめ（叩き直し2 で 測った・わざと 壊した 写し）
+         lib の 索引の下限 を 1e9 ⇒ 全部 違う 盤の 9本が 赤（1600万回）・1種類／5種類は 覚えで 緑
+         条件ごとに並べる の 覚えを 切る ⇒ 1種類・5種類 の 等しい 条件 4本が 赤（1600万・320万回）
    使い方: node tests/jouken-sakuin.test.mjs */
 import { createRequire } from 'module';
 import path from 'path';
@@ -14,7 +21,7 @@ import { fileURLToPath } from 'url';
 const require = createRequire(import.meta.url);
 const 根 = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 require(path.join(根, 'lib/shiki-tsunagi.js'));
-require(path.join(根, 'lib/shiki-kansuu.js'));
+const K関 = require(path.join(根, 'lib/shiki-kansuu.js'));
 const H = require(path.join(根, 'lib/shiki-hyou.js'));
 
 let pass = 0, fail = 0;
@@ -28,6 +35,8 @@ const 盤 = (h) => {
     const v = 種[(i * 7) % 種.length];
     if (v !== null) h.打つ('A' + (i + 1), v);
     h.打つ('B' + (i + 1), i + 1);
+    /* D＝整数・誤り・字・真偽 混ぜ（集まりで答える の 誤りの 番号・数で ない 物を 飛ばす を 見る） */
+    h.打つ('D' + (i + 1), i % 11 === 3 ? '=NA()' : i % 13 === 5 ? 'x' : i % 17 === 7 ? '=TRUE' : i % 19 === 2 ? '=1/0' : i * 3 - 100);
   }
 };
 /* ★条件★ C1:C40 */
@@ -47,6 +56,14 @@ const 式たち = [
   ['AVERAGEIFS', (c) => `=AVERAGEIFS(B1:B80,A1:A80,${c},B1:B80,"<70")`],
   ['MAXIFS', (c) => `=MAXIFS(B1:B80,A1:A80,${c})`],
   ['MINIFS', (c) => `=MINIFS(B1:B80,A1:A80,${c})`],
+  ['SUMIF 誤り混ぜ', (c) => `=SUMIF(A1:A80,${c},D1:D80)`],
+  ['AVERAGEIF 誤り混ぜ', (c) => `=AVERAGEIF(A1:A80,${c},D1:D80)`],
+  ['SUMIFS 誤り混ぜ', (c) => `=SUMIFS(D1:D80,A1:A80,${c})`],
+  ['AVERAGEIFS 誤り混ぜ', (c) => `=AVERAGEIFS(D1:D80,A1:A80,${c})`],
+  ['MAXIFS 誤り混ぜ', (c) => `=MAXIFS(D1:D80,A1:A80,${c})`],
+  ['MINIFS 誤り混ぜ', (c) => `=MINIFS(D1:D80,A1:A80,${c})`],
+  ['SUMIF 足す＝条件の範囲（端数）', (c) => `=SUMIF(A1:A80,${c})`],
+  ['MAXIFS 足す＝条件の範囲', (c) => `=MAXIFS(A1:A80,A1:A80,${c})`],
 ];
 console.log('\n[jouken-sakuin] ①溢れ（索引）と 1つずつ（全部 なめる）が 同じ 答えか');
 for (const [名, 式] of 式たち) {
@@ -69,25 +86,37 @@ for (const [名, 式] of 式たち) {
   else ng('盤の 置き方 ' + [...全].join() + ' 字の "5" ' + 字の数);
 }
 
-console.log('[jouken-sakuin] ②重さ＝N を 4倍に して 1本あたりが 4倍を 超えたら 赤');
+console.log('[jouken-sakuin] ②重さ＝N=4000 で 条件を 見た 回数が 20×N を 超えたら 赤（盤 3つ）');
+let 盤の種 = 1;
 const 一回 = (N, 式) => {
   const h = new H.表();
-  for (let i = 1; i <= N; i++) { h.打つ('A' + i, i % 97); h.打つ('B' + i, i); }
+  const K = 盤の種 === 0 ? N : 盤の種;
+  for (let i = 1; i <= N; i++) { h.打つ('A' + i, i % K); h.打つ('B' + i, i); }
   const t0 = process.hrtime.bigint();
   h.打つ('D1', 式(N));
   return Number(process.hrtime.bigint() - t0) / 1e6;
 };
-const 測る = (N, 式) => { 一回(200, 式); let m = Infinity; for (let k = 0; k < 3; k++) m = Math.min(m, 一回(N, 式)); return m; };
-for (const [名, 式] of [
+const N = 4000;
+for (const [盤名, 種k] of [['1種類', 1], ['5種類', 5], ['全部 違う', 0]]) for (const [名0, 式] of [
   ['SUMPRODUCT(1/COUNTIF(A,A))', (n) => `=SUMPRODUCT(1/COUNTIF(A1:A${n},A1:A${n}))`],
   ['SUM(SUMIF(A,A,B))', (n) => `=SUM(SUMIF(A1:A${n},A1:A${n},B1:B${n}))`],
   ['SUM(COUNTIF(A,">"&A))', (n) => `=SUM(COUNTIF(A1:A${n},">"&A1:A${n}))`],
+  ['SUM(SUMIF(A,"<"&A,B))', (n) => `=SUM(SUMIF(A1:A${n},"<"&A1:A${n},B1:B${n}))`],
+  ['SUM(COUNTIFS(A,">"&A))', (n) => `=SUM(COUNTIFS(A1:A${n},">"&A1:A${n}))`],
+  ['SUM(COUNTIF(A,"<>"&A))', (n) => `=SUM(COUNTIF(A1:A${n},"<>"&A1:A${n}))`],
+  ['SUM(MAXIFS(B,A,"<"&A))', (n) => `=SUM(MAXIFS(B1:B${n},A1:A${n},"<"&A1:A${n}))`],
+  ['SUM(AVERAGEIF(A,">="&A,B))', (n) => `=SUM(AVERAGEIF(A1:A${n},">="&A1:A${n},B1:B${n}))`],
+  ['SUM(SUMIFS(B,A,"<="&A))', (n) => `=SUM(SUMIFS(B1:B${n},A1:A${n},"<="&A1:A${n}))`],
 ]) {
-  const 小 = 測る(1000, 式) / 1000, 大 = 測る(4000, 式) / 4000, 倍 = 大 / 小;
-  const 書 = '      N=1000 … ' + (小 * 1000).toFixed(1) + 'µs/本 ／ N=4000 … ' + (大 * 1000).toFixed(1) + 'µs/本 ／ ★' + 倍.toFixed(2) + '倍★';
-  if (!(大 > 0 && 小 > 0)) ng(名 + ' 測りが 0（空振り）');
-  else if (倍 <= 4) { pass++; console.log('  ✓ ' + 名); console.log(書); }
-  else { ng(名 + ' 1本あたりが ' + 倍.toFixed(2) + '倍（4倍まで）＝N の 2乗に 戻って いないか'); console.log(書); }
+  盤の種 = 種k;
+  const 名 = 盤名 + ' ' + 名0;
+  const 前 = K関.条件を見た数();
+  const ms = 一回(N, 式);
+  const 回 = K関.条件を見た数() - 前;
+  const 書 = '      N=' + N + ' … 条件を 見た 回数 ' + 回 + '（' + (回 / N).toFixed(1) + '×N）／' + ms.toFixed(0) + 'ms（時間は 書くだけ）';
+  if (!(ms > 0)) ng(名 + ' 測りが 0（空振り）');
+  else if (回 <= 20 * N) { pass++; console.log('  ✓ ' + 名); console.log(書); }
+  else { ng(名 + ' 条件を 見た 回数が ' + 回 + '（20×N＝' + 20 * N + ' まで）＝N の 2乗に 戻って いないか'); console.log(書); }
 }
 console.log('[jouken-sakuin] pass ' + pass + ' / fail ' + fail);
 process.exit(fail ? 1 : 0);
