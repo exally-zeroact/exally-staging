@@ -100,6 +100,8 @@ export function この回の名乗り(x) {
   if (x.CI) return { 答: '見ていない', 訳: 'CI（消える場所は 手元にしか 無い）' };
   if (x.直が渡された && !x.直が在る) return { 答: '赤', 訳: 'EXALLY_SCRATCHPAD が 無い道を 指している' };
   if (x.番号) {
+    /* ★部屋は 在るが scratchpad が まだ 無い＝失う物 0＝見る★（11-07 本番前 taiketsu 止め1＝正しい 押しを 止めていた） */
+    if (!x.番号の置き場が在る && x.番号の部屋が在る) return { 答: '見る', 訳: 'scratchpad が まだ 無い（失う物 0）' };
     if (!x.番号の置き場が在る) return { 答: '赤', 訳: '番号 ' + x.番号 + ' の 置き場が 見つからない（道が 変わった合図）' };
     return { 答: '見る', 訳: '' };
   }
@@ -113,6 +115,15 @@ export function 番号の置き場が在るか(場たち, 番号) {
   if (!番号) return false;
   const 鍵 = '/' + 番号.toLowerCase() + '/scratchpad';
   return 場たち.some((p) => p.replace(/\\/g, '/').toLowerCase().replace(/\/+$/, '').endsWith(鍵));
+}
+
+/** ★番号の 部屋（tmp/claude/<親>/<番号>）が 在るか★＝scratchpad が 無くても 席は 居る */
+export function 番号の部屋が在るか(tmp, 番号) {
+  if (!番号) return false;
+  const 上 = path.join(tmp, 'claude');
+  let 親たち = [];
+  try { 親たち = fs.readdirSync(上); } catch (e) { return false; }
+  return 親たち.some((p) => { try { return fs.statSync(path.join(上, p, 番号)).isDirectory(); } catch (e) { return false; } });
 }
 
 /** CI か（CI=false・CI=0・空は CI でない） */
@@ -297,6 +308,15 @@ if (process.argv.includes('--self-test')) {
       if (!番号の置き場が在るか(c, 'S1')) throw new Error('★実物の 道で 当たらない★');
       if (番号の置き場が在るか(置き場の候補({ tmp: 試, 番号: 'S9', 直: '', root: path.join(試, 'repo') }), 'S9')) throw new Error('★無い 番号で 在ると 言った★');
     });
+    T('★★部屋は 在るが scratchpad が 無い＝見る／部屋ごと 無い＝赤★★', () => {
+      fs.mkdirSync(path.join(試, 'claude', 'oya1', 'S3'), { recursive: true });
+      if (!番号の部屋が在るか(試, 'S3')) throw new Error('★部屋を 見つけない★');
+      if (番号の部屋が在るか(試, 'S9')) throw new Error('★無い 部屋を 在ると 言った★');
+      if (番号の部屋が在るか(試, '')) throw new Error('★番号 無しで 在ると 言った★');
+      const 基 = { CI: false, win32: true, CLAUDECODE: true, 番号: 'S3', 番号の置き場が在る: false, 直が渡された: false, 直が在る: false };
+      if (この回の名乗り({ ...基, 番号の部屋が在る: true }).答 !== '見る') throw new Error('★scratchpad の 無い 席の 押しを 止める★');
+      if (この回の名乗り({ ...基, 番号の部屋が在る: false }).答 !== '赤') throw new Error('★部屋ごと 無いのに 赤に ならない★');
+    });
     T('★CI=true は CI／CI=false・0・空は CI でない', () => {
       if (!CIか('true') || CIか('false') || CIか('0') || CIか('') || CIか(undefined)) throw new Error('分けていない');
     });
@@ -349,7 +369,7 @@ const 名乗り = この回の名乗り({
   CI: CIか(process.env.CI),
   win32: process.platform === 'win32',
   CLAUDECODE: process.env.CLAUDECODE === '1',
-  番号, 番号の置き場が在る,
+  番号, 番号の置き場が在る, 番号の部屋が在る: 番号の部屋が在るか(tmp, 番号),
   直が渡された: !!直, 直が在る: !!直 && fs.existsSync(直),
 });
 
