@@ -59,6 +59,7 @@ const FILES = [
   ['shoshiki.test.mjs'],                       // ★書式の台＝TEXT も 画面も 同じ 台（実Excel 192行と 一致）★
   ['shoshiki.test.mjs', '--self-test'],        // ★時の隣の m は 分／-0 を 出さない／1900年の起点 2つ／曜日は 割り算★
   ['xlsb-jitai.test.mjs'],                     // ★.xlsb の マスごとの 字体を 自分で 読む（借り物は くれない）★
+  ['xlsb-gyou-atama.test.mjs'],                // ★.xlsb の 新しい 行の 頭を 0 から 作る★（丸写しで 打った 行が 隠れた・2026-11-07）
   ['ketsugou-yomu.test.mjs'],                  // ★Excel の 結合した マスを 読む（前は 1組も 読んで いなかった）★
   ['migi-ni-ugokasu.test.mjs'],                // ★右へ動かすと画面が真っ白（幅の広い列が在ると当たりが行き過ぎる）★
   ['tashi-hikae.test.mjs'],                    // ★書いた幅・高さの足し算の控え＝控えあり/なしで colX・rowY・境目が全部同じ（2026-11-07）★

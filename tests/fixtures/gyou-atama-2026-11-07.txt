@@ -1,0 +1,8 @@
+﻿row 1 h=0 hid=True lv=3 bold=True
+row 2 h=17.7 hid=False lv=1 bold=False
+row 3 h=17.7 hid=False lv=1 bold=False
+row 4 h=17.7 hid=False lv=1 bold=False
+row 5 h=17.7 hid=False lv=1 bold=False
+row 6 h=17.7 hid=False lv=1 bold=False
+row 7 h=17.7 hid=False lv=1 bold=False
+std h=17.7
