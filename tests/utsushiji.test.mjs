@@ -63,11 +63,15 @@ const 盤7 = (h) => ['1,00', '1,2,3', ',5', '1,000.5', '-1,000', '1,0000', '=TRU
 const 盤11 = (h) => [45658, '2025/1/1', 0.5, '12:00', '50%', 0, '=25/24', '=1/24', '25:00', 0.05].forEach((v, i) => { h.打つ('G' + (i + 1), 字に(v)); h.打つ('H' + (i + 1), 2 ** i); });
 /* 盤13（紙10・範囲の 引数に #REF!）A1:A5=1..5・B1:B5=10..50 */
 const 盤13 = (h) => [1, 2, 3, 4, 5].forEach((v, i) => { h.打つ('A' + (i + 1), v); h.打つ('B' + (i + 1), v * 10); });
+/* 盤14（紙11・読めない 参照）A1:A5=1..5・B1:B5=10,20,1,1,50（retsu-x の 材料＋B3=1・B4=1） */
+const 盤14 = (h) => [10, 20, 1, 1, 50].forEach((v, i) => { h.打つ('A' + (i + 1), i + 1); h.打つ('B' + (i + 1), v); });
 const 紙たち = [['utsushiji-excel-2026-11-07.tsv', 27, 盤1], ['utsushiji-excel-2-2026-11-07.tsv', 39, 盤2], ['utsushiji-excel-3-2026-11-07.tsv', 39, 盤3],
   ['utsushiji-excel-4-2026-11-07.tsv', 9, 盤6], ['utsushiji-excel-5-2026-11-07.tsv', 19, 盤7], ['utsushiji-excel-6-2026-11-07.tsv', 18, 盤8], ['utsushiji-excel-7-2026-11-07.tsv', 48, 盤11], ['utsushiji-excel-8-2026-11-07.tsv', 14, 盤11],
-  ['utsushiji-excel-10-2026-11-07.tsv', 16, 盤13]];
+  ['utsushiji-excel-10-2026-11-07.tsv', 16, 盤13], ['utsushiji-excel-11-2026-11-07.tsv', 14, 盤14]];
 /* ★「まだ」の 口は 残す（直して いない 行を 黙って 外さず 数えて 出す 為）★ */
 const まだ = /^$^/;   /* ★紙6 の 日付・%・時刻の 右 7本と MATCH("a~b") 1本は 直した（11-07）＝まだ 0★ */
+/* ★紙11 の まだ 3本★（2026-11-07）＝参照を 返す IF・CHOOSE・LET を 足す 範囲に 置く 形＝Excel 52・台 #VALUE!（黙った 数では ない・26141b6 から 前の まま）＝次の 件で 直す */
+const まだ11 = new Set(['=SUMIF(A1:A5,">2",IF(TRUE,B1))', '=SUMIF(A1:A5,">2",CHOOSE(1,B1))', '=LET(r,B1,SUMIF(A1:A5,">2",r))']);
 let まだの数 = 0;
 let pass = 0, fail = 0;
 for (const [名, 本数, 盤] of 紙たち) {
@@ -75,6 +79,7 @@ for (const [名, 本数, 盤] of 紙たち) {
   if (紙.length !== 本数) { console.log('✗ ' + 名 + ' の 行が ' + 本数 + '本で ない: ' + 紙.length); fail++; }
   for (const 行 of 紙) {
     if (名 === 'utsushiji-excel-6-2026-11-07.tsv' && まだ.test(行[0])) { まだの数++; continue; }
+    if (名 === 'utsushiji-excel-11-2026-11-07.tsv' && まだ11.has(行[0])) { まだの数++; console.log('… まだ ' + 名 + ' ' + 行[0] + ' Excel ' + 行[1]); continue; }
     const 式 = 行[0], 条 = 行.length === 3 ? 行[1].replace(/^J2=/, '') : undefined, 見 = 行[行.length - 1];
     const h = new H.表(); 盤(h, 条); h.打つ('BZ1', 式);
     const 出 = String(h.字('BZ1'));

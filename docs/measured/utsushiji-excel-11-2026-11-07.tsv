@@ -1,0 +1,16 @@
+# Excel 16.0 build 20527 / ban14 A1:A5=1..5 B1:B5=10,20,1,1,50 / yomenai sanshou / .Formula to .Formula2 onaji / toru-utsushiji-11.ps1
+=SUMIF(A1:A5,">2",B1#)	#REF!	z0=-2146826265	kata=Error
+=SUMIF(A1#,">2",B1:B5)	#REF!	z0=-2146826265	kata=Error
+=COUNTIF(A1#,">2")	#REF!	z0=-2146826265	kata=Error
+=SUMIFS(B1#,A1:A5,">2")	#REF!	z0=-2146826265	kata=Error
+=SUMIF(A1:A5,">2",IF(TRUE,B1))	52	z0=False	kata=Double
+=SUMIF(A1:A5,">2",CHOOSE(1,B1))	52	z0=False	kata=Double
+=LET(r,B1,SUMIF(A1:A5,">2",r))	52	z0=False	kata=Double
+=SUMIF(A1:A5,">2",IF(TRUE,#REF!))	#REF!	z0=-2146826265	kata=Error
+=COUNTIF(INDIRECT("ZZ"),">2")	#REF!	z0=-2146826265	kata=Error
+=SUMIF(A1:A5,">2",INDIRECT("ZZ"))	#REF!	z0=-2146826265	kata=Error
+=COUNTIF(OFFSET(A1,-1,0,5,1),">2")	#REF!	z0=-2146826265	kata=Error
+=COUNTIF(IF(TRUE,#REF!),">2")	#REF!	z0=-2146826265	kata=Error
+=SUMIF(A1:A5,">2",(B1))	52	z0=False	kata=Double
+=SUMIF(A1:A5,">2",$B$1)	52	z0=False	kata=Double
+# (utenai) =SUMIF(A1:A5,">2",)

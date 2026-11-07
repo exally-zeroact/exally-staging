@@ -736,12 +736,16 @@ console.log('[retsu-x] ★空に 当たる 条件と SUMIF の 取り直し（20
   }
   /* ★設計前 taiketsu（2026-11-07）止め1・止め2★＝頼りが 取り直した 所を 知らない 形は #REF!・足す 範囲が 読めない 値は #VALUE!
        （打った 時だけ 正しく 打ち直すと 古い 数／黙って 条件の 範囲を 足す を 出さない）・省いた 足す 範囲は 前の まま */
+  /* ★2026-11-07 実Excel で 測った（docs/measured/utsushiji-excel-11-2026-11-07.tsv・盤14＝この 材料＋B3・B4=1）★
+       B1#（溢れて いない）＝★#REF!★（前の 見込み #VALUE! は 測らずに 書いた 誤り）
+       IF(TRUE,B1)・CHOOSE(1,B1)・LET(r,B1,…)＝Excel ★52★・台は #VALUE!（黙った 数では ない）＝次の 件で 直す（utsushiji の まだ11）
+       SUMIF(A1:A5,">2",) は Excel が 打たせない（紙11 の 注） */
   const 止め形 = [
     ['=SUMIF(INDEX(A1:A5,0),">2",B1)', '#REF!'], ['=SUMIF(A1:A5,">2",INDEX(B1:B2,1))', '#REF!'], ['=SUMIF(A1:A5,">2",INDEX(B1:B2,1):B1)', '#REF!'],
     ['=SUMIF(A1:A5,">2",B1:INDEX(B1:B2,1))', '#REF!'], ['=SUMIF(A1:A5,">2",B1 B1:B2)', '#REF!'], ['=SUMIF(A1:A3 A1:A5,">2",B1)', '#REF!'],
     ['=LET(x,A1:A5,SUMIF(x,">2",B1))', '#REF!'], ['=AVERAGEIF(INDEX(A1:A5,0),">2",B1)', '#REF!'],
     ['=SUMIF(A1:A5,">2",(B1))', '52'], ['=SUMIF(A1:A5,">2",IF(TRUE,B1))', '#VALUE!'], ['=SUMIF(A1:A5,">2",CHOOSE(1,B1))', '#VALUE!'],
-    ['=LET(r,B1,SUMIF(A1:A5,">2",r))', '#VALUE!'], ['=SUMIF(A1:A5,">2",B1#)', '#VALUE!'],
+    ['=LET(r,B1,SUMIF(A1:A5,">2",r))', '#VALUE!'], ['=SUMIF(A1:A5,">2",B1#)', '#REF!'],
     ['=SUMIF(A1:A5,">2",)', '12'], ['=SUMIF(INDEX(A1:A5,0),">2",B1:B5)', '52'], ['=SUMIF(A1:A5,">2",$B$1)', '52'],
   ];
   for (const [f, 見] of 止め形) {
