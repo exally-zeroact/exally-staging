@@ -10,6 +10,9 @@
        ★時間では 測らない★＝前の「N を 4倍で 1本あたり 4倍まで」は N×N でも ちょうど 4倍で 見分けられず（索引を 切った 写しで 3.71・3.94倍 緑）
          2倍の 線に 下げても 溢れの 土台の 揺れ（1本 数µs）で N×N で ない 物まで 赤（2.0〜4.1倍）＝時間は 書くだけ
        ★回数は 揺れない★＝N×N なら 1600万回・直って いれば 数万回
+       ★集まりを 作った 回数も 見る★（叩き直し2 止めB 残り）＝1式で 2回まで（毎回 作り直すと N 回＝4000）
+       ★小数の 盤（B＝i＋0.5）★＝和・平均は 前と 端数まで 同じに する 為 軽い なめ方（N×N 回 だが 当てはまるか は 0回）
+         ⇒ 当てはまるか 20×N まで・作った 2回まで・軽く なめた 行は N×N まで（それより 多ければ 覚えが 効いて いない）
        ★盤は 違う 値が 1種類・5種類・全部 違う の 3つ★＝前の i%97 は 速い 側だけで 遅い 型が 隠れた
        空振りの 確かめ（叩き直し2 で 測った・わざと 壊した 写し）
          lib の 索引の下限 を 1e9 ⇒ 全部 違う 盤の 9本が 赤（1600万回）・1種類／5種類は 覚えで 緑
@@ -87,17 +90,17 @@ for (const [名, 式] of 式たち) {
 }
 
 console.log('[jouken-sakuin] ②重さ＝N=4000 で 条件を 見た 回数が 20×N を 超えたら 赤（盤 3つ）');
-let 盤の種 = 1;
+let 盤の種 = 1, 盤の小数 = false;
 const 一回 = (N, 式) => {
   const h = new H.表();
   const K = 盤の種 === 0 ? N : 盤の種;
-  for (let i = 1; i <= N; i++) { h.打つ('A' + i, i % K); h.打つ('B' + i, i); }
+  for (let i = 1; i <= N; i++) { h.打つ('A' + i, i % K); h.打つ('B' + i, 盤の小数 ? i + 0.5 : i); }
   const t0 = process.hrtime.bigint();
   h.打つ('D1', 式(N));
   return Number(process.hrtime.bigint() - t0) / 1e6;
 };
 const N = 4000;
-for (const [盤名, 種k] of [['1種類', 1], ['5種類', 5], ['全部 違う', 0]]) for (const [名0, 式] of [
+for (const [盤名, 種k, 小数] of [['1種類', 1, false], ['5種類', 5, false], ['全部 違う', 0, false], ['全部 違う・B 小数', 0, true]]) for (const [名0, 式] of [
   ['SUMPRODUCT(1/COUNTIF(A,A))', (n) => `=SUMPRODUCT(1/COUNTIF(A1:A${n},A1:A${n}))`],
   ['SUM(SUMIF(A,A,B))', (n) => `=SUM(SUMIF(A1:A${n},A1:A${n},B1:B${n}))`],
   ['SUM(COUNTIF(A,">"&A))', (n) => `=SUM(COUNTIF(A1:A${n},">"&A1:A${n}))`],
@@ -108,15 +111,21 @@ for (const [盤名, 種k] of [['1種類', 1], ['5種類', 5], ['全部 違う', 
   ['SUM(AVERAGEIF(A,">="&A,B))', (n) => `=SUM(AVERAGEIF(A1:A${n},">="&A1:A${n},B1:B${n}))`],
   ['SUM(SUMIFS(B,A,"<="&A))', (n) => `=SUM(SUMIFS(B1:B${n},A1:A${n},"<="&A1:A${n}))`],
 ]) {
-  盤の種 = 種k;
+  盤の種 = 種k; 盤の小数 = 小数;
   const 名 = 盤名 + ' ' + 名0;
-  const 前 = K関.条件を見た数();
+  const 前 = K関.条件を見た数(), 前集 = K関.集まりの数();
   const ms = 一回(N, 式);
-  const 回 = K関.条件を見た数() - 前;
-  const 書 = '      N=' + N + ' … 条件を 見た 回数 ' + 回 + '（' + (回 / N).toFixed(1) + '×N）／' + ms.toFixed(0) + 'ms（時間は 書くだけ）';
-  if (!(ms > 0)) ng(名 + ' 測りが 0（空振り）');
-  else if (回 <= 20 * N) { pass++; console.log('  ✓ ' + 名); console.log(書); }
-  else { ng(名 + ' 条件を 見た 回数が ' + 回 + '（20×N＝' + 20 * N + ' まで）＝N の 2乗に 戻って いないか'); console.log(書); }
+  const 回 = K関.条件を見た数() - 前, 後集 = K関.集まりの数();
+  const 作 = 後集.作った - 前集.作った, 軽 = 後集.軽くなめた - 前集.軽くなめた;
+  const 書 = '      N=' + N + ' … 条件を 見た 回数 ' + 回 + '（' + (回 / N).toFixed(1) + '×N）・集まりを 作った ' + 作 + '・軽く なめた ' + 軽 + '／' + ms.toFixed(0) + 'ms（時間は 書くだけ）';
+  const 悪 = [];
+  if (!(ms > 0)) 悪.push('測りが 0（空振り）');
+  if (回 > 20 * N) 悪.push('条件を 見た 回数が ' + 回 + '（20×N＝' + 20 * N + ' まで）＝N の 2乗に 戻って いないか');
+  if (作 > 2) 悪.push('集まりを ' + 作 + '回 作った（2回まで）＝覚えが 効いて いない');
+  if (軽 > N * N) 悪.push('軽く なめた 行が ' + 軽 + '（N×N まで）');
+  if (!小数 && 軽 > 0) 悪.push('整数の 盤で 軽く なめた（累計の 道を 通って いない）');
+  if (!悪.length) { pass++; console.log('  ✓ ' + 名); console.log(書); }
+  else { ng(名 + ' ' + 悪.join('／')); console.log(書); }
 }
 console.log('[jouken-sakuin] pass ' + pass + ' / fail ' + fail);
 process.exit(fail ? 1 : 0);
