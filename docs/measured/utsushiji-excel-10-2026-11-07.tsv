@@ -1,0 +1,17 @@
+# Excel 16.0 build 20527 / ban13 A1:A5=1..5 B1:B5=10..50 / hani no hikisuu ni #REF! (8 kansuu) / .Formula to .Formula2 onaji / toru-utsushiji-10.ps1
+=AVERAGEIFS(#REF!,A1:A5,">0")	#REF!	z0=-2146826265	kata=Error
+=AVERAGEIFS(B1:B5,#REF!,">0")	#REF!	z0=-2146826265	kata=Error
+=AVERAGEIFS(B1:B5,A1:A5,">0",#REF!,1)	#REF!	z0=-2146826265	kata=Error
+=SUMIFS(#REF!,A1:A5,">0")	#REF!	z0=-2146826265	kata=Error
+=SUMIFS(B1:B5,#REF!,">0")	#REF!	z0=-2146826265	kata=Error
+=SUMIFS(B1:B5,A1:A5,">0",#REF!,1)	#REF!	z0=-2146826265	kata=Error
+=COUNTIFS(#REF!,">0")	#REF!	z0=-2146826265	kata=Error
+=COUNTIFS(A1:A5,">0",#REF!,1)	#REF!	z0=-2146826265	kata=Error
+=MAXIFS(#REF!,A1:A5,">0")	#REF!	z0=-2146826265	kata=Error
+=MAXIFS(B1:B5,#REF!,">0")	#REF!	z0=-2146826265	kata=Error
+=MINIFS(B1:B5,A1:A5,">0",#REF!,1)	#REF!	z0=-2146826265	kata=Error
+=SUMIF(#REF!,">0")	#REF!	z0=-2146826265	kata=Error
+=SUMIF(A1:A5,">0",#REF!)	#REF!	z0=-2146826265	kata=Error
+=AVERAGEIF(#REF!,">0",B1:B5)	#REF!	z0=-2146826265	kata=Error
+=AVERAGEIF(A1:A5,">0",#REF!)	#REF!	z0=-2146826265	kata=Error
+=COUNTIF(#REF!,">0")	#REF!	z0=-2146826265	kata=Error
