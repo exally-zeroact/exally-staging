@@ -107,12 +107,16 @@ for (const [名, bin, file] of [['狭い 本（25バイト）', 狭, 狭い], ['
   });
 }
 
-T('⑶ xlsb板を作る：記録485 を 134 の 後・145 の 前 に 写す／全部の 行の 頭が 0 から', () => {
+T('⑶ xlsb板を作る：記録485 を 134 の 後・145 の 前 に 写す（段の 深さは 0）／全部の 行の 頭が 0 から', () => {
   const b = XE.xlsb板を作る(狭recs, { A1: { v: 1 }, B3: { v: 2 }, C5: { v: 5 }, F7: { v: 7 }, A7: { v: 8 } });
   const recs = XE.parse(b, XE.SHAPE.sheet).recs;
   const ids = recs.map((x) => x.id);
   const i485 = ids.indexOf(485);
   ok(i485 > ids.indexOf(134) && i485 < ids.indexOf(145), '485 の 所 ' + i485 + '（134=' + ids.indexOf(134) + ' 145=' + ids.indexOf(145) + '）');
+  const 元485 = 狭recs.find((x) => x.id === 485).data, 今485 = recs[i485].data;
+  ok(元485[10] === 2, '見本の 段の 深さが 2 で ない（' + 元485[10] + '）＝壊しが 空振り');
+  ok(今485[10] === 0 && 今485[11] === 0, '段の 深さを 写した ' + 今485[10] + '/' + 今485[11] + '（期待 0/0）');
+  ok(Buffer.from(今485.subarray(0, 10)).equals(Buffer.from(元485.subarray(0, 10))), '485 の 高さ 等が 写って いない');
   形を見る(行の頭(recs, 0), 0, [0], 353);
   形を見る(行の頭(recs, 2), 2, [1], 353);
   形を見る(行の頭(recs, 4), 4, [2], 353);
