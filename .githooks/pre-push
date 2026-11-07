@@ -1,7 +1,9 @@
 #!/bin/sh
-# 押す 前の 門 2つ（置き方: git config --local core.hooksPath .githooks）
+# 押す 前の 門（置き方: git config --local core.hooksPath .githooks）
 #   1. commit の メールを 公開 repo に 出さない（pre-push-author.mjs）
 #   2. 押す commit の 中身に 実在の 字が 無いか（pre-push-kinshi.mjs・一覧の 指紋は .githooks/kinshi-finger）
+#   3. ★11-07★ 消える 置き場に git に 元の 無い 控えを 置いていないか（tests/shouko-no-okiba.test.mjs）
+#      ＝本体は CI に 置き場が 無く 走らない（見ていない と 名乗る）ので 押す 前の 門で 回す。人が 押す 時（CLAUDECODE も 番号も 無し）は 見ていない で 通る
 # ★Exally だけ 1行 足した（逐語で ない・2026-10-20）★＝scripts/pre-push-noreply.sh も 呼ぶ。
 #   pre-push-author.mjs は 本文の Co-authored-by と 注釈付きの タグの tagger を 見ない（門の 外）。
 #   Exally の 門（10-11）は 2つとも 止めていた＝外すと 止める 物が 0 に なる（10-20 設計前の 対立役が 同じ 入力で 測った）。
@@ -12,3 +14,4 @@ input=$(cat)
 printf '%s\n' "$input" | node "$d/pre-push-author.mjs" "$@" || exit 1
 printf '%s\n' "$input" | sh "$d/../scripts/pre-push-noreply.sh" "$@" || exit 1
 printf '%s\n' "$input" | node "$d/pre-push-kinshi.mjs" "$@" || exit 1
+node "$d/../tests/shouko-no-okiba.test.mjs" || exit 1
