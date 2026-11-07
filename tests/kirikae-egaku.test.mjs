@@ -334,7 +334,7 @@ if (SELF) {
     ['★隠れた列の 幅を 0にしない★',
       (s) => s.replace('  if(sh.kirikaeCols && sh.kirikaeCols[c]) return 0;', '')],
     ['★隠す物が 変わっても 数え直さない（前の並びを 使い回す）★',
-      (s) => s.replace('  if(箱.印 === 印) return 箱.並び;', '  if(箱.並び.length) return 箱.並び;')],
+      (s) => s.replace('  if(箱.名 === 名 && _隠しが同じ(箱.鍵, たち)) return 箱.並び;', '  if(箱.並び.length) return 箱.並び;')],
     ['★人を選んでも 列を 隠さない★',
       (s2) => s2.replace('  if(sh.kirikaeCols && sh.kirikaeCols[c]) return 0;', '')],
   ];

@@ -39,7 +39,7 @@ function 一行(src, re, 名) {
   return m[0];
 }
 
-const 名たち = ['cW', 'rH', '_隠しの印', '_隠しの並び', '_隠れた数', '_隠れ行の並び', '_隠れ列の並び',
+const 名たち = ['cW', 'rH', '_隠しが同じ', '_隠しの並び', '_隠れた数', '_隠れ行の並び', '_隠れ列の並び',
   '_控えて', '_足しの控え', '_控えの和', 'colX', 'rowY',
   'xToC', '_xToCの中', 'yToR', '_yToRの中',
   'getColResizeBorder', '_getColResizeBorderの中', 'getRowResizeBorder', '_getRowResizeBorderの中'];

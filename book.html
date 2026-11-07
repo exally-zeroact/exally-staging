@@ -11199,30 +11199,41 @@ function rH(r){
      （1月分は 表の頭から 始まるので たまたま 出ていた＝★出る方しか 測っていなかった★）
    ⇒ ★r より前に 隠れている行の数を 引く★。行番号は 元のまま（飛び飛びで 残る＝Excelと同じ）。
    ★数え直しは 隠す物が 変わった時だけ★（並びを覚えて 二分探索する。ROWS=100万でも 速い） */
-var _隠し = { 行: { 印: null, 並び: [] }, 列: { 印: null, 並び: [] } };
+var _隠し = { 行: { 名: null, 鍵: null, 並び: [] }, 列: { 名: null, 鍵: null, 並び: [] } };
 /* 控えの 箱（中身の 注は 下の _控えて の 上）＝_隠れ行の並び より 前に 置く */
 var _足し控え = { 深さ: 0, 列: null, 行: null, 隠行: null, 隠列: null };
-function _隠しの印(たち){
-  var 印 = '';
+/* ★隠した物が 前と 同じかは 鍵を 1つずつ 比べる★（2026-11-07）
+   ＝前は 鍵の 数と 和だけを 印に して いた（08-28〜）。{1,4} と {2,3} は 数2・和5 で 同じ 印
+     ⇒ 絞り込みで 隠す 行が 1・4 から 2・3 に 変わっても 古い 並び [1,4] で rowY を 数えた（行が ずれて 描かれる）
+   ⇒ 前に 見た 鍵を 箱ごとに そのまま 覚え、今の 鍵と 順に 比べる。重さは 前と 同じ（鍵を 1回 回すだけ）
+   ★「同じ」と 言うのは 鍵が 全部 同じ時だけ★（並ぶ 順が 違うだけでも 作り直す＝古い 並びを 使う 事は 無い）
+   試験＝tests/kakushi-shirushi.test.mjs */
+function _隠しが同じ(前, たち){
+  if(!前 || 前.length !== たち.length) return false;
   for(var i=0;i<たち.length;i++){
-    var o = たち[i] || {};
-    var n = 0, 和 = 0;
-    for(var k in o){ if(Object.prototype.hasOwnProperty.call(o,k) && o[k]){ n++; 和 += (+k)||0; } }
-    印 += n + ':' + 和 + '/';
+    var o = たち[i] || {}, 鍵 = 前[i], j = 0;
+    for(var k in o){
+      if(Object.prototype.hasOwnProperty.call(o,k) && o[k]){
+        if(j >= 鍵.length || 鍵[j] !== k) return false;
+        j++;
+      }
+    }
+    if(j !== 鍵.length) return false;
   }
-  return 印;
+  return true;
 }
 function _隠しの並び(どっち, たち){
-  var 印 = どっち + '|' + (sheets[activeSheet].name||'') + '|' + _隠しの印(たち);
+  var 名 = sheets[activeSheet].name||'';
   var 箱 = _隠し[どっち];
-  if(箱.印 === 印) return 箱.並び;
-  var 印付き = {};
+  if(箱.名 === 名 && _隠しが同じ(箱.鍵, たち)) return 箱.並び;
+  var 印付き = {}, 鍵 = [];
   for(var i=0;i<たち.length;i++){
-    var o = たち[i] || {};
-    for(var k in o){ if(Object.prototype.hasOwnProperty.call(o,k) && o[k]) 印付き[+k] = 1; }
+    var o = たち[i] || {}, ks = [];
+    for(var k in o){ if(Object.prototype.hasOwnProperty.call(o,k) && o[k]){ ks.push(k); 印付き[+k] = 1; } }
+    鍵.push(ks);
   }
   var 並び = Object.keys(印付き).map(Number).sort(function(a,b){ return a-b; });
-  箱.印 = 印; 箱.並び = 並び;
+  箱.名 = 名; 箱.鍵 = 鍵; 箱.並び = 並び;
   return 並び;
 }
 /** ★n より前に 隠れている数★（二分探索） */
@@ -11232,7 +11243,7 @@ function _隠れた数(並び, n){
   return lo;
 }
 /* ★控えの 間（描く・境目・位置→列行）は 並びも 1回だけ 作る★（2026-11-07）
-   ＝_隠しの印 は 呼ぶ たびに 隠した 鍵を 全部 回す。取り込んだ xlsx の 隠した 行が 何千も 来ると rowY ごとに 重い
+   ＝_隠しが同じ は 呼ぶ たびに 隠した 鍵を 全部 回す。取り込んだ xlsx の 隠した 行が 何千も 来ると rowY ごとに 重い
    ★控えの 外は 今まで 通り 毎回 印を 見る★（隠すのが 変わったら すぐ 数え直す） */
 function _隠れ行の並び(){
   var sh = sheets[activeSheet];

@@ -62,6 +62,8 @@ const FILES = [
   ['migi-ni-ugokasu.test.mjs'],                // ★右へ動かすと画面が真っ白（幅の広い列が在ると当たりが行き過ぎる）★
   ['tashi-hikae.test.mjs'],                    // ★書いた幅・高さの足し算の控え＝控えあり/なしで colX・rowY・境目が全部同じ（2026-11-07）★
   ['tashi-hikae.test.mjs', '--self-test'],     // ★和・隠し・二分探索・捨て忘れを壊すと赤★
+  ['kakushi-shirushi.test.mjs'],               // ★隠した行・列の並びの覚え＝{1,4}→{2,3} でも古い並びを使わない（2026-11-07）★
+  ['kakushi-shirushi.test.mjs', '--self-test'], // ★前の数と和の印に戻すと赤★
   ['kumikomi-shoshiki.test.mjs'],              // ★国で 変わる 書式番号38／15桁に 丸めてから 出す（実物で 見つけた）★
   ['moji-no-kotae.test.mjs'],                  // ★文字を 返す 式が 数に 化けない（2026-09-11 実Excel 14本 一致）★
   ['hashira-haba.test.mjs'],                   // ★列の 幅を 実Excel と 同じに する（2026-09-11 実測 8列 差0.00）★
