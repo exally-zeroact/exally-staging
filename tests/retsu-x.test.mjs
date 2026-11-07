@@ -740,7 +740,7 @@ console.log('[retsu-x] ★空に 当たる 条件と SUMIF の 取り直し（20
     ['=SUMIF(INDEX(A1:A5,0),">2",B1)', '#REF!'], ['=SUMIF(A1:A5,">2",INDEX(B1:B2,1))', '#REF!'], ['=SUMIF(A1:A5,">2",INDEX(B1:B2,1):B1)', '#REF!'],
     ['=SUMIF(A1:A5,">2",B1:INDEX(B1:B2,1))', '#REF!'], ['=SUMIF(A1:A5,">2",B1 B1:B2)', '#REF!'], ['=SUMIF(A1:A3 A1:A5,">2",B1)', '#REF!'],
     ['=LET(x,A1:A5,SUMIF(x,">2",B1))', '#REF!'], ['=AVERAGEIF(INDEX(A1:A5,0),">2",B1)', '#REF!'],
-    ['=SUMIF(A1:A5,">2",(B1))', '#VALUE!'], ['=SUMIF(A1:A5,">2",IF(TRUE,B1))', '#VALUE!'], ['=SUMIF(A1:A5,">2",CHOOSE(1,B1))', '#VALUE!'],
+    ['=SUMIF(A1:A5,">2",(B1))', '52'], ['=SUMIF(A1:A5,">2",IF(TRUE,B1))', '#VALUE!'], ['=SUMIF(A1:A5,">2",CHOOSE(1,B1))', '#VALUE!'],
     ['=LET(r,B1,SUMIF(A1:A5,">2",r))', '#VALUE!'], ['=SUMIF(A1:A5,">2",B1#)', '#VALUE!'],
     ['=SUMIF(A1:A5,">2",)', '12'], ['=SUMIF(INDEX(A1:A5,0),">2",B1:B5)', '52'], ['=SUMIF(A1:A5,">2",$B$1)', '52'],
   ];
@@ -754,6 +754,40 @@ console.log('[retsu-x] ★空に 当たる 条件と SUMIF の 取り直し（20
   [['=SUMIF(A:A,">2",B2)', '#REF!'], ['=COUNTIF(A:A,B1:B2)', '#REF!'], ['=SUMIF(A:A,B1:B2,B:B)', '#REF!']].forEach(([f, 見], i) => {
     h.打つ('ZY' + (i + 1), f); T('取り直せない・条件が 四角 → #REF! ... ' + f, h.字('ZY' + (i + 1)) === 見, h.字('ZY' + (i + 1)));
   });
+}
+
+console.log('');
+console.log('[retsu-x] ★本番前 taiketsu（2026-11-07）止め2・止め3★');
+{
+  /* ★止め2★ 省いたかは 式の 木で 決める＝空の マスを 指す 式で 条件の 範囲を 黙って 足さない（前は 12）
+       ・括弧は はがす＝`(D1)` も 番地の 付いた 参照（Excel は D3:D5 を 足して 0）・`(B1:B2)` は 左上から 取り直して 120 */
+  const 組 = [
+    ['=SUMIF(A:A,">2",(D1))', '0'], ['=SUMIF(A1:A5,">2",(D1))', '0'], ['=AVERAGEIF(A1:A5,">2",(D1))', '#DIV/0!'],
+    ['=SUMIF(A1:A5,">2",(B1:B2))', '120'], ['=SUMIF(A1:A5,">2",((B1)))', '120'],
+    ['=SUMIF(A1:A5,">2",IF(TRUE,D1))', '#VALUE!'], ['=SUMIF(A1:A5,">2",CHOOSE(1,D1))', '#VALUE!'],
+    ['=LET(r,D1,SUMIF(A1:A5,">2",r))', '#VALUE!'],
+    ['=SUMIF(A1:A5,">2",)', '12'], ['=SUMIF(A1:A5,">2")', '12'], ['=AVERAGEIF(A1:A5,">2",)', '4'],
+  ];
+  for (const [f, 見] of 組) {
+    const h = 材料(); h.打つ('ZZ9', f);
+    T('止め2 ' + f + ' → ' + 見, h.字('ZZ9') === 見, h.字('ZZ9'));
+  }
+  /* ★括弧の 足す 範囲も 頼る★＝B3 を 打ち直すと 新しい 数（古い 120 の まま に しない） */
+  {
+    const h = 材料(); h.打つ('ZZ9', '=SUMIF(A1:A5,">2",(B1))'); h.打つ('B3', '1');
+    T('止め2 (B1) に B3=1 → 91（打ってから）', h.字('ZZ9') === '91', h.字('ZZ9'));
+  }
+  /* ★止め3★ 帯で 条件の 字に * ? ~ が 在る 時は 前と 同じ #REF!（当てはまるか が 写し字を 見ない＝黙った 数に しない） */
+  const 帯 = [
+    ['=COUNTIF(A:A,"<>*")', '#REF!'], ['=SUMIF(A:A,"<>*",B:B)', '#REF!'], ['=COUNTIF(A:A,"a*")', '#REF!'],
+    ['=COUNTIF(A:A,"?")', '#REF!'], ['=COUNTIF(A:A,"~*")', '#REF!'], ['=COUNTIFS(A:A,"",B:B,"*")', '#REF!'],
+    ['=SUMIFS(B:B,A:A,"<>*")', '#REF!'], ['=COUNTIF(A:A,E1)', '#REF!'],
+    ['=COUNTIF(A:A,"<>3")', '1048575'], ['=COUNTIF(A:A,">2")', '3'],
+  ];
+  for (const [f, 見] of 帯) {
+    const h = 材料(); h.打つ('E1', '*'); h.打つ('ZZ9', f);
+    T('止め3 ' + f + ' → ' + 見, h.字('ZZ9') === 見, h.字('ZZ9'));
+  }
 }
 
 console.log('');
