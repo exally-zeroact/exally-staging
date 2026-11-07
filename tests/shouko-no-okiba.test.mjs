@@ -178,12 +178,23 @@ export function blob指紋(buf) {
   return crypto.createHash('sha1').update('blob ' + buf.length + '\0').update(buf).digest('hex');
 }
 
+/** ★git の 門から 走ると GIT_DIR 等が 引き継がれ `-C root` より 勝つ★（2026-11-07 実測＝別 repo の 指紋 3個を 読んだ）
+ *  ⇒ GIT_ で 始まる 道の 変数を 外して 呼ぶ */
+export function git用の環境(env) {
+  const 出 = {};
+  for (const [k, v] of Object.entries(env)) {
+    if (/^GIT_(DIR|WORK_TREE|INDEX_FILE|OBJECT_DIRECTORY|ALTERNATE_OBJECT_DIRECTORIES|COMMON_DIR|NAMESPACE|CEILING_DIRECTORIES|PREFIX)$/i.test(k)) continue;
+    出[k] = v;
+  }
+  return 出;
+}
+
 /** ★rev-list が 転んだら 空の 集まり★＝全部 赤（黙って 緑に しない） */
 function git指紋(root) {
   const 集 = new Set();
   let 訳 = '';
   try {
-    const out = execFileSync('git', ['-C', root, 'rev-list', '--all', '--objects'], { maxBuffer: 1 << 30, stdio: ['ignore', 'pipe', 'pipe'] }).toString();
+    const out = execFileSync('git', ['-C', root, 'rev-list', '--all', '--objects'], { maxBuffer: 1 << 30, stdio: ['ignore', 'pipe', 'pipe'], env: git用の環境(process.env) }).toString();
     for (const line of out.split('\n')) { const h = line.slice(0, 40); if (/^[0-9a-f]{40}$/.test(h)) 集.add(h); }
   } catch (e) { 訳 = String((e && e.message) || e).split('\n')[0]; }
   return { 集, 訳 };
@@ -300,6 +311,19 @@ if (process.argv.includes('--self-test')) {
       const h = blob指紋(Buffer.from('ひかえ\n'));
       const r = 置き場を調べる([自], repo, new Set([h]));
       if (r.危.length) throw new Error('★元が 在るのに 赤★: ' + JSON.stringify(r.危));
+    });
+    T('★★GIT_DIR が 別の repo を 指していても 自分の repo の 指紋を 読む（git の 門から 走った時）★★', () => {
+      const 別 = path.join(試, 'betsu');
+      fs.mkdirSync(別);
+      execFileSync('git', ['init', '-q', 別], { stdio: 'ignore', env: git用の環境(process.env) });
+      const 前 = process.env.GIT_DIR;
+      const 素 = git指紋(ROOT).集.size;
+      process.env.GIT_DIR = path.join(別, '.git');
+      let 混 = -1;
+      try { 混 = git指紋(ROOT).集.size; } finally { if (前 === undefined) delete process.env.GIT_DIR; else process.env.GIT_DIR = 前; }
+      if (!素) throw new Error('★自分の repo の 指紋が 0★');
+      if (混 !== 素) throw new Error('★GIT_DIR に 引きずられた★ ' + 混 + '個（' + 素 + '個の はず）');
+      if (git用の環境({ GIT_DIR: 'x', git_work_tree: 'y', GIT_AUTHOR_NAME: 'a', PATH: 'p' }).GIT_DIR !== undefined) throw new Error('GIT_DIR を 外していない');
     });
     T('★★rev-list が 転んだ（空の 集まり）＝全部 赤★★', () => {
       const g = git指紋(path.join(試, 'gitでない'));
