@@ -53,10 +53,12 @@ function 切る(名) {
 }
 
 /* ★実物と 同じ 形の 板★＝既定 72点／広い 列が 3本（司さんの 売上表と 同じ） */
+/* ★2026-11-07 xToC は 「控えの 包み」＋「_xToCの中」に なった★＝包みと 控えも 一緒に 切り出す */
+const 控えの素 = (/var _足し控え = {[^}]*};/.exec(本) || [''])[0] + ' ' + 切る('_控えて') + ' ' + 切る('_足しの控え') + ' ' + 切る('_控えの和') + ' ';
 const 板 = { colW: { 2: 165, 3: 165, 4: 165 }, rowH: {}, hiddenCols: {}, hiddenRows: {}, freezeCol: 0, freezeRow: 0 };
 
 function 台(scrollLeft) {
-  const 素 = 切る('colX') + ' ' + 切る('cW') + ' ' + 切る('xToC')
+  const 素 = 控えの素 + 切る('colX') + ' ' + 切る('cW') + ' ' + 切る('xToC') + ' ' + 切る('_xToCの中')
     + ' return { xToC: xToC, colX: colX, cW: cW };';
   const f = new Function('sheets', 'activeSheet', 'HDR_W', 'COL_W', 'scale', 'scrollLeft',
     '_隠れ列の並び', '_隠れた数', 'COLS', 素);
@@ -77,7 +79,7 @@ T('★★戻れない 版なら 赤に なる（★これが 真っ白の 正体
      ⇒★見るのは「答えた 列が 本当に 画面の 端に 居るか」★
      ⇒ そして ★戻れない 版（直す 前）を その場で 作って 赤に なる 事★を 見ます
        ＝この 見張りが 空振りして いない 証し */
-  const 素 = 切る('colX') + ' ' + 切る('cW') + ' ' + 切る('xToC').replace(
+  const 素 = 控えの素 + 切る('colX') + ' ' + 切る('cW') + ' ' + 切る('xToC') + ' ' + 切る('_xToCの中').replace(
     /var _戻 = 0;\s*while\(est > 0 && cx > x && _戻 < COLS\)\{ est--; cx -= cW\(est\); _戻\+\+; \}/,
     '/* 戻れない 版（直す 前） */')
     + ' return xToC;';
@@ -129,7 +131,7 @@ T('★★広い 列が 在っても どこでも 合う（総なめ）★★', (
 
 T('★★行も 同じ 直しが 入って いる★★', () => {
   const 動く = 注記を外す(本, { html: true });
-  const i = 動く.indexOf('function yToR');
+  const i = 動く.indexOf('function _yToRの中');  /* 2026-11-07 包みの 中身 */
   const 中 = i >= 0 ? 動く.slice(i, i + 900) : '';
   if (中.indexOf('while(est > 0 && ry > y') < 0) {
     throw new Error('★行（yToR）が 戻れない ままです★'

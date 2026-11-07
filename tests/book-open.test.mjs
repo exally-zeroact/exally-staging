@@ -167,5 +167,58 @@ await T('★.xlsx で1セル変えたら、変わる部品は狙った物だけ'
   if (!changed.length) throw new Error('1つも変わっていない');
 });
 
+/* ★★取り込んだ ブックの 行の 高さ・隠した 行と 列★★（2026-11-07）
+   前は js/book-open.js が rowH・hiddenRows・hiddenCols を ★いつも 空★で 返した
+   ⇒ 隠した 行も 列も 見えて、行は 全部 既定の 24点だった（Excel と 違う）
+   材料＝★実Excel（COM）で 作った★ tests/fixtures/gyou-takasa-2026-11-07.xlsx／.xlsb（作り方 tools/gyou-takasa-excel.ps1）
+   実Excel の 答え（2026-11-07 測った）:
+     2行目 6pt／3行目 隠す／5行目 30pt／7行目 0.75pt（Excel は 0.8 と 言い、上の 位置は 0.75pt ずれる）
+     9行目 30pt に してから 隠す（★高さも 隠しも 両方 来る＝再表示で 30pt に 戻る★）
+     B列 隠す／D列 幅2＝15.375pt／F列 幅5 に してから 隠す／標準 17.7pt・54pt
+   ★物差し＝画面の 点＝pt × 4/3★（列幅と 同じ＝Excel 54pt が うちの 72） */
+for (const ext of ['xlsx', 'xlsb']) {
+  const b = new Uint8Array(fs.readFileSync(path.join(ROOT, 'tests/fixtures/gyou-takasa-2026-11-07.' + ext)));
+  await T('★' + ext + ' の 行の 高さ・隠した 行と 列を Excel と 同じに 読む', async () => {
+    const r = await BookOpen.openFile(fakeFile('gyou.' + ext, b));
+    const sh = r.sheets[0];
+    eq(JSON.stringify(sh.rowH), JSON.stringify({ 1: 8, 4: 40, 6: 1, 8: 40 }), '行の高さ（点）');
+    eq(JSON.stringify(sh.hiddenRows), JSON.stringify({ 2: true, 8: true }), '隠した行');
+    eq(JSON.stringify(sh.hiddenCols), JSON.stringify({ 1: true, 5: true }), '隠した列');
+    eq(sh.colW[3], 21, 'D列の幅（前から 合って いる 物が 崩れない）');
+    eq(sh.colW[5], 45, 'F列＝隠す前の 幅も 残す（再表示で 戻る）');
+  });
+  await T('★' + ext + ' の 行の 高さを 読んでも 何も変えずに保存 → 1バイトも変わらない', async () => {
+    const r = await BookOpen.openFile(fakeFile('gyou.' + ext, b));
+    const res = await BookOpen.saveOpened(r.sheets);
+    const out = res.bytes || res;
+    eq(Buffer.compare(Buffer.from(out), Buffer.from(b)), 0, '中身');
+  });
+}
+
+/* ★★隠した 行・列の 後ろに 置いた 判子★★（2026-11-07）
+   前は 判子の 場所を 隠した 行・列も 既定の 幅・高さで 数え、行の 高さも 渡して いなかった（book-open.js の {}）
+   ⇒ 隠しを 読むと 画面の マスは 詰まるのに 判子だけ 右・下へ ずれる
+   材料＝★実Excel（COM）で 作った★ tests/fixtures/hanko-kakushi-2026-11-07.xlsx／.xlsb（作り方 tools/hanko-kakushi-excel.ps1）
+   実Excel の 答え：判子 Left 114pt・Top 138.75pt（TopLeftCell E10）＝点で ★152・185★
+     （B列・C列 隠す（C は 幅20 に してから）／3行目 隠す・7行目 24pt に してから 隠す・5行目 30pt）
+   ★縦は 3点 まで 許す★＝書いて いない 行は うちが 24点・Excel は 17.625pt＝23.5点（6行 × 0.5）＝別件 */
+{
+  const XlsxZukei = require(path.join(ROOT, 'lib/xlsx-zukei.js'));
+  const XlsxKazari = require(path.join(ROOT, 'lib/xlsx-kazari.js'));   /* xlsx の 図形は 飾りの 読みと 一緒に 回る */
+  const zbox = { XLSX, ZipSurgeon, XlsxEdit, XlsbEdit, XlsxZukei, XlsxKazari };
+  new Function('self', 'window', src + '\n;self.__BookOpen = self.BookOpen;')(zbox, zbox);
+  const ZB = zbox.__BookOpen;
+  for (const ext of ['xlsx', 'xlsb']) {
+    const b = new Uint8Array(fs.readFileSync(path.join(ROOT, 'tests/fixtures/hanko-kakushi-2026-11-07.' + ext)));
+    await T('★' + ext + ' の 判子が 隠した 行・列を 数えず Excel の 場所に 来る（152・185）', async () => {
+      const r = await ZB.openFile(fakeFile('hanko.' + ext, b));
+      const o = (r.sheets[0].objects || [])[0];
+      if (!o) throw new Error('★判子が 読めて いない★（空振り）');
+      if (Math.abs(o.x - 152) > 1) throw new Error('★横 ' + o.x + '★（Excel 152）');
+      if (Math.abs(o.y - 185) > 3) throw new Error('★縦 ' + o.y + '★（Excel 185）');
+    });
+  }
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

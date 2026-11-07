@@ -852,6 +852,22 @@
       var px = 幅を点に(col, 字幅);
       if (px) colW[i] = px;
     });
+    /* ★★行の 高さ・隠した 行と 列も 読む★★（2026-11-07）
+         前は 3つとも ★いつも 空★＝隠した 行も 列も 見えて、行は 全部 既定の 24点だった
+         ★物差しは 列と 同じ＝画面の 点 ＝ pt × 4/3★（Excel 54pt が 72・6pt が 8・30pt が 40）
+         ★SheetJS の hpx は pt と 同じ 数を 入れる★＝使わない（実Excel で 作った 材料で 見た）
+         ★高さを 決めてから 隠した 行は 高さも 隠しも 両方 来る★＝両方 入れる（再表示で 元の 高さに 戻る＝Excel と 同じ）
+         ★高さ 0 は Excel では 隠れた 行★ */
+    var rowH = {}, hiddenRows = {}, hiddenCols = {};
+    (ws['!rows'] || []).forEach(function (row, i) {
+      if (!row) return;
+      var hpt = (typeof row.hpt === 'number') ? row.hpt : -1;
+      if (row.hidden || hpt === 0) hiddenRows[i] = true;
+      if (hpt > 0) rowH[i] = Math.max(1, Math.round(hpt * 4 / 3));
+    });
+    (ws['!cols'] || []).forEach(function (col, i) {
+      if (col && (col.hidden || col.width === 0)) hiddenCols[i] = true;
+    });
     /* ★表の枠（!ref）も 覚えておく★（2026-08-27 指示役の指摘）
        ＝★「値か式が在る所」と「表の枠」は 違う★。
          実物 計算シート … ★値か式 400行×72列／表の枠 404行×152列★
@@ -896,7 +912,8 @@
          ⇒★うちの 列幅で 解くので そのまま 合います★ */
     var objects = [];
     if (図形 && 図形.length && root.XlsxZukei) {
-      objects = root.XlsxZukei.台に載せる形(図形, colW, 標準の点, {}, 24);
+      objects = root.XlsxZukei.台に載せる形(図形, colW, 標準の点, rowH, 24, hiddenCols, hiddenRows);
+      /* ★行の 高さ・隠した 行と 列も 渡す★（2026-11-07）＝画面の rowY/colX と 同じ 数え方 */
     }
     return { name: name, data: data, colW: colW, 既定の列幅: 標準の点, objects: objects,
       /* ★★ゼロを 隠す 板か★★（2026-09-25）
@@ -909,7 +926,7 @@
          ⇒ 同じ 幅に 入る 桁数が 実Excel と 揃う（うちの 字は 細くて 多く 入って いた） */
       既定の字体名: (既定の字体 && 既定の字体.name) ? 既定の字体.name : '',
       既定の字大: (既定の字体 && 既定の字体.sz) ? 既定の字体.sz : 0,
-      rowH: {}, hiddenRows: {}, hiddenCols: {}, 枠: 枠, _fromFile: true };
+      rowH: rowH, hiddenRows: hiddenRows, hiddenCols: hiddenCols, 枠: 枠, _fromFile: true };
   }
 
   /* ── 保存：★元のバイト列を書き換える★ ── */

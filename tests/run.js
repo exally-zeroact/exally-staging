@@ -60,6 +60,8 @@ const FILES = [
   ['xlsb-jitai.test.mjs'],                     // ★.xlsb の マスごとの 字体を 自分で 読む（借り物は くれない）★
   ['ketsugou-yomu.test.mjs'],                  // ★Excel の 結合した マスを 読む（前は 1組も 読んで いなかった）★
   ['migi-ni-ugokasu.test.mjs'],                // ★右へ動かすと画面が真っ白（幅の広い列が在ると当たりが行き過ぎる）★
+  ['tashi-hikae.test.mjs'],                    // ★書いた幅・高さの足し算の控え＝控えあり/なしで colX・rowY・境目が全部同じ（2026-11-07）★
+  ['tashi-hikae.test.mjs', '--self-test'],     // ★和・隠し・二分探索・捨て忘れを壊すと赤★
   ['kumikomi-shoshiki.test.mjs'],              // ★国で 変わる 書式番号38／15桁に 丸めてから 出す（実物で 見つけた）★
   ['moji-no-kotae.test.mjs'],                  // ★文字を 返す 式が 数に 化けない（2026-09-11 実Excel 14本 一致）★
   ['hashira-haba.test.mjs'],                   // ★列の 幅を 実Excel と 同じに する（2026-09-11 実測 8列 差0.00）★
