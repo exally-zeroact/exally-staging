@@ -1,0 +1,40 @@
+# 実Excel 16.0 build 20527 / 盤2 A1:A10=apple,#N/A,TRUE,="",a~b," x",x,5(数),#DIV/0!,空 B1:B10=1..10 / 盤3 H1:H5=1..5 I1:I5=10..50 L1=*
+=COUNTIF(A1:A10,"*")	5	z0=False	kata=Double
+=COUNTIF(A1:A10,"<>*")	5	z0=False	kata=Double
+=COUNTIF(A1:A10,"=*")	5	z0=False	kata=Double
+=COUNTIF(A1:A10,"?*")	4	z0=False	kata=Double
+=COUNTIF(A1:A10,"<>?*")	6	z0=False	kata=Double
+=COUNTIF(A1:A10,"<>x")	9	z0=False	kata=Double
+=COUNTIF(A1:A10,"=x")	1	z0=False	kata=Double
+=COUNTIF(A1:A10,"x")	1	z0=False	kata=Double
+=COUNTIF(A1:A10,"<>")	9	z0=False	kata=Double
+=COUNTIF(A1:A10,"=")	1	z0=False	kata=Double
+=COUNTIF(A1:A10,"")	2	z0=False	kata=Double
+=COUNTIF(A1:A10,"a~b")	1	z0=False	kata=Double
+=COUNTIF(A1:A10,"a~~b")	0	z0=True	kata=Double
+=COUNTIF(A1:A10,"<>a~b")	9	z0=False	kata=Double
+=COUNTIF(A1:A10," x*")	1	z0=False	kata=Double
+=COUNTIF(A1:A10,"= x*")	1	z0=False	kata=Double
+=COUNTIF(A1:A10,"<> x*")	9	z0=False	kata=Double
+=COUNTIF(A1:A10,"x*")	1	z0=False	kata=Double
+=COUNTIF(A1:A10,"=x*")	1	z0=False	kata=Double
+=COUNTIF(A1:A10,"<>x*")	9	z0=False	kata=Double
+=COUNTIF(A1:A10,"5")	1	z0=False	kata=Double
+=COUNTIF(A1:A10,"=5")	1	z0=False	kata=Double
+=COUNTIF(A1:A10,"TRUE")	1	z0=False	kata=Double
+=COUNTIF(A1:A10,"<>TRUE")	9	z0=False	kata=Double
+=COUNTIF(A1:A10,"#N/A")	1	z0=False	kata=Double
+=COUNTIF(A1:A10,"<>#N/A")	9	z0=False	kata=Double
+=SUMIF(A1:A10,"<>*",B1:B10)	32	z0=False	kata=Double
+=SUMIF(A1:A10,"*",B1:B10)	23	z0=False	kata=Double
+=COUNTIFS(A1:A10,"<>*",B1:B10,">2")	4	z0=False	kata=Double
+=COUNTIF(H:H,"<>*")	1048576	z0=False	kata=Double
+=SUMIF(H:H,"<>*",I:I)	150	z0=False	kata=Double
+=COUNTIF(H:H,"a*")	0	z0=True	kata=Double
+=COUNTIF(H:H,"?")	0	z0=True	kata=Double
+=COUNTIF(H:H,"~*")	0	z0=True	kata=Double
+=COUNTIFS(H:H,"",I:I,"*")	0	z0=True	kata=Double
+=SUMIFS(I:I,H:H,"<>*")	150	z0=False	kata=Double
+=COUNTIF(H:H,L1)	0	z0=True	kata=Double
+=COUNTIF(H:H,"<>3")	1048575	z0=False	kata=Double
+=COUNTIF(H:H,">2")	3	z0=False	kata=Double
