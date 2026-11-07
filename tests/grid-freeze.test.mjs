@@ -487,6 +487,44 @@ T('★隠れた行が 多くても 見出しの塗りが 下まで届く★', ()
   finally { sh().hiddenRows = {}; }
 });
 
+/* ── ⑭ ★低い行・細い列（Excel 方眼紙）でも 画面の下・右の端まで描く★（2026-11-07 実WebKit で見た：列幅24で T列から右・行高8で 23行目から下が 白く残った）
+   ★見出しの字（列の字・行の番号）の 一番 右・一番 下が 画面の端まで 届いているか★を 数で見る */
+function 見出しの字(設定) {
+  const sh0 = sh(); const 元ctx = win.ctx, 元H = win.wrapH, 元W = win.wrapW, 元T = win.scrollTop, 元L = win.scrollLeft;
+  const 元幅 = sh0.colW, 元高 = sh0.rowH;
+  sh0.colW = {}; sh0.rowH = {};
+  for (let c = 0; c < 400; c++) if (設定.幅) sh0.colW[c] = 設定.幅;
+  for (let r = 0; r < 400; r++) if (設定.高さ) sh0.rowH[r] = 設定.高さ;
+  win.wrapH = 600; win.wrapW = 900; win.scrollTop = 0; win.scrollLeft = 0;
+  let 右 = 0, 下 = 0, n = 0;
+  win.ctx = new Proxy(元ctx, {
+    get(t, k) {
+      if (k === 'fillText') return (s, x, y) => { if (y === win.HDR_H / 2) 右 = Math.max(右, x); else if (x === win.HDR_W - 4) 下 = Math.max(下, y); };
+      if (k === 'fillRect') return () => { if (++n > 上限) throw new 描きすぎ('fillRect ' + 上限 + ' 回を越えた'); };
+      return t[k];
+    },
+    set() { return true; },
+  });
+  try { win._doRender(); }
+  finally { win.ctx = 元ctx; win.wrapH = 元H; win.wrapW = 元W; win.scrollTop = 元T; win.scrollLeft = 元L; sh0.colW = 元幅; sh0.rowH = 元高; }
+  return { 右, 下 };
+}
+T('★細い列（幅24）でも 列の字が 画面の右の端まで 描かれる★', () => {
+  reset();
+  const { 右 } = 見出しの字({ 幅: 24 });
+  ok(右 >= 900 - 24, '★列の字の 一番右が ' + 右 + '＝画面の右（900）まで 描いていない★');
+});
+T('★低い行（高さ8）でも 行の番号が 画面の下の端まで 描かれる★', () => {
+  reset();
+  const { 下 } = 見出しの字({ 高さ: 8 });
+  ok(下 >= 600 - 8, '★行の番号の 一番下が ' + 下 + '＝画面の下（600）まで 描いていない★');
+});
+T('★既定の大きさでも 今まで通り 端まで 描かれる★', () => {
+  reset();
+  const { 右, 下 } = 見出しの字({});
+  ok(右 >= 900 - win.COL_W && 下 >= 600 - win.ROW_H, '既定で 端まで 届いていない 右' + 右 + ' 下' + 下);
+});
+
 /* ── ⑨ ★作っていない物を 台帳に書いてある★ ── */
 T('★作っていない物が golden に書いてある（全部 作った事にしない）★', () => {
   ok(Array.isArray(GOLD['作っていない物']) && GOLD['作っていない物'].length >= 2, '作っていない物が書かれていない');
@@ -532,6 +570,8 @@ if (SELF) {
     ['book.html', '★見出しの強調を 打ち切りすぎる（下）★', (s) => s.replace('r<=Math.min(eR+1,selR2);r++) ctx.fillRect(0,rowY(r)', 'r<=Math.min(eR-3,selR2);r++) ctx.fillRect(0,rowY(r)')],
     ['book.html', '★見出しの強調を 打ち切りすぎる（上）★', (s) => s.replace('for(var r=Math.max(sR,selR1);r<=Math.min(eR+1,selR2);r++) ctx.fillRect(0,rowY(r)', 'for(var r=Math.max(sR+1,selR1);r<=Math.min(eR+1,selR2);r++) ctx.fillRect(0,rowY(r)')],
     ['book.html', '★見出しの強調（列）を 打ち切りすぎる（右）★', (s) => s.replace('c<=Math.min(eC+1,selC2);c++) ctx.fillRect(colX(c),0', 'c<=Math.min(eC-3,selC2);c++) ctx.fillRect(colX(c),0')],
+    ['book.html', '★歩く数を 既定の高さで 数える★（低い行で 下が白い）', (s) => s.replace('Math.ceil(wrapH/Math.max(1,_低い*scale))', 'Math.ceil(wrapH/Math.max(1,ROW_H*scale))')],
+    ['book.html', '★歩く数を 既定の幅で 数える★（細い列で 右が白い）', (s) => s.replace('Math.ceil(wrapW/Math.max(1,_細い*scale))', 'Math.ceil(wrapW/Math.max(1,COL_W*scale))')],
     ['book.html', '★Alt+= が どちらを取ったか 出さない★', (s) => s.replace('  if(got.ambiguous){', '  if(false){')],
     ['lib/autosum.js', '★上と左の両方が在る事に 気づかない★', (s) => s.replace('    var まよう = 上あり && 左あり;', '    var まよう = false;')],
   ];

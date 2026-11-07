@@ -7203,8 +7203,13 @@ function _renderPass() {
               + Object.keys(_sh.filterHidden||{}).length;
   var _隠れ列 = Object.keys(_sh.hiddenCols||{}).length
               + Object.keys(_sh.kirikaeCols||{}).length;
-  var _行の端 = Math.min(ROWS-1, sR + Math.ceil(wrapH/Math.max(1,ROW_H*scale)) + _隠れ行 + 4);
-  var _列の端 = Math.min(COLS-1, sC + Math.ceil(wrapW/Math.max(1,COL_W*scale)) + _隠れ列 + 4);
+  /* ★歩く数は 一番低い行・一番細い列で 数える★（既定の 24・72 で数えると 低い行・細い列＝Excel 方眼紙で
+     画面の下・右が 白く残った＝列幅24で T列から右・行高8で 23行目から下＝2026-11-07 実WebKit で見た） */
+  var _低い = ROW_H, _細い = Math.min(COL_W, _sh.既定の列幅 || COL_W);
+  for(var _k in (_sh.rowH||{})){ var _v = +_sh.rowH[_k]; if(_v > 0 && _v < _低い) _低い = _v; }
+  for(var _k2 in (_sh.colW||{})){ var _v2 = +_sh.colW[_k2]; if(_v2 > 0 && _v2 < _細い) _細い = _v2; }
+  var _行の端 = Math.min(ROWS-1, sR + Math.ceil(wrapH/Math.max(1,_低い*scale)) + _隠れ行 + 4);
+  var _列の端 = Math.min(COLS-1, sC + Math.ceil(wrapW/Math.max(1,_細い*scale)) + _隠れ列 + 4);
   while(colX(eC)<wrapW && eC<_列の端) eC++;
   while(rowY(eR)<wrapH && eR<_行の端) eR++;
 
