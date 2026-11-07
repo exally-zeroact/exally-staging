@@ -87,6 +87,8 @@
       /* ★★2つ 受け取ります★★（2026-09-25 から 「ゼロを 隠すか」も 一緒に 来ます） */
       var 字体表 = (読んだ物 && 読んだ物.字体) ? 読んだ物.字体 : null;
       var ゼロ表 = (読んだ物 && 読んだ物.ゼロ) ? 読んだ物.ゼロ : null;
+      /* ★板の 既定の 行の 高さ（pt・custom の 板だけ）★（2026-11-07）＝.xlsx は 下の 飾りの 前で 同じ 外の 変数へ */
+      var 既定行高表 = (読んだ物 && 読んだ物.既定行高) ? 読んだ物.既定行高 : null;
       var 全部計算の印 = (読んだ物 && 読んだ物.全部計算 !== undefined) ? 読んだ物.全部計算 : null;
       var wb = root.XLSX.read(bytes, { type: 'array', cellFormula: true, cellNF: true, sheetStubs: false, cellStyles: true });
       /* ★★.xlsb の 行の 高さを 足す★★（2026-11-07）
@@ -163,6 +165,7 @@
                  ⇒★落ちません／印が いつも false に なるだけ★＝★一番 見つけにくい 形★。
                  ⇒★絵の 点で 数える 試験が 捕まえました★（板の 印 2枚とも false） */
             ゼロ表 = ゼロ表 || {};   /* ★板の 名前 → ゼロを 隠すか★ */
+            既定行高表 = 既定行高表 || {};   /* ★同じ 罠＝外の 変数に 入れる（var を 書かない）★ */
             /* ★★`.xlsx` の 「開いたら 全部 計算しろ」★★（2026-09-25）
                  `xl/workbook.xml` の `<calcPr `fullCalcOnLoad="1"` />`
                  ★札が 無い＝立って いない★（Excel は 立って いる 時だけ 書きます） */
@@ -204,6 +207,18 @@
                     if (m0) {
                       var m = /showZeros\s*=\s*"([^"]*)"/.exec(m0[0]);
                       ゼロ表[板.name] = !!(m && (m[1] === '0' || m[1] === 'false'));
+                    }
+                    /* ★★板の 既定の 行の 高さ★★（2026-11-07）
+                         Excel で 全部の 行の 高さを 変えると `<sheetFormatPr defaultRowHeight="30" customHeight="1">`
+                         ＝書いて いない 行も その 高さ（借り物は この 札を 読まない）
+                         ★custom が 立つ 時だけ★（無い 時の defaultRowHeight は 字から 出る 数・在る 行にしか 効かない＝別件）
+                         ★札の 中だけで 探す★＝`<row>` にも customHeight が 在る */
+                    var f0 = /<sheetFormatPr[\s/>][^>]*>/.exec(xml);
+                    if (f0) {
+                      var fc = /\scustomHeight\s*=\s*"([^"]*)"/.exec(f0[0]);
+                      var fh = /\sdefaultRowHeight\s*=\s*"([^"]*)"/.exec(f0[0]);
+                      var fpt = fh ? parseFloat(fh[1]) : NaN;
+                      if (fc && (fc[1] === '1' || fc[1] === 'true') && fpt > 0) 既定行高表[板.name] = fpt;
                     }
                     表[板.name] = root.XlsxKazari.飾りを読む(xml, 型の字, テーマの字);
                   }).catch(function () { /* ★1枚 読めなくても 他は 出す★ */ });
@@ -312,7 +327,7 @@
           });
         });
       }
-      return pre.then(function () { return finish(bytes, kind, wb, file, trFixes, trStats, hasVba, マクロ, tr断り, 字体表, 飾り表, 図形表, 図形の並び, 図形の当て方, ゼロ表, 全部計算の印); });
+      return pre.then(function () { return finish(bytes, kind, wb, file, trFixes, trStats, hasVba, マクロ, tr断り, 字体表, 飾り表, 図形表, 図形の並び, 図形の当て方, ゼロ表, 全部計算の印, 既定行高表); });
       });
     });
   }
@@ -429,7 +444,7 @@
     return 訳;
   }
 
-  function finish(bytes, kind, wb, file, trFixes, trStats, hasVba, マクロ, tr断り, 字体表, 飾り表, 図形表, 図形の並び, 図形の当て方, ゼロ表, 全部計算の印) {
+  function finish(bytes, kind, wb, file, trFixes, trStats, hasVba, マクロ, tr断り, 字体表, 飾り表, 図形表, 図形の並び, 図形の当て方, ゼロ表, 全部計算の印, 既定行高表) {
       /* ★その本の 既定の 字体を 覚える★＝列の 幅を 点に 直すのに 要る
          （SheetJS は `wb.Styles.Fonts[0]` に 入れる … 実測 2026-09-11
            {"sz":11,"name":"游ゴシック",...}） */
@@ -439,7 +454,8 @@
         var 図 = 図形表 ? 図形表[nm] : null;
         if (!図 && 図形の並び) 図 = 図形の並び[i];
         return sheetToGrid(wb.Sheets[nm], nm, trFixes, 字体表 ? 字体表[nm] : null,
-          飾り表 ? 飾り表[nm] : null, 図 || null, (ゼロ表 && ゼロ表[nm]) || false);
+          飾り表 ? 飾り表[nm] : null, 図 || null, (ゼロ表 && ゼロ表[nm]) || false,
+          既定行高表 ? 既定行高表[nm] : null);
       });
       /* ★控えは「見せている文字」ではなく「元の生の値」から作る★（2026-08-09）
          画面用に 46043 を "1/21(水)" にして見せているので、その文字を控えにすると
@@ -515,7 +531,7 @@
       var 全部計算 = JT.開いたら全部計算するか(wp.recs);
       var 対応 = JT.板とファイル(wp.recs, 字);
       if (!対応) return null;
-      var 名ら = Object.keys(対応), 仕事 = [], 出 = {}, ゼロ = {}, 行高 = {};
+      var 名ら = Object.keys(対応), 仕事 = [], 出 = {}, ゼロ = {}, 行高 = {}, 既定行高 = {};
       for (var k = 0; k < 名ら.length; k++) {
         (function (名) {
           仕事.push(袋から(z, 対応[名]).then(function (sb) {
@@ -531,12 +547,15 @@
             /* ★行の 高さも 同じ 歩きで★（2026-11-07）＝借り物が 落とす Excel の 自動の 高さ（lib/xlsb-jitai.js） */
             var 高 = JT.行の高さたち(p2.recs);
             if (高) 行高[名] = 高;
+            /* ★板の 既定の 行の 高さ も 同じ 歩きで★（2026-11-07）＝custom の 板だけ pt */
+            var 既 = JT.既定の行の高さ ? JT.既定の行の高さ(p2.recs) : null;
+            if (既) 既定行高[名] = 既;
           }, function () { /* 1枚 読めなくても 他は 使う */ }));
         })(名ら[k]);
       }
       return Promise.all(仕事).then(function () {
-        if (!Object.keys(出).length && !Object.keys(ゼロ).length && !Object.keys(行高).length && 全部計算 === null) return null;
-        return { 字体: 出, ゼロ: ゼロ, 全部計算: 全部計算, 行高: 行高 };
+        if (!Object.keys(出).length && !Object.keys(ゼロ).length && !Object.keys(行高).length && !Object.keys(既定行高).length && 全部計算 === null) return null;
+        return { 字体: 出, ゼロ: ゼロ, 全部計算: 全部計算, 行高: 行高, 既定行高: 既定行高 };
       });
     }, function () { return null; });
   }
@@ -699,7 +718,7 @@
     if (typeof c.w === 'string' && c.w.charAt(0) === '#') return c.w;
     return 誤りの番号[c.v] || '#N/A';
   }
-  function sheetToGrid(ws, name, tableFixes, 字体, 飾り, 図形, ゼロを隠す) {
+  function sheetToGrid(ws, name, tableFixes, 字体, 飾り, 図形, ゼロを隠す, 既定行高pt) {
 
     var data = {}, X = root.XLSX, fixes = tableFixes || {};
     var 答えが無い数 = 0;   /* ★式は 在るのに 答えが 保存されて いない マス★ */
@@ -877,6 +896,10 @@
          ★高さを 決めてから 隠した 行は 高さも 隠しも 両方 来る★＝両方 入れる（再表示で 元の 高さに 戻る＝Excel と 同じ）
          ★高さ 0 は Excel では 隠れた 行★ */
     var rowH = {}, hiddenRows = {}, hiddenCols = {};
+    /* ★★板の 既定の 行の 高さ（点）＝★出どころは ここ 1つ★★★（2026-11-07）
+         板の `既定の行高` と 図形の 置き場（台に載せる形）の 両方に ★この 変数を 渡す★
+         ＝画面の rowY と 図形が 同じ 数で 数える（片方だけ 24 だと 判子が 行ごとに ずれる） */
+    var 既定の行の点 = (既定行高pt > 0) ? Math.max(1, Math.round(既定行高pt * 4 / 3)) : 0;
     (ws['!rows'] || []).forEach(function (row, i) {
       if (!row) return;
       var hpt = (typeof row.hpt === 'number') ? row.hpt : -1;
@@ -930,10 +953,10 @@
          ⇒★うちの 列幅で 解くので そのまま 合います★ */
     var objects = [];
     if (図形 && 図形.length && root.XlsxZukei) {
-      objects = root.XlsxZukei.台に載せる形(図形, colW, 標準の点, rowH, 24, hiddenCols, hiddenRows);
+      objects = root.XlsxZukei.台に載せる形(図形, colW, 標準の点, rowH, 既定の行の点 || 24, hiddenCols, hiddenRows);
       /* ★行の 高さ・隠した 行と 列も 渡す★（2026-11-07）＝画面の rowY/colX と 同じ 数え方 */
     }
-    return { name: name, data: data, colW: colW, 既定の列幅: 標準の点, objects: objects,
+    var 板 = { name: name, data: data, colW: colW, 既定の列幅: 標準の点, objects: objects,
       /* ★★ゼロを 隠す 板か★★（2026-09-25）
            経営者1 の 実測 ... 表示が 実Excel と 違う 9,163個の うち
            ★6,743個（74%）が 「Excel は 空・うちは `0`」★
@@ -945,6 +968,9 @@
       既定の字体名: (既定の字体 && 既定の字体.name) ? 既定の字体.name : '',
       既定の字大: (既定の字体 && 既定の字体.sz) ? 既定の字体.sz : 0,
       rowH: rowH, hiddenRows: hiddenRows, hiddenCols: hiddenCols, 枠: 枠, _fromFile: true };
+    /* ★custom の 既定が 在る 板だけ 持つ★＝無い 板（新しく 作る 板も）は 今まで 通り 画面の ROW_H */
+    if (既定の行の点) 板.既定の行高 = 既定の行の点;
+    return 板;
   }
 
   /* ── 保存：★元のバイト列を書き換える★ ── */

@@ -118,8 +118,8 @@ ok('★背景は 紙に 刷られない事を 画面に 書いてある★', /�
 ok('★ふりがなは 8px＝実測の 6点★', /'8px "Noto Sans JP",sans-serif'/.test(book));
 ok('  点→画面の 直し方を 書き残している', /6×96\/72 = ★8px★/.test(book));
 ok('★読み方の 在る 行だけ 伸ばす（実測 18.75→26.7＝1.424倍）★',
-  /Math\.round\(ROW_H \* 1\.424\)/.test(book));
-ok('★人が 高さを 決めた 行は 触らない★', /&& !sh\.rowH\[r\]\) \{/.test(book));
+  /Math\.round\(既定の行高\(sh\) \* 1\.424\)/.test(book));
+ok('★人が 高さを 決めた 行は 触らない★', /&& !sh\.rowH\[r\] && !sh\.既定の行高\) \{/.test(book));
 ok('★ふりがなは 人が 入れる事を 画面に 書いてある★', /ふりがなが 入りません/.test(book));
 ok('★ふりがなは シートごとに 持つ★', /sheets\[activeSheet\]\.ruby/.test(book));
 ok('★出していない 時は 描かない★', /if \(ふりがなを出す\) \{/.test(book));

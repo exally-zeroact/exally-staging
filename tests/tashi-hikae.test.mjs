@@ -39,7 +39,7 @@ function 一行(src, re, 名) {
   return m[0];
 }
 
-const 名たち = ['cW', 'rH', '_隠しが同じ', '_隠しの並び', '_隠れた数', '_隠れ行の並び', '_隠れ列の並び',
+const 名たち = ['cW', '既定の行高', '素の行高', 'rH', '_隠しが同じ', '_隠しの並び', '_隠れた数', '_隠れ行の並び', '_隠れ列の並び',
   '_控えて', '_足しの控え', '_控えの和', 'colX', 'rowY',
   'xToC', '_xToCの中', 'yToR', '_yToRの中',
   'getColResizeBorder', '_getColResizeBorderの中', 'getRowResizeBorder', '_getRowResizeBorderの中'];
@@ -162,6 +162,45 @@ function 見る(src) {
   return { 違い, 数, t };
 }
 
+/* ★★板の 既定の 行の 高さ（customHeight）★★（2026-11-07）
+     ★控えあり／なしの 一致では 足りない★＝両方 24 に 戻っても 同じ＝★正しい 数と 直に 比べる★
+     板A＝鍵も 隠しも 無い 既定40（yToR の 速い 道を 通る）／板B＝鍵・隠しが 混じる 既定40 */
+function 既定を見る(src) {
+  const 違い = [];
+  const t = 台を組む(src);
+  const HDR = vm.runInContext('HDR_H', t);
+  const 板A = { name: 'A', colW: {}, rowH: {}, hiddenRows: {}, hiddenCols: {}, 既定の行高: 40 };
+  const 板B = { name: 'B', colW: {}, rowH: { 3: 10, 7: 55, 20: 1 }, hiddenRows: { 5: true, 12: true }, hiddenCols: {},
+    filterHidden: { 30: true }, 既定の行高: 40 };
+  t.scale = 1; t.scrollTop = 0; t.scrollLeft = 0;
+  for (const 控え of [false, true]) {
+    const 回す = (f) => 控え ? t._控えて(f, null, []) : f();
+    const 名 = 控え ? '控えの中 ' : '控えの外 ';
+    t.sheets = [板A]; t.activeSheet = 0;
+    回す(() => {
+      if (t.rH(5) !== 40) 違い.push(名 + 'A rH(5)=' + t.rH(5));
+      if (t.rowY(2) !== HDR + 80) 違い.push(名 + 'A rowY(2)=' + t.rowY(2));
+      for (let r = 0; r <= 60; r++) {
+        if (t.rowY(r + 1) - t.rowY(r) !== 40) 違い.push(名 + 'A 差 r=' + r + ' ' + (t.rowY(r + 1) - t.rowY(r)));
+        if (t.yToR(t.rowY(r) + 1) !== r) 違い.push(名 + 'A 往復 r=' + r + ' ' + t.yToR(t.rowY(r) + 1));
+      }
+    });
+    t.sheets = [板B]; t.activeSheet = 0;
+    回す(() => {
+      for (let r = 0; r <= 200; r++) {
+        const h = t.rH(r);
+        if (t.rowY(r + 1) - t.rowY(r) !== h) 違い.push(名 + 'B 差 r=' + r + ' ' + (t.rowY(r + 1) - t.rowY(r)) + '≠' + h);
+        if (h > 0 && t.yToR(t.rowY(r)) !== r) 違い.push(名 + 'B 往復 r=' + r + ' ' + t.yToR(t.rowY(r)));
+      }
+    });
+  }
+  /* 素の行高＝取り消しの 元・引っ張りの 始まり・窓 */
+  if (t.素の行高({ rowH: {}, 既定の行高: 40 }, 3) !== 40) 違い.push('素の行高 既定40');
+  if (t.素の行高({ rowH: { 3: 10 }, 既定の行高: 40 }, 3) !== 10) 違い.push('素の行高 鍵10');
+  if (t.素の行高({ rowH: {} }, 3) !== 24) 違い.push('素の行高 既定無し');
+  return 違い;
+}
+
 let pass = 0, fail = 0;
 const T = (n, f) => { try { f(); pass++; console.log('  ✓ ' + n); } catch (e) { fail++; console.log('  ✗ ' + n + ' — ' + e.message); } };
 
@@ -199,6 +238,11 @@ T('★控えは 外に 出たら 捨てる（古い 控えを 使わない）★
   if (箱.隠行 !== null || 箱.隠列 !== null) throw new Error('★隠しの 並びの 控えが 残って いる★');
 });
 
+T('★★既定の 行の 高さ 40 の 板で rowY・rH・yToR が 正しい 数★★', () => {
+  const 違 = 既定を見る(本);
+  if (違.length) throw new Error('★' + 違.length + '本 違う★  ' + 違.slice(0, 5).join(' ／ '));
+});
+
 T('★描く・境目・位置→列行 の 5つ が 控えの 中で 回る★', () => {
   for (const n of ['_doRender', 'xToC', 'yToR', 'getColResizeBorder', 'getRowResizeBorder']) {
     const 中 = n.charAt(0) === '_' ? n + 'の中' : '_' + n + 'の中';
@@ -217,6 +261,11 @@ if (process.argv.includes('--self-test')) {
     { 名: '行の 境目の 始めが 1つ 先', 前: 'if(rowY(m) + rH(m) < HDR_H - threshold) lo = m + 1; else hi = m; }\n  var start = lo;', 後: 'if(rowY(m) + rH(m) < HDR_H - threshold) lo = m + 1; else hi = m; }\n  var start = lo + 1;' },
     { 名: '列の 境目の 始めが 1つ 先', 前: 'if(colX(m) + cW(m) < HDR_W - threshold) lo = m + 1; else hi = m; }\n  var start = lo;', 後: 'if(colX(m) + cW(m) < HDR_W - threshold) lo = m + 1; else hi = m; }\n  var start = lo + 1;' },
     { 名: '外に 出ても 控えを 捨てない', 前: '_足し控え.列 = null; _足し控え.行 = null;', 後: '' },
+    { 名: 'rowY の 土台が 既定を 見ない', 前: '(r - 隠) * 既 * scale', 後: '(r - 隠) * ROW_H * scale' },
+    { 名: 'rowY 控えの 和が 既定を 見ない', 前: "_控えの和('行', sh, rh, rH, 既, r)", 後: "_控えの和('行', sh, rh, rH, ROW_H, r)" },
+    { 名: 'rowY 控えの 外の 足しが 既定を 見ない', 前: '足 += rh[k] - 既; }', 後: '足 += rh[k] - ROW_H; }' },
+    { 名: 'rH が 既定を 見ない', 前: '  var h = 素の行高(sh, r);', 後: '  var h = (sh.rowH[r] || ROW_H);' },
+    { 名: 'yToR の 速い 道が 既定を 見ない', 前: 'return Math.min(Math.floor(py / (既定の行高(sheets[activeSheet]) * scale)), ROWS-1);', 後: 'return Math.min(Math.floor(py / (ROW_H * scale)), ROWS-1);' },
   ];
   let 悪 = 0;
   for (const こ of 壊し方) {
@@ -224,6 +273,7 @@ if (process.argv.includes('--self-test')) {
     const 壊 = 本.replace(こ.前, こ.後);
     let 赤 = false;
     try {
+      if (既定を見る(壊).length) 赤 = true;
       const r = 見る(壊);
       if (r.違い.length) 赤 = true;
       if (!赤) {

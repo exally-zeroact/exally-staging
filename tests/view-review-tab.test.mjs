@@ -60,7 +60,7 @@ ok('★外れた数は 入れずに 理由を 出す★', /％から ' \+ ズー
   const f = new Function('selR1', 'selR2', 'selC1', 'selC2', 'sheets', 'activeSheet',
     'COL_W', 'ROW_H', 'wrapW', 'wrapH', 'HDR_W', 'HDR_H', 'ズームの下', 'ズームの上',
     'ズームを決める', 'ズームの窓を閉じる', 'notify',
-    抜く('選択範囲に合わせる') + '\nreturn 選択範囲に合わせる;');
+    抜く('既定の行高') + '\n' + 抜く('素の行高') + '\n' + 抜く('選択範囲に合わせる') + '\nreturn 選択範囲に合わせる;');
   let 決めた = null;
   const 走らす = (r2, c2, W, H) => {
     決めた = null;

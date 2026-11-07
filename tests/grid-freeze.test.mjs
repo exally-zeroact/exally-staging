@@ -491,8 +491,9 @@ T('★隠れた行が 多くても 見出しの塗りが 下まで届く★', ()
    ★見出しの字（列の字・行の番号）の 一番 右・一番 下が 画面の端まで 届いているか★を 数で見る */
 function 見出しの字(設定) {
   const sh0 = sh(); const 元ctx = win.ctx, 元H = win.wrapH, 元W = win.wrapW, 元T = win.scrollTop, 元L = win.scrollLeft;
-  const 元幅 = sh0.colW, 元高 = sh0.rowH;
+  const 元幅 = sh0.colW, 元高 = sh0.rowH, 元既 = sh0.既定の行高;
   sh0.colW = {}; sh0.rowH = {};
+  if (設定.既定) sh0.既定の行高 = 設定.既定; else delete sh0.既定の行高;
   for (let c = 0; c < 400; c++) if (設定.幅) sh0.colW[c] = 設定.幅;
   for (let r = 0; r < 400; r++) if (設定.高さ) sh0.rowH[r] = 設定.高さ;
   win.wrapH = 600; win.wrapW = 900; win.scrollTop = 0; win.scrollLeft = 0;
@@ -506,7 +507,7 @@ function 見出しの字(設定) {
     set() { return true; },
   });
   try { win._doRender(); }
-  finally { win.ctx = 元ctx; win.wrapH = 元H; win.wrapW = 元W; win.scrollTop = 元T; win.scrollLeft = 元L; sh0.colW = 元幅; sh0.rowH = 元高; }
+  finally { win.ctx = 元ctx; win.wrapH = 元H; win.wrapW = 元W; win.scrollTop = 元T; win.scrollLeft = 元L; sh0.colW = 元幅; sh0.rowH = 元高; if (元既 === undefined) delete sh0.既定の行高; else sh0.既定の行高 = 元既; }
   return { 右, 下 };
 }
 T('★細い列（幅24）でも 列の字が 画面の右の端まで 描かれる★', () => {
@@ -518,6 +519,13 @@ T('★低い行（高さ8）でも 行の番号が 画面の下の端まで 描�
   reset();
   const { 下 } = 見出しの字({ 高さ: 8 });
   ok(下 >= 600 - 8, '★行の番号の 一番下が ' + 下 + '＝画面の下（600）まで 描いていない★');
+});
+/* ★板の 既定の 行の 高さが 24 より 低い（行の 鍵は 1つも 無い）★（2026-11-07）
+   ＝Excel で 全部の 行を 10pt（13点）に した 本。歩く数を 画面の 既定 24 で 数えると 下が 白く 残る */
+T('★板の 既定の 行の 高さが 低い（13・鍵 無し）でも 行の番号が 画面の下の端まで 描かれる★', () => {
+  reset();
+  const { 下 } = 見出しの字({ 既定: 13 });
+  ok(下 >= 600 - 13, '★行の番号の 一番下が ' + 下 + '＝画面の下（600）まで 描いていない★');
 });
 T('★既定の大きさでも 今まで通り 端まで 描かれる★', () => {
   reset();
@@ -571,6 +579,7 @@ if (SELF) {
     ['book.html', '★見出しの強調を 打ち切りすぎる（上）★', (s) => s.replace('for(var r=Math.max(sR,selR1);r<=Math.min(eR+1,selR2);r++) ctx.fillRect(0,rowY(r)', 'for(var r=Math.max(sR+1,selR1);r<=Math.min(eR+1,selR2);r++) ctx.fillRect(0,rowY(r)')],
     ['book.html', '★見出しの強調（列）を 打ち切りすぎる（右）★', (s) => s.replace('c<=Math.min(eC+1,selC2);c++) ctx.fillRect(colX(c),0', 'c<=Math.min(eC-3,selC2);c++) ctx.fillRect(colX(c),0')],
     ['book.html', '★歩く数を 既定の高さで 数える★（低い行で 下が白い）', (s) => s.replace('Math.ceil(wrapH/Math.max(1,_低い*scale))', 'Math.ceil(wrapH/Math.max(1,ROW_H*scale))')],
+    ['book.html', '★歩く数を 板の 既定の 行の 高さで 始めない★（既定 13 の 板で 下が白い）', (s) => s.replace('  var _低い = 既定の行高(_sh), _細い', '  var _低い = ROW_H, _細い')],
     ['book.html', '★歩く数を 既定の幅で 数える★（細い列で 右が白い）', (s) => s.replace('Math.ceil(wrapW/Math.max(1,_細い*scale))', 'Math.ceil(wrapW/Math.max(1,COL_W*scale))')],
     ['book.html', '★Alt+= が どちらを取ったか 出さない★', (s) => s.replace('  if(got.ambiguous){', '  if(false){')],
     ['lib/autosum.js', '★上と左の両方が在る事に 気づかない★', (s) => s.replace('    var まよう = 上あり && 左あり;', '    var まよう = false;')],

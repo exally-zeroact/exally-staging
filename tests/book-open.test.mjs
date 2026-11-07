@@ -243,7 +243,62 @@ for (const ext of ['xlsx', 'xlsb']) {
       if (Math.abs(o.y - 185) > 3) throw new Error('★縦 ' + o.y + '★（Excel 185）');
     });
   }
+  /* ★★既定の 行の 高さが 30pt（custom）の 板の 判子★★（2026-11-07）
+     同じ 本の sheetFormatPr を defaultRowHeight="30" customHeight="1" に 書き換える
+     ⇒ 判子の y＝★画面の 行の 高さの 和に ぴったり★（台に載せる形 へ 24 を 渡すと 書いて いない 行ごとに 16点 ずれる）
+     判子＝行10（xdr:row 9）・rowOff 38100EMU＝3pt＝4点／上の 9行＝隠す 2本（3・7行目）・5行目 30pt・残り 既定
+     ⇒ 7行 × 40＋4＝★284★ */
+  await T('★既定 30pt（custom）の 板の 判子が 画面の 行の 高さの 和に ぴったり 来る（284）', async () => {
+    const b = new Uint8Array(fs.readFileSync(path.join(ROOT, 'tests/fixtures/hanko-kakushi-2026-11-07.xlsx')));
+    const z = ZipSurgeon.read(b);
+    let xml = await z.text('xl/worksheets/sheet1.xml');
+    xml = xml.replace(/<sheetFormatPr[^>]*\/>/, '<sheetFormatPr defaultRowHeight="30" customHeight="1" x14ac:dyDescent="0.7"/>');
+    if (!/customHeight="1" x14ac/.test(xml)) throw new Error('★書き換えられて いない★（空振り）');
+    z.replaceText('xl/worksheets/sheet1.xml', xml);
+    const b30 = (await z.build()).bytes;
+    const r = await ZB.openFile(fakeFile('hanko30.xlsx', b30));
+    const sh = r.sheets[0];
+    eq(sh.既定の行高, 40, '既定の行高（点）');
+    const o = (sh.objects || [])[0];
+    if (!o) throw new Error('★判子が 読めて いない★（空振り）');
+    let 和 = 0;
+    for (let i = 0; i < 9; i++) 和 += sh.hiddenRows[i] ? 0 : (sh.rowH[i] !== undefined ? sh.rowH[i] : sh.既定の行高);
+    eq(和 + 4, 284, '画面の 行の 高さの 和＋4');
+    eq(o.y, 284, '判子の 縦');
+  });
+}
+
+/* ★★板の 既定の 行の 高さ（全部の 行の 高さを 変えた 本）★★（2026-11-07）
+   前は 書いて いない 行が いつも 画面の 24点＝Excel で 全部の 行を 30pt に した 本が 詰まって 見えた
+   材料＝★実Excel（COM）で 作った★ tests/fixtures/kitei-gyoudaka-*-2026-11-07.xlsx／.xlsb（作者は sakusha-mihon で 見本）
+     e_all30＝Cells.RowHeight=30（custom 立つ）／b_custom30＝sheetFormatPr customHeight="1" defaultRowHeight="30" を 手で 書いて Excel で 開き直し
+     a_nocustom30＝defaultRowHeight="30" だが custom 無し／d_excel30＝StandardHeight=30（custom 立たない）
+   ★custom の 板だけ 既定の行高＝30pt × 4/3＝40★／無い 板は 持たない（画面の ROW_H の まま） */
+{
+  /* ★.xlsx の sheetFormatPr は 飾りの 読みと 一緒に 回る★＝book.html と 同じく XlsxKazari も 載せる（無いと .xlsx は 空振り） */
+  const kbox = { XLSX, ZipSurgeon, XlsxEdit, XlsbEdit, XlsbJitai, XlsxKazari: require(path.join(ROOT, 'lib/xlsx-kazari.js')) };
+  new Function('self', 'window', src + '\n;self.__BookOpen = self.BookOpen;')(kbox, kbox);
+  const KB = kbox.__BookOpen;
+/* 空き行＝その 見本で 書いて いない 行（e は 2行目・b は 4行目＝b は 2行目に 6pt が 在る）／custom 無しは 見ない（a の xlsb は Excel が 全部の 行に 40 を 書く） */
+for (const [名, 期待, 空き行] of [['e-all30', 40, 1], ['b-custom30', 40, 3], ['a-nocustom30', undefined, -1], ['d-excel30', undefined, -1]]) {
+  for (const ext of ['xlsx', 'xlsb']) {
+    const b = new Uint8Array(fs.readFileSync(path.join(ROOT, 'tests/fixtures/kitei-gyoudaka-' + 名 + '-2026-11-07.' + ext)));
+    await T('★' + 名 + '.' + ext + ' の 既定の 行の 高さ＝' + (期待 || '持たない'), async () => {
+      const r = await KB.openFile(fakeFile('kitei.' + ext, b));
+      const sh = r.sheets[0];
+      eq(sh.既定の行高, 期待, '既定の行高（点）');
+      if (空き行 >= 0 && sh.rowH[空き行] !== undefined) throw new Error('★' + (空き行 + 1) + '行目は 書いて いない 行の はず★（空振り）＝' + sh.rowH[空き行]);
+    });
+    await T('★' + 名 + '.' + ext + ' を 何も変えずに保存 → 1バイトも変わらない', async () => {
+      const r = await KB.openFile(fakeFile('kitei.' + ext, b));
+      const res = await KB.saveOpened(r.sheets);
+      eq(Buffer.compare(Buffer.from(res.bytes || res), Buffer.from(b)), 0, '中身');
+    });
+  }
+}
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
+
+

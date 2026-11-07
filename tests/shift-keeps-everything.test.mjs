@@ -44,6 +44,8 @@ if (SELF) {
     ['  _結合を付け直す(s.data, 結合, true, true, selR1, selR2);\n', ''],
     ['  _浮かぶ物を動かす(s, true, 写す);\n  render(); hideCtxMenu();\n}\nfunction ctxInsertCol', '  render(); hideCtxMenu();\n}\nfunction ctxInsertCol'],
     ["  ruby: '動かす（番地）',\n", ''],
+    ["  既定の行高: '動かさない（板の 既定の 行の 高さ＝番地を 持たない・鍵の 無い 行の 上に 足した 行も この 高さ）',\n", ''],
+    ['    var 足す = 幅 * (縦 ? 既定の行高(sheets[activeSheet]) : COL_W) * scale;', '    var 足す = 幅 * (縦 ? ROW_H : COL_W) * scale;'],
   ];
   for (const [a, b] of 戻す) {
     if (html.indexOf(a) < 0) { console.log('★--self-test の 壊し方が 当たらない★ ' + a.slice(0, 50)); process.exit(1); }
@@ -97,7 +99,8 @@ await T('板の 鍵は 全部 板の鍵の行き先 に 書いてある（book.h
   ok(行き先 && typeof 行き先 === 'object', '板の鍵の行き先 が 無い');
   const 字 = [html, ...fs.readdirSync(path.join(ROOT, 'js')).filter((f) => f.endsWith('.js')).map((f) => fs.readFileSync(path.join(ROOT, 'js', f), 'utf8'))].join('\n');
   const 見た = new Set();
-  for (const m of 字.matchAll(/(?:sheets\[[^\]\n]{1,40}\]|(?:^|[^A-Za-z0-9_.$])(?:sh|_sh|s0))\.([A-Za-z_][A-Za-z0-9_]*)/g)) 見た.add(m[1]);
+  /* ★日本語の 鍵も 拾う★（2026-11-07＝既定の行高・既定の列幅 が 英字だけの 数えでは 見えなかった） */
+  for (const m of 字.matchAll(/(?:sheets\[[^\]\n]{1,40}\]|(?:^|[^A-Za-z0-9_.$぀-鿿])(?:sh|_sh|s0))\.([A-Za-z_぀-ヿ一-鿿][A-Za-z0-9_぀-ヿ一-鿿]*)/g)) 見た.add(m[1]);
   ok(見た.size >= 15, '数え方が 壊れた（' + 見た.size + ' 個しか 見えない）');
   const 字の関数 = new Set(['length']);
   const 抜け = [...見た].filter((k) => !字の関数.has(k) && !Object.prototype.hasOwnProperty.call(行き先, k));
@@ -183,6 +186,15 @@ await T('図形の 中に 行を 足す＝伸びる', () => {
   板().objects = [{ 種類: '四角', x: 0, y: 上, w: 10, h: 高 }];
   win.sel(5, 0, 5, 0); win.ctxInsertRow();
   eq(板().objects[0].y, 上); eq(板().objects[0].h, 上から(7) - 上から(4));
+});
+/* ★既定の 高さを 変えた 板（custom・40点）★（2026-11-07）＝鍵の 無い 行の 下に 足した 行は 画面の 24 で なく 板の 既定 */
+await T('既定 40 の 板で 鍵の 無い 行の 下に 2行 足す＝図形は 40×2 下へ（280）', () => {
+  新しい本(); 板().既定の行高 = 40;
+  const 上 = 上から(5);
+  eq(上, 200, '板の 既定で 数えて いない');
+  板().objects = [{ 種類: '四角', x: 0, y: 上, w: 10, h: 40 }];
+  win.sel(3, 0, 4, 0); win.ctxInsertRow();
+  eq(板().objects[0].y, 280, '図形の 上'); eq(板().objects[0].y, 上から(7), '行と 揃う'); eq(板().objects[0].h, 40, '大きさ');
 });
 await T('固定枠＝すぐ下に 足しても 変わらない・固定の 行を 全部 消しても 1', () => {
   新しい本(); 板().freezeRow = 2;

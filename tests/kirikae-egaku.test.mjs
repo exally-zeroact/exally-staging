@@ -320,8 +320,9 @@ if (SELF) {
   console.log('[self-test] わざと壊して 赤くなるかを数える（★repo は読むだけ★）');
   const BREAKS = [
     ['★隠れた行も 場所を取る（差し戻された 元の形）★',
-      (s) => s.replace('  var 隠 = _隠れた数(_隠れ行の並び(), r);\n  var y = HDR_H - scrollTop + (r - 隠) * ROW_H * scale;',
-                       '  var y = HDR_H - scrollTop + r * ROW_H * scale;')],
+      /* 2026-11-07 行の 既定が 板の 既定の行高 に なった＝その 形を 壊す */
+      (s) => s.replace('  var 隠 = _隠れた数(_隠れ行の並び(), r);\n  var sh = sheets[activeSheet], rh = sh.rowH, 既 = 既定の行高(sh);\n  var y = HDR_H - scrollTop + (r - 隠) * 既 * scale;',
+                       '  var sh = sheets[activeSheet], rh = sh.rowH, 既 = 既定の行高(sh);\n  var y = HDR_H - scrollTop + r * 既 * scale;')],
     ['★隠れた列も 場所を取る★',
       (s) => s.replace('  var 隠 = _隠れた数(_隠れ列の並び(), c);\n  var x = HDR_W - scrollLeft + (c - 隠) * COL_W * scale;',
                        '  var x = HDR_W - scrollLeft + c * COL_W * scale;')],
