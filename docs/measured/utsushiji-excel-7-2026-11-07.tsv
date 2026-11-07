@@ -1,0 +1,49 @@
+# Excel 16.0 build 20527 / ban11 G1:G10=45658,'2025/1/1,0.5,'12:00,'50%,0,=25/24,=1/24,'25:00,0.05 (kata: kazu,ji,kazu,ji,ji,kazu,kazu,kazu,ji,kazu) H1:H10=2^0..2^9
+=COUNTIF(G1:G10,"2025/1/1")	2	z0=False	kata=Double
+=SUMIF(G1:G10,"2025/1/1",H1:H10)	3	z0=False	kata=Double
+=COUNTIF(G1:G10,"=2025/1/1")	2	z0=False	kata=Double
+=SUMIF(G1:G10,"=2025/1/1",H1:H10)	3	z0=False	kata=Double
+=COUNTIF(G1:G10,"<>2025/1/1")	9	z0=False	kata=Double
+=SUMIF(G1:G10,"<>2025/1/1",H1:H10)	1022	z0=False	kata=Double
+=COUNTIF(G1:G10,">=2025/1/1")	1	z0=False	kata=Double
+=SUMIF(G1:G10,">=2025/1/1",H1:H10)	1	z0=False	kata=Double
+=COUNTIF(G1:G10,"<2025/1/1")	5	z0=False	kata=Double
+=SUMIF(G1:G10,"<2025/1/1",H1:H10)	740	z0=False	kata=Double
+=COUNTIF(G1:G10,"2025-1-1")	2	z0=False	kata=Double
+=SUMIF(G1:G10,"2025-1-1",H1:H10)	3	z0=False	kata=Double
+=COUNTIF(G1:G10,"12:00")	3	z0=False	kata=Double
+=SUMIF(G1:G10,"12:00",H1:H10)	28	z0=False	kata=Double
+=COUNTIF(G1:G10,"=12:00")	3	z0=False	kata=Double
+=SUMIF(G1:G10,"=12:00",H1:H10)	28	z0=False	kata=Double
+=COUNTIF(G1:G10,"<>12:00")	9	z0=False	kata=Double
+=SUMIF(G1:G10,"<>12:00",H1:H10)	1019	z0=False	kata=Double
+=COUNTIF(G1:G10,"50%")	3	z0=False	kata=Double
+=SUMIF(G1:G10,"50%",H1:H10)	28	z0=False	kata=Double
+=COUNTIF(G1:G10,"=50%")	3	z0=False	kata=Double
+=SUMIF(G1:G10,"=50%",H1:H10)	28	z0=False	kata=Double
+=COUNTIF(G1:G10,"<>50%")	9	z0=False	kata=Double
+=SUMIF(G1:G10,"<>50%",H1:H10)	1019	z0=False	kata=Double
+=COUNTIF(G1:G10,"5%")	1	z0=False	kata=Double
+=SUMIF(G1:G10,"5%",H1:H10)	512	z0=False	kata=Double
+=COUNTIF(G1:G10,"5 %")	1	z0=False	kata=Double
+=SUMIF(G1:G10,"5 %",H1:H10)	512	z0=False	kata=Double
+=COUNTIF(G1:G10,"50 %")	3	z0=False	kata=Double
+=SUMIF(G1:G10,"50 %",H1:H10)	28	z0=False	kata=Double
+=COUNTIF(G1:G10,"24:00")	0	z0=True	kata=Double
+=SUMIF(G1:G10,"24:00",H1:H10)	0	z0=True	kata=Double
+=COUNTIF(G1:G10,"=24:00")	0	z0=True	kata=Double
+=SUMIF(G1:G10,"=24:00",H1:H10)	0	z0=True	kata=Double
+=COUNTIF(G1:G10,">=24:00")	2	z0=False	kata=Double
+=SUMIF(G1:G10,">=24:00",H1:H10)	65	z0=False	kata=Double
+=COUNTIF(G1:G10,"25:00")	2	z0=False	kata=Double
+=SUMIF(G1:G10,"25:00",H1:H10)	320	z0=False	kata=Double
+=COUNTIF(G1:G10,"=25:00")	2	z0=False	kata=Double
+=SUMIF(G1:G10,"=25:00",H1:H10)	320	z0=False	kata=Double
+=COUNTIF(G1:G10,"<>25:00")	9	z0=False	kata=Double
+=SUMIF(G1:G10,"<>25:00",H1:H10)	959	z0=False	kata=Double
+=COUNTIF(G1:G10,"1:00")	1	z0=False	kata=Double
+=SUMIF(G1:G10,"1:00",H1:H10)	128	z0=False	kata=Double
+=COUNTIF(G1:G10,"0:00")	1	z0=False	kata=Double
+=SUMIF(G1:G10,"0:00",H1:H10)	32	z0=False	kata=Double
+=COUNTIF(G1:G10,"<12:00")	3	z0=False	kata=Double
+=SUMIF(G1:G10,"<12:00",H1:H10)	672	z0=False	kata=Double
