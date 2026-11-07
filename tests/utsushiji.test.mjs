@@ -61,9 +61,8 @@ const 盤6 = (h) => ['5', ' 5', '5.', '1E3', '1,000', 5, '-0'].forEach((v, i) =>
 const 盤7 = (h) => ['1,00', '1,2,3', ',5', '1,000.5', '-1,000', '1,0000', '=TRUE', 5, 'b', '5,'].forEach((v, i) => { h.打つ('A' + (i + 1), 字に(v)); h.打つ('B' + (i + 1), i + 1); });
 const 紙たち = [['utsushiji-excel-2026-11-07.tsv', 27, 盤1], ['utsushiji-excel-2-2026-11-07.tsv', 39, 盤2], ['utsushiji-excel-3-2026-11-07.tsv', 39, 盤3],
   ['utsushiji-excel-4-2026-11-07.tsv', 9, 盤6], ['utsushiji-excel-5-2026-11-07.tsv', 19, 盤7], ['utsushiji-excel-6-2026-11-07.tsv', 18, 盤8]];
-/* ★紙6 の 日付・%・時刻の 右（C1:C3 の 7本）は ★まだ 直して いない★＝次の 件（台は 字と 読む・Excel は 数と 読む）★
-   ★黙って 外さず 「まだ」と 数えて 出す★ */
-const まだ = /^=COUNTIF\(C1:C3,|^=MATCH\("a~b",/;   /* ★MATCH("a~b") も まだ＝Excel #N/A・台 1（MATCH の ~ は 他の 字の 前でも 消える 形・前からの 穴）★ */
+/* ★「まだ」の 口は 残す（直して いない 行を 黙って 外さず 数えて 出す 為）★ */
+const まだ = /^$^/;   /* ★紙6 の 日付・%・時刻の 右 7本と MATCH("a~b") 1本は 直した（11-07）＝まだ 0★ */
 let まだの数 = 0;
 let pass = 0, fail = 0;
 for (const [名, 本数, 盤] of 紙たち) {
@@ -92,5 +91,5 @@ for (const [名, 本数, 盤] of 紙たち) {
   if (String(h.字('BZ1')) === '1') pass++; else { fail++; console.log('✗ MATCH("a*",{"a*b"},0) 台 ' + h.字('BZ1') + ' 見 1'); }
 }
 fail += 窓の崩れ;
-console.log('[utsushiji] pass ' + pass + ' / fail ' + fail + '（窓の 崩れ ' + 窓の崩れ + '・まだ ' + まだの数 + '本＝紙6 の 日付・%・時刻の 右 7・MATCH の ~ 1）');
+console.log('[utsushiji] pass ' + pass + ' / fail ' + fail + '（窓の 崩れ ' + 窓の崩れ + '・まだ ' + まだの数 + '本）');
 process.exit(fail ? 1 : 0);
