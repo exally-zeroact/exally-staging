@@ -89,6 +89,21 @@
       var ゼロ表 = (読んだ物 && 読んだ物.ゼロ) ? 読んだ物.ゼロ : null;
       var 全部計算の印 = (読んだ物 && 読んだ物.全部計算 !== undefined) ? 読んだ物.全部計算 : null;
       var wb = root.XLSX.read(bytes, { type: 'array', cellFormula: true, cellNF: true, sheetStubs: false, cellStyles: true });
+      /* ★★.xlsb の 行の 高さを 足す★★（2026-11-07）
+           借り物は 手で 決めた 行しか 高さを くれない＝Excel が 字に 合わせて 決めた 高さを 落とす
+           ⇒ 自分で 読んだ 高さ（字体を読む の 行高）を `!rows` に 入れる
+           ★借り物が 数を くれた 行は そのまま★／★隠す 印は 触らない★／`!rows` を 読むのは sheetToGrid だけ */
+      var 行高表 = (読んだ物 && 読んだ物.行高) ? 読んだ物.行高 : null;
+      if (行高表) Object.keys(行高表).forEach(function (名) {
+        var ws0 = wb.Sheets[名];
+        if (!ws0) return;
+        var rs = ws0['!rows'] || (ws0['!rows'] = []);
+        Object.keys(行高表[名]).forEach(function (k) {
+          var i = Number(k);
+          if (!rs[i]) rs[i] = {};
+          if (typeof rs[i].hpt !== 'number') rs[i].hpt = 行高表[名][k];
+        });
+      });
 
       /* ★表の名前での参照（Table[列名]）を、実際のA1範囲に直す★（2026-08-18）
          読み込みライブラリは .xlsb で ★表の名前も列名も捨てる★。
@@ -500,7 +515,7 @@
       var 全部計算 = JT.開いたら全部計算するか(wp.recs);
       var 対応 = JT.板とファイル(wp.recs, 字);
       if (!対応) return null;
-      var 名ら = Object.keys(対応), 仕事 = [], 出 = {}, ゼロ = {};
+      var 名ら = Object.keys(対応), 仕事 = [], 出 = {}, ゼロ = {}, 行高 = {};
       for (var k = 0; k < 名ら.length; k++) {
         (function (名) {
           仕事.push(袋から(z, 対応[名]).then(function (sb) {
@@ -513,12 +528,15 @@
                  ★2度 歩きません★＝ここは もう 板の 記録を 開いて います */
             var ゼ = JT.ゼロを隠すか(p2.recs);
             if (ゼ !== null) ゼロ[名] = ゼ;
+            /* ★行の 高さも 同じ 歩きで★（2026-11-07）＝借り物が 落とす Excel の 自動の 高さ（lib/xlsb-jitai.js） */
+            var 高 = JT.行の高さたち(p2.recs);
+            if (高) 行高[名] = 高;
           }, function () { /* 1枚 読めなくても 他は 使う */ }));
         })(名ら[k]);
       }
       return Promise.all(仕事).then(function () {
-        if (!Object.keys(出).length && !Object.keys(ゼロ).length && 全部計算 === null) return null;
-        return { 字体: 出, ゼロ: ゼロ, 全部計算: 全部計算 };
+        if (!Object.keys(出).length && !Object.keys(ゼロ).length && !Object.keys(行高).length && 全部計算 === null) return null;
+        return { 字体: 出, ゼロ: ゼロ, 全部計算: 全部計算, 行高: 行高 };
       });
     }, function () { return null; });
   }

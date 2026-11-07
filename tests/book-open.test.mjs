@@ -28,7 +28,8 @@ const XlsbEdit = require(path.join(ROOT, 'lib/xlsb-edit.js'));
 const XlsbJitai = require(path.join(ROOT, 'lib/xlsb-jitai.js'));
 
 /* book-open.js はブラウザの物なので、必要な物だけ載せた入れ物で読み込む */
-const box = { XLSX, ZipSurgeon, XlsxEdit, XlsbEdit };
+/* ★XlsbJitai も 載せる★（2026-11-07）＝book.html と 同じ（無いと .xlsb の 字体・ゼロ・行の 高さの 道が 1度も 走らない） */
+const box = { XLSX, ZipSurgeon, XlsxEdit, XlsbEdit, XlsbJitai };
 const src = fs.readFileSync(path.join(ROOT, 'js/book-open.js'), 'utf8');
 new Function('self', 'window', src + '\n;self.__BookOpen = self.BookOpen;')(box, box);
 const BookOpen = box.__BookOpen;
@@ -189,6 +190,30 @@ for (const ext of ['xlsx', 'xlsb']) {
   });
   await T('★' + ext + ' の 行の 高さを 読んでも 何も変えずに保存 → 1バイトも変わらない', async () => {
     const r = await BookOpen.openFile(fakeFile('gyou.' + ext, b));
+    const res = await BookOpen.saveOpened(r.sheets);
+    const out = res.bytes || res;
+    eq(Buffer.compare(Buffer.from(out), Buffer.from(b)), 0, '中身');
+  });
+}
+
+/* ★★Excel が 自動で 決めた 行の 高さ（.xlsb）★★（2026-11-07）
+   字の 大きさ・折り返しで Excel が 決めた 高さは customHeight が 無い
+   ⇒ 借り物は .xlsb の その 高さを ★全部 落とした★（.xlsx は 読める）＝24pt の 行が 24点の まま
+   材料＝★実Excel（COM）で 作った★ tests/fixtures/jidou-takasa-2026-11-07.xlsx／.xlsb（作り方 tools/jidou-takasa-excel.ps1）
+   実Excel の 答え（2026-11-07 測った）:
+     2行目 24pt の 字＝38.25pt／4行目 折り返し 3行＝52.9pt／6行目 手で 30pt／8行目 20pt の 字の 後に 隠す（32.25pt）
+     9行目 6pt の 字＝17.7pt の まま（既定より 低く ならない）／標準 17.7pt
+   ★物差し＝画面の 点＝pt × 4/3★ ⇒ 51・71・40・43 */
+for (const ext of ['xlsx', 'xlsb']) {
+  const b = new Uint8Array(fs.readFileSync(path.join(ROOT, 'tests/fixtures/jidou-takasa-2026-11-07.' + ext)));
+  await T('★' + ext + ' の Excel が 自動で 決めた 行の 高さを 読む', async () => {
+    const r = await BookOpen.openFile(fakeFile('jidou.' + ext, b));
+    const sh = r.sheets[0];
+    eq(JSON.stringify(sh.rowH), JSON.stringify({ 1: 51, 3: 71, 5: 40, 7: 43 }), '行の高さ（点）');
+    eq(JSON.stringify(sh.hiddenRows), JSON.stringify({ 7: true }), '隠した行');
+  });
+  await T('★' + ext + ' の 自動の 高さを 読んでも 何も変えずに保存 → 1バイトも変わらない', async () => {
+    const r = await BookOpen.openFile(fakeFile('jidou.' + ext, b));
     const res = await BookOpen.saveOpened(r.sheets);
     const out = res.bytes || res;
     eq(Buffer.compare(Buffer.from(out), Buffer.from(b)), 0, '中身');
