@@ -8,6 +8,7 @@ const cases=[
 ];
 let ng=0;
 for(const [f,want] of cases){const t=new H.表();for(let r=1;r<=5;r++){t.打つ('A'+r,r);t.打つ('B'+r,r*10);t.打つ('C'+r,r*100);}
+ if(f.indexOf(':B,')>0||f.indexOf('A:B')>0){t.打つ('D1',1);t.打つ('D2',2);t.打つ('D4',4);t.打つ('D5',5);} /* 帯の 1212 は mae4 の 盤（D1=1 D2=2 D4=4 D5=5） */
  t.打つ('BZ1',f);const got=String(t.字('BZ1'));if(got!==want)ng++;console.log(got===want?'ok':'NG',f,'台',got,'Excel',want);}
 const e=[['=COUNTIF(A1:A7,"")','2'],['=COUNTIF(A1:A7,"=")','2'],['=COUNTIF(A1:A7,"<>3")','6'],['=COUNTIF(A1:A7,"<>")','5'],['=COUNTIF(A1:A7,Z1)','0'],
  ['=COUNTIFS(A1:A7,"")','2'],['=SUMIF(A1:A7,"",B1:B7)','0'],['=SUMIF(A1:A7,"<>3",B1:B7)','24'],['=AVERAGEIF(A1:A7,"<>3")','3'],
