@@ -23,7 +23,7 @@
  *    ③★`f.split('/')[0]` は 深さ1の git複製しか 除けなかった★
  *       ⇒★どの 段の `.git` でも 部屋ごと 落とす★（掘る 前に 見る）
  *
- *  ★★どこまでを 赤に するか（2026-09-05 実測の 上で 決めた）★★
+ *  ★★どこまでを 赤に するか（2026-09-05 実測の 上で 決めた）★★（★経緯★＝48時間の 線は 2026-11-07 の 作り直しで 消した・下を 見る）
  *    親の 部屋の 置き場 ★67個★を 全部 見たら ★危ない 55本★
  *      ⇒ 55本は ★全部 他の セッション（b1c00d76 / b43c1163）★
  *      ⇒ 中身は ★別アプリの 丸ごと 複製(before-tree 318本)★＝`package.json` `sw.js`
@@ -107,6 +107,16 @@ export function この回の名乗り(x) {
   if (x.win32 && x.CLAUDECODE) return { 答: '赤', 訳: 'Claude の 席なのに CLAUDE_CODE_SESSION_ID が 無い＝自分の 置き場を 探せない' };
   return { 答: '見ていない', 訳: '人が 手で 回した（番号も EXALLY_SCRATCHPAD も 無い）' };
 }
+
+/** ★番号の 置き場が 見る所に 入っているか★（Windows の 道・大小文字を 揃える・末尾で 比べる） */
+export function 番号の置き場が在るか(場たち, 番号) {
+  if (!番号) return false;
+  const 鍵 = '/' + 番号.toLowerCase() + '/scratchpad';
+  return 場たち.some((p) => p.replace(/\\/g, '/').toLowerCase().replace(/\/+$/, '').endsWith(鍵));
+}
+
+/** CI か（CI=false・CI=0・空は CI でない） */
+export function CIか(v) { return !!v && v !== 'false' && v !== '0'; }
 
 /** ★見る 置き場の 和集合★（親の 名を 決め打ちしない） */
 export function 置き場の候補({ tmp, 番号, 直, root }) {
@@ -267,6 +277,18 @@ if (process.argv.includes('--self-test')) {
       const c = 置き場の候補({ tmp: 試, 番号: 'S1', 直: '', root: path.join(試, 'repo') });
       if (c.length !== 1 || path.resolve(c[0]) !== path.resolve(自)) throw new Error(JSON.stringify(c));
     });
+    T('★★番号の 置き場が 在るかの 判定（Windows の 道・大小文字・他の 番号）★★', () => {
+      if (!番号の置き場が在るか(['C:\\T\\claude\\p\\AbC\\scratchpad'], 'abc')) throw new Error('★Windows の 道で 当たらない★');
+      if (番号の置き場が在るか(['C:/T/claude/p/xyz/scratchpad'], 'abc')) throw new Error('★他の 番号で 在ると 言った★');
+      if (番号の置き場が在るか(['C:/T/claude/p/abc/scratchpad/wt/scratchpad'], 'abc')) throw new Error('★中の 置き場で 在ると 言った★');
+      if (番号の置き場が在るか(['C:/T/claude/p/abc/scratchpad'], '')) throw new Error('★番号 無しで 在ると 言った★');
+      const c = 置き場の候補({ tmp: 試, 番号: 'S1', 直: '', root: path.join(試, 'repo') });
+      if (!番号の置き場が在るか(c, 'S1')) throw new Error('★実物の 道で 当たらない★');
+      if (番号の置き場が在るか(置き場の候補({ tmp: 試, 番号: 'S9', 直: '', root: path.join(試, 'repo') }), 'S9')) throw new Error('★無い 番号で 在ると 言った★');
+    });
+    T('★CI=true は CI／CI=false・0・空は CI でない', () => {
+      if (!CIか('true') || CIか('false') || CIか('0') || CIか('') || CIか(undefined)) throw new Error('分けていない');
+    });
     T('★★ROOT が 置き場の 中なら その 置き場も 見る（木の 中は 除く）★★', () => {
       const c = 置き場の候補({ tmp: 試, 番号: 'S1', 直: '', root: 木 });
       if (c.length !== 2) throw new Error('2つの はず: ' + JSON.stringify(c));
@@ -298,9 +320,9 @@ const tmp = os.tmpdir();
 const 番号 = process.env.CLAUDE_CODE_SESSION_ID || '';
 const 直 = process.env.EXALLY_SCRATCHPAD || '';
 const 場たち = 置き場の候補({ tmp, 番号, 直, root: ROOT });
-const 番号の置き場が在る = !!番号 && 場たち.some((p) => p.replace(/\\/g, '/').toLowerCase().includes('/' + 番号.toLowerCase() + '/scratchpad'));
+const 番号の置き場が在る = 番号の置き場が在るか(場たち, 番号);
 const 名乗り = この回の名乗り({
-  CI: !!process.env.CI,
+  CI: CIか(process.env.CI),
   win32: process.platform === 'win32',
   CLAUDECODE: process.env.CLAUDECODE === '1',
   番号, 番号の置き場が在る,
