@@ -1,0 +1,15 @@
+# Excel 16.0 build 20527 / ban11 G1:G10=45658,'2025/1/1,0.5,'12:00,'50%,0,=25/24,=1/24,'25:00,0.05 (kata: kazu,ji,kazu,ji,ji,kazu,kazu,kazu,ji,kazu) H1:H10=2^0..2^9
+=AVERAGEIFS(H1:H10,G1:G10,"12:00")	9.33333333333333	z0=False	kata=Double
+=AVERAGEIF(G1:G10,"12:00",H1:H10)	9.33333333333333	z0=False	kata=Double
+=AVERAGEIFS(H1:H10,G1:G10,"50%")	9.33333333333333	z0=False	kata=Double
+=AVERAGEIFS(H1:H10,G1:G10,"<>2025/1/1")	113.555555555556	z0=False	kata=Double
+=AVERAGEIFS(H1:H10,G1:G10,"2025/1/1")	1.5	z0=False	kata=Double
+=AVERAGEIFS(H1:H10,G1:G10,"25:00")	160	z0=False	kata=Double
+=AVERAGEIFS(H1:H10,G1:G10,">=24:00")	32.5	z0=False	kata=Double
+=AVERAGEIFS(H1:H10,G1:G10,"zzz")	#DIV/0!	z0=-2146826281	kata=Error
+=COUNTIF(G1:G10,0.5)	3	z0=False	kata=Double
+=SUMIF(G1:G10,0.5,H1:H10)	28	z0=False	kata=Double
+=COUNTIF(G1:G10,"45658")	2	z0=False	kata=Double
+=SUMIF(G1:G10,"45658",H1:H10)	3	z0=False	kata=Double
+=SUMIF(G1:G10,45658,H1:H10)	3	z0=False	kata=Double
+=SUMIF(G1:G10,"0.5",H1:H10)	28	z0=False	kata=Double

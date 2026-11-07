@@ -19,6 +19,8 @@ const FILES = [
   ['shiki-kansuu.test.mjs'],                   // ★四角（A1:A3）と 関数＝実Excel 37通り（土台④の 後半）★
   ['retsu-x.test.mjs'],                        // ★列まるごと・行まるごと（A:A・1:1）を 台が 読む＝実Excel 71本・網（17fcf11 の 画面 =SUM(A:A) #REF!・2026-11-04）★
   ['utsushiji.test.mjs'],                      // ★条件の 写し字（* ? ~）＝実Excel 27本（COUNTIF 系・帯も）★
+  ['jouken-sakuin.test.mjs'],                  // ★条件の 溢れの 索引＝1つずつ なめた 答えと 同じ・N×N に 戻らない（値の直し3 止め1）★
+  ['jouken-hairetsu.test.mjs'],               // ★条件で 集める 一族の 並びの 条件（溢れ）・形違い・誤りの 伝わり＝実Excel 紙9 34本★
   ['shiki-hyou.test.mjs'],                     // ★本体＝表を持ち 依存を追い 変わった所だけ直す（借り物の 55.2%）★
   ['shiki-sashikomi.test.mjs'],                // ★行/列の 入れ消しで 式が 追従する＝実Excel 17通り★
   ['shiki-afure.test.mjs'],                    // ★溢れ＝1つの式が 何マスにも 広がる（実Excel 16通り）★
