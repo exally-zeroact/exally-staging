@@ -47,11 +47,29 @@
  *      ⇒★正しい 物を 赤に する 見張りは 人が 切る★
  *    ⇒★★測って 出した 結果は「その場で repo に commit」＝手を 変えるしか ない★★
  *
+ *
+ *  ★★2026-11-07 作り直し（親の 置き場が 古い道のまま＝手元で 毎回 赤）★★
+ *    実測：既定の 親（Temp/claude/C--WINDOWS-…）＝置き場106 全部 48h超＝「生きている 0」で 毎回 赤
+ *          親を 今の 部屋に 替えると 置き場138・★危ない 29401本★（他の 席の 木の 写し・他アプリ）
+ *          ★中身の blob 指紋が git に 在る物を 除くと 1565本（48h内）★
+ *    ⇒ 設計（設計前 taiketsu の 止め2を 入れた形）：
+ *      ①見る所＝和集合［EXALLY_SCRATCHPAD・tmpdir/claude/＊/<CLAUDE_CODE_SESSION_ID>/scratchpad・ROOT を 含む scratchpad］
+ *        ★親の 名を 決め打ちしない★／★他の 席の 置き場は 見ない★（「見ていない N個」の 1行だけ）
+ *      ②赤＝repo と 同じ 名前の .js/.mjs/.cjs/.json のうち ★中身の blob 指紋が `git rev-list --all --objects` に 無い物★
+ *        ＝git に 元が 在る 写しは 消えても 困らない／★rev-list が 転んだら 空の 集まり＝全部 赤★
+ *      ③名乗り：CI＝見ていない／EXALLY_SCRATCHPAD が 無い道＝赤／番号が 在るのに 置き場が 無い＝赤／
+ *               win32 で CLAUDECODE=1 なのに 番号 無し＝赤／人が 手で 回す（どちらも 無し）＝見ていない
+ *      ④48時間の 線は 消した（自分の 席だけ 見る＝古い 他席の 物で 赤に ならない）
+ *      ⑤rev-list は 名乗りの 後で 呼ぶ（CI は 浅い 複製）
+ *
  *  使い方: node tests/shouko-no-okiba.test.mjs
  *          node tests/shouko-no-okiba.test.mjs --self-test
  */
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
+import crypto from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -60,30 +78,120 @@ const T = (n, fn) => { try { fn(); pass++; console.log('  ✓ ' + n); } catch (e
 
 /** ★純関数★＝repo の 名前の 集まりと 消える場所の 名前から「危ない物」を 返す
  *  ★git の 作業用 複製(worktree)は 除く★（2026-09-05 実測で 199本 出た）
- *    ＝★中は git が 守っている＝消えても 元が 在る★／★控えでは ない★ */
-export function 危ないか(repoの名前, 消える場所の名前, git複製) {
+ *  ★元が在るか(f)★＝渡されたら ★中身が git に 在る 写しは 除く★（2026-11-07） */
+export function 危ないか(repoの名前, 消える場所の名前, git複製, 元が在るか) {
   const 見る = /\.(js|mjs|cjs|json)$/i;
   const 集 = new Set(repoの名前.map((f) => f.split('/').pop()));
-  /* ★git の 作業用 複製は ★どの 段に 在っても★ 除く★（2026-09-05 指示役の 差し戻し③）
-     ★前は `f.split('/')[0]` ＝ ★深さ1しか 除けなかった★
-     ⇒ 深い 所に 在ると 除けず ★199本の 雑音が 戻る★
-     ★部屋の 境目まで 見る★＝`wt-a` で `wt-ab` を 巻き添えに しない */
+  /* ★部屋の 境目まで 見る★＝`wt-a` で `wt-ab` を 巻き添えに しない */
   const 除く = (git複製 || []).map((d) => String(d).replace(/\\/g, '/').replace(/^\/+|\/+$/g, ''));
   const 除くか = (f) => 除く.some((d) => f === d || f.indexOf(d + '/') === 0);
   return 消える場所の名前.filter((f) => {
     if (!見る.test(f)) return false;
     if (除くか(f)) return false;
-    return 集.has(f.split('/').pop());
+    if (!集.has(f.split('/').pop())) return false;
+    if (元が在るか && 元が在るか(f)) return false;
+    return true;
   });
 }
 
-/** ★この 回を どう 名乗るか★（差し戻し②の 判定を ★純関数★に 出す）
- *  ⇒ ubuntu を 手元に 持っていないので、★枝の 中身を 直に 掴めない★
- *  ⇒★判定だけ 取り出して 自分で 壊す★（機械が 実際に 走る のは 下の 本番） */
-export function この回の名乗り(親が在る, 手元か) {
-  if (親が在る) return '見る';
-  if (手元か) return '赤';   /* ★手元なのに 道が 無い＝道が 変わった＝赤★ */
-  return '見ていない';       /* ★CI＝毎回 そう 名乗る（黙って 緑に しない）★ */
+/** ★この 回を どう 名乗るか★（純関数）
+ *  返す＝{ 答: '見る'|'赤'|'見ていない', 訳 } */
+export function この回の名乗り(x) {
+  if (x.CI) return { 答: '見ていない', 訳: 'CI（消える場所は 手元にしか 無い）' };
+  if (x.直が渡された && !x.直が在る) return { 答: '赤', 訳: 'EXALLY_SCRATCHPAD が 無い道を 指している' };
+  if (x.番号) {
+    if (!x.番号の置き場が在る) return { 答: '赤', 訳: '番号 ' + x.番号 + ' の 置き場が 見つからない（道が 変わった合図）' };
+    return { 答: '見る', 訳: '' };
+  }
+  if (x.直が渡された) return { 答: '見る', 訳: '' };
+  if (x.win32 && x.CLAUDECODE) return { 答: '赤', 訳: 'Claude の 席なのに CLAUDE_CODE_SESSION_ID が 無い＝自分の 置き場を 探せない' };
+  return { 答: '見ていない', 訳: '人が 手で 回した（番号も EXALLY_SCRATCHPAD も 無い）' };
+}
+
+/** ★見る 置き場の 和集合★（親の 名を 決め打ちしない） */
+export function 置き場の候補({ tmp, 番号, 直, root }) {
+  const 出 = [];
+  if (直 && fs.existsSync(直)) 出.push(path.resolve(直));
+  const 上 = path.join(tmp, 'claude');
+  if (番号) {
+    let 親たち = [];
+    try { 親たち = fs.readdirSync(上); } catch (e) { /* 無い */ }
+    for (const p of 親たち) {
+      const s = path.join(上, p, 番号, 'scratchpad');
+      try { if (fs.statSync(s).isDirectory()) 出.push(path.resolve(s)); } catch (e) { /* 無い */ }
+    }
+  }
+  /* ★ROOT を 含む scratchpad★＝作業木を 置き場に 作った時、その 置き場の 控えも 見る */
+  let d = path.resolve(root);
+  for (;;) {
+    if (path.basename(d).toLowerCase() === 'scratchpad') { 出.push(d); break; }
+    const u = path.dirname(d);
+    if (u === d) break;
+    d = u;
+  }
+  const 済 = new Set();
+  return 出.filter((p) => { const k = p.replace(/\\/g, '/').toLowerCase(); if (済.has(k)) return false; 済.add(k); return true; });
+}
+
+/** ★見ない 置き場の 数★（他の 席・数だけ 出す） */
+function 全部の置き場の数(tmp) {
+  let n = 0;
+  const 上 = path.join(tmp, 'claude');
+  let 親たち = [];
+  try { 親たち = fs.readdirSync(上); } catch (e) { return 0; }
+  for (const p of 親たち) {
+    let ids = [];
+    try { ids = fs.readdirSync(path.join(上, p)); } catch (e) { continue; }
+    for (const id of ids) { try { if (fs.statSync(path.join(上, p, id, 'scratchpad')).isDirectory()) n++; } catch (e) { /* 無い */ } }
+  }
+  return n;
+}
+
+const SKIP = new Set(['node_modules', '.git', 'tmp', '.vercel', 'dist']);
+/* ★掘る 前に「その 部屋は git の 複製か」を 見て、部屋ごと 落とす★（.git は ファイルでも 部屋でも） */
+function 集める(base, rel, out, wt) {
+  let 中;
+  try { 中 = fs.readdirSync(path.join(base, rel || '.')); } catch (e) { return out; }
+  if (rel && 中.includes('.git')) { if (wt) wt.push(rel); return out; }
+  for (const n of 中) {
+    if (SKIP.has(n)) continue;
+    const r = rel ? rel + '/' + n : n;
+    let st;
+    try { st = fs.statSync(path.join(base, r)); } catch (e) { continue; }
+    if (st.isDirectory()) 集める(base, r, out, wt); else out.push(r);
+  }
+  return out;
+}
+
+/** git の blob 指紋（`git hash-object` と 同じ） */
+export function blob指紋(buf) {
+  return crypto.createHash('sha1').update('blob ' + buf.length + '\0').update(buf).digest('hex');
+}
+
+/** ★rev-list が 転んだら 空の 集まり★＝全部 赤（黙って 緑に しない） */
+function git指紋(root) {
+  const 集 = new Set();
+  let 訳 = '';
+  try {
+    const out = execFileSync('git', ['-C', root, 'rev-list', '--all', '--objects'], { maxBuffer: 1 << 30, stdio: ['ignore', 'pipe', 'pipe'] }).toString();
+    for (const line of out.split('\n')) { const h = line.slice(0, 40); if (/^[0-9a-f]{40}$/.test(h)) 集.add(h); }
+  } catch (e) { 訳 = String((e && e.message) || e).split('\n')[0]; }
+  return { 集, 訳 };
+}
+
+/** 置き場ごとに 危ない物を 数える（道を 渡せる＝self-test でも 使う） */
+export function 置き場を調べる(場たち, repoの, 指紋の集) {
+  const 危 = [];
+  let 見た = 0, 複 = 0;
+  for (const 場 of 場たち) {
+    const 名 = 場.replace(/\\/g, '/');
+    const wt = [];
+    const ファイル = 集める(場, '', [], wt);
+    見た += ファイル.length; 複 += wt.length;
+    const 元が在るか = (f) => { try { return 指紋の集.has(blob指紋(fs.readFileSync(path.join(場, f)))); } catch (e) { return false; } };
+    for (const f of 危ないか(repoの, ファイル, wt, 元が在るか)) 危.push(名 + '/' + f);
+  }
+  return { 危, 見た, 複 };
 }
 
 /* ══ 自分で 壊して 赤に なるか ═══════════════════════════════ */
@@ -106,12 +214,11 @@ if (process.argv.includes('--self-test')) {
     const r = 危ないか(repo, ['a/b/c/claude.js']);
     if (r.length !== 1) throw new Error('見つけていない');
   });
-  /* ★差し戻し③の 実測★＝深さ1でしか 除けなかった 事を ここで 掴む */
   T('★★git複製は ★深さ1★でも 除く★★', () => {
     const r = 危ないか(repo, ['wt-a/lib/formula-extra.js'], ['wt-a']);
     if (r.length) throw new Error('除けていない: ' + JSON.stringify(r));
   });
-  T('★★git複製は ★深い 段★でも 除く（前の 形は ここで 落ちた）★★', () => {
+  T('★★git複製は ★深い 段★でも 除く★★', () => {
     const r = 危ないか(repo, ['tmp/wt-a/lib/formula-extra.js'], ['tmp/wt-a']);
     if (r.length) throw new Error('★深さ1しか 除けていない★: ' + JSON.stringify(r));
   });
@@ -119,157 +226,127 @@ if (process.argv.includes('--self-test')) {
     const r = 危ないか(repo, ['tmp/wt-ab/lib/formula-extra.js'], ['tmp/wt-a']);
     if (r.length !== 1) throw new Error('★除きすぎ★: ' + JSON.stringify(r));
   });
-  /* ★差し戻し②＝材料が 無い時に 緑を 出していた★ */
-  T('★★材料が 無い回は「緑」に ならない（CIは 見ていないと 名乗る／手元は 赤）★★', () => {
-    const a = この回の名乗り(true, true);
-    const b = この回の名乗り(false, true);
-    const c = この回の名乗り(false, false);
-    if (a !== '見る') throw new Error('道が 在るのに 見ない: ' + a);
-    if (b !== '赤') throw new Error('★手元で 道が 無いのに 赤に ならない★: ' + b);
-    if (c !== '見ていない') throw new Error('★CIで 黙って 緑に している★: ' + c);
-    /* ★★「いつも 緑」に なっていないか★★＝3つとも 同じ 答えなら 何も 分けていない */
-    if (a === b && b === c) throw new Error('★3つとも 同じ＝何も 分けていない★');
+  T('★★指紋が git に 在る 写しは 緑／無い 控えは 赤★★', () => {
+    const r = 危ないか(repo, ['a/claude.js', 'b/claude.js'], [], (f) => f.startsWith('a/'));
+    if (r.length !== 1 || r[0] !== 'b/claude.js') throw new Error('分けていない: ' + JSON.stringify(r));
+  });
+  T('★blob 指紋は git hash-object と 同じ（空と "a\\n"）', () => {
+    if (blob指紋(Buffer.from('')) !== 'e69de29bb2d1d6434b8b29ae775ad8c2e48c5391') throw new Error('空が 違う');
+    if (blob指紋(Buffer.from('a\n')) !== '78981922613b2afb6025042ff6bd878ac1994e85') throw new Error('a が 違う');
+  });
+  T('★★名乗り：材料が 無い回は「緑」に ならない★★', () => {
+    const 基 = { CI: false, win32: true, CLAUDECODE: true, 番号: 'S1', 番号の置き場が在る: true, 直が渡された: false, 直が在る: false };
+    const 例 = [
+      [{}, '見る', '全部 揃っている'],
+      [{ CI: true }, '見ていない', 'CI'],
+      [{ 番号: '' }, '赤', '★番号を 消す（win32・CLAUDECODE=1）★'],
+      [{ 番号の置き場が在る: false }, '赤', '番号の 置き場が 無い'],
+      [{ 直が渡された: true, 直が在る: false }, '赤', '★無い EXALLY_SCRATCHPAD★'],
+      [{ 番号: '', 直が渡された: true, 直が在る: true }, '見る', 'EXALLY_SCRATCHPAD だけ'],
+      [{ 番号: '', CLAUDECODE: false }, '見ていない', '人が 手で 回す'],
+    ];
+    for (const [差, 答, 名] of 例) {
+      const r = この回の名乗り({ ...基, ...差 });
+      if (r.答 !== 答) throw new Error(名 + ' が ' + r.答 + '（' + 答 + ' のはず）');
+    }
+  });
+  /* ★実物の 道で 壊す★＝tmp/claude/<親>/<番号>/scratchpad を 作って 見る */
+  const 試 = fs.mkdtempSync(path.join(os.tmpdir(), 'okiba-st-'));
+  try {
+    const 自 = path.join(試, 'claude', 'oya1', 'S1', 'scratchpad');
+    const 他 = path.join(試, 'claude', 'oya2', 'S2', 'scratchpad');
+    fs.mkdirSync(path.join(自, 'hold'), { recursive: true });
+    fs.mkdirSync(path.join(他, 'hold'), { recursive: true });
+    fs.writeFileSync(path.join(自, 'hold', 'claude.js'), 'ひかえ\n');
+    fs.writeFileSync(path.join(他, 'hold', 'claude.js'), 'ひかえ\n');
+    const 木 = path.join(他, 'wt');
+    fs.mkdirSync(path.join(木, 'tests'), { recursive: true });
+    fs.writeFileSync(path.join(木, '.git'), 'gitdir: x\n');
+    fs.writeFileSync(path.join(木, 'tests', 'claude.js'), 'き\n');
+    T('★★番号で 自分の 置き場を 見つけ・他の 席は 見ない★★', () => {
+      const c = 置き場の候補({ tmp: 試, 番号: 'S1', 直: '', root: path.join(試, 'repo') });
+      if (c.length !== 1 || path.resolve(c[0]) !== path.resolve(自)) throw new Error(JSON.stringify(c));
+    });
+    T('★★ROOT が 置き場の 中なら その 置き場も 見る（木の 中は 除く）★★', () => {
+      const c = 置き場の候補({ tmp: 試, 番号: 'S1', 直: '', root: 木 });
+      if (c.length !== 2) throw new Error('2つの はず: ' + JSON.stringify(c));
+      const r = 置き場を調べる(c, repo, new Set());
+      if (r.危.length !== 2) throw new Error('★控え 2本の はず★: ' + JSON.stringify(r.危));
+      if (r.危.some((f) => f.includes('/wt/'))) throw new Error('★木の 中を 赤に した★');
+    });
+    T('★★指紋の 集まりに 在れば 緑（git に 元が 在る）★★', () => {
+      const h = blob指紋(Buffer.from('ひかえ\n'));
+      const r = 置き場を調べる([自], repo, new Set([h]));
+      if (r.危.length) throw new Error('★元が 在るのに 赤★: ' + JSON.stringify(r.危));
+    });
+    T('★★rev-list が 転んだ（空の 集まり）＝全部 赤★★', () => {
+      const g = git指紋(path.join(試, 'gitでない'));
+      if (g.集.size) throw new Error('git でない 所で 指紋が 出た');
+      const r = 置き場を調べる([自], repo, g.集);
+      if (r.危.length !== 1) throw new Error('★黙って 緑★: ' + JSON.stringify(r.危));
+    });
+  } finally { fs.rmSync(試, { recursive: true, force: true }); }
+  T('★この 機械が「半分」だと 書いてある', () => {
+    if (fs.readFileSync(fileURLToPath(import.meta.url), 'utf8').indexOf('半分しか 守りません') < 0) throw new Error('★半分だと 書いていない★');
   });
   console.log('\n' + pass + ' passed, ' + fail + ' failed');
   process.exit(fail ? 1 : 0);
 }
 
 /* ══ 本番 ═══════════════════════════════════════════════════ */
-const SKIP = new Set(['node_modules', '.git', 'tmp', '.vercel', 'dist']);
+const tmp = os.tmpdir();
+const 番号 = process.env.CLAUDE_CODE_SESSION_ID || '';
+const 直 = process.env.EXALLY_SCRATCHPAD || '';
+const 場たち = 置き場の候補({ tmp, 番号, 直, root: ROOT });
+const 番号の置き場が在る = !!番号 && 場たち.some((p) => p.replace(/\\/g, '/').toLowerCase().includes('/' + 番号.toLowerCase() + '/scratchpad'));
+const 名乗り = この回の名乗り({
+  CI: !!process.env.CI,
+  win32: process.platform === 'win32',
+  CLAUDECODE: process.env.CLAUDECODE === '1',
+  番号, 番号の置き場が在る,
+  直が渡された: !!直, 直が在る: !!直 && fs.existsSync(直),
+});
 
-/* ★`.git` は SKIP に 入っている＝集める は 一生 返さない★
-   ⇒ 前の 形（集めた 名前から git複製を 探す）は ★除外が 一度も 効かなかった★
-   ⇒ ★掘る 前に「その 部屋は git の 複製か」を 見て、部屋ごと 落とす★
-   `wt` に 落とした 部屋を 積む（何を 除いたか 報告に 出す為） */
-function 集める(base, rel, out, wt) {
-  let 中;
-  try { 中 = fs.readdirSync(path.join(base, rel || '.')); } catch (e) { return out; }
-  if (rel && 中.includes('.git')) { if (wt) wt.push(rel); return out; }
-  for (const n of 中) {
-    if (SKIP.has(n)) continue;
-    const r = rel ? rel + '/' + n : n;
-    let st;
-    try { st = fs.statSync(path.join(base, r)); } catch (e) { continue; }
-    if (st.isDirectory()) 集める(base, r, out, wt); else out.push(r);
-  }
-  return out;
-}
-
-/* ★★置き場は「親の 部屋を 読んで 全部 見る」★★（差し戻し①）
-   ★セッションの 番号を 書かない★＝次の 回でも 効く */
-const 親の部屋 = process.env.EXALLY_SCRATCHPAD_OYA
-  || 'C:/Users/zeroa/AppData/Local/Temp/claude/C--WINDOWS-System32-WindowsPowerShell-v1-0';
-const 生きている線 = 48 * 3600 * 1000; /* ★実測 0.4時間 と 80時間 の 間★（上の 見出しに 根拠） */
-
-function 置き場を調べる() {
-  const 出 = [];
-  const 見る = [];
-  const 直 = process.env.EXALLY_SCRATCHPAD;
-  if (直 && fs.existsSync(直)) 見る.push(直);
-  try {
-    for (const n of fs.readdirSync(親の部屋)) {
-      const p = path.join(親の部屋, n, 'scratchpad');
-      try { if (fs.statSync(p).isDirectory()) 見る.push(p); } catch (e) { /* 無い */ }
-    }
-  } catch (e) { /* 親の部屋が 無い */ }
-  for (const 場 of [...new Set(見る)]) {
-    const 名 = 場.replace(/\\/g, '/');
-    const wt = [];
-    const ファイル = 集める(場, '', [], wt);
-    let 新 = 0;
-    for (const f of ファイル) {
-      try { const s = fs.statSync(path.join(場, f)); if (s.mtimeMs > 新) 新 = s.mtimeMs; } catch (e) { /* 消えた */ }
-    }
-    出.push({
-      場: 名,
-      名前: ファイル.map((f) => 名 + '/' + f),
-      git複製: wt.map((d) => 名 + '/' + d),
-      新,
-      生きている: 新 > 0 && (Date.now() - 新) < 生きている線,
-    });
-  }
-  return 出;
-}
-
-const repoの = 集める(ROOT, '', [], null);
-const 置き場たち = 置き場を調べる();
-const 生きている = 置き場たち.filter((x) => x.生きている);
-const 古い = 置き場たち.filter((x) => !x.生きている);
-
-const 名前 = (群) => 群.flatMap((x) => x.名前);
-const 複製 = (群) => 群.flatMap((x) => x.git複製);
-const 危ない = 危ないか(repoの, 名前(生きている), 複製(生きている));
-const 古い置き忘れ = 危ないか(repoの, 名前(古い), 複製(古い));
-
-/* ★★材料が 無い時に 緑を 出さない★★（差し戻し②） */
-const 親が在る = fs.existsSync(親の部屋);
-const 手元 = process.platform === 'win32';
-if (この回の名乗り(親が在る, 手元) === '見ていない') {
-  /* ★CI(ubuntu) には この 道が 無い★
-     ⇒★「見ていない」と ★毎回 記録に 残す★★＝黙って 緑に しない
-     ⇒ この 見張りが 本当に 働くのは ★手元(Windows)★。そこでは 下の 検査が 走る */
-  console.log('\n[shouko-no-okiba] ★★この 回は 見ていません★★');
-  console.log('  ★' + 親の部屋 + ' が 在りません（platform=' + process.platform + '）★');
-  console.log('  ⇒ ★この 見張りは 手元(Windows)専用★＝CI では ★消える場所を 見ていない★');
+if (名乗り.答 === '見ていない') {
+  console.log('\n[shouko-no-okiba] ★★この 回は 見ていません★★ … ' + 名乗り.訳);
   console.log('  ⇒ ★緑＝「置き場が きれい」では ありません★');
   process.exit(0);
 }
 
 console.log('\n[shouko-no-okiba] 消える場所に repo の 物を 置いていないか');
-
-T('★★材料が 在る（親の 部屋が 読めて 置き場が 1つ以上）★★', () => {
-  if (!親が在る) {
-    throw new Error('★未測定（親の 部屋が 在りません）★'
-      + ' … ' + 親の部屋
-      + ' / 手元(Windows)なのに 道が 変わっています。EXALLY_SCRATCHPAD_OYA で 渡してください');
-  }
-  if (!置き場たち.length) {
-    throw new Error('★未測定（置き場が 1つも ありません）★ … ' + 親の部屋
-      + ' / ★この 回は 何も 見ていません＝緑を 出しては いけない★');
-  }
-  if (!生きている.length) {
-    throw new Error('★未測定（生きている 置き場が ありません）★'
-      + ' … 置き場 ' + 置き場たち.length + '個 は 全部 48時間 以上 動いていません'
-      + ' / ★自分の 置き場が 数えられていない＝道が 変わった合図★');
-  }
+T('★★この 回の 名乗り（材料が 在る）★★', () => {
+  if (名乗り.答 === '赤') throw new Error('★未測定★ … ' + 名乗り.訳);
 });
+if (名乗り.答 === '赤') { console.log('\n' + pass + ' passed, ' + fail + ' failed'); process.exit(1); }
 
-T('★★消える場所に repo と 同じ 名前の コードが 無い★★', () => {
-  if (危ない.length) {
-    throw new Error('★消える場所に repo の 物が 在ります★:\n'
-      + 危ない.map((f) => '   - ' + f).join('\n')
+/* ★rev-list は 名乗りの 後★（CI は 浅い 複製＝ここまで 来ない） */
+const t0 = Date.now();
+const 指紋 = git指紋(ROOT);
+const repoの = 集める(ROOT, '', [], null);
+const 調 = 置き場を調べる(場たち, repoの, 指紋.集);
+
+T('★★git の 指紋が 読めた★★', () => {
+  if (!指紋.集.size) throw new Error('★rev-list が 転んだ★（' + 指紋.訳 + '）＝名前の 当たった 物は 全部 赤に しています');
+});
+T('★★消える場所に git に 無い repo の コードが 無い★★', () => {
+  if (調.危.length) {
+    throw new Error('★消える場所に git に 元の 無い 控えが 在ります★:\n'
+      + 調.危.map((f) => '   - ' + f).join('\n')
       + '\n   → ★控えは `git switch -c <枝>` ＋ commit★（push しなくてよい）'
-      + '\n     ★scratchpad は 消えます★＝2026-08-29 の 実Excel 507個は これで 消え、'
-      + '\n     ★「507個」は 中身の 無い 数字に なりました★');
+      + '\n     ★scratchpad は 消えます★＝2026-08-29 の 実Excel 507個は これで 消えました');
   }
 });
-
 T('★この 機械が「半分」だと 書いてある（守ったと 読ませない）', () => {
-  /* ★捕まえられない 物が 在る★のに、それが 書いていないと
-     ★「見張りが 在る＝安全」と 読まれる★＝一番 危ない */
-  const 本文 = fs.readFileSync(fileURLToPath(import.meta.url), 'utf8');
-  if (本文.indexOf('半分しか 守りません') < 0) throw new Error('★半分だと 書いていない★');
+  if (fs.readFileSync(fileURLToPath(import.meta.url), 'utf8').indexOf('半分しか 守りません') < 0) throw new Error('★半分だと 書いていない★');
 });
-
 T('検査が空振りしていない（repo を 実際に 数えている）', () => {
   if (repoの.length < 100) throw new Error('repo の ファイルが 少なすぎます: ' + repoの.length);
 });
 
 console.log('\n── 実測 ──');
-console.log('  repo … ' + repoの.length + '本');
-console.log('  置き場 … ' + 置き場たち.length + '個'
-  + '（★生きている ' + 生きている.length + '個★ / 48時間 動いていない ' + 古い.length + '個）');
-console.log('  見た ファイル … ' + 名前(生きている).length + '本'
-  + '（除いた git の 作業用 複製 ' + 複製(生きている).length + '個）');
-console.log('  ★危ない（生きている 置き場）… ' + 危ない.length + '本★');
-/* ★古い 置き忘れは 赤に しないが ★黙らない★★＝数と 場所を 必ず 出す */
-if (古い置き忘れ.length) {
-  console.log('  ─ 参考：48時間 動いていない 置き場の 置き忘れ … ' + 古い置き忘れ.length + '本');
-  const 部屋 = {};
-  for (const f of 古い置き忘れ) { const k = f.split('/scratchpad/')[0].split('/').pop(); 部屋[k] = (部屋[k] || 0) + 1; }
-  for (const k of Object.keys(部屋)) console.log('      ' + k + ' … ' + 部屋[k] + '本');
-  console.log('    ⇒★もう 居ない セッションの 物＝私には 直せない★ので 赤に していません');
-  console.log('    ⇒★中身を 見て 要る物なら 枝に して ください★');
-}
+console.log('  repo … ' + repoの.length + '本 ／ git の 指紋 … ' + 指紋.集.size + '個（' + (Date.now() - t0) + 'ms）');
+console.log('  見た 置き場 … ' + 場たち.length + '個 ／ 見た ファイル … ' + 調.見た + '本（除いた git の 作業用 複製 ' + 調.複 + '個）');
+console.log('  ★危ない … ' + 調.危.length + '本★');
+console.log('  見ていない 置き場（他の 席）… ' + Math.max(0, 全部の置き場の数(tmp) - 場たち.length) + '個');
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
