@@ -774,9 +774,17 @@ console.log('[retsu-x] ★空に 当たる 条件と SUMIF の 取り直し（20
   /* ★件4d-1（2026-11-08）AGGREGATE の 帯★＝1〜13 は 3つ目から 全部・14〜19 は 3つ目だけ（4つ目の k は 帯に しない）
        実測 utsushiji-excel-25：AGGREGATE(2,6,A:A) 5・(9,6,A:A) 15・(3,6,A:A) 5・(14,6,A:A,1) 5。★直す前の 台（2215bfd）は 帯の 形が #REF!／#VALUE!★ */
   for (const [f, 見] of [['=AGGREGATE(2,6,A:A)', '5'], ['=AGGREGATE(9,6,A:A)', '15'], ['=AGGREGATE(3,6,A:A)', '5'], ['=AGGREGATE(14,6,A:A,1)', '5'],
-    ['=AGGREGATE(9,6,A:A,B:B)', '165'], ['=AGGREGATE(14,6,A:A,B:B)', '#REF!']]) {
+    ['=AGGREGATE(9,6,A:A,B:B)', '165'], ['=AGGREGATE(14,6,A:A,B:B)', '#REF!']]) { /* ★165・#REF! の 2本は 紙25 に 無い＝手で 数えた 数（1〜13 は 引数を 全部 足す・14〜19 の 4つ目 k に 帯は 誤り）★ */
     const h = 材料(); h.打つ('ZZ9', f);
     T('件4d-1 ' + f + ' → ' + 見, h.字('ZZ9') === 見, h.字('ZZ9'));
+  }
+  /* ★件4d-1 の 選び（2026-11-09・staging 前 taiketsu 止め1）★＝帯を 通すのは 選びが 直に 書いた 4・6 の 時だけ
+       0〜3 は 列の 中の SUBTOTAL・AGGREGATE を 数えない（台に 外しが 無い＝通すと 入れ子ごと 足して 30＝黙った 数）・5・7 は 隠した 行（未測定）⇒ #REF!
+       4・6 は 入れ子も 数える（Excel の 決まり）＝A1:A5 の 15＋A20 の 小計 15＝30。★直す前（e71e846）は 0〜3 も 30★ */
+  for (const [f, 見] of [['=AGGREGATE(9,0,A:A)', '#REF!'], ['=AGGREGATE(9,3,A:A)', '#REF!'], ['=AGGREGATE(9,5,A:A)', '#REF!'], ['=AGGREGATE(9,7,A:A)', '#REF!'],
+    ['=AGGREGATE(9,D30,A:A)', '#REF!'], ['=AGGREGATE(9,4,A:A)', '30'], ['=AGGREGATE(9,6,A:A)', '30'], ['=AGGREGATE(9,3,A1:A5)', '15']]) {
+    const h = 材料(); h.打つ('A20', '=AGGREGATE(9,6,A1:A5)'); h.打つ('D30', '6'); h.打つ('ZZ9', f);
+    T('件4d-1 選び ' + f + '（A20 に 小計）→ ' + 見, h.字('ZZ9') === 見, h.字('ZZ9'));
   }
   /* ★LET・ラムダの 名に 入れた 参照を `:`・交わりの 端に 使う 式は 揮発★（2026-11-08 件4b・taiketsu 止め2）
        ＝名の 中身（B1 等）は 頼りに 在っても 端と 端の 間（B2）は 頼りに 無い＝揮発を 外すと 古い 数
