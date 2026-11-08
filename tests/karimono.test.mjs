@@ -8,8 +8,10 @@
  *
  *  ★出どころが 手元に 無い時（CI など）★
  *    ★未測定★と はっきり 言う（★0件と 混ぜない★）。
- *    ★週1の 回（MEASURE_REQUIRED=1）では 赤★＝そこは 出どころも 置く 場所では ないので
- *    ★「写した時の sha」との 見比べ★だけ やる（下の ②）。
+ *    ★週1の 回（webkit.yml）でも 赤に しない★（MEASURE_REQUIRED は 読まない＝11-09 に 注を 直した）。
+ *    そこは 出どころを 置く 場所では ないので ★写しの 残りの sha との 見比べ★だけ やる（下の ③-a）。
+ *  ★出どころの 新しい版を 見て 取らないと 決めた 時★＝台帳の `見て取らなかった` に sha と 訳を 書く
+ *    （★緑に 数えず 別に 数える★・★書いた sha 以外に 変われば 赤★）。
  *
  *  走らせ方: node tests/karimono.test.mjs [--self-test]
  */
@@ -21,7 +23,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SELF = process.argv.includes('--self-test');
 
-let pass = 0, fail = 0, 未測定 = 0;
+let pass = 0, fail = 0, 未測定 = 0, 見て取らなかった = 0;
 const T = (n, よい, 添え) => {
   if (よい) { pass++; console.log('  ok   ' + n); }
   else { fail++; console.log('  NG   ' + n + (添え ? '\n       ' + 添え : '')); }
@@ -54,6 +56,16 @@ const 借り物 = [
       { 行に: 'node_modules/playwright/index.js' },
       { 行に: '手元に無い時だけ 借りる' },
       { 行に: '★ここだけ 変えた（借り先' },
+    ],
+    /* ★★出どころの 新しい版を 見て「取らない」と 決めた 物★★（2026-11-09 に 足した）
+       ★今の 出どころの sha が ここに 在り、写しの 残りの sha も 同じ時だけ★
+       「見て 取らなかった」と 訳を 出して 別に 数える（★緑には 数えない★）。
+       ★ここに 無い sha に 変わったら 今まで 通り 赤★＝★もう一度 見て 決める★。 */
+    見て取らなかった: [
+      { sha: '397bf9c2d1bf5280', 写しの残りのsha: '36e46d64274d0933', 見た日: '2026-11-09',
+        訳: '出どころ 2026-09-25（a7cc4cc8・9ba429ed）＝閉じる前に 倉庫（/rest/v1/）の 保存が 静まるのを 待つ'
+          + '（Rakunally の 段を 跨ぐ 保存の 手当て）。Exally の 借り手は 倉庫の 鍵（session）を 入れず'
+          + ' 保存が 走らない（0本・11-09 taiketsu が 数え直し）＝取っても 効き目 0・閉じる たびに 最低 1.2秒 増える' },
     ],
   },
 ];
@@ -124,6 +136,17 @@ for (const k of 借り物) {
   }
   const 元 = fs.readFileSync(k.出どころ, 'utf8');
   const 今のsha = sha(元);
+  /* ★見て 取らなかった 版★（台帳 `見て取らなかった`）＝★緑に 混ぜず 別に 数える★ */
+  const 見送り = 今のsha !== k.写した時のsha
+    && (k.見て取らなかった || []).find((m) => m.sha === 今のsha && m.写しの残りのsha === sha(写しの残り0));
+  if (見送り) {
+    見て取らなかった++;
+    console.log('  ★見て 取らなかった★ 出どころは 変わった（写した時 ' + k.写した時のsha + ' → 今 ' + 今のsha
+      + '・' + 見送り.見た日 + ' に 見た）');
+    console.log('         ⇒★訳★ ' + 見送り.訳);
+    console.log('         ⇒★「出どころと 同じか」は 緑に 数えていません★');
+    continue;
+  }
   T('★出どころが 写した時から 変わっていない（' + 今のsha + '）★', 今のsha === k.写した時のsha,
     '★出どころが 変わりました★（写した時 ' + k.写した時のsha + ' → 今 ' + 今のsha + '）'
     + '＝★写し直して この 台帳も 直して ください★');
@@ -165,9 +188,40 @@ if (process.argv.includes('--self-test')) {
     if (!赤) fail++;
   }
   T('★本物は 壊していない（戻した）★', fs.readFileSync(元道, 'utf8') === 元);
+
+  /* ★★台帳の「見て 取らなかった」の sha を 1字 変えたら 赤か★★（2026-11-09）
+     ★台帳は この ファイルの 中＝壊した 写しを tests/ に 置いて 走らせ、必ず 消す★。
+     ★出どころが 無い（CI）時は この 壊しは 意味が 無い（③-b を 飛ぶ）＝★未測定★と 数える★
+     （素通りを 赤に すると 週1の 回が 毎回 赤＝11-09 taiketsu の 止め S1） */
+  const 見送り0 = (借り物[0].見て取らなかった || [])[0];
+  if (!見送り0) {
+    console.log('  ★素通り★  台帳の「見て 取らなかった」が 空（壊しが 古い＝直せ）'); fail++;
+  } else if (process.env.EXALLY_KARIMONO_NO_SRC === '1' || !fs.existsSync(借り物[0].出どころ)) {
+    未測定++;
+    console.log('  ★未測定★  台帳の「見て 取らなかった」の sha を 壊す … 出どころが 無い＝③-b を 飛ぶので 見られない');
+  } else {
+    const 自分 = fileURLToPath(import.meta.url);
+    const 中0 = fs.readFileSync(自分, 'utf8');
+    const 壊れsha = (見送り0.sha[0] === '0' ? '1' : '0') + 見送り0.sha.slice(1);
+    const 壊れ = 中0.split("sha: '" + 見送り0.sha + "'").join("sha: '" + 壊れsha + "'");
+    const 仮 = path.join(ROOT, 'tests', '_karimono-kowashi.tmp.mjs');
+    let 赤 = false;
+    if (壊れ === 中0) { console.log('  ★素通り★  台帳の sha の 印が 見つからない（壊しが 古い＝直せ）'); fail++; }
+    else {
+      try {
+        fs.writeFileSync(仮, 壊れ);
+        try { execFileSync(process.execPath, [仮], { stdio: 'pipe' }); }
+        catch (e) { 赤 = true; }
+      } finally { try { fs.unlinkSync(仮); } catch (e) { /* 無ければ よい */ } }
+      console.log((赤 ? '  赤くなった  ' : '  ★素通り★  ') + '★台帳の「見て 取らなかった」の sha を 1字 変える★');
+      if (!赤) fail++;
+    }
+    T('★壊した 写しは 残っていない★', !fs.existsSync(仮));
+  }
 }
 
 console.log('');
 console.log('karimono: ' + pass + ' 緑 / ' + fail + ' 赤'
-  + (未測定 ? ' / ★未測定 ' + 未測定 + '件★（★緑に 数えていません★）' : ''));
+  + (未測定 ? ' / ★未測定 ' + 未測定 + '件★（★緑に 数えていません★）' : '')
+  + (見て取らなかった ? ' / ★見て 取らなかった ' + 見て取らなかった + '件★（★緑に 数えていません★）' : ''));
 process.exit(fail ? 1 : 0);
