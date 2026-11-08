@@ -786,6 +786,28 @@ console.log('[retsu-x] ★空に 当たる 条件と SUMIF の 取り直し（20
     const h = 材料(); h.打つ('A20', '=AGGREGATE(9,6,A1:A5)'); h.打つ('D30', '6'); h.打つ('ZZ9', f);
     T('件4d-1 選び ' + f + '（A20 に 小計）→ ' + 見, h.字('ZZ9') === 見, h.字('ZZ9'));
   }
+  /* ★件4d（2026-11-08）IF・CHOOSE・IFS・SWITCH を 通る 帯★（sekkei-4d v3・設計前 taiketsu 止め0）
+       ①打ち直しで 古い 数に ならない（頼りは 元の 木＝判の マス・全部の 枝の 帯）＝打ってから と 初めから が 同じ
+       ②判は 1回（RAND の 判で 置き換えと IF 本体が 食い違うと #REF! が 出る＝出ない 事を 見る）
+       ③判の 読み方は kansuu と 同じ（空→偽・"TRUE"・CHOOSE "2"・TRUE）・1つに 決まらない 判＋帯の 枝＝#REF!（黙った 0 で ない）
+       ★直す前の 台（5f08c18）は ①③ の 帯の 形が #REF!／黙った 0★ */
+  for (const [f, c, v] of [['=SUM(IF(C2,A:A,B:B))', 'C2', '1'], ['=SUM(IF(C2,A:A,B:B))', 'A3', '100'], ['=SUM(IF(C2,A:A,B:B))', 'B3', '100'],
+    ['=SUMIF(IF(TRUE,A:A),">2",B1)', 'B3', '100'], ['=COUNT(CHOOSE(D1,A:A,B:B))', 'D1', '2'], ['=SUM(IF(TRUE,A:A))', 'A9', '7']]) {
+    const a = 材料(); a.打つ('B3', '1'); a.打つ('B4', '1'); a.打つ('ZZ9', f); a.字('ZZ9'); a.打つ(c, v);
+    const b = 材料(); b.打つ('B3', '1'); b.打つ('B4', '1'); b.打つ(c, v); b.打つ('ZZ9', f);
+    T('件4d 打ち直し ' + f + ' に ' + c + '=' + v + '（打ってから＝初めから）', a.字('ZZ9') === b.字('ZZ9') && !/^#/.test(a.字('ZZ9')), a.字('ZZ9') + ' / ' + b.字('ZZ9'));
+  }
+  for (const [f, よい] of [['=SUM(IF(RAND()>0.5,A:A,1))', ['15', '1']], ['=SUM(SWITCH(IF(RAND()>0.5,1,2),1,A:A,2,7))', ['15', '7']], ['=SUM(IFS(RAND()>0.5,7,TRUE,A:A))', ['15', '7']]]) {
+    const 出 = new Set();
+    for (let i = 0; i < 200; i++) { const h = 材料(); h.打つ('ZZ9', f); 出.add(h.字('ZZ9')); }
+    T('件4d 判は 1回 ' + f + '（200回 ' + よい.join('・') + ' だけ）', [...出].every((x) => よい.includes(x)), [...出].join(','));
+  }
+  for (const [f, 見] of [['=SUM(IF(C9,A:A))', '0'], ['=SUM(IF("TRUE",A:A))', '15'], ['=SUM(CHOOSE("2",1,A:A))', '15'], ['=SUM(CHOOSE(TRUE,A:A,1))', '15'],
+    ['=COUNT((IF(TRUE,A:A)))', '5'], ['=COUNT(IF(A1:A5>0,A:A))', '#REF!'], ['=COUNT(IF(A1:A5>0,(A:A,B1),A:A))', '#REF!'], ['=SUM(IF({TRUE},(A:A,B1)))', '#VALUE!'],
+    ['=ISREF(SWITCH(9,{1},B1,B2))', 'TRUE'], ['=ISREF(SWITCH(1,{1},B1))', 'FALSE'], ['=ISREF(IFS({TRUE},B1))', 'FALSE'], ['=SUM(IF(TRUE,B1:B5))', '150']]) {
+    const h = 材料(); h.打つ('ZZ9', f);
+    T('件4d ' + f + ' → ' + 見, h.字('ZZ9') === 見, h.字('ZZ9'));
+  }
   /* ★LET・ラムダの 名に 入れた 参照を `:`・交わりの 端に 使う 式は 揮発★（2026-11-08 件4b・taiketsu 止め2）
        ＝名の 中身（B1 等）は 頼りに 在っても 端と 端の 間（B2）は 頼りに 無い＝揮発を 外すと 古い 数
        材料 B1:B5＝10,20,1,1,50（B3・B4 を 1）。打ってから 間の マスを 打ち直す */
