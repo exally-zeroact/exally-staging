@@ -71,7 +71,7 @@ const 紙たち = [['utsushiji-excel-2026-11-07.tsv', 27, 盤1], ['utsushiji-exc
   ['utsushiji-excel-4-2026-11-07.tsv', 9, 盤6], ['utsushiji-excel-5-2026-11-07.tsv', 19, 盤7], ['utsushiji-excel-6-2026-11-07.tsv', 18, 盤8], ['utsushiji-excel-7-2026-11-07.tsv', 48, 盤11], ['utsushiji-excel-8-2026-11-07.tsv', 14, 盤11],
   ['utsushiji-excel-10-2026-11-07.tsv', 16, 盤13], ['utsushiji-excel-11-2026-11-07.tsv', 14, 盤14],
   ['utsushiji-excel-12-2026-11-08.tsv', 22, 盤14], ['utsushiji-excel-13-2026-11-08.tsv', 103, 盤15],
-  ['utsushiji-excel-14-2026-11-08.tsv', 35, 盤15], ['utsushiji-excel-15-2026-11-08.tsv', 27, 盤15]];
+  ['utsushiji-excel-14-2026-11-08.tsv', 35, 盤15], ['utsushiji-excel-15-2026-11-08.tsv', 27, 盤15], ['utsushiji-excel-16-2026-11-08.tsv', 23, 盤15]];
 /* ★「まだ」の 口は 残す（直して いない 行を 黙って 外さず 数えて 出す 為）★ */
 const まだ = /^$^/;   /* ★紙6 の 日付・%・時刻の 右 7本と MATCH("a~b") 1本は 直した（11-07）＝まだ 0★ */
 /* ★紙11 の まだ★（2026-11-07）＝参照を 返す IF・CHOOSE・LET を 足す 範囲に 置く 形＝Excel 52
