@@ -70,23 +70,23 @@ const 盤15 = (h) => { 盤14(h); h.打つ('E1', '="5"'); h.打つ('E2', 7); h.�
 const 紙たち = [['utsushiji-excel-2026-11-07.tsv', 27, 盤1], ['utsushiji-excel-2-2026-11-07.tsv', 39, 盤2], ['utsushiji-excel-3-2026-11-07.tsv', 39, 盤3],
   ['utsushiji-excel-4-2026-11-07.tsv', 9, 盤6], ['utsushiji-excel-5-2026-11-07.tsv', 19, 盤7], ['utsushiji-excel-6-2026-11-07.tsv', 18, 盤8], ['utsushiji-excel-7-2026-11-07.tsv', 48, 盤11], ['utsushiji-excel-8-2026-11-07.tsv', 14, 盤11],
   ['utsushiji-excel-10-2026-11-07.tsv', 16, 盤13], ['utsushiji-excel-11-2026-11-07.tsv', 14, 盤14],
-  ['utsushiji-excel-12-2026-11-08.tsv', 22, 盤14], ['utsushiji-excel-13-2026-11-08.tsv', 103, 盤15]];
+  ['utsushiji-excel-12-2026-11-08.tsv', 22, 盤14], ['utsushiji-excel-13-2026-11-08.tsv', 103, 盤15],
+  ['utsushiji-excel-14-2026-11-08.tsv', 35, 盤15], ['utsushiji-excel-15-2026-11-08.tsv', 27, 盤15]];
 /* ★「まだ」の 口は 残す（直して いない 行を 黙って 外さず 数えて 出す 為）★ */
 const まだ = /^$^/;   /* ★紙6 の 日付・%・時刻の 右 7本と MATCH("a~b") 1本は 直した（11-07）＝まだ 0★ */
 /* ★紙11 の まだ★（2026-11-07）＝参照を 返す IF・CHOOSE・LET を 足す 範囲に 置く 形＝Excel 52
      ★IF・CHOOSE は 値の直し4 件4a（2026-11-08）で 直した★＝残りは LET（件4b＝LET・ラムダの 名が 参照を 持つ） */
-const まだ11 = new Set(['=LET(r,B1,SUMIF(A1:A5,">2",r))']);
+const まだ11 = new Set([]);   /* ★LET は 件4b（2026-11-08）で 直した★ */
 /* ★紙13 の まだ★（2026-11-08・件4a の 後）＝名指しで 件を 書く（黙って 外さず 数えて 出す）
      件4b＝LET・ラムダの 名が 参照を 持たない（値に 詰める）／件4c＝XLOOKUP が 参照を 返さない
      件5＝式が 作った 表を IF が 1つに 詰める（Formula2 の 溢れ）／件6＝帯を AVERAGEIF(S)・MAXIFS・MINIFS に 置くと #REF! */
 const まだ13 = new Map([
-  ['=LET(r,B1,SUMIF(A1:A5,">2",r))', '件4b'], ['=SUMIF(A1:A5,">2",LET(r,B1,r))', '件4b'], ['=SUMIF(A1:A5,">2",LAMBDA(x,x)(B1))', '件4b'],
-  ['=SUM(LET(r,IF(TRUE,B1:B5),r))', '件4b'], ['=ISREF(LET(r,B1,r))', '件4b'], ['=SUM(LET(r,B1,r:B3))', '件4b'],
-  ['=CELL("address",LET(r,B2,r))', '件4b'], ['=SUM(LET(x,B1,y,x,y:B3))', '件4b'],
   ['=SUMIF(A1:A5,">2",XLOOKUP(10,B1:B5,B1:B5))', '件4c'], ['=SUM(XLOOKUP(10,B1:B5,A1:A5):A3)', '件4c'], ['=SUM(XLOOKUP(20,B1:B5,A1:A5):A5)', '件4c'],
   ['=SUM(IF(TRUE,{1,2,3}))', '件5'], ['=ROWS(IF(TRUE,{1;2;3}))', '件5'],
   ['=AVERAGEIF(A:A,">2",B:B)', '件6'], ['=MAXIFS(B:B,A:A,">2")', '件6'], ['=MINIFS(B:B,A:A,">2")', '件6'], ['=AVERAGEIFS(B:B,A:A,">2")', '件6'],
 ]);
+/* ★紙14 の まだ★（2026-11-08 件4b の 後）＝番号が 並び（{1,2}）の CHOOSE は 並びの 数だけ 選んで 溢れる＝件5 */
+const まだ14 = new Map([['=SUM(CHOOSE({1,2},B1,B2))', '件5']]);
 let まだの数 = 0;
 let pass = 0, fail = 0;
 for (const [名, 本数, 盤] of 紙たち) {
@@ -96,6 +96,7 @@ for (const [名, 本数, 盤] of 紙たち) {
     if (名 === 'utsushiji-excel-6-2026-11-07.tsv' && まだ.test(行[0])) { まだの数++; continue; }
     if (名 === 'utsushiji-excel-11-2026-11-07.tsv' && まだ11.has(行[0])) { まだの数++; console.log('… まだ ' + 名 + ' ' + 行[0] + ' Excel ' + 行[1]); continue; }
     if (名 === 'utsushiji-excel-13-2026-11-08.tsv' && まだ13.has(行[0])) { まだの数++; console.log('... まだ（' + まだ13.get(行[0]) + '） ' + 名 + ' ' + 行[0] + ' Excel ' + 行[1]); continue; }
+    if (名 === 'utsushiji-excel-14-2026-11-08.tsv' && まだ14.has(行[0])) { まだの数++; console.log('... まだ（' + まだ14.get(行[0]) + '） ' + 名 + ' ' + 行[0] + ' Excel ' + 行[1]); continue; }
     const 式 = 行[0], 条 = 行.length === 3 ? 行[1].replace(/^J2=/, '') : undefined;
     /* ★Excel の 真偽は Value2 の 字で True／False（紙13 から）＝台の TRUE／FALSE と 揃えて 比べる★ */
     const 見 = ({ True: 'TRUE', False: 'FALSE' })[行[行.length - 1]] || 行[行.length - 1];

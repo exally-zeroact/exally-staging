@@ -1,0 +1,29 @@
+# Excel 16.0 build 20527 / ban15 A1:A5=1..5 B1:B5=10,20,1,1,50 E1=shiki-moji5 E2=7 C2=TRUE / LET LAMBDA no sanshou / .Formula to .Formula2 onaji dake / toru-utsushiji-15.ps1
+=SUM(IF({TRUE},B1:B5))	82	z0=False	kata=Double
+=SUM(CHOOSE({1},B1:B5))	82	z0=False	kata=Double
+=SUM(IF(A1:A1>0,B1:B5))	82	z0=False	kata=Double
+=ISREF(IF({TRUE},B1))	False	z0=False	kata=Boolean
+=ISREF(CHOOSE({1},B1))	False	z0=False	kata=Boolean
+=ISREF(IF(A1:A1>0,B1))	True	z0=False	kata=Boolean
+=SUM(IFS({TRUE},B1:B5))	82	z0=False	kata=Double
+=SUM(SWITCH({1},1,B1:B5))	82	z0=False	kata=Double
+=ROWS(IF({TRUE},B1:B5))	5	z0=False	kata=Double
+=ROWS(CHOOSE({1},B1:B5))	5	z0=False	kata=Double
+# (F to F2 ga chigau) =LET(r,INDEX(A1:B5,0,2),r) F=#VALUE! F2=10
+=LET(f,LAMBDA(x,B1),SUM(f(0):B5))	82	z0=False	kata=Double
+=LET(r,B1:B5,SUM(r))	82	z0=False	kata=Double
+=ISFORMULA(LET(r,E1,r))	True	z0=False	kata=Boolean
+=FORMULATEXT(LET(r,E1,r))	="5"	z0=False	kata=String
+=ISFORMULA(IF(TRUE,E1))	True	z0=False	kata=Boolean
+=FORMULATEXT(IF(TRUE,E1))	="5"	z0=False	kata=String
+=ISFORMULA(LAMBDA(x,x)(E1))	True	z0=False	kata=Boolean
+=ISFORMULA(E1)	True	z0=False	kata=Boolean
+=ISREF({1,2})	False	z0=False	kata=Boolean
+=ISREF(INDEX({1;2},0))	False	z0=False	kata=Boolean
+=ISREF({1})	False	z0=False	kata=Boolean
+=ISREF(SEQUENCE(2))	False	z0=False	kata=Boolean
+=LET(r,D1,SUMIF(A1:A5,">2",r))	0	z0=True	kata=Double
+=LAMBDA(x,SUM(x:B3))(B1)	31	z0=False	kata=Double
+=SUM(LAMBDA(x,x B2:B3)(B1:B5))	21	z0=False	kata=Double
+=LET(f,LAMBDA(x,x),SUM(f(B1):B3))	31	z0=False	kata=Double
+=ISREF(LET(r,{1,2},r))	False	z0=False	kata=Boolean
