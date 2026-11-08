@@ -71,7 +71,16 @@ const 紙たち = [['utsushiji-excel-2026-11-07.tsv', 27, 盤1], ['utsushiji-exc
   ['utsushiji-excel-4-2026-11-07.tsv', 9, 盤6], ['utsushiji-excel-5-2026-11-07.tsv', 19, 盤7], ['utsushiji-excel-6-2026-11-07.tsv', 18, 盤8], ['utsushiji-excel-7-2026-11-07.tsv', 48, 盤11], ['utsushiji-excel-8-2026-11-07.tsv', 14, 盤11],
   ['utsushiji-excel-10-2026-11-07.tsv', 16, 盤13], ['utsushiji-excel-11-2026-11-07.tsv', 14, 盤14],
   ['utsushiji-excel-12-2026-11-08.tsv', 22, 盤14], ['utsushiji-excel-13-2026-11-08.tsv', 103, 盤15],
-  ['utsushiji-excel-14-2026-11-08.tsv', 35, 盤15], ['utsushiji-excel-15-2026-11-08.tsv', 27, 盤15], ['utsushiji-excel-16-2026-11-08.tsv', 23, 盤15]];
+  ['utsushiji-excel-14-2026-11-08.tsv', 35, 盤15], ['utsushiji-excel-15-2026-11-08.tsv', 27, 盤15], ['utsushiji-excel-16-2026-11-08.tsv', 23, 盤15],
+  /* ★件4c（2026-11-08）＝束（とびとび）・端の外枠・帯の交わり・INDEX の区・束の門の名簿★ */
+  ['utsushiji-excel-17-2026-11-08.tsv', 30, 盤15], ['utsushiji-excel-18-2026-11-08.tsv', 46, 盤15],
+  ['utsushiji-excel-19-2026-11-08.tsv', 124, 盤15], ['utsushiji-excel-20-2026-11-08.tsv', 58, 盤15],
+  /* ★叩き直し2（2026-11-08）＝束の 関数の 残り（GCD・IM系・COVAR・SUMX系は #VALUE!／FREQUENCY・ZTEST・HSTACK・VSTACK・TOCOL・TOROW は 受ける）・束と 帯の 交わり★ */
+  ['utsushiji-excel-21-2026-11-08.tsv', 30, 盤15],
+  /* ★叩き直し3（2026-11-08）＝TOCOL/TOROW の 列の 順・区が 1つ 残る 交わり（22）／束の 交わりを MATCH・XLOOKUP・VLOOKUP・HLOOKUP・INDEX・SUMIF に（23）★ */
+  ['utsushiji-excel-22-2026-11-08.tsv', 33, 盤15], ['utsushiji-excel-23-2026-11-08.tsv', 48, 盤15],
+  /* ★叩き直し3 の 後（2026-11-08）＝TOCOL/TOROW の 3つ目の 字（「TRUE」だけ 真・他の 字は #VALUE!）／IF・CHOOSE・IFS・SWITCH を 通る 帯（件4d）★ */
+  ['utsushiji-excel-24-2026-11-08.tsv', 19, 盤15]];
 /* ★「まだ」の 口は 残す（直して いない 行を 黙って 外さず 数えて 出す 為）★ */
 const まだ = /^$^/;   /* ★紙6 の 日付・%・時刻の 右 7本と MATCH("a~b") 1本は 直した（11-07）＝まだ 0★ */
 /* ★紙11 の まだ★（2026-11-07）＝参照を 返す IF・CHOOSE・LET を 足す 範囲に 置く 形＝Excel 52
@@ -87,6 +96,16 @@ const まだ13 = new Map([
 ]);
 /* ★紙14 の まだ★（2026-11-08 件4b の 後）＝番号が 並び（{1,2}）の CHOOSE は 並びの 数だけ 選んで 溢れる＝件5 */
 const まだ14 = new Map([['=SUM(CHOOSE({1,2},B1,B2))', '件5']]);
+/* ★紙17・紙19 の まだ★（2026-11-08 件4c の 後）＝CHOOSE({1,2},B1,B2) は 件5・CELL("address",束) は Excel が "$A$1,$B$1"（台は #VALUE! に 止めて ある＝黙って 1つ目を 出さない） */
+const まだ17 = new Map([['=SUM(CHOOSE({1,2},B1,B2))', '件5']]);
+const まだ19 = new Map([['=CELL("address",(A1,B1))', '束の 番地の 字']]);
+/* ★紙22・紙23 の まだ★＝★素の 帯でも 外れる 形★（MEDIAN(A:A)・SUM(INDEX(B:B,0))・近似の VLOOKUP(3,A:B,2) も 台は #REF!/#VALUE!）＝帯の 置き場（案X）の 外・件4c で ない */
+const まだ22 = new Map([['=MEDIAN((A:A,B:B) A:A)', '案X MEDIAN の 帯']]);
+const まだ23 = new Map([['=SUM(INDEX((A:A,B:B) B:B,0))', '案X INDEX の 0'], ['=VLOOKUP(3,(A:B,D:D) A:B,2)', '案X 近似の VLOOKUP'],
+  ['=SUM(INDEX((A:A,B:B),0,1,2))', '案X INDEX の 0'], ['=MEDIAN((A:A,B:B) A:B)', '案X MEDIAN の 帯'], ['=INDEX((A:A,B:B) A:A,0)', '案X INDEX の 0（溢れ）']]);
+/* ★紙24 の まだ★＝★帯が IF・CHOOSE・IFS・SWITCH を 通ると COUNT 等が 黙って 0★（ff1aef5 から 在る・件4c の 叩き直し3 で 見つけた）＝件4d */
+const まだ24 = new Map(['=COUNT(IF(TRUE,A:A))', '=COUNT(CHOOSE(1,A:A))', '=AGGREGATE(2,6,IF(TRUE,A:A))', '=COUNTA(IF(TRUE,A:A))', '=SUM(IF(TRUE,A:A))',
+  '=COUNT(IF(TRUE,(A:A,B:B)))', '=COUNT(IF(TRUE,(A:A,B:B) A:B))', '=COUNT(IFS(TRUE,A:A))', '=COUNT(SWITCH(1,1,A:A))', '=MAX(IF(TRUE,A:A))'].map(function (f) { return [f, '件4d IF 等を 通る 帯']; }));
 let まだの数 = 0;
 let pass = 0, fail = 0;
 for (const [名, 本数, 盤] of 紙たち) {
@@ -96,6 +115,10 @@ for (const [名, 本数, 盤] of 紙たち) {
     if (名 === 'utsushiji-excel-6-2026-11-07.tsv' && まだ.test(行[0])) { まだの数++; continue; }
     if (名 === 'utsushiji-excel-11-2026-11-07.tsv' && まだ11.has(行[0])) { まだの数++; console.log('… まだ ' + 名 + ' ' + 行[0] + ' Excel ' + 行[1]); continue; }
     if (名 === 'utsushiji-excel-13-2026-11-08.tsv' && まだ13.has(行[0])) { まだの数++; console.log('... まだ（' + まだ13.get(行[0]) + '） ' + 名 + ' ' + 行[0] + ' Excel ' + 行[1]); continue; }
+    for (const [紙名, ま] of [['utsushiji-excel-17-2026-11-08.tsv', まだ17], ['utsushiji-excel-19-2026-11-08.tsv', まだ19], ['utsushiji-excel-22-2026-11-08.tsv', まだ22], ['utsushiji-excel-23-2026-11-08.tsv', まだ23], ['utsushiji-excel-24-2026-11-08.tsv', まだ24]]) {
+      if (名 === 紙名 && ま.has(行[0])) { まだの数++; console.log('... まだ（' + ま.get(行[0]) + '） ' + 名 + ' ' + 行[0] + ' Excel ' + 行[1]); 行.まだ = true; }
+    }
+    if (行.まだ) continue;
     if (名 === 'utsushiji-excel-14-2026-11-08.tsv' && まだ14.has(行[0])) { まだの数++; console.log('... まだ（' + まだ14.get(行[0]) + '） ' + 名 + ' ' + 行[0] + ' Excel ' + 行[1]); continue; }
     const 式 = 行[0], 条 = 行.length === 3 ? 行[1].replace(/^J2=/, '') : undefined;
     /* ★Excel の 真偽は Value2 の 字で True／False（紙13 から）＝台の TRUE／FALSE と 揃えて 比べる★ */
@@ -118,6 +141,24 @@ for (const [名, 本数, 盤] of 紙たち) {
 {
   const h = new H.表(); h.打つ('A1', 'a*b'); h.打つ('BZ1', '=MATCH("a*",A1:A1,0)');
   if (String(h.字('BZ1')) === '1') pass++; else { fail++; console.log('✗ MATCH("a*",{"a*b"},0) 台 ' + h.字('BZ1') + ' 見 1'); }
+}
+/* ★★「# (F to F2 ga chigau)」の 行も 数える★★（件4c 叩き直し2・止め1＝紙19 の FREQUENCY((A1:A2,B1:B2),{2}) が 2→#VALUE! に 崩れたのに 「#」の 行は 飛ばして いた）
+     ＝溢れる 答え（F2 は 左上）。台の 字('BZ1') は 左上なので F2 と 比べる。★紙17〜21 だけ★（紙13 以前の F/F2 は 演算子の 溢れ＝件5） */
+{
+  let 見た = 0;
+  for (const k of [17, 18, 19, 20, 21, 22, 23]) {
+    const 名 = 'utsushiji-excel-' + k + '-2026-11-08.tsv';
+    for (const l of fs.readFileSync(path.join(根, 'docs/measured', 名), 'utf8').split(/\r?\n/)) {
+      const m = /^# \(F to F2 ga chigau\) (=.*) F=(.*) F2=(.*)$/.exec(l);
+      if (!m) continue;
+      見た++;
+      if (k === 23 && まだ23.has(m[1])) { まだの数++; console.log('... まだ（' + まだ23.get(m[1]) + '） ' + 名 + ' ' + m[1]); continue; }
+      const h = new H.表(); 盤15(h); h.打つ('BZ1', m[1]);
+      const 出 = String(h.字('BZ1'));
+      if (出 === m[3] || (出 !== '' && isFinite(+出) && Math.abs(+出 - +m[3]) < 1e-9)) pass++; else { fail++; console.log('✗ ' + 名 + ' ' + m[1] + '（溢れの 左上） 台 ' + 出 + ' Excel F2 ' + m[3]); }
+    }
+  }
+  if (見た !== 5) { fail++; console.log('✗ 紙17〜23 の F/F2 の 行が 5本で ない: ' + 見た); }
 }
 fail += 窓の崩れ;
 console.log('[utsushiji] pass ' + pass + ' / fail ' + fail + '（窓の 崩れ ' + 窓の崩れ + '・まだ ' + まだの数 + '本）');

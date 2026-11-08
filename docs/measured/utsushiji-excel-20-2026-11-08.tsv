@@ -1,0 +1,60 @@
+# Excel 16.0 build 20527 / ban15 A1:A5=1..5 B1:B5=10,20,1,1,50 E1=shiki-moji5 E2=7 C2=TRUE / LET LAMBDA no sanshou / .Formula to .Formula2 onaji dake / toru-utsushiji-20.ps1
+=STDEV.S((A1:A2,B1:B2))	8.80814017448254	z0=False	kata=Double
+=STDEV.P((A1:A2,B1:B2))	7.62807315119618	z0=False	kata=Double
+=STDEVP((A1:A2,B1:B2))	7.62807315119618	z0=False	kata=Double
+=STDEVA((A1:A2,B1:B2))	8.80814017448254	z0=False	kata=Double
+=STDEVPA((A1:A2,B1:B2))	7.62807315119618	z0=False	kata=Double
+=VAR.S((A1:A2,B1:B2))	77.5833333333333	z0=False	kata=Double
+=VAR.P((A1:A2,B1:B2))	58.1875	z0=False	kata=Double
+=VARP((A1:A2,B1:B2))	58.1875	z0=False	kata=Double
+=VARA((A1:A2,B1:B2))	77.5833333333333	z0=False	kata=Double
+=VARPA((A1:A2,B1:B2))	58.1875	z0=False	kata=Double
+=MINA((A1:A2,B1:B2))	1	z0=False	kata=Double
+=AVEDEV((A1:A2,B1:B2))	6.75	z0=False	kata=Double
+=DEVSQ((A1:A2,B1:B2))	232.75	z0=False	kata=Double
+=HARMEAN((A1:A2,B1:B2))	2.42424242424242	z0=False	kata=Double
+=KURT((A1:A2,B1:B2))	-0.563934002568176	z0=False	kata=Double
+=SKEW((A1:A2,B1:B2))	0.977881691389098	z0=False	kata=Double
+=MODE.SNGL((A1:A2,B1:B2))	#VALUE!	z0=-2146826273	kata=Error
+=TRIMMEAN((A1:A2,B1:B2),0.2)	8.25	z0=False	kata=Double
+=PERCENTILE.INC((A1:A2,B1:B2),0.5)	6	z0=False	kata=Double
+=PERCENTILE.EXC((A1:A2,B1:B2),0.5)	6	z0=False	kata=Double
+=QUARTILE((A1:A2,B1:B2),0.5)	1	z0=False	kata=Double
+=QUARTILE.INC((A1:A2,B1:B2),0.5)	1	z0=False	kata=Double
+=QUARTILE.EXC((A1:A2,B1:B2),0.5)	#NUM!	z0=-2146826252	kata=Error
+=PERCENTRANK((A1:A2,B1:B2),0.5)	#N/A	z0=-2146826246	kata=Error
+=PERCENTRANK.INC((A1:A2,B1:B2),0.5)	#N/A	z0=-2146826246	kata=Error
+=QUARTILE((A1:A2,B1:B2),1)	1.75	z0=False	kata=Double
+=RANK.EQ(1,(A1:A2,B1:B2))	4	z0=False	kata=Double
+=RANK.AVG(1,(A1:A2,B1:B2))	4	z0=False	kata=Double
+=PERCENTRANK((A1:A2,B1:B2),2)	0.333	z0=False	kata=Double
+=SUMIFS(B1:B2,(A1:A2,B1:B2),">1")	#VALUE!	z0=-2146826273	kata=Error
+=MAXIFS(B1:B2,(A1:A2,B1:B2),">1")	#VALUE!	z0=-2146826273	kata=Error
+=AVERAGEIFS(B1:B2,(A1:A2,B1:B2),">1")	#VALUE!	z0=-2146826273	kata=Error
+=HLOOKUP(1,(A1:A2,B1:B2),1,0)	#N/A	z0=-2146826246	kata=Error
+=XMATCH(2,(A1:A2,B1:B2))	#N/A	z0=-2146826246	kata=Error
+=LOOKUP(2,(A1:A2,B1:B2))	#N/A	z0=-2146826246	kata=Error
+=MATCH(2,(A1:A2,B1:B2),1)	#N/A	z0=-2146826246	kata=Error
+=ISTEXT((A1,B1))	False	z0=False	kata=Boolean
+=ISLOGICAL((A1,B1))	False	z0=False	kata=Boolean
+=ISNONTEXT((A1,B1))	True	z0=False	kata=Boolean
+=ISEVEN((A1,B1))	#VALUE!	z0=-2146826273	kata=Error
+=ISODD((A1,B1))	#VALUE!	z0=-2146826273	kata=Error
+=ISFORMULA((A1,B1))	False	z0=False	kata=Boolean
+=CELL("row",(A1,B1))	1	z0=False	kata=Double
+=CELL("contents",(B1,A1))	10	z0=False	kata=Double
+=N((B1,A1))	10	z0=False	kata=Double
+=T((E1,A1))	5	z0=False	kata=String
+=N(LET(x,(B1,A1),x))	10	z0=False	kata=Double
+=FORMULATEXT((E1,B1))	="5"	z0=False	kata=String
+=MAX(SWITCH(2,1,C1,(A1,B1)))	10	z0=False	kata=Double
+=SUM(IF(TRUE,(A1,B1),C1),1)	12	z0=False	kata=Double
+=COUNTA(CHOOSE(1,(A1,C1)))	1	z0=False	kata=Double
+=SUM(INDEX(((A1:A2,B1:B2),C1),0,0,3))	0	z0=True	kata=Double
+# (F to F2 ga chigau) =INDEX((A1:A2,B1:B2),,1,2) F=#VALUE! F2=10
+=INDEX((A1:A2,B1:B2),2,,2)	20	z0=False	kata=Double
+=MINVERSE((A1:A2,B1:B2))	#VALUE!	z0=-2146826273	kata=Error
+=SUM((A1:A2,B1:B2) A2:B2)	22	z0=False	kata=Double
+=SUM((A1:A2,B1:B2) C1:C2)	#NULL!	z0=-2146826288	kata=Error
+=SUM((A1:A2,B1:B2) B1:B2)	30	z0=False	kata=Double
+=SUM(A1:B1 (A1:A2,B1:B2))	11	z0=False	kata=Double

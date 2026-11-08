@@ -1,0 +1,128 @@
+# Excel 16.0 build 20527 / ban15 A1:A5=1..5 B1:B5=10,20,1,1,50 E1=shiki-moji5 E2=7 C2=TRUE / LET LAMBDA no sanshou / .Formula to .Formula2 onaji dake / toru-utsushiji-19.ps1
+=ABS((A1,B1))	#VALUE!	z0=-2146826273	kata=Error
+=N((A1,B1))	1	z0=False	kata=Double
+=T((A1,B1))		z0=False	kata=String
+=LEN((A1,B1))	#VALUE!	z0=-2146826273	kata=Error
+=IF((A1,B1),1,2)	#VALUE!	z0=-2146826273	kata=Error
+=ISNUMBER((A1,B1))	False	z0=False	kata=Boolean
+=ISBLANK((A1,B1))	False	z0=False	kata=Boolean
+=ISERROR((A1,B1))	True	z0=False	kata=Boolean
+=IFERROR((A1,B1),9)	9	z0=False	kata=Double
+=TYPE((A1,B1))	16	z0=False	kata=Double
+=ERROR.TYPE((A1,B1))	3	z0=False	kata=Double
+=VLOOKUP(1,(A1:B2,C1),1,0)	#N/A	z0=-2146826246	kata=Error
+=SUMIF((A1:A2,B1:B2),">1")	#VALUE!	z0=-2146826273	kata=Error
+=COUNTIF((A1:A2,B1:B2),">1")	#VALUE!	z0=-2146826273	kata=Error
+=MATCH(2,(A1:A2,B1:B2),0)	#N/A	z0=-2146826246	kata=Error
+=XLOOKUP(2,(A1:A2,B1:B2),(A1:A2,B1:B2))	#N/A	z0=-2146826246	kata=Error
+=SUMPRODUCT((A1:A2,B1:B2))	#VALUE!	z0=-2146826273	kata=Error
+=TEXTJOIN(",",1,(A1,B1))	#VALUE!	z0=-2146826273	kata=Error
+=CONCAT((A1,B1))	#VALUE!	z0=-2146826273	kata=Error
+=MAP((A1,B1),LAMBDA(x,x))	#VALUE!	z0=-2146826273	kata=Error
+=OFFSET((A1,B1),1,1)	#VALUE!	z0=-2146826273	kata=Error
+=CELL("address",(A1,B1))	$A$1,$B$1	z0=False	kata=String
+=TRANSPOSE((A1,B1))	#VALUE!	z0=-2146826273	kata=Error
+=SORT((A1:A2,B1:B2))	#VALUE!	z0=-2146826273	kata=Error
+=UNIQUE((A1:A2,B1:B2))	#VALUE!	z0=-2146826273	kata=Error
+=FILTER((A1:A2,B1:B2),{1;1})	#REF!	z0=-2146826265	kata=Error
+=INDEX((A1:A2,B1:B2),1,1)	1	z0=False	kata=Double
+=ROWS((A1,B1))	#REF!	z0=-2146826265	kata=Error
+=AVERAGE((A1,B1))	5.5	z0=False	kata=Double
+=SUBTOTAL(9,(A1:A2,B1:B2))	33	z0=False	kata=Double
+=AGGREGATE(9,0,(A1:A2,B1:B2))	33	z0=False	kata=Double
+=ISFORMULA((A1,B1))	False	z0=False	kata=Boolean
+=FORMULATEXT((A1,B1))	#N/A	z0=-2146826246	kata=Error
+=ISREF((A1,B1))	True	z0=False	kata=Boolean
+=MAX((A1,B1),(B2))	20	z0=False	kata=Double
+=RANK(1,(A1:A2,B1:B2))	4	z0=False	kata=Double
+=LARGE((A1:A2,B1:B2),1)	20	z0=False	kata=Double
+=SMALL((A1:A2,B1:B2),1)	1	z0=False	kata=Double
+=MEDIAN((A1:A2,B1:B2))	6	z0=False	kata=Double
+=STDEV((A1:A2,B1:B2))	8.80814017448254	z0=False	kata=Double
+=COUNTA((A1,B1,C1))	2	z0=False	kata=Double
+=COUNTIFS((A1:A2,B1:B2),">1")	#VALUE!	z0=-2146826273	kata=Error
+# (F to F2 ga chigau) =FREQUENCY((A1:A2,B1:B2),{2}) F=2 F2=2
+# (F to F2 ga chigau) =HSTACK((A1,B1)) F=1 F2=1
+=TAKE((A1:A2,B1:B2),1)	#VALUE!	z0=-2146826273	kata=Error
+=CHOOSE(1,(A1,B1))	#VALUE!	z0=-2146826273	kata=Error
+=IF(TRUE,(A1,B1))	#VALUE!	z0=-2146826273	kata=Error
+=SUM(IF(TRUE,(A1,B1)))	11	z0=False	kata=Double
+=SUM(IFERROR((A1,B1),0))	0	z0=True	kata=Double
+=(A1,B1)	#VALUE!	z0=-2146826273	kata=Error
+=(A1,B1)&"x"	#VALUE!	z0=-2146826273	kata=Error
+=(A1,B1)+1	#VALUE!	z0=-2146826273	kata=Error
+=(A1,B1)=1	#VALUE!	z0=-2146826273	kata=Error
+=-(A1,B1)	#VALUE!	z0=-2146826273	kata=Error
+=LET(x,(A1,B1),x)	#VALUE!	z0=-2146826273	kata=Error
+=LET(x,(A1,B1),x&"")	#VALUE!	z0=-2146826273	kata=Error
+=LAMBDA(x,SUM(x))((A1,B1))	11	z0=False	kata=Double
+=AREAS(CHOOSE(1,(A1,B1),C1))	2	z0=False	kata=Double
+=PRODUCT((A1,B1))	10	z0=False	kata=Double
+=NPV(0.1,(A1,B1))	9.17355371900826	z0=False	kata=Double
+=AND((A1,B1))	True	z0=False	kata=Boolean
+=OR((A1:A2,C2))	True	z0=False	kata=Boolean
+=XOR((A1,B1))	False	z0=False	kata=Boolean
+=SUMSQ((A1,B1))	101	z0=False	kata=Double
+=AVERAGEA((A1,B1))	5.5	z0=False	kata=Double
+=MAXA((A1,B1))	10	z0=False	kata=Double
+=COUNTBLANK((A1,B1))	#VALUE!	z0=-2146826273	kata=Error
+=CORREL((A1:A2,B1:B2),(A1:A2,B1:B2))	#VALUE!	z0=-2146826273	kata=Error
+=PERCENTILE((A1:A2,B1:B2),0.5)	6	z0=False	kata=Double
+=MODE((A1:A2,B1:B2))	#VALUE!	z0=-2146826273	kata=Error
+=GEOMEAN((A1,B1))	3.16227766016838	z0=False	kata=Double
+=TEXT((A1,B1),"0")	#VALUE!	z0=-2146826273	kata=Error
+=VALUE((A1,B1))	#VALUE!	z0=-2146826273	kata=Error
+# (F to F2 ga chigau) =TOCOL((A1:A2,B1:B2)) F=1 F2=1
+=SUMX2PY2((A1,B1),(A1,B1))	#VALUE!	z0=-2146826273	kata=Error
+=INDEX((A1:A2,B1:B2),1,1,2)	10	z0=False	kata=Double
+=SUM(INDEX(B1:B5,0):B1)	82	z0=False	kata=Double
+=SUM(B3:INDEX(B1:B2,0))	31	z0=False	kata=Double
+=SUM(INDEX(B2:B3,0):B1)	31	z0=False	kata=Double
+=SUM(INDEX(A1:B2,0,0):B1)	33	z0=False	kata=Double
+=SUM(B1:INDEX(A1:B2,0,0))	33	z0=False	kata=Double
+=SUM(A:A 3:3)	3	z0=False	kata=Double
+=SUM(A:B A:A)	15	z0=False	kata=Double
+=AREAS(((A1,B1),C1))	3	z0=False	kata=Double
+=SUM(((A1,B1),C1))	11	z0=False	kata=Double
+=SUM(IF({TRUE},(A1,B1)))	#VALUE!	z0=-2146826273	kata=Error
+=SUM(CHOOSE({1},(A1,B1),C1))	#VALUE!	z0=-2146826273	kata=Error
+=LET(x,(A1,B1),IFERROR(x,9))	9	z0=False	kata=Double
+=LET(x,(A1:A2,B1:B2),SUMPRODUCT(x))	#VALUE!	z0=-2146826273	kata=Error
+=LET(x,(A1,B1),TRANSPOSE(x))	#VALUE!	z0=-2146826273	kata=Error
+=LET(x,(A1,B1),MAP(x,LAMBDA(v,v)))	#VALUE!	z0=-2146826273	kata=Error
+=LET(x,(A1,B1),ISERROR(x))	True	z0=False	kata=Boolean
+=LET(x,(A1,B1),TYPE(x))	16	z0=False	kata=Double
+=LET(x,(A1,B1),CONCAT(x))	#VALUE!	z0=-2146826273	kata=Error
+=LET(x,(A1:A2,B1:B2),MATCH(2,x,0))	#N/A	z0=-2146826246	kata=Error
+=LET(x,(A1,B1),IF(TRUE,x))	#VALUE!	z0=-2146826273	kata=Error
+=LET(x,(A1,B1),ISNUMBER(x))	False	z0=False	kata=Boolean
+=SUM(A:A 3:3)	3	z0=False	kata=Double
+=SUM(B:B 2:3)	21	z0=False	kata=Double
+=SUM((A:A) (3:3))	3	z0=False	kata=Double
+=A:A 3:3	3	z0=False	kata=Double
+=SUM(A:B A:A)	15	z0=False	kata=Double
+=SUM((A1:A2,B1:B2) A1:B1)	11	z0=False	kata=Double
+=AVERAGEIF((A1:A2,B1:B2),">1")	#VALUE!	z0=-2146826273	kata=Error
+=VAR((A1:A2,B1:B2))	77.5833333333333	z0=False	kata=Double
+=MIN((A1,B1))	1	z0=False	kata=Double
+=ISERR((A1,B1))	True	z0=False	kata=Boolean
+=ISNA((A1,B1))	False	z0=False	kata=Boolean
+=ROW((A1,B1))	#REF!	z0=-2146826265	kata=Error
+=COLUMN((A1,B1))	#REF!	z0=-2146826265	kata=Error
+=COUNT(LET(x,(A1,B1),x))	2	z0=False	kata=Double
+=MAX(IF(TRUE,(A1,B1)))	10	z0=False	kata=Double
+=AREAS(IF(TRUE,(A1,B1)))	2	z0=False	kata=Double
+=ROWS(IF(TRUE,(A1,B1)))	#REF!	z0=-2146826265	kata=Error
+=SUM(SWITCH(1,1,(A1,B1)))	11	z0=False	kata=Double
+=SUM(IFS(TRUE,(A1,B1)))	11	z0=False	kata=Double
+=SUM(CHOOSE(2,C1,(A1,B1)))	11	z0=False	kata=Double
+=SUM(IF(FALSE,1,(A1,B1)))	11	z0=False	kata=Double
+=IF(TRUE,(A1,B1))+0	#VALUE!	z0=-2146826273	kata=Error
+=SUM(INDEX((A1:A2,B1:B5),0,1,2):B1)	82	z0=False	kata=Double
+=SUM((B1):(B3))	31	z0=False	kata=Double
+=SUM(B1:(B3))	31	z0=False	kata=Double
+=SUM((A1):B3)	37	z0=False	kata=Double
+=SUM((B1:B2):(B3))	31	z0=False	kata=Double
+=SUM(INDEX(B1:B5,2):INDEX(B1:B5,4))	22	z0=False	kata=Double
+=SUM(INDEX(B1:B5,4):INDEX(B1:B5,2))	22	z0=False	kata=Double
+=SUM(INDEX(A1:B5,0,2):A1)	97	z0=False	kata=Double

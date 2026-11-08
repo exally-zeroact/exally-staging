@@ -1,0 +1,31 @@
+# Excel 16.0 build 20527 / ban15 A1:A5=1..5 B1:B5=10,20,1,1,50 E1=shiki-moji5 E2=7 C2=TRUE / LET LAMBDA no sanshou / .Formula to .Formula2 onaji dake / toru-utsushiji-21.ps1
+=GCD((A2,A4))	#VALUE!	z0=-2146826273	kata=Error
+=LCM((A2,A4))	#VALUE!	z0=-2146826273	kata=Error
+=MULTINOMIAL((A2,A4))	#VALUE!	z0=-2146826273	kata=Error
+=IMSUM((A2,A4))	#VALUE!	z0=-2146826273	kata=Error
+=IMPRODUCT((A2,A4))	#VALUE!	z0=-2146826273	kata=Error
+=ZTEST((A1:A2,B1:B2),2)	0.0779288381732169	z0=False	kata=Double
+=Z.TEST((A1:A2,B1:B2),2)	0.0779288381732169	z0=False	kata=Double
+=COVAR((A1,A2),(B1,B2))	#VALUE!	z0=-2146826273	kata=Error
+=COVARIANCE.P((A1,A2),(B1,B2))	#VALUE!	z0=-2146826273	kata=Error
+=SUMX2MY2((A1,A2),(B1,B2))	#VALUE!	z0=-2146826273	kata=Error
+=SUMXMY2((A1,A2),(B1,B2))	#VALUE!	z0=-2146826273	kata=Error
+=PEARSON((A1,A2),(B1,B2))	#VALUE!	z0=-2146826273	kata=Error
+=SLOPE((A1,A2),(B1,B2))	#VALUE!	z0=-2146826273	kata=Error
+=MODE.SNGL((A1,A3),A1)	#VALUE!	z0=-2146826273	kata=Error
+=SUM((A:A,B:B) A:A)	15	z0=False	kata=Double
+=SUM((A1:A5,B1:B5) A:A)	15	z0=False	kata=Double
+=SUM(FREQUENCY((A1:A2,B1:B2),{2}))	4	z0=False	kata=Double
+=INDEX(FREQUENCY((A1:A2,B1:B2),{2}),2)	2	z0=False	kata=Double
+=INDEX(FREQUENCY((A1:A2,B1:B2),{2}),1)	2	z0=False	kata=Double
+=ROWS(FREQUENCY((A1:A2,B1:B2),{2}))	2	z0=False	kata=Double
+=SUM(FREQUENCY((A1,B1,A3),{5,15}))	3	z0=False	kata=Double
+=INDEX(HSTACK((A1,B1)),1,2)	10	z0=False	kata=Double
+=COLUMNS(HSTACK((A1,B1)))	2	z0=False	kata=Double
+=ROWS(TOCOL((A1:A2,B1:B2)))	4	z0=False	kata=Double
+=INDEX(TOCOL((A1:A2,B1:B2)),3)	10	z0=False	kata=Double
+=SUM(VSTACK((A1,B1)))	11	z0=False	kata=Double
+=SUM(TOROW((A1:A2,B1:B2)))	33	z0=False	kata=Double
+=GCD((A2,A4),6)	#VALUE!	z0=-2146826273	kata=Error
+=IMSUB((A2,A4),1)	#VALUE!	z0=-2146826273	kata=Error
+=SERIESSUM(1,1,1,(A1,A2))	#VALUE!	z0=-2146826273	kata=Error

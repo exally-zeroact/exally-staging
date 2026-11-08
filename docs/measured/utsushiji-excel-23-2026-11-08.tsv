@@ -1,0 +1,50 @@
+# Excel 16.0 build 20527 / ban15 A1:A5=1..5 B1:B5=10,20,1,1,50 E1=shiki-moji5 E2=7 C2=TRUE / LET LAMBDA no sanshou / .Formula to .Formula2 onaji dake / toru-utsushiji-23.ps1
+=INDEX((A:A,B:B) A:A,3)	3	z0=False	kata=Double
+=INDEX((A:A,B:B) A:A,10)	0	z0=True	kata=Double
+=INDEX((A:A,B:B) A:A,3,1)	3	z0=False	kata=Double
+=INDEX((A:A,B:B) B:B,2)	20	z0=False	kata=Double
+=INDEX((1:1,3:3) 1:1,2)	10	z0=False	kata=Double
+=INDEX((1:1,3:3) 1:1,1,2)	10	z0=False	kata=Double
+=INDEX((A:A,B:B) A:B,3)	3	z0=False	kata=Double
+=INDEX((A:A,B:B) A:B,3,2)	#REF!	z0=-2146826265	kata=Error
+# (F to F2 ga chigau) =INDEX((A:A,B:B) A:A,0) F=0 F2=
+=SUM(INDEX((A:A,B:B) B:B,0))	82	z0=False	kata=Double
+=MATCH(3,(A:A,B:B) A:A,0)	3	z0=False	kata=Double
+=MATCH(20,(A:A,B:B) B:B,0)	2	z0=False	kata=Double
+=MATCH(99,(A:A,B:B) A:A,0)	#N/A	z0=-2146826246	kata=Error
+=MATCH(4,(A:A,B:B) A:A,1)	4	z0=False	kata=Double
+=MATCH(3,(A:A,B:B) A:A)	3	z0=False	kata=Double
+=MATCH(3,(A:A,B:B) A:A,-1)	#N/A	z0=-2146826246	kata=Error
+=XLOOKUP(3,(A:A,B:B) A:A,(A:A,B:B) B:B)	1	z0=False	kata=Double
+=XLOOKUP(99,(A:A,B:B) A:A,(A:A,B:B) B:B,"nai")	nai	z0=False	kata=String
+=XLOOKUP(3,(A:A,B:B) A:A,B:B)	1	z0=False	kata=Double
+=XLOOKUP(3,A:A,(A:A,B:B) B:B)	1	z0=False	kata=Double
+=VLOOKUP(3,(A:A,B:B) A:B,2,0)	#N/A	z0=-2146826246	kata=Error
+=VLOOKUP(3,(A:B,D:D) A:B,2,0)	1	z0=False	kata=Double
+=VLOOKUP(3,(A:B,D:D) A:B,2,FALSE)	1	z0=False	kata=Double
+=VLOOKUP(3,(A:B,D:D) A:B,2)	1	z0=False	kata=Double
+=HLOOKUP(1,(1:2,4:4) 1:2,2,0)	2	z0=False	kata=Double
+=MATCH(3,(A1:A5,B1:B5) A1:A5,0)	3	z0=False	kata=Double
+=INDEX((A1:A5,B1:B5) A1:A5,3)	3	z0=False	kata=Double
+=VLOOKUP(3,(A1:B5,D1:D5) A1:B5,2,0)	1	z0=False	kata=Double
+=COUNTIF((A:A,B:B) A:A,">2")	3	z0=False	kata=Double
+=SUMIF((A:A,B:B) A:A,">2",B:B)	52	z0=False	kata=Double
+=ROWS((A:A,B:B) A:B)	#REF!	z0=-2146826265	kata=Error
+=INDEX((A:A,B:B),3)	3	z0=False	kata=Double
+=INDEX((A:A,B:B),3,1,2)	1	z0=False	kata=Double
+=INDEX((A:A,B:B),10,1,2)	0	z0=True	kata=Double
+=INDEX((A:A,B:B) A:B,3,1,2)	1	z0=False	kata=Double
+=INDEX((A:A,B:B) A:B,3,1,3)	#REF!	z0=-2146826265	kata=Error
+=INDEX((1:1,3:3),1,2)	10	z0=False	kata=Double
+=SUM(INDEX((A:A,B:B),0,1,2))	82	z0=False	kata=Double
+=ROWS(INDEX((A:A,B:B),3,1,2))	1	z0=False	kata=Double
+=MATCH(3,(A:A,B:B),0)	#N/A	z0=-2146826246	kata=Error
+=VLOOKUP(3,(A:A,B:B),2,0)	#N/A	z0=-2146826246	kata=Error
+=XLOOKUP(3,(A:A,B:B) A:B,B:B)	#N/A	z0=-2146826246	kata=Error
+=ABS((A:A,B:B) A:B)	#VALUE!	z0=-2146826273	kata=Error
+=MEDIAN((A:A,B:B) A:B)	3.5	z0=False	kata=Double
+=SUM((A:A,B:B) A:B)	97	z0=False	kata=Double
+=COUNTIF((A:A,B:B) A:B,">2")	#VALUE!	z0=-2146826273	kata=Error
+=SUMIF((A:A,B:B) A:B,">2")	#VALUE!	z0=-2146826273	kata=Error
+=ISREF((A:A,B:B) A:B)	True	z0=False	kata=Boolean
+=AREAS((A:A,B:B) A:B)	2	z0=False	kata=Double

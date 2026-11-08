@@ -1,0 +1,31 @@
+# Excel 16.0 build 20527 / ban15 A1:A5=1..5 B1:B5=10,20,1,1,50 E1=shiki-moji5 E2=7 C2=TRUE / LET LAMBDA no sanshou / .Formula to .Formula2 onaji dake / toru-utsushiji-17.ps1
+=INDEX((A1:A2,B1:B2),1,1,2)	10	z0=False	kata=Double
+=INDEX((A1:A2,B1:B2),2,1,2)	20	z0=False	kata=Double
+=INDEX((A1:A2,B1:B2),2,1,1)	2	z0=False	kata=Double
+=INDEX((A1:A2,B1:B2),1,1,3)	#REF!	z0=-2146826265	kata=Error
+=SUM(INDEX((A1:A5,B1:B5),0,1,2))	82	z0=False	kata=Double
+=AREAS((A1:A2,B1:B2))	2	z0=False	kata=Double
+=AREAS(LET(x,(A1:A5,B1:B5),x))	2	z0=False	kata=Double
+=LET(x,(A1:A5,B1:B5),SUM(x))	97	z0=False	kata=Double
+=LET(x,(A1:A5,B1:B5),COUNT(x))	10	z0=False	kata=Double
+=LET(x,(A1:A5,B1:B5),AREAS(x))	2	z0=False	kata=Double
+=LET(x,(A1:A5,B1:B5),INDEX(x,2,1,2))	20	z0=False	kata=Double
+=SUM(LET(x,(A1,B1),x))	11	z0=False	kata=Double
+=SUM((B1):(B3))	31	z0=False	kata=Double
+=SUM((B1:B2):(B3))	31	z0=False	kata=Double
+=SUM((A1):B3)	37	z0=False	kata=Double
+=SUM(B1:(B3))	31	z0=False	kata=Double
+=SUM(A:A 3:3)	3	z0=False	kata=Double
+=SUM(B:B 2:3)	21	z0=False	kata=Double
+=SUM((A:A) (3:3))	3	z0=False	kata=Double
+=COUNTBLANK((A1:A2,C1:C3))	#VALUE!	z0=-2146826273	kata=Error
+=COUNTBLANK((C1:C3,D1))	#VALUE!	z0=-2146826273	kata=Error
+=COUNTBLANK(C1:C3)	2	z0=False	kata=Double
+=SUM((A1:A2,B1:B2))	33	z0=False	kata=Double
+=COUNT((A1:A5,B1:B5,C2))	10	z0=False	kata=Double
+=MAX((A1:A5,B1:B5))	50	z0=False	kata=Double
+=ROWS((A1:A2,B1:B2))	#REF!	z0=-2146826265	kata=Error
+=COLUMNS((A1:A2,B1:B2))	#REF!	z0=-2146826265	kata=Error
+=ISREF((A1:A2,B1:B2))	True	z0=False	kata=Boolean
+=SUM(CHOOSE({1,2},B1,B2))	30	z0=False	kata=Double
+=SUM(CHOOSE(1,(A1,B1),C1))	11	z0=False	kata=Double
