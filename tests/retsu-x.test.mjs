@@ -794,6 +794,29 @@ console.log('[retsu-x] ★空に 当たる 条件と SUMIF の 取り直し（20
     const h = 材料(); h.打つ('A20', '=AGGREGATE(9,6,A1:A5)'); h.打つ('D30', '6'); h.打つ('ZZ9', f);
     T('件4d-1 選び ' + f + '（A20 に 小計）→ ' + 見, h.字('ZZ9') === 見, h.字('ZZ9'));
   }
+  /* ★件4f（2026-11-09）入れ子の 小計の 字の 形★＝実測 utsushiji-excel-26〜26e（A1:A5=1..5・A20=中）
+       外す：式の 中の SUBTOTAL・AGGREGATE（=1+...・SUM(...)・IFERROR(AGGREGATE...)・LET・_xlfn.・通らない 枝 IF(FALSE,...)）・AGGREGATE 選び 0〜3 は 誤りの 判より 前
+       外さない：字の マス・字の 中（"SUBTOTAL(...)"）・選び 4〜7
+       ★直す前の 台（04af44c）は =1+SUBTOTAL を 足して 31・AGGREGATE(9,0) の 入れ子を 足して 30・(9,0) と /0 で #DIV/0!★ */
+  for (const [中, f, 見] of [['=1+SUBTOTAL(9,A1:A5)', '=SUBTOTAL(9,A1:A30)', '15'], ['=SUM(SUBTOTAL(9,A1:A5))', '=SUBTOTAL(109,A1:A30)', '15'],
+    ['=IFERROR(AGGREGATE(9,6,A1:A5),0)', '=SUBTOTAL(9,A1:A30)', '15'], ['=LET(s,SUBTOTAL(9,A1:A5),s)', '=AGGREGATE(9,0,A1:A30)', '15'],
+    ['=_xlfn.AGGREGATE(9,6,A1:A5)', '=SUBTOTAL(9,A1:A30)', '15'], ['=IF(FALSE,SUBTOTAL(9,A1:A5),7)', '=SUBTOTAL(9,A1:A30)', '15'],
+    ['=AGGREGATE(9,6,A1:A5)', '=AGGREGATE(9,0,A1:A30)', '15'], ['=AGGREGATE(9,6,A1:A5)', '=AGGREGATE(9,4,A1:A30)', '30'],
+    ['=SUBTOTAL(9,A1:A5)/0', '=AGGREGATE(9,0,A1:A30)', '15'], ['=SUBTOTAL(9,A1:A5)/0', '=AGGREGATE(9,4,A1:A30)', '#DIV/0!'],
+    ['=SUBTOTAL(9,A1:A5)', '=SUBTOTAL(9,A1:A5,A20)', '15'], ['=SUBTOTAL(9,A1:A5)', '=SUBTOTAL(9,(A1:A5,A20))', '15'],
+    ['shoukei SUBTOTAL(9) zumi', '=SUBTOTAL(3,A1:A30)', '6'], ['="SUBTOTAL(9,A1:A5)"', '=SUBTOTAL(3,A1:A30)', '6'], ['=SUM(A1:A5)', '=SUBTOTAL(9,A1:A30)', '30']]) {
+    const h = 材料(); h.打つ('A20', 中); h.打つ('ZZ9', f);
+    T('件4f A20 ' + 中 + ' の 時 ' + f + ' → ' + 見, h.字('ZZ9') === 見, h.字('ZZ9'));
+  }
+  /* ★件4f 切れない 字★（叩き直し 任意2）＝引用符が 閉じて いない 式は 前の 判（=SUBTOTAL( で 始まる）＝直す前と 同じ 15（#VALUE! に しない） */
+  { const h = 材料(); h.打つ('A20', '=SUBTOTAL(9,A1:A5)&"x'); h.打つ('ZZ9', '=SUBTOTAL(9,A1:A30)');
+    T('件4f 切れない 字の 入れ子 → 前の 判で 15', h.字('ZZ9') === '15', h.字('ZZ9')); }
+  /* ★件4f 打ち直し★＝A20 を 小計 ⇔ 小計で ない 式に 打ち直すと 外の 答えが 変わる（覚えは 字ごと＝古い 判が 残らない） */
+  for (const f of ['=SUBTOTAL(9,A1:A30)', '=AGGREGATE(9,0,A1:A30)']) {
+    const h = 材料(); h.打つ('A20', '=1+SUBTOTAL(9,A1:A5)'); h.打つ('ZZ9', f); const 前 = h.字('ZZ9');
+    h.打つ('A20', '=1+SUM(A1:A5)'); const 中 = h.字('ZZ9'); h.打つ('A20', '=1+SUBTOTAL(9,A1:A5)'); const 後 = h.字('ZZ9');
+    T('件4f 打ち直し ' + f + ' 小計→SUM→小計 = 15→31→15', 前 === '15' && 中 === '31' && 後 === '15', 前 + '→' + 中 + '→' + 後);
+  }
   /* ★件4d（2026-11-08）IF・CHOOSE・IFS・SWITCH を 通る 帯★（sekkei-4d v3・設計前 taiketsu 止め0）
        ①打ち直しで 古い 数に ならない（頼りは 元の 木＝判の マス・全部の 枝の 帯）＝打ってから と 初めから が 同じ
        ②判は 1回（RAND の 判で 置き換えと IF 本体が 食い違うと #REF! が 出る＝出ない 事を 見る）

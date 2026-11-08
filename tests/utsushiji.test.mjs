@@ -166,6 +166,40 @@ for (const [名, 本数, 盤] of 紙たち) {
   }
   if (見た !== 5) { fail++; console.log('✗ 紙17〜23 の F/F2 の 行が 5本で ない: ' + 見た); }
 }
+/* ★★紙26（件4f・2026-11-09）＝入れ子の 小計（A20）を 外の SUBTOTAL・AGGREGATE が 外すか★★
+     実Excel 16.0 build 20527・toru-utsushiji-26*.ps1・盤 A1:A5=1..5・A20=中（式 または 字のマス TEXTMARK）・K1=外
+     ★行の 形が 違う★＝「A20 中<TAB>外<TAB>値<TAB>z0=<TAB>kata=」（窓は ここで 見る＝読む() を 通さない・0 の 行 20本）
+     直す前の lib（04af44c）は 155/311・直した後 303/311 */
+/* ★まだ は「中<TAB>外」で ちょうど 8本だけ（通る 行は 飛ばさない）★ */
+const まだ26 = new Map([
+  ...['=SUBTOTAL(9,A1:A30)', '=AGGREGATE(3,0,A1:A30)', '=AGGREGATE(9,0,A1:A30)'].map((外) => ['=ROWS(SUBTOTAL)\t' + 外,
+    '名 SUBTOTAL（関数で ない 名）を 台は #NAME?・Excel は 1（範囲外）']),
+  ...['=SUBTOTAL(9,A1:A5)', '=IF(FALSE,SUBTOTAL(9,A1:A5),7)', '=CHOOSE(2,SUBTOTAL(9,A1:A5),7)', '=IF(FALSE,AGGREGATE(9,6,A1:A5),7)', 'TEXTMARK']
+    .map((中) => [中 + '\t=SUBTOTAL(9,Sheet1!A1:A30)', '板の 名 Sheet1 が 台に 無い＝#REF!（範囲外）'])]);
+{
+  let 行数 = 0, まだ26の数 = 0;
+  const 見本数 = { '': 120, b: 64, c: 25, d: 32, e: 70 };
+  for (const x of ['', 'b', 'c', 'd', 'e']) {
+    const 名 = 'utsushiji-excel-26' + x + '-2026-11-09.tsv';
+    const 行たち = fs.readFileSync(path.join(根, 'docs/measured', 名), 'utf8').split(/\r?\n/).filter((l) => l && l[0] !== '#');
+    if (行たち.length !== 見本数[x]) { fail++; console.log('✗ ' + 名 + ' の 行が ' + 見本数[x] + '本で ない: ' + 行たち.length); }
+    for (const l of 行たち) {
+      行数++;
+      const [a, 外, 見, z0, 型] = l.split('\t'); const 中 = a.replace(/^A20 /, '');
+      /* ★窓（z0= kata=）が 無い・値と 食い違う 行は 紙の 崩れ★（monosashi-mado の 決まり・読む() と 同じ 判） */
+      if (!/^z0=/.test(z0 || '') || !/^kata=/.test(型 || '') || (型 === 'kata=Double' && (見 === '0') !== (z0 === 'z0=True'))) { 窓の崩れ++; console.log('✗ ' + 名 + ' 窓の 崩れ ' + l); continue; }
+      const 訳 = まだ26.get(中 + '\t' + 外);
+      if (訳) { まだ26の数++; まだの数++; console.log('... まだ（' + 訳 + '） ' + 名 + ' ' + 中 + ' ' + 外 + ' Excel ' + 見); continue; }
+      const h = new H.表();
+      for (let i = 1; i <= 5; i++) h.打つ('A' + i, String(i));
+      h.打つ('A20', 中 === 'TEXTMARK' ? 'shoukei SUBTOTAL(9) zumi' : 中); h.打つ('K1', 外);
+      const 出 = String(h.字('K1'));
+      if (出 === 見) pass++; else { fail++; console.log('✗ ' + 名 + ' A20 ' + 中 + ' ' + 外 + ' 台 ' + 出 + ' Excel ' + 見); }
+    }
+  }
+  if (行数 !== 311) { fail++; console.log('✗ 紙26 の 行が 311本で ない: ' + 行数); }
+  if (まだ26の数 !== まだ26.size) { fail++; console.log('✗ 紙26 の まだ が ' + まだ26.size + '本 当たらない: ' + まだ26の数); }
+}
 fail += 窓の崩れ;
 console.log('[utsushiji] pass ' + pass + ' / fail ' + fail + '（窓の 崩れ ' + 窓の崩れ + '・まだ ' + まだの数 + '本）');
 process.exit(fail ? 1 : 0);

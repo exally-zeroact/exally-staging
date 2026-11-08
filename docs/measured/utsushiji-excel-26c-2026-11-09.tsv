@@ -1,0 +1,26 @@
+# Excel 16.0 build 20527 / A1:A5=1..5 / A20=naka / K=soto / toru-26c.ps1 2026-11-09 (ji no naka,LET,_xlfn)
+A20 ="SUBTOTAL(9,A1:A5)"	=SUBTOTAL(3,A1:A30)	6	z0=False	kata=Double
+A20 ="SUBTOTAL(9,A1:A5)"	=SUBTOTAL(9,A1:A30)	15	z0=False	kata=Double
+A20 ="SUBTOTAL(9,A1:A5)"	=AGGREGATE(3,0,A1:A30)	6	z0=False	kata=Double
+A20 ="SUBTOTAL(9,A1:A5)"	=AGGREGATE(9,0,A1:A30)	15	z0=False	kata=Double
+A20 ="SUBTOTAL(9,A1:A5)"	=COUNTA(A1:A30)	6	z0=False	kata=Double
+A20 =LET(s,SUBTOTAL(9,A1:A5),s)	=SUBTOTAL(3,A1:A30)	5	z0=False	kata=Double
+A20 =LET(s,SUBTOTAL(9,A1:A5),s)	=SUBTOTAL(9,A1:A30)	15	z0=False	kata=Double
+A20 =LET(s,SUBTOTAL(9,A1:A5),s)	=AGGREGATE(3,0,A1:A30)	5	z0=False	kata=Double
+A20 =LET(s,SUBTOTAL(9,A1:A5),s)	=AGGREGATE(9,0,A1:A30)	15	z0=False	kata=Double
+A20 =LET(s,SUBTOTAL(9,A1:A5),s)	=COUNTA(A1:A30)	6	z0=False	kata=Double
+A20 =_xlfn.AGGREGATE(9,6,A1:A5)	=SUBTOTAL(3,A1:A30)	5	z0=False	kata=Double
+A20 =_xlfn.AGGREGATE(9,6,A1:A5)	=SUBTOTAL(9,A1:A30)	15	z0=False	kata=Double
+A20 =_xlfn.AGGREGATE(9,6,A1:A5)	=AGGREGATE(3,0,A1:A30)	5	z0=False	kata=Double
+A20 =_xlfn.AGGREGATE(9,6,A1:A5)	=AGGREGATE(9,0,A1:A30)	15	z0=False	kata=Double
+A20 =_xlfn.AGGREGATE(9,6,A1:A5)	=COUNTA(A1:A30)	6	z0=False	kata=Double
+A20 =SUBTOTAL(9,A1:A5)+AGGREGATE(9,6,A1:A5)	=SUBTOTAL(3,A1:A30)	5	z0=False	kata=Double
+A20 =SUBTOTAL(9,A1:A5)+AGGREGATE(9,6,A1:A5)	=SUBTOTAL(9,A1:A30)	15	z0=False	kata=Double
+A20 =SUBTOTAL(9,A1:A5)+AGGREGATE(9,6,A1:A5)	=AGGREGATE(3,0,A1:A30)	5	z0=False	kata=Double
+A20 =SUBTOTAL(9,A1:A5)+AGGREGATE(9,6,A1:A5)	=AGGREGATE(9,0,A1:A30)	15	z0=False	kata=Double
+A20 =SUBTOTAL(9,A1:A5)+AGGREGATE(9,6,A1:A5)	=COUNTA(A1:A30)	6	z0=False	kata=Double
+A20 =ROWS(SUBTOTAL)	=SUBTOTAL(3,A1:A30)	6	z0=False	kata=Double
+A20 =ROWS(SUBTOTAL)	=SUBTOTAL(9,A1:A30)	16	z0=False	kata=Double
+A20 =ROWS(SUBTOTAL)	=AGGREGATE(3,0,A1:A30)	6	z0=False	kata=Double
+A20 =ROWS(SUBTOTAL)	=AGGREGATE(9,0,A1:A30)	16	z0=False	kata=Double
+A20 =ROWS(SUBTOTAL)	=COUNTA(A1:A30)	6	z0=False	kata=Double
