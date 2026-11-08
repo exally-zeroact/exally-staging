@@ -89,6 +89,9 @@
       var ゼロ表 = (読んだ物 && 読んだ物.ゼロ) ? 読んだ物.ゼロ : null;
       /* ★板の 既定の 行の 高さ（pt・custom の 板だけ）★（2026-11-07）＝.xlsx は 下の 飾りの 前で 同じ 外の 変数へ */
       var 既定行高表 = (読んだ物 && 読んだ物.既定行高) ? 読んだ物.既定行高 : null;
+      /* ★書いて いない 行を 隠す 板（zeroHeight）の 在る 行たち★（2026-11-08）＝{ 板の名: [行番号(0から)…] }
+           .xlsx は 下の 飾りの 前で 同じ 外の 変数へ（既定行高表 と 同じ 罠＝var を 書かない） */
+      var 書いていない表 = (読んだ物 && 読んだ物.書いていない) ? 読んだ物.書いていない : null;
       var 全部計算の印 = (読んだ物 && 読んだ物.全部計算 !== undefined) ? 読んだ物.全部計算 : null;
       var wb = root.XLSX.read(bytes, { type: 'array', cellFormula: true, cellNF: true, sheetStubs: false, cellStyles: true });
       /* ★★.xlsb の 行の 高さを 足す★★（2026-11-07）
@@ -166,6 +169,7 @@
                  ⇒★絵の 点で 数える 試験が 捕まえました★（板の 印 2枚とも false） */
             ゼロ表 = ゼロ表 || {};   /* ★板の 名前 → ゼロを 隠すか★ */
             既定行高表 = 既定行高表 || {};   /* ★同じ 罠＝外の 変数に 入れる（var を 書かない）★ */
+            書いていない表 = 書いていない表 || {};   /* ★同じ 罠★ */
             /* ★★`.xlsx` の 「開いたら 全部 計算しろ」★★（2026-09-25）
                  `xl/workbook.xml` の `<calcPr `fullCalcOnLoad="1"` />`
                  ★札が 無い＝立って いない★（Excel は 立って いる 時だけ 書きます） */
@@ -219,6 +223,20 @@
                       var fh = /\sdefaultRowHeight\s*=\s*"([^"]*)"/.exec(f0[0]);
                       var fpt = fh ? parseFloat(fh[1]) : NaN;
                       if (fc && (fc[1] === '1' || fc[1] === 'true') && fpt > 0) 既定行高表[板.name] = fpt;
+                      /* ★★書いて いない 行を 隠す（zeroHeight）★★（2026-11-08）
+                           実Excel 16.0 で 測った（c_zero・g_zero_gap）＝`zeroHeight="1"` の 板は
+                           ★書いて いない 行が 間も 下も 高さ 0・隠れる★（借り物は この 札を 読まない＝全部 見えて いた）
+                           ⇒在る 行＝`<row>` の 札（r が 無ければ 前の 行+1＝決まりの 通り・頭の 付いた 札も） */
+                      var fz = /\szeroHeight\s*=\s*"([^"]*)"/.exec(f0[0]);
+                      if (fz && (fz[1] === '1' || fz[1] === 'true')) {
+                        var 在る = [], 前 = -1, rre = /<(?:\w+:)?row\b([^>]*)>/g, rm;
+                        while ((rm = rre.exec(xml))) {
+                          var rn = /\sr\s*=\s*"(\d+)"/.exec(rm[1]);
+                          前 = rn ? parseInt(rn[1], 10) - 1 : 前 + 1;
+                          在る.push(前);
+                        }
+                        書いていない表[板.name] = 在る;
+                      }
                     }
                     表[板.name] = root.XlsxKazari.飾りを読む(xml, 型の字, テーマの字);
                   }).catch(function () { /* ★1枚 読めなくても 他は 出す★ */ });
@@ -327,7 +345,7 @@
           });
         });
       }
-      return pre.then(function () { return finish(bytes, kind, wb, file, trFixes, trStats, hasVba, マクロ, tr断り, 字体表, 飾り表, 図形表, 図形の並び, 図形の当て方, ゼロ表, 全部計算の印, 既定行高表); });
+      return pre.then(function () { return finish(bytes, kind, wb, file, trFixes, trStats, hasVba, マクロ, tr断り, 字体表, 飾り表, 図形表, 図形の並び, 図形の当て方, ゼロ表, 全部計算の印, 既定行高表, 書いていない表); });
       });
     });
   }
@@ -444,7 +462,7 @@
     return 訳;
   }
 
-  function finish(bytes, kind, wb, file, trFixes, trStats, hasVba, マクロ, tr断り, 字体表, 飾り表, 図形表, 図形の並び, 図形の当て方, ゼロ表, 全部計算の印, 既定行高表) {
+  function finish(bytes, kind, wb, file, trFixes, trStats, hasVba, マクロ, tr断り, 字体表, 飾り表, 図形表, 図形の並び, 図形の当て方, ゼロ表, 全部計算の印, 既定行高表, 書いていない表) {
       /* ★その本の 既定の 字体を 覚える★＝列の 幅を 点に 直すのに 要る
          （SheetJS は `wb.Styles.Fonts[0]` に 入れる … 実測 2026-09-11
            {"sz":11,"name":"游ゴシック",...}） */
@@ -455,7 +473,7 @@
         if (!図 && 図形の並び) 図 = 図形の並び[i];
         return sheetToGrid(wb.Sheets[nm], nm, trFixes, 字体表 ? 字体表[nm] : null,
           飾り表 ? 飾り表[nm] : null, 図 || null, (ゼロ表 && ゼロ表[nm]) || false,
-          既定行高表 ? 既定行高表[nm] : null);
+          既定行高表 ? 既定行高表[nm] : null, 書いていない表 ? 書いていない表[nm] : null);
       });
       /* ★控えは「見せている文字」ではなく「元の生の値」から作る★（2026-08-09）
          画面用に 46043 を "1/21(水)" にして見せているので、その文字を控えにすると
@@ -531,7 +549,7 @@
       var 全部計算 = JT.開いたら全部計算するか(wp.recs);
       var 対応 = JT.板とファイル(wp.recs, 字);
       if (!対応) return null;
-      var 名ら = Object.keys(対応), 仕事 = [], 出 = {}, ゼロ = {}, 行高 = {}, 既定行高 = {};
+      var 名ら = Object.keys(対応), 仕事 = [], 出 = {}, ゼロ = {}, 行高 = {}, 既定行高 = {}, 書いていない = {};
       for (var k = 0; k < 名ら.length; k++) {
         (function (名) {
           仕事.push(袋から(z, 対応[名]).then(function (sb) {
@@ -550,12 +568,14 @@
             /* ★板の 既定の 行の 高さ も 同じ 歩きで★（2026-11-07）＝custom の 板だけ pt */
             var 既 = JT.既定の行の高さ ? JT.既定の行の高さ(p2.recs) : null;
             if (既) 既定行高[名] = 既;
+            /* ★書いて いない 行を 隠す 板（記録485 ビット1）は 在る 行（行の 頭）も 同じ 歩きで★（2026-11-08） */
+            if (JT.書いていない行を隠すか && JT.書いていない行を隠すか(p2.recs) === true) 書いていない[名] = JT.在る行たち(p2.recs);
           }, function () { /* 1枚 読めなくても 他は 使う */ }));
         })(名ら[k]);
       }
       return Promise.all(仕事).then(function () {
-        if (!Object.keys(出).length && !Object.keys(ゼロ).length && !Object.keys(行高).length && !Object.keys(既定行高).length && 全部計算 === null) return null;
-        return { 字体: 出, ゼロ: ゼロ, 全部計算: 全部計算, 行高: 行高, 既定行高: 既定行高 };
+        if (!Object.keys(出).length && !Object.keys(ゼロ).length && !Object.keys(行高).length && !Object.keys(既定行高).length && !Object.keys(書いていない).length && 全部計算 === null) return null;
+        return { 字体: 出, ゼロ: ゼロ, 全部計算: 全部計算, 行高: 行高, 既定行高: 既定行高, 書いていない: 書いていない };
       });
     }, function () { return null; });
   }
@@ -718,7 +738,7 @@
     if (typeof c.w === 'string' && c.w.charAt(0) === '#') return c.w;
     return 誤りの番号[c.v] || '#N/A';
   }
-  function sheetToGrid(ws, name, tableFixes, 字体, 飾り, 図形, ゼロを隠す, 既定行高pt) {
+  function sheetToGrid(ws, name, tableFixes, 字体, 飾り, 図形, ゼロを隠す, 既定行高pt, 在る行たち) {
 
     var data = {}, X = root.XLSX, fixes = tableFixes || {};
     var 答えが無い数 = 0;   /* ★式は 在るのに 答えが 保存されて いない マス★ */
@@ -909,6 +929,24 @@
     (ws['!cols'] || []).forEach(function (col, i) {
       if (col && (col.hidden || col.width === 0)) hiddenCols[i] = true;
     });
+    /* ★★書いて いない 行を 隠す 板（zeroHeight）★★（2026-11-08・実Excel 16.0 で 測った）
+         ★在る 行＝ファイルの 行の 札 ∪ 値の 在る 行 ∪ 高さ・隠しの 鍵★（どれか 1つから 漏れても 見える 行が 消えない ように）
+         ★最後の 在る 行より 下＝板の `下を隠す`（この 番号から 下は 全部 隠れ）★＝100万 行を 鍵に しない
+         ★間（下を隠す より 上で 在る 行に 無い 行）＝`書いていない間`★＝hiddenRows と 分ける
+           （Excel の 全部の 再表示で 両方 出る／範囲の 再表示は 選んだ 行だけ＝hakaru-zero4） */
+    var 下を隠す = -1, 書いていない間 = null;
+    if (在る行たち) {
+      var 在る印 = {}, 最後 = -1, ak;
+      var 印を付ける = function (r) { if (r >= 0) { 在る印[r] = true; if (r > 最後) 最後 = r; } };
+      在る行たち.forEach(印を付ける);
+      /* ★data の 鍵は「行,列」（0から）★＝前の 数が 行。結ばれた マスの 子（空）は 数えない＝値か 式の 在る マスだけ */
+      for (ak in data) { var dc = data[ak]; if (dc && ((dc.v !== '' && dc.v != null) || dc.f)) 印を付ける(parseInt(ak, 10)); }
+      for (ak in rowH) 印を付ける(+ak);
+      for (ak in hiddenRows) 印を付ける(+ak);
+      下を隠す = 最後 + 1;
+      書いていない間 = {};
+      for (var gr = 0; gr < 下を隠す; gr++) if (!在る印[gr]) 書いていない間[gr] = true;
+    }
     /* ★表の枠（!ref）も 覚えておく★（2026-08-27 指示役の指摘）
        ＝★「値か式が在る所」と「表の枠」は 違う★。
          実物 計算シート … ★値か式 400行×72列／表の枠 404行×152列★
@@ -953,7 +991,10 @@
          ⇒★うちの 列幅で 解くので そのまま 合います★ */
     var objects = [];
     if (図形 && 図形.length && root.XlsxZukei) {
-      objects = root.XlsxZukei.台に載せる形(図形, colW, 標準の点, rowH, 既定の行の点 || 24, hiddenCols, hiddenRows);
+      /* ★書いて いない 間 も 隠しに 合わせて 渡す★（2026-11-08）＝画面の rowY と 同じ 数え方 */
+      var 図形の隠し = hiddenRows;
+      if (書いていない間) { 図形の隠し = {}; for (ak in hiddenRows) 図形の隠し[ak] = true; for (ak in 書いていない間) 図形の隠し[ak] = true; }
+      objects = root.XlsxZukei.台に載せる形(図形, colW, 標準の点, rowH, 既定の行の点 || 24, hiddenCols, 図形の隠し, 下を隠す);
       /* ★行の 高さ・隠した 行と 列も 渡す★（2026-11-07）＝画面の rowY/colX と 同じ 数え方 */
     }
     var 板 = { name: name, data: data, colW: colW, 既定の列幅: 標準の点, objects: objects,
@@ -970,6 +1011,8 @@
       rowH: rowH, hiddenRows: hiddenRows, hiddenCols: hiddenCols, 枠: 枠, _fromFile: true };
     /* ★custom の 既定が 在る 板だけ 持つ★＝無い 板（新しく 作る 板も）は 今まで 通り 画面の ROW_H */
     if (既定の行の点) 板.既定の行高 = 既定の行の点;
+    /* ★zeroHeight の 板だけ 持つ★＝無い 板は 今まで 通り */
+    if (下を隠す >= 0) { 板.下を隠す = 下を隠す; 板.書いていない間 = 書いていない間; }
     return 板;
   }
 

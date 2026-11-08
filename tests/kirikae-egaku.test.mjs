@@ -320,16 +320,16 @@ if (SELF) {
   console.log('[self-test] わざと壊して 赤くなるかを数える（★repo は読むだけ★）');
   const BREAKS = [
     ['★隠れた行も 場所を取る（差し戻された 元の形）★',
-      /* 2026-11-07 行の 既定が 板の 既定の行高 に なった＝その 形を 壊す */
-      (s) => s.replace('  var 隠 = _隠れた数(_隠れ行の並び(), r);\n  var sh = sheets[activeSheet], rh = sh.rowH, 既 = 既定の行高(sh);\n  var y = HDR_H - scrollTop + (r - 隠) * 既 * scale;',
+      /* 2026-11-07 行の 既定が 板の 既定の行高 に なった＝その 形を 壊す／2026-11-08 隠れた 数は _隠れ行の数（zeroHeight の 下を 足す）を 通る */
+      (s) => s.replace('  var 隠 = _隠れ行の数(r);\n  var sh = sheets[activeSheet], rh = sh.rowH, 既 = 既定の行高(sh);\n  var y = HDR_H - scrollTop + (r - 隠) * 既 * scale;',
                        '  var sh = sheets[activeSheet], rh = sh.rowH, 既 = 既定の行高(sh);\n  var y = HDR_H - scrollTop + r * 既 * scale;')],
     ['★隠れた列も 場所を取る★',
       (s) => s.replace('  var 隠 = _隠れた数(_隠れ列の並び(), c);\n  var x = HDR_W - scrollLeft + (c - 隠) * COL_W * scale;',
                        '  var x = HDR_W - scrollLeft + c * COL_W * scale;')],
     ['★切り替えの隠しを 座標が 見ない★',
       /* 2026-11-07 控えの 間は 並びを 覚える 形に なった＝「var 並 = 」の 行を 壊す */
-      (s) => s.replace("var 並 = _隠しの並び('行', [sh.hiddenRows, sh.kirikaeRows, sh.filterHidden]);",
-                       "var 並 = _隠しの並び('行', [sh.hiddenRows, sh.filterHidden]);")],
+      (s) => s.replace("var 並 = _隠しの並び('行', [sh.hiddenRows, sh.kirikaeRows, sh.filterHidden, sh.書いていない間]);",
+                       "var 並 = _隠しの並び('行', [sh.hiddenRows, sh.filterHidden, sh.書いていない間]);")],
     ['★隠れた行の 高さを 0にしない★',
       (s) => s.replace('  if(sh.kirikaeRows && sh.kirikaeRows[r]) return 0;               /* ★切り替えで 隠れている行（別の入れ物）★ */', '')],
     ['★隠れた列の 幅を 0にしない★',
