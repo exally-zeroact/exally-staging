@@ -1,0 +1,40 @@
+# Excel 16.0 build 20527 / ban15 A1:A5=1..5 B1:B5=10,20,1,1,50 E1=shiki-moji5 E2=7 C2=TRUE / LET LAMBDA no sanshou / .Formula to .Formula2 onaji dake / toru-utsushiji-14.ps1
+=LET(r,B1,SUMIF(A1:A5,">2",r))	52	z0=False	kata=Double
+=SUMIF(A1:A5,">2",LET(r,B1,r))	52	z0=False	kata=Double
+=SUMIF(A1:A5,">2",LAMBDA(x,x)(B1))	52	z0=False	kata=Double
+=SUM(LET(r,IF(TRUE,B1:B5),r))	82	z0=False	kata=Double
+=ISREF(LET(r,B1,r))	True	z0=False	kata=Boolean
+=SUM(LET(r,B1,r:B3))	31	z0=False	kata=Double
+=CELL("address",LET(r,B2,r))	$B$2	z0=False	kata=String
+=SUM(LET(x,B1,y,x,y:B3))	31	z0=False	kata=Double
+=ISREF(LAMBDA(x,x)(B1))	True	z0=False	kata=Boolean
+=SUM(LAMBDA(x,x)(B1:B5))	82	z0=False	kata=Double
+=ROWS(LAMBDA(x,x)(B1:B5))	5	z0=False	kata=Double
+=ROWS(LET(r,B1:B5,r))	5	z0=False	kata=Double
+=SUM(LET(r,B1:B5,r B2:B3))	21	z0=False	kata=Double
+=SUM(LET(r,B2,OFFSET(r,1,0)))	1	z0=False	kata=Double
+=SUM(LET(r,B1,B3:r))	31	z0=False	kata=Double
+=SUM(LET(r,E1,r))	0	z0=True	kata=Double
+=SUM(LAMBDA(x,x)(E1))	0	z0=True	kata=Double
+# (F to F2 ga chigau) =SUM(LET(r,B1:B5,r*1)) F=#VALUE! F2=82
+=SUM(LET(r,B1:B5,r))	82	z0=False	kata=Double
+=COUNTIF(LET(r,A1:A5,r),">2")	3	z0=False	kata=Double
+=LET(f,LAMBDA(x,x),SUM(f(B1:B5)))	82	z0=False	kata=Double
+=LET(f,LAMBDA(x,x),SUMIF(A1:A5,">2",f(B1)))	52	z0=False	kata=Double
+=SUM(MAP(B1:B3,LAMBDA(x,x)))	31	z0=False	kata=Double
+=LET(r,B1,r)	10	z0=False	kata=Double
+=LET(r,B1:B3,SUM(INDEX(r,2):B5))	72	z0=False	kata=Double
+=AND(LET(r,C2,r))	True	z0=False	kata=Boolean
+=MAX(LET(r,E1,r),1)	1	z0=False	kata=Double
+=COUNT(LET(r,E1,r))	0	z0=True	kata=Double
+=ISREF(LET(r,B1:B5,INDEX(r,2)))	True	z0=False	kata=Boolean
+=SUM(LET(r,B1:B5,IF(TRUE,r)))	82	z0=False	kata=Double
+=COUNTIF(A:A,LET(r,A1,r))	1	z0=False	kata=Double
+=SUMIF(A:A,LET(r,A1,r),B:B)	10	z0=False	kata=Double
+=LET(a,B1,LET(b,a,SUM(b:B2)))	30	z0=False	kata=Double
+=ISREF(CHOOSE({1},B1))	False	z0=False	kata=Boolean
+=SUM(CHOOSE({1,2},B1,B2))	30	z0=False	kata=Double
+=LET(r,IF(TRUE,E1),SUM(r))	0	z0=True	kata=Double
+# (F to F2 ga chigau) =SUM(IFERROR(IF(TRUE,B1:B5),0)) F=0 F2=82
+# (F to F2 ga chigau) =SUM(IF(A1:A5>2,B1:B5)) F=#VALUE! F2=52
+# (F to F2 ga chigau) =TYPE(IF(TRUE,B1:B5)) F=16 F2=64
