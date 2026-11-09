@@ -243,6 +243,40 @@ const まだ27 = new Map([
   }
   if (まだ27の数 !== まだ27.size) { fail++; console.log('✗ 紙27 の まだ が ' + まだ27.size + '本 当たらない: ' + まだ27の数); }
 }
+/* ★★紙27g・27h（件4g 叩き直し 止め1・2026-11-09）★★ 実Excel 16.0 build 20527・toru-utsushiji-27g/27h.ps1
+     盤 B1:B5=1,2,=1/0,4,5・C1:C2=7,1。参照を 返す 関数（XLOOKUP・TAKE・DROP・OFFSET・INDIRECT・SWITCH・IFS・IF・CHOOSE・INDEX）を AGGREGATE に 渡す・
+     XLOOKUP の 大きさ違い（#VALUE!）・2列 返す 形・見つからない 時の 4つ目・知らない 板（Nai を 消した 後の 式）と 直の 誤りの 順
+     直す前の lib（d71a836）27g 17/33・27h 10/22（ISREF の 3本は 字の 大小だけ＝True／TRUE）。土台（9e5c8d2）27g 19/33
+     ★「(Nai wo kesu mae ...)」の 行★＝板 Nai を 作らずに 元の 式を 打つ（台では 知らない 板）＝Excel の 消した 後の 答えと 比べる */
+const まだ27g = new Map([
+  ['=AGGREGATE(9,6,FILTER(B1:B5,B1:B5<>2))', 'FILTER の 条件に 誤りが 在る 時 Excel は FILTER が #DIV/0!（台は 誤りを 出さない＝AGGREGATE の 外の 別の 件）'],
+  ['=AGGREGATE(9,6,TRIMRANGE(B1:B9))', 'TRIMRANGE は 台に 無い（#NAME?）＝別の 件'],
+  ['=AGGREGATE(9,6,B1:B9.)', '切り詰めの 参照 B1:B9. を 台は 読まない＝別の 件']]);
+{
+  let まだ27gの数 = 0;
+  const 見本 = { g: 33, h: 22 };
+  for (const x of ['g', 'h']) {
+    const 名 = 'utsushiji-excel-27' + x + '-2026-11-09.tsv';
+    const 行たち = fs.readFileSync(path.join(根, 'docs/measured', 名), 'utf8').split(/\r?\n/).filter((l) => l && l[0] !== '#');
+    for (const l of 行たち) {
+      const [, 外0, 見, z0, 型] = l.split('\t');
+      if (!/^z0=/.test(z0 || '') || !/^kata=/.test(型 || '') || (型 === 'kata=Double' && (見 === '0') !== (z0 === 'z0=True'))) { 窓の崩れ++; console.log('✗ ' + 名 + ' 窓の 崩れ ' + l); continue; }
+      const m = 外0.match(/^(\S+) \(Nai wo kesu mae /);
+      const 外 = m ? m[1] : 外0;
+      const 訳 = まだ27g.get(外);
+      if (訳) { まだ27gの数++; まだの数++; console.log('... まだ（' + 訳 + '） ' + 名 + ' ' + 外 + ' Excel ' + 見); continue; }
+      const h = new H.表();
+      ['1', '2', '=1/0', '4', '5'].forEach((v, i) => h.打つ('B' + (i + 1), v)); h.打つ('C1', '7'); h.打つ('C2', '1');
+      h.打つ('K1', 外);
+      const 出 = String(h.字('K1'));
+      const 見U = 型 === 'kata=Boolean' ? 見.toUpperCase() : 見;
+      const ok = 出 === 見U || (出 !== '' && isFinite(+出) && Math.abs(+出 - +見) < 1e-9);
+      if (ok) pass++; else { fail++; console.log('✗ ' + 名 + ' ' + 外 + ' 台 ' + 出 + ' Excel ' + 見); }
+    }
+    if (行たち.length !== 見本[x]) { fail++; console.log('✗ ' + 名 + ' の 行 ' + 行たち.length + ' が 見本 ' + 見本[x] + ' で ない'); }
+  }
+  if (まだ27gの数 !== まだ27g.size) { fail++; console.log('✗ 紙27g の まだ が ' + まだ27g.size + '本 当たらない: ' + まだ27gの数); }
+}
 fail += 窓の崩れ;
 console.log('[utsushiji] pass ' + pass + ' / fail ' + fail + '（窓の 崩れ ' + 窓の崩れ + '・まだ ' + まだの数 + '本）');
 process.exit(fail ? 1 : 0);
