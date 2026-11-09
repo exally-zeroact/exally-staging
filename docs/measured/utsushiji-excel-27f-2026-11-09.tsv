@@ -1,0 +1,19 @@
+# Excel 16.0 build 20527 / B1:B5=1,2,=1/0,4,5 / A20=SUBTOTAL(9,B1:B2) / toru-27f.ps1 2026-11-09
+-	=AGGREGATE(9,6,{1;2;4;5})	#VALUE!	z0=-2146826273	kata=Error
+-	=AGGREGATE(19,6,{1;2;4;5},1)	1.25	z0=False	kata=Double
+-	=AGGREGATE(9,6,B1:B5,#REF!)	#REF!	z0=-2146826265	kata=Error
+-	=AGGREGATE(9,6,#REF!)	#REF!	z0=-2146826265	kata=Error
+-	=AGGREGATE(9,6,(B1,#REF!))	#REF!	z0=-2146826265	kata=Error
+-	=AGGREGATE(9,0,B1,#REF!)	#REF!	z0=-2146826265	kata=Error
+-	=AGGREGATE(2,6,B1:B5,#REF!)	#REF!	z0=-2146826265	kata=Error
+-	=AGGREGATE(14,6,#REF!,1)	#REF!	z0=-2146826265	kata=Error
+-	=AGGREGATE(9,6,IF({TRUE},B1:B2))	#VALUE!	z0=-2146826273	kata=Error
+-	=AGGREGATE(9,6,INDEX({1;2;3},0))	#VALUE!	z0=-2146826273	kata=Error
+-	=AGGREGATE(2,0,5)	#VALUE!	z0=-2146826273	kata=Error
+-	=AGGREGATE(9,0,1/0,"2")	#DIV/0!	z0=-2146826281	kata=Error
+-	=AGGREGATE(9,0,"2",1/0)	#DIV/0!	z0=-2146826281	kata=Error
+-	=AGGREGATE(9,0,B1:B2,A20)	3	z0=False	kata=Double
+-	=AGGREGATE(9,6,LET(x,B1:B2,x))	3	z0=False	kata=Double
+-	=AGGREGATE(9,6,LET(x,{1,2},x))	#VALUE!	z0=-2146826273	kata=Error
+-	=AGGREGATE(9,6,CHOOSE({1},B1:B2))	#VALUE!	z0=-2146826273	kata=Error
+# (ita wo kesu) =AGGREGATE(9,6,B1:B5,Nai!B2) (Nai wo kesu mae 112) ato no shiki =AGGREGATE(9,6,B1:B5,#REF!B2)	#REF!	z0=-	kata=Error

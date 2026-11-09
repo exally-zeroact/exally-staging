@@ -200,6 +200,49 @@ const まだ26 = new Map([
   if (行数 !== 311) { fail++; console.log('✗ 紙26 の 行が 311本で ない: ' + 行数); }
   if (まだ26の数 !== まだ26.size) { fail++; console.log('✗ 紙26 の まだ が ' + まだ26.size + '本 当たらない: ' + まだ26の数); }
 }
+/* ★★紙27（件4g・2026-11-09）★★ 実Excel 16.0 build 20527・toru-utsushiji-27*.ps1
+     27  ＝外が 1マスだけ（A20・A20:A20・A1,A20）の SUBTOTAL・AGGREGATE（行の 形は 紙26 と 同じ・618本）
+           直す前の lib（36567c4）606/618＝外れ 12本は 全部 AGGREGATE(9,o,A1,A20)
+     27b〜27e＝AGGREGATE の 引数の 種（盤 B1:B5=1,2,=1/0,4,5・C1='moji'・D1=TRUE・A1 空・行の 形「-<TAB>式<TAB>値<TAB>z0=<TAB>kata=」）
+           27b マス・束・参照を 返す 関数・直の 値（222）／27c 1つ目の 引数と 式の 誤り（58）／27d SUBTOTAL の 同じ 形（105）／27e COUNT・COUNTA と 誤り（110）／27f 縦の 定数の 表・直の #REF!・LET・IF({TRUE})（17＋板を 消した 手順の 注 1行）
+           直す前の lib（36567c4）27b 36/222・27c 30/58・27d 60/105・27e 70/110
+     ★(ukenai)＝Excel が 式を 受け付けない＝比べない（数だけ 見る）★ */
+const まだ27 = new Map([
+  ['=AGGREGATE(9,6,B1:B5,Sheet1!B2)', '板の 名 Sheet1 が 台に 無い＝範囲外'], ['=AGGREGATE(9,0,B1,Sheet1!B2)', '板の 名 Sheet1 が 台に 無い＝範囲外'],
+  ['=AGGREGATE(9,0,B1,B:B)', '帯の 選び 0〜3 は 台が #REF!（閉じる 側・別の 件）'],
+  ...['9', '109', '1', '2', '4'].map((n) => ['=SUBTOTAL(' + n + ',Sheet1!B1)', '板の 名 Sheet1 が 台に 無い＝範囲外'])]);
+{
+  let まだ27の数 = 0;
+  const 見本 = { '': [618, 0], b: [222, 6], c: [58, 4], d: [105, 40], e: [110, 0], f: [17, 0] };
+  for (const x of ['', 'b', 'c', 'd', 'e', 'f']) {
+    const 名 = 'utsushiji-excel-27' + x + '-2026-11-09.tsv';
+    const 行たち = fs.readFileSync(path.join(根, 'docs/measured', 名), 'utf8').split(/\r?\n/).filter((l) => l && l[0] !== '#');
+    let 受けない = 0;
+    for (const l of 行たち) {
+      const [a, 外, 見, z0, 型] = l.split('\t');
+      if (見 === '(ukenai)') { 受けない++; continue; }
+      if (!/^z0=/.test(z0 || '') || !/^kata=/.test(型 || '') || (型 === 'kata=Double' && (見 === '0') !== (z0 === 'z0=True'))) { 窓の崩れ++; console.log('✗ ' + 名 + ' 窓の 崩れ ' + l); continue; }
+      const 訳 = x === '' ? null : まだ27.get(外);
+      if (訳) { まだ27の数++; まだの数++; console.log('... まだ（' + 訳 + '） ' + 名 + ' ' + 外 + ' Excel ' + 見); continue; }
+      const h = new H.表();
+      if (x === '') { for (let i = 1; i <= 5; i++) h.打つ('A' + i, String(i)); h.打つ('A20', a.replace(/^A20 /, '')); }
+      else { ['1', '2', '=1/0', '4', '5'].forEach((v, i) => h.打つ('B' + (i + 1), v)); h.打つ('C1', 'moji'); h.打つ('D1', '=TRUE'); if (x === 'f') h.打つ('A20', '=SUBTOTAL(9,B1:B2)'); }
+      h.打つ('K1', 外);
+      const 出 = String(h.字('K1'));
+      const ok = 出 === 見 || (出 !== '' && isFinite(+出) && Math.abs(+出 - +見) < 1e-9);
+      if (ok) pass++; else { fail++; console.log('✗ ' + 名 + ' ' + (x === '' ? a + ' ' : '') + 外 + ' 台 ' + 出 + ' Excel ' + 見); }
+    }
+    if (行たち.length !== 見本[x][0] || 受けない !== 見本[x][1]) { fail++; console.log('✗ ' + 名 + ' の 行 ' + 行たち.length + '（受けない ' + 受けない + '）が 見本 ' + 見本[x] + ' で ない'); }
+  }
+  /* ★知らない 板（Nai）を 指す 参照は #REF!★（taiketsu 止め S1・実測 紙27f＝板を 消すと 式は #REF!B2 に なり Excel は 選び 6 でも #REF!）
+       直す前の lib は (9,6,B1:B5,Nai!B2) 12・(9,6,Nai!B2:B3) 0＝黙った 数 */
+  for (const 式 of ['=AGGREGATE(9,6,B1:B5,Nai!B2)', '=AGGREGATE(9,6,(B1,Nai!B1))', '=AGGREGATE(9,6,B1:B5,Nai!B2:B3)', '=AGGREGATE(9,6,Nai!B2)', '=AGGREGATE(14,6,Nai!B2:B3,1)', '=AGGREGATE(2,6,B1:B5,Nai!B2)']) {
+    const h = new H.表(); ['1', '2', '=1/0', '4', '5'].forEach((v, i) => h.打つ('B' + (i + 1), v)); h.打つ('K1', 式);
+    const 出 = String(h.字('K1'));
+    if (出 === '#REF!') pass++; else { fail++; console.log('✗ 知らない 板 ' + 式 + ' 台 ' + 出 + ' 見 #REF!'); }
+  }
+  if (まだ27の数 !== まだ27.size) { fail++; console.log('✗ 紙27 の まだ が ' + まだ27.size + '本 当たらない: ' + まだ27の数); }
+}
 fail += 窓の崩れ;
 console.log('[utsushiji] pass ' + pass + ' / fail ' + fail + '（窓の 崩れ ' + 窓の崩れ + '・まだ ' + まだの数 + '本）');
 process.exit(fail ? 1 : 0);
