@@ -198,7 +198,7 @@ if (process.argv.includes('--self-test')) {
     console.log('  ★素通り★  台帳の「見て 取らなかった」が 空（壊しが 古い＝直せ）'); fail++;
   } else if (process.env.EXALLY_KARIMONO_NO_SRC === '1' || !fs.existsSync(借り物[0].出どころ)) {
     未測定++;
-    console.log('  ★未測定★  台帳の「見て 取らなかった」の sha を 壊す … 出どころが 無い＝③-b を 飛ぶので 見られない');
+    console.log('  ★未測定★  台帳の「見て 取らなかった」の sha を 壊す＝出どころが 無い＝③-b を 飛ぶので 見られない');
   } else {
     const 自分 = fileURLToPath(import.meta.url);
     const 中0 = fs.readFileSync(自分, 'utf8');
