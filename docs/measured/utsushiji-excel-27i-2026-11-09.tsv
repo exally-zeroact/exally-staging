@@ -1,0 +1,22 @@
+# Excel 16.0 build 20527 / B1:B5=1,2,=1/0,4,5 / C1:C2=7,1 / toru-27i.ps1 2026-11-09
+-	=XLOOKUP(2,B1:C5,B1:C5)	#VALUE!	z0=-2146826273	kata=Error
+-	=XLOOKUP(2,B1:C2,B1:C2)	#VALUE!	z0=-2146826273	kata=Error
+-	=XLOOKUP(7,C1:D2,B1:C2)	#VALUE!	z0=-2146826273	kata=Error
+-	=XLOOKUP(99,B1:C5,B1:C5)	#VALUE!	z0=-2146826273	kata=Error
+-	=XLOOKUP(2,B1:C5,B1:B5)	#VALUE!	z0=-2146826273	kata=Error
+-	=XLOOKUP(2,B1:C5,B1:C5,9)	#VALUE!	z0=-2146826273	kata=Error
+-	=XLOOKUP(2,B1:C5,B1:C5,,0,-1)	#VALUE!	z0=-2146826273	kata=Error
+-	=IFERROR(XLOOKUP(2,B1:C5,B1:C5),"x")	x	z0=False	kata=String
+-	=AGGREGATE(9,6,XLOOKUP(2,B1:C5,B1:C5))	#VALUE!	z0=-2146826273	kata=Error
+-	=XLOOKUP(2,B1:C2,B1:B2)	#VALUE!	z0=-2146826273	kata=Error
+-	=AGGREGATE(9,6,TAKE(B1:B5,C2))	1	z0=False	kata=Double
+-	=AGGREGATE(9,6,DROP(B1:B5,C2))	11	z0=False	kata=Double
+-	=AGGREGATE(9,6,TAKE(B1:B5,TRUE))	1	z0=False	kata=Double
+-	=AGGREGATE(9,6,DROP(B1:B5,TRUE))	11	z0=False	kata=Double
+-	=ISREF(TAKE(B1:B5,C2))	True	z0=False	kata=Boolean
+-	=ISREF(DROP(B1:B5,C2))	True	z0=False	kata=Boolean
+-	=AGGREGATE(9,6,TAKE(B1:B5,,C2))	12	z0=False	kata=Double
+-	=AGGREGATE(9,6,TAKE(B1:B5,C2+1))	3	z0=False	kata=Double
+-	=SUM(TAKE(B1:B5,C2))	1	z0=False	kata=Double
+-	=AGGREGATE(9,6,XLOOKUP(99,B1:B5,B1:B5,,0))	#N/A	z0=-2146826246	kata=Error
+-	=XLOOKUP(99,B1:B5,B1:B5,,0)	#N/A	z0=-2146826246	kata=Error

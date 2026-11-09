@@ -247,6 +247,7 @@ const まだ27 = new Map([
      盤 B1:B5=1,2,=1/0,4,5・C1:C2=7,1。参照を 返す 関数（XLOOKUP・TAKE・DROP・OFFSET・INDIRECT・SWITCH・IFS・IF・CHOOSE・INDEX）を AGGREGATE に 渡す・
      XLOOKUP の 大きさ違い（#VALUE!）・2列 返す 形・見つからない 時の 4つ目・知らない 板（Nai を 消した 後の 式）と 直の 誤りの 順
      直す前の lib（d71a836）27g 17/33・27h 10/22（ISREF の 3本は 字の 大小だけ＝True／TRUE）。土台（9e5c8d2）27g 19/33
+     ★紙27i（叩き直し 止め1）★＝探す 所が 2次元の XLOOKUP は #VALUE!（前は 投げて 表 全体が 読めなかった）・TAKE・DROP の 数を マス・TRUE で 渡しても 参照・4つ目を 省いた XLOOKUP は #N/A。f7d0b59 の lib で 27i 4/21
      ★「(Nai wo kesu mae ...)」の 行★＝板 Nai を 作らずに 元の 式を 打つ（台では 知らない 板）＝Excel の 消した 後の 答えと 比べる */
 const まだ27g = new Map([
   ['=AGGREGATE(9,6,FILTER(B1:B5,B1:B5<>2))', 'FILTER の 条件に 誤りが 在る 時 Excel は FILTER が #DIV/0!（台は 誤りを 出さない＝AGGREGATE の 外の 別の 件）'],
@@ -254,8 +255,8 @@ const まだ27g = new Map([
   ['=AGGREGATE(9,6,B1:B9.)', '切り詰めの 参照 B1:B9. を 台は 読まない＝別の 件']]);
 {
   let まだ27gの数 = 0;
-  const 見本 = { g: 33, h: 22 };
-  for (const x of ['g', 'h']) {
+  const 見本 = { g: 33, h: 22, i: 21 };
+  for (const x of ['g', 'h', 'i']) {
     const 名 = 'utsushiji-excel-27' + x + '-2026-11-09.tsv';
     const 行たち = fs.readFileSync(path.join(根, 'docs/measured', 名), 'utf8').split(/\r?\n/).filter((l) => l && l[0] !== '#');
     for (const l of 行たち) {
