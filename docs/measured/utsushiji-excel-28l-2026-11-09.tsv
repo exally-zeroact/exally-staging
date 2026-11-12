@@ -1,0 +1,13 @@
+# Excel 16.0 build 20527 / B1:B5=1,2,=1/0,4,5 / C1:C2=7,1 / XFD2=9 / shiki wa basho no masu / 1 hon zutsu atarashii sheet / toru-28l.ps1 2026-11-09
+P10	=XLOOKUP(99,B1:B5,B1:B5,B1:B3)	1	afure=P10:P12	shita=2	migi=(sora)	kata=Double
+E2	=XLOOKUP(99,B1:B5,B1:B5,B1:B3)	1	afure=E2:E4	shita=2	migi=(sora)	kata=Double
+E3	=XLOOKUP(99,B1:B5,B1:B5,B1:B3)	1	afure=E3:E5	shita=2	migi=(sora)	kata=Double
+P10	=XLOOKUP(99,B1:B5,C1:C5,B1:B3)	1	afure=P10:P12	shita=2	migi=(sora)	kata=Double
+P10	=XLOOKUP(99,B1:B5,C1:C5,{8;9})	8	afure=P10:P11	shita=9	migi=(sora)	kata=Double
+P10	=XLOOKUP(99,B1:B5,C1:D5,{8,9})	8	afure=P10:Q10	shita=(sora)	migi=9	kata=Double
+P10	=XLOOKUP(99,B1:B5,C1:C5,{8,9})	8	afure=P10:Q10	shita=(sora)	migi=9	kata=Double
+P10	=ROWS(XLOOKUP(99,B1:B5,C1:C5,B1:B3))	3	afure=nashi	shita=(sora)	migi=(sora)	kata=Double
+P10	=ISREF(XLOOKUP(99,B1:B5,C1:C5,B1:B3))	True	afure=nashi	shita=(sora)	migi=(sora)	kata=Boolean
+P10	=XLOOKUP(2,B1:B5,C1:XFD5)	#SPILL!	afure=nashi	shita=(sora)	migi=(sora)	kata=Error
+P10	=SUM(XLOOKUP(2,B1:B5,C1:XFD5))	10	afure=nashi	shita=(sora)	migi=(sora)	kata=Double
+P10	=XLOOKUP(2,B1:B5,C1:XFC5)	#SPILL!	afure=nashi	shita=(sora)	migi=(sora)	kata=Error

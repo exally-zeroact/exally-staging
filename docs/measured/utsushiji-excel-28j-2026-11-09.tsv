@@ -1,0 +1,20 @@
+# Excel 16.0 build 20527 / B1:B5=1,2,=1/0,4,5 / C1:C2=7,1 / S1==1/0 / shiki wa P10 / 1 hon zutsu atarashii sheet / toru-28j.ps1 2026-11-09
+-	=XLOOKUP(1,B1,C1:C5,"n")	7	afure=P10:P14	P11=1	Q10=(sora)	kata=Double
+-	=XLOOKUP(1,B1,C1:D1,"n")	7	afure=P10:Q10	P11=(sora)	Q10=0	kata=Double
+-	=XLOOKUP(1,B1,B1:C5,"n")	#VALUE!	afure=nashi	P11=(sora)	Q10=(sora)	kata=Error
+-	=XLOOKUP(2,B1,B1:C5,"n")	#VALUE!	afure=nashi	P11=(sora)	Q10=(sora)	kata=Error
+-	=XLOOKUP(1,B1,B1:B1048576,"n")	#SPILL!	afure=nashi	P11=(sora)	Q10=(sora)	kata=Error
+-	=XLOOKUP(2,B1,B1:B1048576,"n")	n	afure=nashi	P11=(sora)	Q10=(sora)	kata=String
+-	=XLOOKUP(1,B1,{5,6},"n")	5	afure=P10:Q10	P11=(sora)	Q10=6	kata=Double
+-	=XLOOKUP(1,B1,{5;6},"n")	5	afure=P10:P11	P11=6	Q10=(sora)	kata=Double
+-	=XLOOKUP(1,1,C1:C5,"n")	7	afure=P10:P14	P11=1	Q10=(sora)	kata=Double
+-	=XLOOKUP(2,B1,B:C,"n")	#VALUE!	afure=nashi	P11=(sora)	Q10=(sora)	kata=Error
+-	=XLOOKUP(1,B1,1:2,"n")	#VALUE!	afure=nashi	P11=(sora)	Q10=(sora)	kata=Error
+-	=XLOOKUP(2,B1,1:2,"n")	#VALUE!	afure=nashi	P11=(sora)	Q10=(sora)	kata=Error
+-	=XLOOKUP(1,B1,C1:C2)	7	afure=P10:P11	P11=1	Q10=(sora)	kata=Double
+-	=XLOOKUP(1,B1,C1)	7	afure=nashi	P11=(sora)	Q10=(sora)	kata=Double
+-	=XLOOKUP(1,B1,B:B,"n")	#SPILL!	afure=nashi	P11=(sora)	Q10=(sora)	kata=Error
+-	=XLOOKUP(1,{1},C1:C5,"n")	7	afure=P10:P14	P11=1	Q10=(sora)	kata=Double
+-	=XLOOKUP(1,B1:B1,C1:C5,"n")	7	afure=P10:P14	P11=1	Q10=(sora)	kata=Double
+-	=XLOOKUP(1,B1,{5,6;7,8},"n")	#VALUE!	afure=nashi	P11=(sora)	Q10=(sora)	kata=Error
+-	=XLOOKUP(2,B1:B5,C1:D5)	1	afure=P10:Q10	P11=(sora)	Q10=0	kata=Double

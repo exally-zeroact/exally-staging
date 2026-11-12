@@ -1,0 +1,11 @@
+# Excel 16.0 build 20527 / B1:B5=1,2,=1/0,4,5 / C1:C2=7,1 / S1==1/0 / shiki wa P10 / 1 hon zutsu atarashii sheet / toru-28k.ps1 2026-11-09
+-	=ISREF(XLOOKUP(1,B1,C1:C5))	True	afure=nashi	P11=(sora)	Q10=(sora)	kata=Boolean
+-	=AGGREGATE(9,6,XLOOKUP(1,B1,B1:B5))	12	afure=nashi	P11=(sora)	Q10=(sora)	kata=Double
+-	=ROW(XLOOKUP(1,B1,C3:C5))	3	afure=P10:P12	P11=4	Q10=(sora)	kata=Double
+-	=SUM(XLOOKUP(1,B1,C1:C2):C5)	8	afure=nashi	P11=(sora)	Q10=(sora)	kata=Double
+-	=XLOOKUP(2,B1,C1:C5,"n")	n	afure=nashi	P11=(sora)	Q10=(sora)	kata=String
+-	=INDEX(XLOOKUP(1,B1,C1:C5),2)	1	afure=nashi	P11=(sora)	Q10=(sora)	kata=Double
+-	=SUM(XLOOKUP(1,B1,C1:C5))	8	afure=nashi	P11=(sora)	Q10=(sora)	kata=Double
+-	=ISREF(XLOOKUP(1,B1,{5;6}))	False	afure=nashi	P11=(sora)	Q10=(sora)	kata=Boolean
+-	=COLUMN(XLOOKUP(1,B1,C1:D1))	3	afure=P10:Q10	P11=(sora)	Q10=4	kata=Double
+-	=ROWS(XLOOKUP(1,B1,C1:C5))	5	afure=nashi	P11=(sora)	Q10=(sora)	kata=Double

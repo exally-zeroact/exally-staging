@@ -1,0 +1,7 @@
+# Excel 16.0 build 20527 / B1:B5=1,2,=1/0,4,5 / C1:C2=7,1 / XFD2=9 / shiki wa basho no masu / 1 hon zutsu atarashii sheet / toru-28m.ps1 2026-11-09
+P10	=XLOOKUP(99,B1:B5,C1:C5,B1:XFD1)	#SPILL!	afure=nashi	shita=(sora)	migi=(sora)	kata=Error
+P10	=SUM(XLOOKUP(99,B1:B5,C1:C5,B1:XFD1))	8	afure=nashi	shita=(sora)	migi=(sora)	kata=Double
+P10	=XLOOKUP(99,B1:B5,C1:C5,B1:C3)	1	afure=P10:Q12	shita=2	migi=7	kata=Double
+P10	=XLOOKUP(99,B1:B5,C1:C5,B1:B1048576)	#SPILL!	afure=nashi	shita=(sora)	migi=(sora)	kata=Error
+P10	=SUM(XLOOKUP(99,B1:B5,C1:C5,B1:B1048576))	#DIV/0!	afure=nashi	shita=(sora)	migi=(sora)	kata=Error
+P10	=XLOOKUP(2,B1,B:B,"n")	n	afure=nashi	shita=(sora)	migi=(sora)	kata=String

@@ -187,7 +187,7 @@ const まだ26 = new Map([
       行数++;
       const [a, 外, 見, z0, 型] = l.split('\t'); const 中 = a.replace(/^A20 /, '');
       /* ★窓（z0= kata=）が 無い・値と 食い違う 行は 紙の 崩れ★（monosashi-mado の 決まり・読む() と 同じ 判） */
-      if (!/^z0=/.test(z0 || '') || !/^kata=/.test(型 || '') || (型 === 'kata=Double' && (見 === '0') !== (z0 === 'z0=True'))) { 窓の崩れ++; console.log('✗ ' + 名 + ' 窓の 崩れ ' + l); continue; }
+      if (!/^z0=/.test(z0 || '') || !/^kata=/.test(型 || '') || (型 === 'kata=Double' && (!/^z0=(True|False)$/.test(z0) || (見 === '0') !== (z0 === 'z0=True')))) { 窓の崩れ++; console.log('✗ ' + 名 + ' 窓の 崩れ ' + l); continue; }
       const 訳 = まだ26.get(中 + '\t' + 外);
       if (訳) { まだ26の数++; まだの数++; console.log('... まだ（' + 訳 + '） ' + 名 + ' ' + 中 + ' ' + 外 + ' Excel ' + 見); continue; }
       const h = new H.表();
@@ -221,7 +221,7 @@ const まだ27 = new Map([
     for (const l of 行たち) {
       const [a, 外, 見, z0, 型] = l.split('\t');
       if (見 === '(ukenai)') { 受けない++; continue; }
-      if (!/^z0=/.test(z0 || '') || !/^kata=/.test(型 || '') || (型 === 'kata=Double' && (見 === '0') !== (z0 === 'z0=True'))) { 窓の崩れ++; console.log('✗ ' + 名 + ' 窓の 崩れ ' + l); continue; }
+      if (!/^z0=/.test(z0 || '') || !/^kata=/.test(型 || '') || (型 === 'kata=Double' && (!/^z0=(True|False)$/.test(z0) || (見 === '0') !== (z0 === 'z0=True')))) { 窓の崩れ++; console.log('✗ ' + 名 + ' 窓の 崩れ ' + l); continue; }
       const 訳 = x === '' ? null : まだ27.get(外);
       if (訳) { まだ27の数++; まだの数++; console.log('... まだ（' + 訳 + '） ' + 名 + ' ' + 外 + ' Excel ' + 見); continue; }
       const h = new H.表();
@@ -243,6 +243,8 @@ const まだ27 = new Map([
   }
   if (まだ27の数 !== まだ27.size) { fail++; console.log('✗ 紙27 の まだ が ' + まだ27.size + '本 当たらない: ' + まだ27の数); }
 }
+/* ★窓の Q10 が 溢れを 塞いだ 行＝z0 が #SPILL!（叩き直し3 で 窓の門を 締めて 見つけた）・答えは 紙28j で 塞がずに 測り直した★ */
+const 塞がれた窓 = new Set(['=XLOOKUP(2,B1:B5,C1:D5)']);
 /* ★★紙27g・27h（件4g 叩き直し 止め1・2026-11-09）★★ 実Excel 16.0 build 20527・toru-utsushiji-27g/27h.ps1
      盤 B1:B5=1,2,=1/0,4,5・C1:C2=7,1。参照を 返す 関数（XLOOKUP・TAKE・DROP・OFFSET・INDIRECT・SWITCH・IFS・IF・CHOOSE・INDEX）を AGGREGATE に 渡す・
      XLOOKUP の 大きさ違い（#VALUE!）・2列 返す 形・見つからない 時の 4つ目・知らない 板（Nai を 消した 後の 式）と 直の 誤りの 順
@@ -261,7 +263,8 @@ const まだ27g = new Map([
     const 行たち = fs.readFileSync(path.join(根, 'docs/measured', 名), 'utf8').split(/\r?\n/).filter((l) => l && l[0] !== '#');
     for (const l of 行たち) {
       const [, 外0, 見, z0, 型] = l.split('\t');
-      if (!/^z0=/.test(z0 || '') || !/^kata=/.test(型 || '') || (型 === 'kata=Double' && (見 === '0') !== (z0 === 'z0=True'))) { 窓の崩れ++; console.log('✗ ' + 名 + ' 窓の 崩れ ' + l); continue; }
+      if (塞がれた窓.has(外0)) { まだの数++; console.log('... まだ（窓の Q10 が 溢れを 塞いだ＝z0 #SPILL!・紙28j で 塞がずに 測り直した） ' + 名 + ' ' + 外0); continue; }
+      if (!/^z0=/.test(z0 || '') || !/^kata=/.test(型 || '') || (型 === 'kata=Double' && (!/^z0=(True|False)$/.test(z0) || (見 === '0') !== (z0 === 'z0=True')))) { 窓の崩れ++; console.log('✗ ' + 名 + ' 窓の 崩れ ' + l); continue; }
       const m = 外0.match(/^(\S+) \(Nai wo kesu mae /);
       const 外 = m ? m[1] : 外0;
       const 訳 = まだ27g.get(外);
@@ -278,6 +281,159 @@ const まだ27g = new Map([
   }
   if (まだ27gの数 !== まだ27g.size) { fail++; console.log('✗ 紙27g の まだ が ' + まだ27g.size + '本 当たらない: ' + まだ27gの数); }
 }
+/* ★紙28g の まだ＝台は 閉じる 側の 誤りを 出す（黙った 数・#N/A に しない）＝[訳, 台の 答え]★ */
+const まだ28 = new Map([
+  ['=XMATCH(4,INDEX(B:C,0,1))', ['INDEX(帯,0,k) は 帯を 置かない＝別の 件 4j', '#REF!']],
+  ['=XLOOKUP(4,INDEX(B:C,0,1),C:C,"n")', ['INDEX(帯,0,k) は 帯を 置かない＝別の 件 4j', '#REF!']],
+  ['=XMATCH("(?>ab)c",G1:G3,3)', ['JS に 無い (?> ＝戻りで 答えが 変わり得る', '#VALUE!']],
+  ['=XMATCH("ab*+",G1:G3,3)', ['JS に 無い 所有の *+ ＝戻りで 答えが 変わり得る', '#VALUE!']],
+  ['=XLOOKUP(1,B1,B:B,"n")', ['Excel は 返す 所を 丸ごと 溢れさせ #SPILL!（z0=-2146826243・紙の 字は 空）＝台は 丸ごとを 溢れさせ られない', '#REF!']],
+  ['=XLOOKUP(1,B1,C:C,"n")', ['Excel は 返す 所を 丸ごと 溢れさせ #SPILL!（z0=-2146826243・紙の 字は 空）＝台は 丸ごとを 溢れさせ られない', '#REF!']],
+  ['=XLOOKUP(1,B1,1:1,"n")', ['Excel は 返す 所を 丸ごと 溢れさせ #SPILL!（z0=-2146826243・紙の 字は 空）＝台は 丸ごとを 溢れさせ られない', '#REF!']],
+  ['=XLOOKUP(1,1,B:B,"n")', ['Excel は 返す 所を 丸ごと 溢れさせ #SPILL!（z0=-2146826243・紙の 字は 空）＝台は 丸ごとを 溢れさせ られない', '#REF!']],
+  ['=XLOOKUP(7,C1,B:B,"n")', ['Excel は 返す 所を 丸ごと 溢れさせ #SPILL!（z0=-2146826243・紙の 字は 空）＝台は 丸ごとを 溢れさせ られない', '#REF!']],
+  ['=XMATCH(2,IF(B1:B2>0,B1:B2))', ['IF が 返す 並びを 探す 所に できない＝9e769fdc から #VALUE!・別の 件（紙28h）', '#VALUE!']]]);
+let まだ28の数 = 0;
+/* ★kata=Double なら z0 は True／False だけ★（叩き直し3＝前は 紙28i の C1:D1・{5,6} の z0 #SPILL!（窓の Q10 が 溢れを 塞いだ）を 素通しして いた・その 2行は 28i から 外し 28j で 測った） */
+/* ★★紙28・28b・28c・28d・28e・28f・28g・28h（件4h・2026-11-09）★★ 実Excel 16.0 build 20527・toru-utsushiji-28〜28h.ps1
+     ★紙28i（叩き直し2）★＝探す 所が 1マスなら 大きさを 見ない（見つからなければ n）・返す 所が 2次元の 帯は #VALUE!
+     ★紙28h（叩き直し2 止め1）★＝探す 所が 1マスの 参照（S1・(S1)・B3・S1:S1・OFFSET・INDIRECT）なら 誤りを データと して 探す（n・#N/A）・計算した 値（1/0・S1*1）だけ その 誤り
+     XLOOKUP の 5つ目（1・-1・2・3＝正規表現）と 6つ目（-1・±2）・XMATCH の 同じ 道・並びの 位（数＜字＜真偽＜誤り・二分では 空も 一番 上）・
+     丸ごとの 2次元（B:C・1:2）の XLOOKUP は #VALUE!・TAKE／DROP の 数が TRUE の マス。9e769fdc の lib で 赤を 見てから 直した
+     ★盤の 真偽は =TRUE／=FALSE で 置く★（台の 打つ('TRUE') は 字＝件4i の 別の 穴）・式は P1 に 打つ（盤が K 列まで 在る）・★紙28f・28g は 式を P10・盤に S1:S2=#DIV/0!,#N/A を 足す★（丸ごとの 列・行 1:2 を 読むので 1行目に 置くと 輪） */
+{
+  const 見本 = { '28': 22, '28b': 20, '28c': 33, '28d': 24, '28e': 10, '28f': 27, '28g': 27, '28h': 18, '28i': 16 };
+  for (const x of Object.keys(見本)) {
+    const 名 = 'utsushiji-excel-' + x + '-2026-11-09.tsv';
+    const 行たち = fs.readFileSync(path.join(根, 'docs/measured', 名), 'utf8').split(/\r?\n/).filter((l) => l && l[0] !== '#');
+    for (const l of 行たち) {
+      const [, 外, 見, z0, 型] = l.split('\t');
+      if (!/^z0=/.test(z0 || '') || !/^kata=/.test(型 || '') || (型 === 'kata=Double' && (!/^z0=(True|False)$/.test(z0) || (見 === '0') !== (z0 === 'z0=True')))) { 窓の崩れ++; console.log('✗ ' + 名 + ' 窓の 崩れ ' + l); continue; }
+      const h = new H.表();
+      ['1', '2', '=1/0', '4', '5'].forEach((v, i) => h.打つ('B' + (i + 1), v)); h.打つ('C1', '7'); h.打つ('C2', '1');
+      h.打つ('F1', '=TRUE'); ['x', 'abc', 'ab'].forEach((v, i) => h.打つ('G' + (i + 1), v));
+      ['2', 'a', '4', '2', 'c', '=TRUE'].forEach((v, i) => { h.打つ('H' + (i + 1), v); h.打つ('I' + (i + 1), String(10 * (i + 1))); });
+      ['2', '=NA()', 'b', '=TRUE'].forEach((v, i) => { h.打つ('K' + (i + 1), v); h.打つ('L' + (i + 1), String(10 * (i + 1))); });
+      h.打つ('M1', '1'); h.打つ('M3', '5'); [1, 2, 3].forEach((i) => h.打つ('N' + i, String(10 * i)));
+      h.打つ('O1', 'a'); h.打つ('O3', 'c'); h.打つ('R1', '=FALSE'); h.打つ('R3', '=TRUE');
+      const 後の紙 = x === '28f' || x === '28g' || x === '28h' || x === '28i';
+      const 式の所 = 後の紙 ? 'P10' : 'P1';
+      if (後の紙) { h.打つ('S1', '=1/0'); h.打つ('S2', '=NA()'); }
+      let 出;
+      try { h.打つ(式の所, 外); 出 = String(h.字(式の所)); } catch (e) { 出 = '投げた ' + e.message; }
+      const ま = まだ28.get(外);
+      if (ま) { まだ28の数++; まだの数++; if (出 === ま[1]) { pass++; console.log('... まだ（' + ま[0] + '） ' + 名 + ' ' + 外 + ' 台 ' + 出 + ' Excel ' + 見); } else { fail++; console.log('✗ まだ の 台が ' + ま[1] + ' で ない ' + 外 + ' 台 ' + 出); } continue; }
+      const 見U = 型 === 'kata=Boolean' ? 見.toUpperCase() : 見;
+      const ok = 出 === 見U || (出 !== '' && isFinite(+出) && Math.abs(+出 - +見) < 1e-9);
+      if (ok) pass++; else { fail++; console.log('✗ ' + 名 + ' ' + 外 + ' 台 ' + 出 + ' Excel ' + 見); }
+    }
+    if (行たち.length !== 見本[x]) { fail++; console.log('✗ ' + 名 + ' の 行 ' + 行たち.length + ' が 見本 ' + 見本[x] + ' で ない'); }
+  }
+}
+/* ★★紙28j（件4h 叩き直し3・2026-11-09）★★ 実Excel 16.0 build 20527・toru-utsushiji-28j.ps1
+     探す 所が 1マスの XLOOKUP＝式は 1本ずつ 新しい 板の P10（隣を 塞がない）・HasSpill の 範囲と P11・Q10 まで 取った
+     返す 所が 2次元は #VALUE!・1次元は 当たれば 丸ごと 溢れ（P11／Q10 の 数まで 比べる）・盤の 端を 越えるのは #SPILL!（台は #REF!＝閉じる 側） */
+{
+  const 名 = 'utsushiji-excel-28j-2026-11-09.tsv';
+  const 行たち = fs.readFileSync(path.join(根, 'docs/measured', 名), 'utf8').split(/\r?\n/).filter((l) => l && l[0] !== '#');
+  const 溢れ越え = new Set(['=XLOOKUP(1,B1,B1:B1048576,"n")', '=XLOOKUP(1,B1,B:B,"n")']);
+  let 越えの数 = 0, 空の数 = 0;
+  for (const l of 行たち) {
+    const [, 外, 見, 溢, p11, q10, 型] = l.split('\t');
+    if (!/^afure=/.test(溢 || '') || !/^P11=/.test(p11 || '') || !/^Q10=/.test(q10 || '') || !/^kata=/.test(型 || '')) { 窓の崩れ++; console.log('✗ ' + 名 + ' 窓の 崩れ ' + l); continue; }
+    const h = new H.表();
+    ['1', '2', '=1/0', '4', '5'].forEach((v, i) => h.打つ('B' + (i + 1), v)); h.打つ('C1', '7'); h.打つ('C2', '1'); h.打つ('S1', '=1/0');
+    let 出, 出11 = '', 出Q = '';
+    try { h.打つ('P10', 外); 出 = String(h.字('P10')); 出11 = String(h.字('P11')); 出Q = String(h.字('Q10')); } catch (e) { 出 = '投げた ' + e.message; }
+    if (溢れ越え.has(外)) {
+      越えの数++; まだの数++;
+      if (見 === '#SPILL!' && 出 === '#REF!') { pass++; console.log('... まだ（盤の 端を 越える 溢れ＝Excel #SPILL!・台は 閉じる 側 #REF!） ' + 名 + ' ' + 外); } else { fail++; console.log('✗ まだ の 台が #REF! で ない ' + 外 + ' 台 ' + 出 + ' Excel ' + 見); }
+      continue;
+    }
+    const 同じ = (a, b) => a === b || (a !== '' && b !== '' && isFinite(+a) && isFinite(+b) && Math.abs(+a - +b) < 1e-9);
+    const 隣 = (v) => (v === '(sora)' ? '' : v);
+    const ok = 同じ(出, 見) && 同じ(出11, 隣(p11.slice(4))) && 同じ(出Q, 隣(q10.slice(4)));
+    /* ★溢れの 空★＝Excel は 空の マスを 0 で 溢れさせ、台は 空で 出す（=C1:D1 も 同じ＝XLOOKUP の 外の 別の 件）＝その 1つ だけが 違う 時は まだ（名指し） */
+    const 空だけ = !ok && 同じ(出, 見) && (同じ(出11, 隣(p11.slice(4))) || (出11 === '' && p11 === 'P11=0')) && (同じ(出Q, 隣(q10.slice(4))) || (出Q === '' && q10 === 'Q10=0'));
+    /* ★空だけ の 時は 溢れが 本当に 届いて いるかを 見る★（叩き直し4 止め2）＝空の 元の マスに 99 を 置いた 盤で その 隣に 99 が 出る（溢れが 丸ごと 消える 壊れを 飲まない） */
+    const 空の元 = { '=XLOOKUP(1,B1,C1:D1,"n")': ['D1', 'Q10'], '=XLOOKUP(2,B1:B5,C1:D5)': ['D2', 'Q10'] }[外];
+    if (空だけ && 空の元) { const h2 = new H.表(); ['1', '2', '=1/0', '4', '5'].forEach((v, i) => h2.打つ('B' + (i + 1), v)); h2.打つ('C1', '7'); h2.打つ('C2', '1'); h2.打つ(空の元[0], '99'); h2.打つ('P10', 外); if (String(h2.字(空の元[1])) !== '99') { fail++; console.log('✗ 紙28j 溢れが ' + 空の元[1] + ' に 届かない ' + 外 + ' 台 ' + h2.字(空の元[1])); continue; } }
+    else if (空だけ) { fail++; console.log('✗ 紙28j 空だけ だが 空の元 が 名指し されて ない ' + 外); continue; }
+    if (空だけ) { まだの数++; 空の数++; pass++; console.log('... まだ（溢れの 空は Excel 0・台 空＝別の 件） ' + 名 + ' ' + 外); continue; }
+    if (ok) pass++; else { fail++; console.log('✗ ' + 名 + ' ' + 外 + ' 台 ' + 出 + '・P11 ' + 出11 + '・Q10 ' + 出Q + ' Excel ' + 見 + '・' + p11 + '・' + q10); }
+  }
+  if (行たち.length !== 19) { fail++; console.log('✗ ' + 名 + ' の 行 ' + 行たち.length + ' が 見本 19 で ない'); }
+  if (空の数 !== 2) { fail++; console.log('✗ 紙28j の 溢れの 空 が 2本 で ない: ' + 空の数); }
+  if (越えの数 !== 溢れ越え.size) { fail++; console.log('✗ 紙28j の まだ が ' + 溢れ越え.size + '本 当たらない: ' + 越えの数); }
+}
+/* ★★紙28l・28m（件4h 設計を 戻した 後の 設計前 taiketsu 止め1・2／叩き直し1 止め1・2・2026-11-09）★★ 実Excel 16.0 build 20527・toru-utsushiji-28l.ps1・28m.ps1
+     式は 1本ずつ 新しい 板の 行の 1つ目の マス（P10・E2・E3）・★置いた 所＋下＋右★まで 比べる（P10 の 値だけだと {8;9}・{8,9} の 3本が 空振り＝叩き直し1 止め2）
+     見つからない 時の 4つ目は 丸ごと（範囲は 参照・配列は 溢れ・形不問・置いた 行に 関わらない）・盤の 端を 越える 溢れは Excel #SPILL!＝台は #REF!（閉じる 側・SUM の 中は Excel 値＝別件 4n） */
+{
+  const 越え = new Set(['=XLOOKUP(2,B1:B5,C1:XFD5)', '=SUM(XLOOKUP(2,B1:B5,C1:XFD5))', '=XLOOKUP(2,B1:B5,C1:XFC5)',
+    '=XLOOKUP(99,B1:B5,C1:C5,B1:XFD1)', '=SUM(XLOOKUP(99,B1:B5,C1:C5,B1:XFD1))', '=XLOOKUP(99,B1:B5,C1:C5,B1:B1048576)', '=SUM(XLOOKUP(99,B1:B5,C1:C5,B1:B1048576))']);
+  const 列名 = (n) => { let s = ''; n++; while (n > 0) { const r = (n - 1) % 26; s = String.fromCharCode(65 + r) + s; n = Math.floor((n - 1) / 26); } return s; };
+  const 列番 = (s) => { let n = 0; for (const c of s) n = n * 26 + (c.charCodeAt(0) - 64); return n - 1; };
+  const ずらす = (a, dr, dc) => { const m = /^([A-Z]+)(\d+)$/.exec(a); return 列名(列番(m[1]) + dc) + (+m[2] + dr); };
+  const 同じ = (a, b) => a === b || (/^(TRUE|FALSE)$/i.test(a) && a.toUpperCase() === String(b).toUpperCase()) || (a !== '' && b !== '' && isFinite(+a) && isFinite(+b) && Math.abs(+a - +b) < 1e-9);
+  const 隣 = (v) => (v === '(sora)' ? '' : v);
+  /* ★紙28n（staging 前 taiketsu 止め1・2026-11-09・toru-utsushiji-28n.ps1・盤に H1:H6=2,a,4,2,c,TRUE を 足す）★
+       XLOOKUP の 5つ目・6つ目／XMATCH の 3つ目・4つ目を 省いた 時は 既定（前は 6つ目の 空＝0 で #VALUE!）
+       ★まだ★ IFERROR(XLOOKUP(99,...,B1:XFD1),"x") は Excel #SPILL!（IFERROR は 越えの #SPILL! を 拾わない）＝台は "x"（閉じる 側の #REF! を IFERROR が 拾う・別件 4n） */
+  const IFERRORのまだ = '=IFERROR(XLOOKUP(99,B1:B5,C1:C5,B1:XFD1),"x")';
+  let 越えの数 = 0, IFERRORの数 = 0;
+  for (const [名, 本] of [['utsushiji-excel-28l-2026-11-09.tsv', 12], ['utsushiji-excel-28m-2026-11-09.tsv', 6], ['utsushiji-excel-28n-2026-11-09.tsv', 10]]) {
+    const 行たち = fs.readFileSync(path.join(根, 'docs/measured', 名), 'utf8').split(/\r?\n/).filter((l) => l && l[0] !== '#');
+    for (const l of 行たち) {
+      const [置, 外, 見, 溢, 下, 右, 型] = l.split('\t');
+      if (!/^[A-Z]+\d+$/.test(置 || '') || !/^afure=/.test(溢 || '') || !/^shita=/.test(下 || '') || !/^migi=/.test(右 || '') || !/^kata=/.test(型 || '')) { 窓の崩れ++; console.log('✗ ' + 名 + ' 窓の 崩れ ' + l); continue; }
+      const h = new H.表();
+      ['1', '2', '=1/0', '4', '5'].forEach((v, i) => h.打つ('B' + (i + 1), v)); h.打つ('C1', '7'); h.打つ('C2', '1'); h.打つ('XFD2', '9');
+      if (名.includes('-28n-')) ['2', 'a', '4', '2', 'c', 'TRUE'].forEach((v, i) => h.打つ('H' + (i + 1), v));
+      let 出, 出下 = '', 出右 = '';
+      try { h.打つ(置, 外); 出 = String(h.字(置)); 出下 = String(h.字(ずらす(置, 1, 0))); 出右 = String(h.字(ずらす(置, 0, 1))); } catch (e) { 出 = '投げた ' + e.message; }
+      if (越え.has(外)) {
+        越えの数++; まだの数++;
+        if (出 === '#REF!') { pass++; console.log('... まだ（盤の 端を 越える＝Excel ' + 見 + '・台は 閉じる 側 #REF!・別件 4n） ' + 名 + ' ' + 外); } else { fail++; console.log('✗ まだ の 台が #REF! で ない ' + 名 + ' ' + 外 + ' 台 ' + 出 + ' Excel ' + 見); }
+        continue;
+      }
+      if (外 === IFERRORのまだ) {
+        IFERRORの数++; まだの数++;
+        if (出 === 'x') { pass++; console.log('... まだ（IFERROR が 越えを 拾う＝Excel ' + 見 + '・台 x・別件 4n） ' + 名 + ' ' + 外); } else { fail++; console.log('✗ まだ の 台が x で ない ' + 名 + ' ' + 外 + ' 台 ' + 出 + ' Excel ' + 見); }
+        continue;
+      }
+      const ok = 同じ(出, 見) && 同じ(出下, 隣(下.slice(6))) && 同じ(出右, 隣(右.slice(5)));
+      if (ok) pass++; else { fail++; console.log('✗ ' + 名 + ' ' + 置 + ' ' + 外 + ' 台 ' + 出 + '・下 ' + 出下 + '・右 ' + 出右 + ' Excel ' + 見 + '・' + 下 + '・' + 右); }
+    }
+    if (行たち.length !== 本) { fail++; console.log('✗ ' + 名 + ' の 行 ' + 行たち.length + ' が 見本 ' + 本 + ' で ない'); }
+  }
+  if (越えの数 !== 越え.size) { fail++; console.log('✗ 紙28l・28m の まだ が ' + 越え.size + '本 当たらない: ' + 越えの数); }
+  if (IFERRORの数 !== 1) { fail++; console.log('✗ 紙28n の IFERROR の まだ が 1本 当たらない: ' + IFERRORの数); }
+}
+/* ★★紙28k（件4h 叩き直し4 止め1・2026-11-09）★★ 実Excel 16.0 build 20527・toru-utsushiji-28k.ps1（28j と 同じ 置き方）
+     1マスの 探す 所で 丸ごと 溢れた 物は 参照（ISREF TRUE・AGGREGATE が 範囲で 受ける・ROW 3,4,5・SUM(...:C5) 8）・配列定数は 参照で ない */
+{
+  const 名 = 'utsushiji-excel-28k-2026-11-09.tsv';
+  let まだ28kの数 = 0;
+  const 行たち = fs.readFileSync(path.join(根, 'docs/measured', 名), 'utf8').split(/\r?\n/).filter((l) => l && l[0] !== '#');
+  for (const l of 行たち) {
+    const [, 外, 見, 溢, p11, q10, 型] = l.split('\t');
+    if (!/^afure=/.test(溢 || '') || !/^P11=/.test(p11 || '') || !/^Q10=/.test(q10 || '') || !/^kata=/.test(型 || '')) { 窓の崩れ++; console.log('✗ ' + 名 + ' 窓の 崩れ ' + l); continue; }
+    const h = new H.表();
+    ['1', '2', '=1/0', '4', '5'].forEach((v, i) => h.打つ('B' + (i + 1), v)); h.打つ('C1', '7'); h.打つ('C2', '1'); h.打つ('S1', '=1/0');
+    let 出, 出11 = '', 出Q = '';
+    try { h.打つ('P10', 外); 出 = String(h.字('P10')); 出11 = String(h.字('P11')); 出Q = String(h.字('Q10')); } catch (e) { 出 = '投げた ' + e.message; }
+    const 大 = (v) => (型 === 'kata=Boolean' ? String(v).toUpperCase() : v);
+    /* ★まだ（名指し）★＝範囲の「:」が 溢れの 参照の 大きさを 見ない（左上 だけ 見る 作りで 無く #REF!）＝閉じる 側・別の 件（4m 候補）・HEAD は 1マスを 返して 8 だった */
+    if (外 === '=SUM(XLOOKUP(1,B1,C1:C2):C5)') { まだの数++; まだ28kの数++; if (出 === '#REF!') { pass++; console.log('... まだ（「:」が 溢れの 参照の 大きさを 見ない＝別の 件） ' + 名 + ' ' + 外 + ' Excel ' + 見); } else { fail++; console.log('✗ まだ の 台が #REF! で ない ' + 外 + ' 台 ' + 出); } continue; }
+    const 同じ = (a, b) => a === b || (a !== '' && b !== '' && isFinite(+a) && isFinite(+b) && Math.abs(+a - +b) < 1e-9);
+    const 隣 = (v) => (v === '(sora)' ? '' : v);
+    if (同じ(出, 大(見)) && 同じ(出11, 隣(p11.slice(4))) && 同じ(出Q, 隣(q10.slice(4)))) pass++; else { fail++; console.log('✗ ' + 名 + ' ' + 外 + ' 台 ' + 出 + '・P11 ' + 出11 + '・Q10 ' + 出Q + ' Excel ' + 見 + '・' + p11 + '・' + q10); }
+  }
+  if (まだ28kの数 !== 1) { fail++; console.log('✗ 紙28k の まだ が 1本 で ない: ' + まだ28kの数); }
+  if (行たち.length !== 10) { fail++; console.log('✗ ' + 名 + ' の 行 ' + 行たち.length + ' が 見本 10 で ない'); }
+}
+if (まだ28の数 !== まだ28.size) { fail++; console.log('✗ 紙28 の まだ が ' + まだ28.size + '本 当たらない: ' + まだ28の数); }
 fail += 窓の崩れ;
 console.log('[utsushiji] pass ' + pass + ' / fail ' + fail + '（窓の 崩れ ' + 窓の崩れ + '・まだ ' + まだの数 + '本）');
 process.exit(fail ? 1 : 0);
