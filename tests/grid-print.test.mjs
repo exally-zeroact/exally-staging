@@ -69,6 +69,7 @@ for (const s of srcs) { const p = srcPath(s); if (fs.existsSync(p)) inject(fs.re
 for (const m of html.matchAll(/<script(?![^>]*\ssrc=)[^>]*>([\s\S]*?)<\/script>/g)) inject(m[1]);
 try { doc.dispatchEvent(new win.Event('DOMContentLoaded', { bubbles: true })); } catch (e) { /* 続ける */ }
 try { win.dispatchEvent(new win.Event('load')); } catch (e) { /* 続ける */ }
+doc.body.classList.remove('exally-locked');   /* ★ログインが 済んだ 形で 試す★（試験は 倉庫を 読まない＝auth.js が 鍵を 掛ける。鍵の 間は 門が キー・押しを 止める＝穴9） */
 inject(WINDOW_SPY);
 
 console.log('\n[grid-print] ★本物の book.html で 実際に印刷を押す★');

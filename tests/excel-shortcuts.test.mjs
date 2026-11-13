@@ -73,6 +73,7 @@ function bootPage() {
   }
   try { doc.dispatchEvent(new win.Event('DOMContentLoaded', { bubbles: true })); } catch (e) { /* 続ける */ }
   try { win.dispatchEvent(new win.Event('load')); } catch (e) { /* 続ける */ }
+  doc.body.classList.remove('exally-locked');   /* ★ログインが 済んだ 形で 試す★（試験は 倉庫を 読まない＝auth.js が 鍵を 掛ける。鍵の 間は 門が キー・押しを 止める＝穴9） */
   return { win, doc, loaded, missing, inlineNG };
 }
 
@@ -229,6 +230,7 @@ T('Ctrl+1 … セルの書式設定の窓が開く', () => {
   const m = doc.getElementById('fmtModal');
   ok(m, '書式の窓（#fmtModal）が見つからない');
   ok(m.classList.contains('show'), '窓が開いていない（show が付いていない）');
+  m.classList.remove('show');   /* ★閉じてから 次へ★（窓が 開いている間は 板の キーが 効かない＝実Excel と 同じ・穴9） */
 });
 
 /* ── ⑤ 行・列を選ぶ ── */

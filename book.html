@@ -10839,6 +10839,8 @@ window.addEventListener('load', function() {
         if (_rbEl) {
           var _リボンキー = function (ev) {
             if (!window.Ribbon || !window.RibbonSpec) return;
+            if (typeof _リボンキーを窓が止める === 'function' && _リボンキーを窓が止める()) return;   /* 窓（覆い）の 間も（穴9 層W） */
+            if (document.body.classList.contains('exally-locked')) return;   /* 鍵の 間も＝ログインの 欄で 打つ Alt も 通さない（document の capture は ログインの窓の 栓より 先・穴9） */
             if (ev.ctrlKey || ev.metaKey) return;      /* Ctrl 系は 別の層 */
             var 使った = window.Ribbon.キーを受ける(_rbEl, window.RibbonSpec, ev);
             if (!使った) return;
@@ -10902,6 +10904,23 @@ window.addEventListener('load', function() {
       }
     });
     _見えた.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    /* ★鍵が 解けた時は 鍵の 間に 隠れた 欄へ 入った 字を 捨てる★（2026-11-14・穴9 L4）
+       鍵の 間の キー・字は js/auth.js の 門が 止めるが、IME の 変換の 字は 欄の value に 残る事が ある。
+       ・自前の 印（_鍵の印）と 比べる＝class を 付け直す・外し直す だけで 鳴っても 動かない
+       ・掛かった時に 帯の 字を 控え、解けた時は 帯が 控えと 違う時だけ マスの 字へ 戻す（鍵の 前の 打ちかけは 残す・書き戻しは しない）
+       ・打っていない（editingCell が 無い）のに セルの 欄に 字が 在れば 捨てる。focus は 動かさない */
+    var _鍵の印 = document.body.classList.contains('exally-locked'), _帯の控え = null;
+    var _鍵の後始末 = new MutationObserver(function(){
+      var 今 = document.body.classList.contains('exally-locked');
+      if(今 === _鍵の印) return;
+      _鍵の印 = 今;
+      var fi_ = document.getElementById('formula-input'), ci_ = document.getElementById('cell-input');
+      if(今){ _帯の控え = fi_ ? fi_.value : null; return; }
+      if(ci_ && !editingCell && ci_.value) ci_.value = '';
+      if(fi_ && (_帯の控え === null || fi_.value !== _帯の控え) && typeof updateBar === 'function') updateBar();
+      _帯の控え = null;
+    });
+    _鍵の後始末.observe(document.body, { attributes: true, attributeFilter: ['class'] });
   } catch (e) { /* 古い画面でも 落とさない（前からの道は そのまま動く） */ }
 });
 function resize() {
@@ -11109,6 +11128,7 @@ function doUndo(){
   /* ★セルや数式の帯を 打っている間は 戻さない★（2026-11-13・穴⑤）＝実Excel は 編集中 元に戻す・やり直しが 押せない。
      前は ↩ ボタンが blur の確定より先に走り、打ちかけのまま 前の操作を 戻した（帯の自前キーボードでは 打った式が 黙って消えた） */
   if(editingCell||_editMode) return;
+  if(_覆いが開いている()) return;   /* ★窓（覆い）が 開いている間は 板へ 書かない★（2026-11-14・穴9 層W） */
   if(!undoStack.length) return;
   var op = undoStack.pop();
   /* ★控えを取った板へ移ってから戻す★（2026-11-07・前は 開いている板へ 書き戻した＝別の板で Ctrl+Z すると
@@ -11185,6 +11205,7 @@ function doRedo(){
   /* ★セルや数式の帯を 打っている間は やり直さない★（2026-11-13・穴⑤）＝実Excel は 編集中 元に戻す・やり直しが 押せない。
      前は ↩ ボタンが blur の確定より先に走り、打ちかけのまま 前の操作を 戻した（帯の自前キーボードでは 打った式が 黙って消えた） */
   if(editingCell||_editMode) return;
+  if(_覆いが開いている()) return;   /* ★窓（覆い）が 開いている間は 板へ 書かない★（2026-11-14・穴9 層W） */
   if(!redoStack.length) return;
   var op = redoStack.pop();
   /* ★控えを取った板へ移ってから戻す★（2026-11-07・前は 開いている板へ 書き戻した＝別の板で Ctrl+Z すると
@@ -11727,6 +11748,7 @@ function bindEvents(){
   var fi=document.getElementById('formula-input');
   // formula-inputイベント（iOSキーボードモード）
   fi.addEventListener('input',function(){
+    if(_覆いが開いている()) return;   /* ★窓（覆い）が 開いている間は 板へ 書かない★（2026-11-14・穴9 層W） */
     var v=this.value;
     refMode=(v.length>0&&(v[0]==='='||v[0]==='＝'));
     _currentRefs=extractRefs(v);
@@ -11758,6 +11780,7 @@ function bindEvents(){
   fi.addEventListener('keyup',function(){ _fiCursorPos=this.selectionStart||0; });
   fi.addEventListener('blur',function(){ _fiCursorPos=this.selectionStart||_fiCursorPos; });
   fi.addEventListener('keydown',function(e){
+    if(_覆いが開いている()) return;   /* ★窓（覆い）が 開いている間は 板へ 書かない★（2026-11-14・穴9 層W） */
     if(e.key==='F4'){ e.preventDefault(); toggleAbsRef(); return; }   /* $ の付け方を1つ進める */
     if(e.key==='Enter'){e.preventDefault();fkbCommit();moveSel(1,0);}
     else if(e.key==='Escape'){fkbCancel();}
@@ -11778,6 +11801,7 @@ function bindEvents(){
   // セル入力
   var ci=document.getElementById('cell-input');
   ci.addEventListener('keydown',function(e){
+    if(_覆いが開いている()) return;   /* ★窓（覆い）が 開いている間は 板へ 書かない★（2026-11-14・穴9 層W） */
     // 編集モード中以外: 矢印キー等はセル操作にパス
     if(!editingCell){
       if(e.key==='ArrowDown'||e.key==='ArrowUp'||e.key==='ArrowLeft'||e.key==='ArrowRight'||
@@ -11798,6 +11822,7 @@ function bindEvents(){
     else if(e.key==='Escape'){refMode=false;refStartR=-1;cancelEdit();}
   });
   ci.addEventListener('input',function(){
+    if(_覆いが開いている()) return;   /* ★窓（覆い）が 開いている間は 板へ 書かない★（2026-11-14・穴9 層W） */
     var v=this.value;
     // 編集モード未開始で文字が入った → 編集モード開始（IME経由でも動く）
     if(!editingCell && v.length>0){
@@ -11865,6 +11890,7 @@ function bindEvents(){
   window.showToast = notify;
   // 外部クリップボードからの貼り付け対応
   ci.addEventListener('paste', function(e){
+    if(_覆いが開いている()) return;   /* ★窓（覆い）が 開いている間は 板へ 書かない★（2026-11-14・穴9 層W） */
     // 編集モード中は通常の貼り付け（textarea にテキスト挿入）→ スキップしてデフォルトへ
     if(editingCell) return;
     var cd = e.clipboardData || window.clipboardData;
@@ -12523,6 +12549,13 @@ function onTE(e){
 // キー
 function onKD(e){
   if(editingCell) return;
+  /* ★窓（覆い）が 開いている間は 的を 見ずに 板の キーを 通さない★（2026-11-14・穴9 層W）＝前は 検索の 窓を 開いたまま
+     Ctrl+V・Ctrl+D・Ctrl+Z が 後ろの 板を 書き換えた。窓の 中の 欄の Ctrl+C・V・Z 等は ブラウザに 任せる。
+     ★うちが 持つ 短縮キー（保存・印刷・検索・置換・開く・新規）だけは 既定を 止める★＝ブラウザの 保存・印刷へ 落とさない */
+  if(_覆いが開いている()){
+    if((e.ctrlKey||e.metaKey) && /^[spfhon]$/.test(String(e.key||'').toLowerCase())) e.preventDefault();
+    return;
+  }
   var ek = e.key.toLowerCase();
   /* ★F9＝すべて再計算／Shift+F9＝このシートだけ★（実Excelと 同じ割り当て）
      ★手動に した時に F9 が 無いと 一生 計算できない★ので ここで 受ける。 */
@@ -20900,6 +20933,97 @@ function onPickBookFile(el){
   el.value = '';                      // 同じファイルをもう一度選べるようにする
   if (f) openBookFile(f);
 }
+/* ══ ★★覆い（窓）が 開いている間は 板へ 入る道を 止める★★（2026-11-14・穴9 層W）══
+   ★なぜ★ 覆い（position:fixed;inset:0 の 窓 44枚＋書式の窓 #fmtModal）は 指・マウスを 板へ 届かせないが、
+     focus は 隠れた 入力欄（#cell-input・#formula-input）や body に 残る＝窓を 開いたまま
+     Ctrl+V・Ctrl+D・Ctrl+Z・打った字・貼り付け・落とし物 が 窓の 後ろの 板を 書き換えた。
+     実Excel の 窓（ダイアログ）は 閉じるまで 板へ 戻れない。
+   ⇒ (a) 開いた時 focus が 窓の外なら 一番上の 窓の 最初の 欄へ／(b) 窓の外へ focus が 抜けたら 戻す／
+     (c) onKD・リボンのキー・doUndo/doRedo・入力欄の input/keydown/paste の 頭で 止める／drop も 断る。
+     ★確定の 動き（入力欄の blur）は 止めない★＝今のまま。
+   名簿の 外（止めずに 使う）＝watchOverlay・fnPalette・fnAutocomplete・inkBar・winBar・#popup-overlay（inset:0 でない＝板と 並べて 使う 物）・
+     #loading（読み込み中の 幕・窓でない）。鍵（body.exally-locked）の 間は js/auth.js の 門が 止める＝ここでは 開いていない 扱い。 */
+var _覆いの名簿 = ['findOverlay','tnOverlay','rcOverlay','rkOverlay','dgOverlay','mcOverlay','vbOverlay','cfOverlay','forecastOverlay',
+  'consolOverlay','shapeOverlay','fitOverlay','pivotOverlay','fontOverlay','orientOverlay','clipOverlay','pageMoreOverlay','goalOverlay',
+  'zoomOverlay','bookProtOverlay','editRangeOverlay','statsOverlay','evalOverlay','calcOverlay','funcOverlay','mkNameOverlay','formOverlay',
+  'symOverlay','headFilterOverlay','tableOverlay','sparkOverlay','linkOverlay','sortOverlay','styleOverlay','shiftOverlay','sizeOverlay',
+  'pageOverlay','commentOverlay','chartOverlay','splitOverlay','nameOverlay','validOverlay','diffOverlay','bookVerOverlay','fmtModal'];
+function _開いている覆い(){
+  var 開 = [];
+  try {
+    if (document.body && document.body.classList.contains('exally-locked')) return 開;
+    for (var i = 0; i < _覆いの名簿.length; i++) {
+      var el = document.getElementById(_覆いの名簿[i]);
+      if (!el) continue;
+      var cs = window.getComputedStyle(el);
+      if (cs && cs.display !== 'none') 開.push(el);
+    }
+  } catch (e) {}
+  return 開;
+}
+/* 一番上の 窓＝z の 大きい方・同じなら DOM で 後の 物。無ければ null */
+function _覆いが開いている(){
+  var 開 = _開いている覆い(), 上 = null, 上z = -Infinity;
+  for (var i = 0; i < 開.length; i++) {
+    var z = parseInt(window.getComputedStyle(開[i]).zIndex, 10); if (isNaN(z)) z = 0;
+    if (!上 || z > 上z || (z === 上z && (上.compareDocumentPosition(開[i]) & 4))) { 上 = 開[i]; 上z = z; }
+  }
+  return 上;
+}
+function _リボンキーを窓が止める(){ return !!_覆いが開いている(); }
+function _覆いの中か(el, 開){
+  if (!el || el.nodeType !== 1) return false;
+  var lo = document.getElementById('loginOv');
+  if (lo && lo.contains(el)) return true;
+  for (var i = 0; i < 開.length; i++) if (開[i].contains(el)) return true;
+  return false;
+}
+function _見えている欄か(el, 窓){
+  if (el.disabled || (el.type === 'hidden')) return false;
+  for (var n = el; n && n !== 窓.parentNode; n = n.parentNode) {
+    if (n.nodeType === 1 && window.getComputedStyle(n).display === 'none') return false;
+    if (n.nodeType === 1 && n.hidden) return false;
+  }
+  return true;
+}
+/* 窓の 最初の 欄＝入力欄が 先・無ければ 閉じるボタン・それも 無ければ 最初の ボタン */
+function _窓の最初の欄(窓){
+  var 欄 = 窓.querySelectorAll('input,select,textarea');
+  for (var i = 0; i < 欄.length; i++) if (_見えている欄か(欄[i], 窓)) return 欄[i];
+  var ボ = 窓.querySelectorAll('button,[tabindex]'), 最初 = null;
+  for (var j = 0; j < ボ.length; j++) {
+    if (!_見えている欄か(ボ[j], 窓)) continue;
+    var t = (ボ[j].textContent || '').trim();
+    if (/^(✕|×|閉じる|キャンセル)$/.test(t) || /close/i.test(ボ[j].className || '')) return ボ[j];
+    if (!最初) 最初 = ボ[j];
+  }
+  return 最初;
+}
+function _窓へ戻す(上){
+  var f = _窓の最初の欄(上);
+  if (f && document.activeElement !== f) { try { f.focus(); } catch (e) {} }
+}
+(function(){
+  try {
+    /* (a) 開いた時＝状態を 持たない（覆いの style/class だけを 見る）。閉じた時は 何もしない */
+    var mo = new MutationObserver(function(){
+      var 上 = _覆いが開いている(); if (!上) return;
+      if (typeof hideFnAutocomplete === 'function') { try { hideFnAutocomplete(); } catch (e) {} }
+      if (_覆いの中か(document.activeElement, _開いている覆い())) return;
+      _窓へ戻す(上);
+    });
+    _覆いの名簿.forEach(function(id){
+      var el = document.getElementById(id);
+      if (el) mo.observe(el, { attributes: true, attributeFilter: ['style', 'class'] });
+    });
+    /* (b) 窓の外へ focus が 抜けたら 戻す（窓の ボタン→sel()→ci.focus() も ここで 戻る）。relatedTarget は 見ない */
+    window.addEventListener('focusin', function(e){
+      var 上 = _覆いが開いている(); if (!上) return;
+      if (_覆いの中か(e.target, _開いている覆い())) return;
+      _窓へ戻す(上);
+    }, true);
+  } catch (e) { if (window.console) console.warn('窓の 見張りを 付けられませんでした', e); }
+})();
 /* ══ ★★ファイルを 読めなかった 時（2026-09-25）★★ ══
      ★★実測（お客さんの 道・実物）★★
        同じ 本の 2つの 写しで 数えました:
@@ -21061,6 +21185,9 @@ function openBookFile(file){
   });
   window.addEventListener('drop', function(e){
     var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    /* ★窓（覆い）の 間・鍵の 間も 本を 差し替えない★（2026-11-14・穴9）＝前は 検索の 窓などを 開いたまま 落とすと 後ろの 本が 替わった */
+    if (f && document.body.classList.contains('exally-locked')) return;
+    if (f && _覆いが開いている()) { notify('窓を 閉じてから 本を 開いてください'); return; }
     if (f) openBookFile(f);
   }, false);
 })();

@@ -262,6 +262,7 @@ if (OPEN_PAGES.length) await T('③ ★[やめる]を実際に押す→1本も�
   }
   for (const m of html.matchAll(/<script(?![^>]*\ssrc=)[^>]*>([\s\S]*?)<\/script>/g)) inject(m[1]);
   await new Promise(r => { if (doc.readyState === 'complete') return r(); win.addEventListener('load', r); setTimeout(r, 3000); });
+  doc.body.classList.remove('exally-locked');   /* ★ログインが 済んだ 形で 試す★（試験は 倉庫を 読まない＝auth.js が 鍵を 掛ける。鍵の 間は 門が キー・押しを 止める＝穴9） */
   for (const f of ['lib/xlsx.full.min.js', 'lib/xlsx-io.js', 'lib/zip-surgeon.js', 'lib/xlsx-edit.js',
     'lib/xlsb-edit.js', 'lib/table-refs.js', 'lib/diff-preview.js', 'js/book-open.js']) {
     inject(fs.readFileSync(path.join(ROOT, f), 'utf8'));
@@ -349,6 +350,7 @@ await T('★' + mode + 'でも 開いていないシートに波及した値が�
   }
   for (const m of html.matchAll(/<script(?![^>]*\ssrc=)[^>]*>([\s\S]*?)<\/script>/g)) inject(m[1]);
   await new Promise(r => { if (doc.readyState === 'complete') return r(); win.addEventListener('load', r); setTimeout(r, 3000); });
+  doc.body.classList.remove('exally-locked');   /* ★ログインが 済んだ 形で 試す★（試験は 倉庫を 読まない＝auth.js が 鍵を 掛ける。鍵の 間は 門が キー・押しを 止める＝穴9） */
   for (const f of ['lib/xlsx.full.min.js', 'lib/xlsx-io.js', 'lib/zip-surgeon.js', 'lib/xlsx-edit.js',
     'lib/xlsb-edit.js', 'lib/table-refs.js', 'lib/diff-preview.js', 'js/book-open.js']) {
     inject(fs.readFileSync(path.join(ROOT, f), 'utf8'));

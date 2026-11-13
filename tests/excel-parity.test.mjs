@@ -127,6 +127,7 @@ for (const m of html.matchAll(/<script src="([^"]+)"><\/script>/g)) {
 }
 for (const m of html.matchAll(/<script(?![^>]*\ssrc=)[^>]*>([\s\S]*?)<\/script>/g)) inject(m[1]);
 await new Promise(r => { if (doc.readyState === 'complete') return r(); win.addEventListener('load', r); setTimeout(r, 3000); });
+doc.body.classList.remove('exally-locked');   /* ★ログインが 済んだ 形で 試す★（試験は 倉庫を 読まない＝auth.js が 鍵を 掛ける。鍵の 間は 門が キー・押しを 止める＝穴9） */
 
 /* 材料を置く（空だと「効いたか」が分からない＝空振りする） */
 win.setCell(0, 0, '10'); win.setCell(1, 0, '20'); win.setCell(2, 0, '30');
@@ -155,6 +156,8 @@ for (const s of SHORTCUTS) {
   try { doc.dispatchEvent(ev); } catch (e) { /* 落ちても続ける */ }
   const works = ev.defaultPrevented || before !== snapshot();
   results.push({ name: s.name, works });
+  /* ★開いた 窓は 閉じてから 次の キーへ★（窓が 開いている間は 板の キーが 効かない＝実Excel と 同じ・穴9）。閉じないと 後の キーが 全部「無い」に 数えられる */
+  for (const id of (win._覆いの名簿 || [])) { const el = doc.getElementById(id); if (!el) continue; if (id === 'fmtModal') el.classList.remove('show'); else el.style.display = 'none'; }
 }
 const have = results.filter(r => r.works).length;
 const missing = results.length - have;

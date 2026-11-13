@@ -54,6 +54,7 @@ for (const src of [...html.matchAll(/<script src="([^"]+)"><\/script>/g)].map((m
 for (const m of html.matchAll(/<script(?![^>]*\ssrc=)[^>]*>([\s\S]*?)<\/script>/g)) { try { inject(m[1]); } catch (e) { /* 続ける */ } }
 try { doc.dispatchEvent(new win.Event('DOMContentLoaded', { bubbles: true })); } catch (e) { /* 続ける */ }
 try { win.dispatchEvent(new win.Event('load')); } catch (e) { /* 続ける */ }
+doc.body.classList.remove('exally-locked');   /* ★ログインが 済んだ 形で 試す★（試験は 倉庫を 読まない＝auth.js が 鍵を 掛ける。鍵の 間は 門が キー・押しを 止める＝穴9） */
 /* ★保存の 道具は 本番でも 初めての 保存で 後から 読む（_ensureXlsx と 同じ 順）★ */
 
 const SELF = process.argv.includes('--self-test');

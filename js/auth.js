@@ -7,6 +7,46 @@
   'use strict';
   var hasSupa = !!(global.SUPA && global.SUPA.url && global.SUPA.key && global.supabase);
 
+  /* ★鍵の間は ログインの窓（#loginOv）の外へ 何も入れない★（2026-11-14 穴9）
+     鍵（body.exally-locked）は 中身を display:none で 隠すだけ＝隠れた欄・ボタンに focus が 残ると、
+     キー・字・貼り付け・落とし物・押しが 板へ 入った（受け手は 名前を 変えて 何本も 付く＝数えて 門を 置くと 漏れる）。
+     ⇒ ★入口1か所★＝window の capture（document の capture や 的の 受け手より 必ず 先）で 止める。
+       ・止める＝stopImmediatePropagation（後の 受け手を 全部 止める）
+       ・既定も 止めるのは 字・貼り付け・落とし物・押し だけ（key 系は 止めない＝Tab・F5・Ctrl+R は 効く）
+       ・focus・blur・composition* は 止めない（鍵の時の 確定の 動きと 変換の 旗は 今のまま）
+       ・hasSupa の 判じより 前に 付ける（接続設定が 無い 端末でも 鍵は 鍵） */
+  var 鍵で止める型 = ['keydown', 'keyup', 'keypress', 'beforeinput', 'input', 'paste', 'cut', 'drop', 'dragover', 'dragenter',
+    'click', 'dblclick', 'auxclick', 'contextmenu', 'change', 'submit', 'mousedown', 'pointerdown'];
+  var 既定も止める型 = { beforeinput: 1, paste: 1, cut: 1, drop: 1, dragover: 1, click: 1, submit: 1, contextmenu: 1, dblclick: 1, auxclick: 1 };
+  function 鍵の門(e) {
+    var 止める;
+    try {
+      var b = document.body;
+      if (!b || !b.classList.contains('exally-locked')) return;
+      var lo = document.getElementById('loginOv');
+      止める = !(lo && e.target && e.target.nodeType === 1 && lo.contains(e.target));
+    } catch (err) { 止める = true; }   /* 判じが 転んだら 止める 側 */
+    if (!止める) { ログインの窓に栓(lo); return; }
+    e.stopImmediatePropagation();
+    if (既定も止める型[e.type] && e.cancelable) e.preventDefault();
+  }
+  /* ★ログインの窓の 中の 事は 窓の 縁で 泡立ちを 止める★（9版の直し2・試験で 見つけた）
+     窓の 中の 受け手（ログインの 欄・ボタン）は そのまま 走るが、そこから document・window の 受け手
+     （板の 短縮キー onKD＝Enter で 選びを 動かす・Ctrl+V で 貼る 等／hub・台帳の click）へ 上がっていた。
+     縁（#loginOv 自身の 泡立ちの 受け手）で stopPropagation＝上の 受け手の 数を 数えなくて よい。
+     document の capture の 受け手（book の _リボンキー）は 縁より 先に 走る＝そちらは 自分で 鍵を 見る。 */
+  function ログインの窓に栓(lo) {
+    if (!lo || lo.__鍵の栓) return;
+    lo.__鍵の栓 = true;
+    鍵で止める型.forEach(function (t) {
+      lo.addEventListener(t, function (e) {
+        if (document.body && document.body.classList.contains('exally-locked')) e.stopPropagation();
+      }, false);
+    });
+  }
+  鍵で止める型.forEach(function (t) { global.addEventListener(t, 鍵の門, true); });
+  global.__鍵で止める型 = 鍵で止める型.slice();   /* 試験が 表を 読む（書き換えても 門は 変わらない） */
+
   // ログイン画面は全アプリ共通の部品(js/exally-login.js)。見た目も文言もそこが一次情報。
   var LOGIN = null;
   var 出す待ち = false;      /* ★body が出来る前に show() が来た時の 預かり★ */
