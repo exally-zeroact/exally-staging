@@ -22,6 +22,7 @@ const 壊し = [
   ['f に 数を 入れる', "{v:op.old, f:String(op.old), d:String(", "{v:op.old, f:op.old, d:String("],
   ['前の 見た目に 戻さない', "    if(!_式 && op.oldD !== undefined && op.oldD !== null) d = op.oldD;", ""],
   ['溢れ先の 空（undefined）を 空と 見ない', "(op.old === '' || op.old === null || op.old === undefined);", "(op.old === '' || op.old === null);"],
+  ['帯の 下書きを 前の 見た目と 控える', "var _前のd = _下書き中 ? _打ちかけ前.d :", "var _前のd = false ? _打ちかけ前.d :"],
   ['式の「答えは字」を 戻さない', "if(_字のまま || (_式 && typeof _hf答えの型", "if(_字のまま || (false && typeof _hf答えの型"],
 ];
 
@@ -129,6 +130,28 @@ await T('★数の マスに 7→Ctrl+Z＝f は 字（数式バーが 落ちな�
 新しい本();
 win.setCell(0, 0, '9:00');
 await T('★時刻 9:00 に 7→Ctrl+Z＝見た目は 9:00（0.375 に しない）★', () => { const 前 = マス('0,0').d; win.setCell(0, 0, '7'); win.doUndo(); eq(マス('0,0').d, 前, 'd'); });
+
+/* ★数式の帯で 確定→Ctrl+Z＝見える字（d）も 前に 戻る★（2026-11-14・件f の続き・Exally [424b60] の taiketsu が 測った）
+   帯は 打つ度に d を 下書きに 書き換える（件⑥）＝setCell が その下書きを「前の 見た目」と 控え、Ctrl+Z で v は 100 なのに d は 200 が 残った */
+const fi = doc.getElementById('formula-input'), kb = doc.getElementById('formula-kb');
+const 帯で打つ = (字) => { fi.value = 字; fi.dispatchEvent(new win.Event('input')); };
+const 選ぶ = (r, c) => { win.sel(r, c, r, c); win.updateBar(); };
+const 帯の確定 = {
+  'Enter': () => { kb.style.display = 'none'; fi.focus(); 帯で打つ('200'); fi.dispatchEvent(new win.KeyboardEvent('keydown', { key: 'Enter', bubbles: true })); },
+  'blur（抜ける）': () => { kb.style.display = 'none'; fi.focus(); 帯で打つ('200'); fi.blur(); },
+  '自前キーボードの 確定': () => { kb.style.display = 'block'; E('_editMode=true'); 帯で打つ('200'); win.fkbCommit(); E('_editMode=false'); kb.style.display = 'none'; },
+};
+for (const [名, 確定] of Object.entries(帯の確定)) {
+  新しい本(); E('_打ちかけ前=null'); win.setCell(0, 0, '100'); 選ぶ(0, 0); 確定();
+  await T('★帯で 100→200 を ' + 名 + '→Ctrl+Z＝v も d も 100★', () => { eq(String(マス('0,0').v), '200', '確定した v'); win.doUndo(); eq(String(マス('0,0').v), '100', 'v'); eq(String(マス('0,0').d), '100', 'd'); eq(HF(0, 0), '100', 'HF'); });
+}
+新しい本(); E('_打ちかけ前=null'); 選ぶ(1, 0); kb.style.display = 'none'; fi.focus(); 帯で打つ('5'); fi.dispatchEvent(new win.KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+await T('★空のマスに 帯で 5 を 確定→Ctrl+Z＝空に 戻る（下書きの 5 を 残さない）★', () => { win.doUndo(); ok(!マス('1,0') || マス('1,0').d === '' || マス('1,0').d === undefined, 'd=' + JSON.stringify(マス('1,0') && マス('1,0').d)); });
+新しい本(); E('_打ちかけ前=null'); win.setCell(0, 0, '100'); 選ぶ(0, 0); kb.style.display = 'block'; 帯で打つ('ab'); E('_fiCursorPos=1'); win.insertLineBreak(); kb.style.display = 'none';
+await T('★帯の 中で 改行（setCell が 走る）→Ctrl+Z＝見える字は 100★', () => { win.doUndo(); eq(String(マス('0,0').v), '100', 'v'); eq(String(マス('0,0').d), '100', 'd'); });
+新しい本(); E('_打ちかけ前=null');
+置く('0,0', { v: '1,234', f: '1,234', d: '1,234', d字: true }); 選ぶ(0, 0); kb.style.display = 'none'; fi.focus(); 帯で打つ('7'); fi.blur();
+await T('★ファイルの字 1,234 に 帯で 7→Ctrl+Z＝見える字 1,234・HF は 字★', () => { win.doUndo(); eq(マス('0,0').d, '1,234', 'd'); eq(HF(0, 0), '"1,234"', 'HF'); });
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
