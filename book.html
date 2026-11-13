@@ -11003,6 +11003,10 @@ function setCell(r,c,v,noUndo){
   var prev = sheets[activeSheet].data[key] ? sheets[activeSheet].data[key].v : '';
   if(!noUndo){ undoStack.push({sheet:activeSheet,key:key,old:prev,new_:v}); redoStack=[]; }
   var d = v;
+  /* ★前に 打った 式の「答えは字」を 持ち越さない★（2026-11-13 件e）
+     下の 日付・時刻の 道では 作り直さない＝=TEXT(1,"0") の 直後に 2026/8/1 を 打つと その日付に d字 が 付き、
+     並べ替えの 流し直し（_pushGrid）で 字のまま HF へ 行って =SORT(A2:A4)+0 が #VALUE! だった。 */
+  _打った答えは字か = false;
   // 時刻は文字列として扱う（HFが小数シリアル値に変換するのを防ぐ）
   var isTime = false, datePart = null;
   if(v && typeof v==='string' && v[0]!=='='){
@@ -20746,8 +20750,13 @@ function _pushGrid(idx, sh){
       var cell = sh.data[r+','+c];
       if(!cell){ row[c] = null; continue; }
       var f = (typeof cell.f==='string' && cell.f.charAt(0)==='=') ? cell.f : null;
+      /* ★値は 打った時（setCellFormula）と 同じく toHFVal を通す★（2026-11-13 件e）
+         前は 字のまま 流した＝新しい本で 打った '1,234'・'2026/8/1' が 並べ替えの後 HF の中で 字になり
+         ★=SORT(B2:B4) の 先頭が 5 でなく「1,234」★（並べ替え 無しなら 5・黙って 違う 答え）。
+         ★ファイルの 字の マス（d字＝book-open.js の t:'s'）は 字のまま★＝通すと 数に 化ける。
+         守り: tests/hf-val-narabekae.test.mjs */
       row[c] = f ? quoteSheetRefs(typeof convertFormula==='function' ? convertFormula(f) : f)
-                 : (cell.v===''||cell.v===undefined ? null : cell.v);
+                 : (cell.v===''||cell.v===undefined ? null : (cell.d字 ? cell.v : toHFVal(cell.v)));
     }
     grid.push(row);
   }
