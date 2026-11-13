@@ -3696,6 +3696,8 @@ function shiftFormula(f, dRow, dCol){
 }
 
 function updateBar(){
+  /* 自前キーボードのまま 別のマス・別の板へ 移った＝前のマスの 下書きを 戻す（件⑥） */
+  if(_打ちかけ前 && (_打ちかけ前.data!==sheets[activeSheet].data || _打ちかけ前.key!==selR1+','+selC1)) _下書きを戻す();
   var addr = cellAddr(selR1,selC1);
   var scaleStr = scale!==1 ? ' ×'+Math.round(scale*10)/10 : '';
   document.getElementById('cell-addr').value = addr+scaleStr;
@@ -11733,8 +11735,15 @@ function bindEvents(){
     if(_fx&&_fx.classList.contains('pulse')){ _fx.classList.remove('pulse'); }
     // リアルタイムプレビュー
     var k=selR1+','+selC1;
-    if(!sheets[activeSheet].data[k]) sheets[activeSheet].data[k]={v:'',f:'',d:''};
-    sheets[activeSheet].data[k].d=v.replace(/ ↵ /g,'\n');
+    /* ★下書きの前の形を 控える★（2026-11-14・件⑥）＝確定しないで 離れたら 戻す（_下書きを戻す） */
+    var _dd=sheets[activeSheet].data;
+    if(!_打ちかけ前 || _打ちかけ前.data!==_dd || _打ちかけ前.key!==k){
+      _下書きを戻す();
+      _打ちかけ前={data:_dd, key:k, 在った:!!_dd[k], d:_dd[k]?_dd[k].d:undefined};
+    }
+    if(!_dd[k]) _dd[k]={v:'',f:'',d:''};
+    _dd[k].d=v.replace(/ ↵ /g,'\n');
+    _打ちかけ前.物=_dd[k]; _打ちかけ前.書いた=_dd[k].d;
     render();
   });
   fi.addEventListener('click',function(){ _fiCursorPos=this.selectionStart||0; });
@@ -11753,8 +11762,8 @@ function bindEvents(){
     var kb=document.getElementById('formula-kb');
     if(kb.style.display==='none'||!kb.style.display){
       _editMode=false;
-      var stored=getCell(selR1,selC1).f||'';
-      var actual=this.value.replace(/ ↵ /g,'\n'); if(actual!==stored) setCell(selR1,selC1,actual);
+      _帯を確定();
+      _下書きを戻す();   /* 同じ字のまま 抜けた・断られた 時は 下書きを 戻す（確定していれば 物が 替わって 何もしない） */
       render();
     }
   });
@@ -11994,7 +12003,7 @@ function onMD(e){
       return;
     }
   }
-  commitEdit(); hideCtxMenu();
+  _帯を先に確定(); commitEdit(); hideCtxMenu();
   // cell-input に focus 強制（マウス操作で奪われた focus を取り戻す）
   var _ci=document.getElementById('cell-input');
   if(_ci && !editingCell) setTimeout(function(){ _ci.focus(); },0);
@@ -12207,6 +12216,7 @@ function onTS(e){
     touchState={type:'refsel',startR:tr,startC:tc,r:canvas.getBoundingClientRect()};
     return;
   }
+  _帯を先に確定();
   // 列幅・行高リサイズ検出（タッチは閾値8px）→ resizecheck状態で保留
   var rc=getColResizeBorder(x,y,8);
   if(rc>=0){ touchState={type:'resizecheck',kind:'col',idx:rc,startX:t.clientX,startY:t.clientY,origW:sheets[activeSheet].colW[rc]||COL_W,ssl:scrollLeft,sst:scrollTop}; return; }
@@ -18209,16 +18219,51 @@ function fkbDelete(){
 function fkbCommit(){
   if(!validGate(selR1,selC1,document.getElementById('formula-input').value)) return;
   setCell(selR1,selC1,document.getElementById('formula-input').value);
+  _下書きを戻す();
   fkbHide();
   updateBar(); render();
 }
 // 数式バー × ボタン：削除済み（Esc キーに一本化）
 function fkbCancel(){
+  _下書きを戻す();
   var stored=getCell(selR1,selC1).f||'';
   document.getElementById('formula-input').value=stored;
   _fiCursorPos=stored.length;
   fkbHide();
   render();
+}
+/* ★数式の帯の 下書き★（2026-11-14・件⑥）
+   帯の input は 打つ度に マスの 見える字（d）を 下書きに 書き換える（空のマスなら 物を 作る）。
+   確定しないで 離れたら（Esc・同じ字のまま 抜ける・自前キーボードのまま 別のマス／板へ）元に 戻す＝実Excel は 確定しなければ 表示が 戻る。
+   ・確定したかは「物が 替わったか」で 見る（setCell は 必ず 物を 作り直す・断った時は 作り直さない）
+   ・自分が 書いた 下書きのままの 時だけ 戻す（F9・外のデータ・150ms 後の 計算が 答えを 書いていたら 触らない）
+   ・板は 番号でなく data そのもので 持つ（板が 並べ替わっても 外れない） */
+var _打ちかけ前=null;
+function _下書きを戻す(){
+  var p=_打ちかけ前; _打ちかけ前=null;
+  if(!p || p.data[p.key]!==p.物 || p.物.d!==p.書いた) return;
+  if(p.在った){ p.物.d=p.d; }
+  else {
+    var 他=false; for(var kk in p.物){ if(kk!=='v'&&kk!=='f'&&kk!=='d'){ 他=true; break; } }
+    if(他 || p.物.v!==''||p.物.f!=='') p.物.d=''; else delete p.data[p.key];   /* 太字など 他の 印が 付いていたら 物は 残す */
+  }
+  render();
+}
+/* PC の帯から 抜ける 確定（blur と 同じ）＝打った字が マスの 式と 違えば 書く */
+function _帯を確定(){
+  var fi=document.getElementById('formula-input');
+  var stored=getCell(selR1,selC1).f||'';
+  var actual=fi.value.replace(/ ↵ /g,'\n'); if(actual!==stored) setCell(selR1,selC1,actual);
+}
+/* ★別のマスを 押す 前に PC の帯を 確定★＝onMD は 既定を 止めるので 帯の blur は sel の 後に 来る＝
+   その時には 帯の字が 新しいマスの 字に 替わっていて 打った字が 消えた。実Excel は 別のセルを 押すと 確定する。
+   参照を 差し込む 向き（= で始まる）・自前キーボードの 時は 確定しない（今のまま） */
+function _帯を先に確定(){
+  var fi=document.getElementById('formula-input'), kb=document.getElementById('formula-kb');
+  if(!fi || document.activeElement!==fi) return;
+  if(kb && kb.style.display && kb.style.display!=='none') return;
+  if(getRefInput()) return;
+  _帯を確定();
 }
 // ===========================
 
