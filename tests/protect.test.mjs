@@ -47,13 +47,14 @@ function 台(データ, 保護, 選 = [0, 0, 0, 0]) {
   const s = { data: {}, protect: !!保護 };
   for (const k of Object.keys(データ)) s.data[k] = データ[k];
   const 出た = [];
-  const f = new Function('sheets', 'activeSheet', 'selR1', 'selR2', 'selC1', 'selC2', 'render', 'updateBar', 'notify',
-    ['このシートは保護中', 'セルはロックされているか', 'ここに書けるか', 'シートを保護する',
+  /* 保護を 変えると 控えの 中の protect も 合わせる（_控えの保護を合わせる・2026-11-13）＝控えの 棚も 渡す */
+  const f = new Function('sheets', 'activeSheet', 'selR1', 'selR2', 'selC1', 'selC2', 'render', 'updateBar', 'notify', 'undoStack', 'redoStack',
+    ['_控えの保護を合わせる', 'このシートは保護中', 'セルはロックされているか', 'ここに書けるか', 'シートを保護する',
       'シートの保護をやめる', 'シートの保護を切り替える', '選んだ所のロックを切り替える'].map(抜く).join('\n')
     + '\nreturn { 保護中: このシートは保護中, ロック: セルはロックされているか, 書ける: ここに書けるか,'
     + ' 掛ける: シートを保護する, やめる: シートの保護をやめる, 切替: シートの保護を切り替える,'
     + ' ロック切替: 選んだ所のロックを切り替える };');
-  const api = f([s], 0, 選[0], 選[1], 選[2], 選[3], function () {}, function () {}, function (m) { 出た.push(m); });
+  const api = f([s], 0, 選[0], 選[1], 選[2], 選[3], function () {}, function () {}, function (m) { 出た.push(m); }, [], []);
   return { s, api, 出た };
 }
 {
