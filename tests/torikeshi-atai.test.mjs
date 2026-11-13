@@ -90,11 +90,14 @@ await T('同じ板の 値の取り消し・やり直しは 今のまま', () => 
 新しい本();
 win.addSheet(); const 板2e = win.activeSheet; win.setCell(0, 0, '板2の字', true);
 win.switchSheet(0); win.setCell(0, 0, '打った');
-await T('★別の板で 打ちかけのまま ↩→↪＝やり直しが 消えない・別の板を 上書きしない★', () => {
-  win.switchSheet(板2e); win.startEdit(1, 1); doc.getElementById('cell-input').value = '打ちかけ';
-  win.doUndo(); eq(値(0, '0,0'), undefined, '↩の後 板1 A1'); eq(win.activeSheet, 0, '↩の後の板');
-  ok(win.redoStack.length >= 1, 'やり直しが 消えた（redoStack=' + win.redoStack.length + '）');
+/* ★打ちかけのまま ↩ は 何もしない（穴⑤・実Excel は 編集中 押せない＝tests/torikeshi-uchikake）＝確定してから 戻す形で 見る★ */
+await T('★別の板で 打って確定→↩→↩→↪↪＝別の板を 上書きしない・やり直しが 消えない★', () => {
+  win.switchSheet(板2e); win.startEdit(1, 1); doc.getElementById('cell-input').value = '打った2'; win.commitEdit();
+  win.doUndo(); eq(値(板2e, '1,1'), undefined, '1回目の↩ 板2 B2');
+  win.doUndo(); eq(値(0, '0,0'), undefined, '2回目の↩ 板1 A1'); eq(win.activeSheet, 0, '↩の後の板');
+  eq(win.redoStack.length, 2, 'redoStack');
   win.doRedo(); eq(値(0, '0,0'), '打った', '↪の後 板1 A1'); eq(値(板2e, '0,0'), '板2の字', '板2 A1');
+  win.doRedo(); eq(値(板2e, '1,1'), '打った2', '↪↪の後 板2 B2'); eq(値(板2e, '0,0'), '板2の字', '板2 A1');
 });
 
 新しい本();

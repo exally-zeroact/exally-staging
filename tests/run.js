@@ -269,6 +269,8 @@ const FILES = [
   ['torikeshi-atai.test.mjs', '--self-test'],// ★値で 板を移らない・控えの protect を 合わせない 形で 赤に なるか
   'torikeshi-dji.test.mjs',               // ★値の取り消しで ファイルの字の マス（d字）が 数に 化けない・0 が 消えない・f は 字（2026-11-14 件f）
   ['torikeshi-dji.test.mjs', '--self-test'],// ★直しを 1つずつ 外して 7通り 全部 赤に なるか
+  'torikeshi-uchikake.test.mjs',          // ★打っている途中（セル・数式の帯）の ↩／↪ は 歴史を 動かさない＝実Excel は 編集中は 押せない（2026-11-14・穴⑤）
+  ['torikeshi-uchikake.test.mjs', '--self-test'],// ★打ちかけでも 戻す・ボタンで 入力欄から 抜ける 形で 赤に なるか
   'shift-keeps-everything.test.mjs',      // ★行・列を 足しても 消しても 棚が 置いていかれない・選んだ 数だけ 入る（押し0b・2026-11-07）
   ['shift-keeps-everything.test.mjs', '--self-test'],// ★直す前の 形に 戻すと 赤に なるか
   'formula-nokori.test.mjs',              // ★2026-09-06に作った14個＝答えは全部★実Excelの実測★

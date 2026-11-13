@@ -10307,8 +10307,8 @@ window.addEventListener('load',updateBookVerBadge);
 
 <div id="fmt-bar1">
   <!-- 戻る・進む（左端sticky）-->
-  <button class="fmt-undo-redo" onclick="doUndo()" title="元に戻す">↩</button>
-  <button class="fmt-undo-redo fmt-undo-redo-right" onclick="doRedo()" title="やり直す">↪</button>
+  <button class="fmt-undo-redo" onmousedown="event.preventDefault()" onclick="doUndo()" title="元に戻す">↩</button>
+  <button class="fmt-undo-redo fmt-undo-redo-right" onmousedown="event.preventDefault()" onclick="doRedo()" title="やり直す">↪</button>
   <div class="fmt-sep"></div>
   <!-- 文字スタイル -->
   <button class="fmt-btn fmt-btn-b" id="fmt-bold"      onclick="toggleFormat('bold')"      title="太字">B</button>
@@ -11096,6 +11096,9 @@ function setCell(r,c,v,noUndo){
   }
 }
 function doUndo(){
+  /* ★セルや数式の帯を 打っている間は 戻さない★（2026-11-13・穴⑤）＝実Excel は 編集中 元に戻す・やり直しが 押せない。
+     前は ↩ ボタンが blur の確定より先に走り、打ちかけのまま 前の操作を 戻した（帯の自前キーボードでは 打った式が 黙って消えた） */
+  if(editingCell||_editMode) return;
   if(!undoStack.length) return;
   var op = undoStack.pop();
   /* ★控えを取った板へ移ってから戻す★（2026-11-07・前は 開いている板へ 書き戻した＝別の板で Ctrl+Z すると
@@ -11169,6 +11172,9 @@ function doUndo(){
   render(); updateBar();
 }
 function doRedo(){
+  /* ★セルや数式の帯を 打っている間は やり直さない★（2026-11-13・穴⑤）＝実Excel は 編集中 元に戻す・やり直しが 押せない。
+     前は ↩ ボタンが blur の確定より先に走り、打ちかけのまま 前の操作を 戻した（帯の自前キーボードでは 打った式が 黙って消えた） */
+  if(editingCell||_editMode) return;
   if(!redoStack.length) return;
   var op = redoStack.pop();
   /* ★控えを取った板へ移ってから戻す★（2026-11-07・前は 開いている板へ 書き戻した＝別の板で Ctrl+Z すると
