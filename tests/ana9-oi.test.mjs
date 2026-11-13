@@ -24,6 +24,7 @@ const 守り = {
   'L4：セルの欄を捨てる': ['book.html', "      if(ci_ && !editingCell && ci_.value) ci_.value = '';\n", ''],
   'W：onKD': ['book.html', '  if(_覆いが開いている()){\n', '  if(false){\n'],
   'W：doUndo': ['book.html', '  if(_覆いが開いている()) return;   /* ★窓（覆い）が 開いている間は 板へ 書かない★（2026-11-14・穴9 層W） */\n  if(!undoStack.length) return;', '  if(!undoStack.length) return;'],
+  'W：doRedo': ['book.html', '  if(_覆いが開いている()) return;   /* ★窓（覆い）が 開いている間は 板へ 書かない★（2026-11-14・穴9 層W） */\n  if(!redoStack.length) return;', '  if(!redoStack.length) return;'],
   'W：ci input': ["book.html", "  ci.addEventListener('input',function(){\n    if(_覆いが開いている()) return;", "  ci.addEventListener('input',function(){\n"],
   'W：ci paste': ["book.html", "  ci.addEventListener('paste', function(e){\n    if(_覆いが開いている()) return;", "  ci.addEventListener('paste', function(e){\n"],
   'W：ci keydown': ["book.html", "  ci.addEventListener('keydown',function(e){\n    if(_覆いが開いている()) return;", "  ci.addEventListener('keydown',function(e){\n"],
@@ -140,6 +141,11 @@ await T('★窓の 欄で Ctrl+V＝後ろの 板へ 貼らない★', () => { �
 await T('★窓の 欄で Ctrl+D＝下へ 写さない★', () => { 選ぶ(0, 0, 1, 0); キー(窓の欄(), 'd', { ctrlKey: true }); eq(値('1,0'), undefined, 'A2'); });
 await T('★窓の 欄で Ctrl+Z＝後ろの 板を 戻さない★', () => { const n = win.undoStack.length; ok(n > 0, '戻す物が 在る'); キー(窓の欄(), 'z', { ctrlKey: true }); eq(win.undoStack.length, n, 'undo の 数'); eq(値('0,0'), 'a', 'A1'); });
 await T('★↩ を 直に 呼んでも 窓の 間は 戻さない★', () => { const n = win.undoStack.length; win.doUndo(); eq(win.undoStack.length, n); eq(値('0,0'), 'a', 'A1'); });
+await T('★↪ を 直に 呼んでも 窓の 間は やり直さない★', async () => {
+  await 閉じる('findOverlay'); win.doUndo(); const m = win.redoStack.length; ok(m > 0, 'やり直す物が 在る'); const 前 = 値('0,0');
+  await 開く('findOverlay'); win.doRedo(); eq(win.redoStack.length, m, 'redo の 数'); eq(値('0,0'), 前, 'A1');
+  await 閉じる('findOverlay'); win.doRedo(); await 開く('findOverlay');
+});
 await T('窓の 欄の Ctrl+C は ブラウザの まま（既定を 止めない）／Ctrl+S は 止める（ブラウザの 保存へ 落とさない）', () => {
   eq(キー(窓の欄(), 'c', { ctrlKey: true }).defaultPrevented, false, 'Ctrl+C');
   eq(キー(窓の欄(), 's', { ctrlKey: true }).defaultPrevented, true, 'Ctrl+S');

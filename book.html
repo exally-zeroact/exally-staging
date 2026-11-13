@@ -20941,7 +20941,7 @@ function onPickBookFile(el){
    ⇒ (a) 開いた時 focus が 窓の外なら 一番上の 窓の 最初の 欄へ／(b) 窓の外へ focus が 抜けたら 戻す／
      (c) onKD・リボンのキー・doUndo/doRedo・入力欄の input/keydown/paste の 頭で 止める／drop も 断る。
      ★確定の 動き（入力欄の blur）は 止めない★＝今のまま。
-   名簿の 外（止めずに 使う）＝watchOverlay・fnPalette・fnAutocomplete・inkBar・winBar・#popup-overlay（inset:0 でない＝板と 並べて 使う 物）・
+   名簿の 外（止めずに 使う）＝watchOverlay・fnPalette・fnAutocomplete・inkBar・winBar（inset:0 でない＝板と 並べて 使う 物）・#popup-overlay（inset:0 だが 一度も 開かない）・
      #loading（読み込み中の 幕・窓でない）。鍵（body.exally-locked）の 間は js/auth.js の 門が 止める＝ここでは 開いていない 扱い。 */
 var _覆いの名簿 = ['findOverlay','tnOverlay','rcOverlay','rkOverlay','dgOverlay','mcOverlay','vbOverlay','cfOverlay','forecastOverlay',
   'consolOverlay','shapeOverlay','fitOverlay','pivotOverlay','fontOverlay','orientOverlay','clipOverlay','pageMoreOverlay','goalOverlay',
