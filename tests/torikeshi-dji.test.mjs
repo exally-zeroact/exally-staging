@@ -4,7 +4,7 @@
  *    同じ 行で ★0 の マスが Ctrl+Z で 消えた★（!op.old）・★数の マスを 戻すと f が 数で 数式バーが 落ちた★・
  *    溢れ先（v 無し）の 控えは undefined・時刻 '9:00' の 見た目が "0.375" に なった。
  *  直し＝setCell の 控えに oldD／oldD字・redo にも 載せる・字の マスは 字のまま HF へ・f は 字・空へは 本当に 空の 時だけ。
- *  使い方: node tests/torikeshi-dji.test.mjs ／ --self-test＝直しを 1つずつ 外して 全部 赤に なるか（子を 起こす・7通り）
+ *  使い方: node tests/torikeshi-dji.test.mjs ／ --self-test＝直しを 1つずつ 外して 全部 赤に なるか（子を 起こす・9通り）
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -23,6 +23,7 @@ const 壊し = [
   ['前の 見た目に 戻さない', "    if(!_式 && op.oldD !== undefined && op.oldD !== null) d = op.oldD;", ""],
   ['溢れ先の 空（undefined）を 空と 見ない', "(op.old === '' || op.old === null || op.old === undefined);", "(op.old === '' || op.old === null);"],
   ['帯の 下書きを 前の 見た目と 控える', "var _前のd = _下書き中 ? _打ちかけ前.d :", "var _前のd = false ? _打ちかけ前.d :"],
+  ['控えた後に 下書きの 控えを 片付けない', "_打ちかけ前.物===_前のマス) _打ちかけ前=null;", "_打ちかけ前.物===_前のマス) {}"],
   ['式の「答えは字」を 戻さない', "if(_字のまま || (_式 && typeof _hf答えの型", "if(_字のまま || (false && typeof _hf答えの型"],
 ];
 
@@ -149,6 +150,11 @@ for (const [名, 確定] of Object.entries(帯の確定)) {
 await T('★空のマスに 帯で 5 を 確定→Ctrl+Z＝空に 戻る（下書きの 5 を 残さない）★', () => { win.doUndo(); ok(!マス('1,0') || マス('1,0').d === '' || マス('1,0').d === undefined, 'd=' + JSON.stringify(マス('1,0') && マス('1,0').d)); });
 新しい本(); E('_打ちかけ前=null'); win.setCell(0, 0, '100'); 選ぶ(0, 0); kb.style.display = 'block'; 帯で打つ('ab'); E('_fiCursorPos=1'); win.insertLineBreak(); kb.style.display = 'none';
 await T('★帯の 中で 改行（setCell が 走る）→Ctrl+Z＝見える字は 100★', () => { win.doUndo(); eq(String(マス('0,0').v), '100', 'v'); eq(String(マス('0,0').d), '100', 'd'); });
+新しい本(); E('_打ちかけ前=null'); win.setCell(0, 0, '100'); 選ぶ(0, 0); kb.style.display = 'block'; E('_editMode=true'); 帯で打つ('ab'); E('_fiCursorPos=2'); win.insertLineBreak(); 帯で打つ('ab ↵ cd'); win.fkbCommit(); E('_editMode=false'); kb.style.display = 'none';
+await T('★帯で 改行→打ち続けて 確定→Ctrl+Z＝v と d が 揃って 改行の時の 字（2つ前の 100 に 飛ばない）★', () => {
+  win.doUndo(); eq(String(マス('0,0').v), 'ab\n', '1回目 v'); eq(String(マス('0,0').d), 'ab\n', '1回目 d');
+  win.doUndo(); eq(String(マス('0,0').v), '100', '2回目 v'); eq(String(マス('0,0').d), '100', '2回目 d');
+});
 新しい本(); E('_打ちかけ前=null');
 置く('0,0', { v: '1,234', f: '1,234', d: '1,234', d字: true }); 選ぶ(0, 0); kb.style.display = 'none'; fi.focus(); 帯で打つ('7'); fi.blur();
 await T('★ファイルの字 1,234 に 帯で 7→Ctrl+Z＝見える字 1,234・HF は 字★', () => { win.doUndo(); eq(マス('0,0').d, '1,234', 'd'); eq(HF(0, 0), '"1,234"', 'HF'); });

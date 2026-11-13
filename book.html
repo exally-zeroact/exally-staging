@@ -11011,6 +11011,9 @@ function setCell(r,c,v,noUndo){
      （Enter・抜ける・自前キーボードの確定・帯の中の改行 の 全部）。自分の 下書きのままの 時だけ（計算が 書いた 答えなら 今の d） */
   var _下書き中 = !!(_前のマス && typeof _打ちかけ前!=='undefined' && _打ちかけ前 && _打ちかけ前.物===_前のマス && _前のマス.d===_打ちかけ前.書いた);
   var _前のd = _下書き中 ? _打ちかけ前.d : (_前のマス ? _前のマス.d : undefined);
+  /* 控えたら 下書きの 控えも 片付ける＝帯の中の 改行（insertLineBreak）は 確定しても 帯に 残るので、
+     続けて 打つと 古い「下書きの前」を 使い回し Ctrl+Z で 2つ前の 見た目へ 飛んだ（taiketsu 止め1） */
+  if(_前のマス && typeof _打ちかけ前!=='undefined' && _打ちかけ前 && _打ちかけ前.物===_前のマス) _打ちかけ前=null;
   if(!noUndo){ undoStack.push({sheet:activeSheet,key:key,old:prev,new_:v,
     oldD:_前のd, oldD字:!!(_前のマス && _前のマス.d字)}); redoStack=[]; }
   var d = v;
