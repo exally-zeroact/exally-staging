@@ -11000,8 +11000,12 @@ function setCell(r,c,v,noUndo){
   // 不完全数式（=のみ）は空として扱う
   if(v==='=') v='';
   var key = r+','+c;
-  var prev = sheets[activeSheet].data[key] ? sheets[activeSheet].data[key].v : '';
-  if(!noUndo){ undoStack.push({sheet:activeSheet,key:key,old:prev,new_:v}); redoStack=[]; }
+  var _前のマス = sheets[activeSheet].data[key];
+  var prev = _前のマス ? _前のマス.v : '';
+  /* ★控えに 前の 見た目（d）と「答えは字」（d字）も 持つ★（2026-11-14 件f）
+     前は v だけ＝ファイルの字のマス '1,234'（d字）に 打って Ctrl+Z すると HF へ toHFVal で 数 1234 が 入り ISTEXT が 黙って 逆に なった */
+  if(!noUndo){ undoStack.push({sheet:activeSheet,key:key,old:prev,new_:v,
+    oldD:_前のマス ? _前のマス.d : undefined, oldD字:!!(_前のマス && _前のマス.d字)}); redoStack=[]; }
   var d = v;
   /* ★前に 打った 式の「答えは字」を 持ち越さない★（2026-11-13 件e）
      下の 日付・時刻の 道では 作り直さない＝=TEXT(1,"0") の 直後に 2026/8/1 を 打つと その日付に d字 が 付き、
@@ -11107,7 +11111,7 @@ function doUndo(){
     if(!sheets[op.sheet]){ undoStack.push(op); notify('戻す板が 見つかりません（取り消しを 止めました）'); return; }
     switchSheet(op.sheet);
   }
-  redoStack.push({type:op.type, snap:op.type==='rowcol'?JSON.parse(JSON.stringify(sheets[activeSheet])):op.snap, kind:op.kind, sheet:op.sheet, idx:op.idx, old:op.old, nw:op.nw, key:op.key, new_:op.new_});
+  redoStack.push({type:op.type, snap:op.type==='rowcol'?JSON.parse(JSON.stringify(sheets[activeSheet])):op.snap, kind:op.kind, sheet:op.sheet, idx:op.idx, old:op.old, nw:op.nw, key:op.key, new_:op.new_, oldD:op.oldD, oldD字:op.oldD字});   /* ★印も 載せる★＝doRedo は この op を そのまま undoStack へ 積む（↩↪↩ でも 字のまま） */
   // 行列操作Undo（スナップショット復元）
   if(op.type==='rowcol'){
     sheets[activeSheet]=op.snap; render(); updateBar(); return;
@@ -11131,18 +11135,36 @@ function doUndo(){
   var parts = op.key.split(',');
   var r = parseInt(parts[0]), c = parseInt(parts[1]);
   var d = op.old;
-  var hfResult = undoCellFormula(op.sheet, r, c, op.old);
-  if(hfResult !== null){ d = hfResult; }
-  else if(d && d[0]==='='){ d = evalFormula(d, r, c); }
+  /* ★空へ 戻すのは 本当に 空の 時だけ★（2026-11-14 件f）＝前は !op.old で ★0 の マスが 消えた★・
+     溢れ先（v 無し）の 控えは undefined＝字のまま HF へ 入れると "undefined" が 入る */
+  var _空へ = (op.old === '' || op.old === null || op.old === undefined);
+  var _式 = (typeof op.old === 'string' && op.old.charAt(0) === '=');
+  /* ★ファイルの字の マス（d字）は 字のまま HF へ★＝_pushGrid（cell.d字 ? cell.v : toHFVal）と 同じ 決まり */
+  var _字のまま = !!op.oldD字 && !_式 && !_空へ;
+  if(_字のまま){
+    try{ hf.setCellContents({sheet:_hfSid(op.sheet),row:r,col:c}, String(op.old)); }catch(e){}
+    d = (op.oldD !== undefined && op.oldD !== null) ? op.oldD : op.old;
+  } else {
+    var hfResult = undoCellFormula(op.sheet, r, c, _空へ ? '' : op.old);
+    if(hfResult !== null){ d = hfResult; }
+    else if(_式){ d = evalFormula(op.old, r, c); }
+    /* ★式で ない 物は 前の 見た目に 戻す★＝前は 時刻 '9:00' が "0.375"・日付が "46235" に なった */
+    if(!_式 && op.oldD !== undefined && op.oldD !== null) d = op.oldD;
+  }
   // 書式プロパティを保持しつつ値のみ戻す
   var existing = sheets[op.sheet].data[op.key] || {};
-  if(!op.old) {
+  if(_空へ) {
     // 書式があれば書式は残す
     var hasFmt = existing.bold||existing.italic||existing.underline||existing.color||existing.bgColor||existing.border||existing.numFmt||existing.align||existing.fontSize;
     if(hasFmt) { existing.v=op.old||''; existing.f=op.old||''; existing.d=''; }
     else delete sheets[op.sheet].data[op.key];
   } else {
-    sheets[op.sheet].data[op.key] = Object.assign({}, existing, {v:op.old, f:op.old, d:String(d||'')});
+    /* ★f は 必ず 字★（setCell と 同じ）＝数の マスを 戻すと f が 数に なり 数式バーが (cell.f||'').replace で 落ちた */
+    var _戻す = Object.assign({}, existing, {v:op.old, f:String(op.old), d:String((d===undefined||d===null)?'':d)});
+    /* ★「答えは字」も 戻す★＝setCell と 同じ 決まり（式は 答えの 型を 聞く） */
+    if(_字のまま || (_式 && typeof _hf答えの型 === 'function' && _hf答えの型(op.sheet, r, c) === 'string')) _戻す.d字 = true;
+    else delete _戻す.d字;
+    sheets[op.sheet].data[op.key] = _戻す;
   }
   render(); updateBar();
 }
