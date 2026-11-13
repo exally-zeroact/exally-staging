@@ -125,6 +125,17 @@ await T('★帯で 打つ→指を 置く→打つ→Esc＝値も 見える字�
 新しい本(); 選ぶ(1, 0); PCの帯(); 帯で打つ('5'); 指を置く(5, 5); 帯で打つ('55'); Esc(); fi.blur();
 await T('空のマスで 打つ→指を 置く→Esc＝空のまま', () => { eq(物(0, '1,0'), undefined, 'A2'); });
 
+/* ★件⑦(3)★ PC の帯で 打つ→指で 列・行の 見出し／左上の 角を タップ＝打った字は 確定する（マウスで 見出しを 押した時と 同じ・実Excel と 同じ）
+ *   前は onTE の 見出しの 枝が commitEdit→sel だけで、sel→updateBar が 下書きを 戻し 打った 7 が 黙って 消えた */
+const 指でタップ = (x, y) => { try { win.onTS({ touches: [{ clientX: x, clientY: y }], preventDefault() {}, stopPropagation() {} }); win.onTE({ touches: [], changedTouches: [], preventDefault() {}, stopPropagation() {} }); } catch (e) { /* 続ける */ } };
+{
+  const p = マスの点(5, 3);
+  for (const [名, x, y] of [['列の 見出し', p.x + 25, 8], ['行の 見出し', 8, p.y + 8], ['左上の 角', 8, 8]]) {
+    新しい本(); win.setCell(0, 0, 'a'); 選ぶ(0, 0); PCの帯(); 帯で打つ('7'); 指でタップ(x, y); fi.blur();
+    await T('★PC の帯で 打つ→指で ' + 名 + 'を タップ＝打った 7 は 確定する★', () => { eq(String(物(0, '0,0').v), '7', 'A1 v'); eq(String(物(0, '0,0').d), '7', 'A1 d'); eq(win.undoStack.length, 2, '控え'); });
+  }
+}
+
 /* ★下書きの 間に 計算し直された 答えを 古い 答えで 上書きしない★（F9・外のデータ・150ms 後の 計算は 同じ 物の d を 直に 書く） */
 新しい本(); win.setCell(0, 0, 1); win.setCell(0, 1, '=A1*2');
 win.eval("計算方法='manual'"); win.setCell(0, 0, 7);

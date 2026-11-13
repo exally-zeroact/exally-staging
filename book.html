@@ -12462,21 +12462,21 @@ function onTE(e){
   var x=touchState.sx-r.left,y=touchState.sy-r.top;
   // 列ヘッダータップ → 列全選択
   if(y<HDR_H && x>=HDR_W){
-    commitEdit();
+    _帯を先に確定(); commitEdit();   /* 帯の 打ちかけは 確定してから 選ぶ（マウスの onMD と 同じ・件⑦(3)） */
     var hc=xToC(x);
     sel(0, hc, ROWS-1, hc);
     touchState=null; return;
   }
   // 行ヘッダータップ → 行全選択
   if(x<HDR_W && y>=HDR_H){
-    commitEdit();
+    _帯を先に確定(); commitEdit();
     var hr=yToR(y);
     sel(hr, 0, hr, COLS-1);
     touchState=null; return;
   }
   // 左上の角タップ → 全選択
   if(x<HDR_W && y<HDR_H){
-    commitEdit();
+    _帯を先に確定(); commitEdit();
     sel(0, 0, ROWS-1, COLS-1);
     touchState=null; return;
   }
