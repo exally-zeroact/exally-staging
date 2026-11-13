@@ -11,7 +11,7 @@
  *    ・initFormulaEngine の板の輪が 投げると initExallyFormula が走らず hf と _hf が 別物に分かれる
  *  ★普通の参照（='給料明細'!A1）は 台が 先に答えるので 画面は 正しい＝★赤が出るのは HF に落ちる式（溢れる式 SORT 等・book.html _台に聞く）★
  *  ★INDIRECT の 板またぎは 台が 自分で #REF! を返す（lib/shiki-kansuu.js の INDIRECT・未測定）＝物差しに 使わない★
- *  使い方: node tests/hf-ita-soroe.test.mjs ／ --self-test＝直しを 1つずつ 壊して（5通り）
+ *  使い方: node tests/hf-ita-soroe.test.mjs ／ --self-test＝直しを 1つずつ 壊して（6通り）
  *  ★引用符なしの 日本語の 板名（=SORT(切り!A1:A2)）は 打った式が HF で #ERROR＝前からの 別の穴（この試験は 引用符つきで 書く）★それぞれ 赤になるか
  */
 import fs from 'node:fs';
@@ -34,6 +34,7 @@ const 壊し方 = {
   中身: (h) => h.replace('if(_中身が在る(sheets[i])) _pushGrid(i, sheets[i]);', ''),
   大小: (h) => h.replace("var 小 = function(x){ return String(x).toLowerCase(); };", "var 小 = function(x){ return String(x); };"),
   つなぎの名: (h) => h.replace("var 名 = 使えるシート名('つないだ表');", "var 名 = 'つないだ表';"),
+  字のまま: (h) => h.replace("</span>' + 字 + '。ブックを", "</span>' + 訳 + '。ブックを"),
   板の輪: (h) => h.replace("    try { hf.addSheet(sheetNames[i]); }\n    catch(e){ hf.addSheet(); 板がずれた('「' + sheetNames[i] + '」と 同じ名の シートが 在ります'); }", '    hf.addSheet(sheetNames[i]);'),
 };
 
@@ -125,6 +126,15 @@ function 回す(html, 黙る) {
     const w = 開く(html);
     w.eval(`initFormulaEngine(['A','a','B']);`);
     eq(w.eval('hf === _hf'), true, 'hf===_hf'); eq(w.eval('hf.countSheets()'), 3, '板の数'); eq(w.eval("hf.getSheetId('B')"), 2, 'B の番号');
+  });
+  T('ずれた時は 客の画面に 知らせが出る（warn）・ファイルの シート名は 字のまま（<b> が 要素に ならない）', () => {
+    const w = 開く(html);
+    w.eval(`initFormulaEngine(['<b>x</b>','<B>X</B>']);`);
+    const t = w.document.getElementById('toast');
+    if (!t) throw new Error('#toast が無い');
+    eq(t.classList.contains('warn'), true, 'warn の 知らせ');
+    eq(t.querySelectorAll('b').length, 0, '名の <b> が 要素に なった数');
+    if (t.textContent.indexOf('<B>X</B>') < 0) throw new Error('名が 字のまま 出ていない: ' + t.textContent);
   });
   return { pass, fail };
 }

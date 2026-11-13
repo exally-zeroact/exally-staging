@@ -1894,7 +1894,9 @@ function _中身が在る(sh){
 }
 function 板がずれた(訳){
   if(window.console) console.error('[Exally] 計算側の シートが 画面と ずれました：' + 訳);
-  notify('<span class="toast-h">⚠️ 計算の 準備で 食い違いが 出ました</span>' + 訳 + '。ブックを 開き直して ください', 8000, 'warn');
+  /* ★訳には ファイルの中の シート名が 入る＝notify は innerHTML ⇒ 字のまま 出す（'<img onerror=…>' の 名で 字が 走らない）★ */
+  var 字 = String(訳).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  notify('<span class="toast-h">⚠️ 計算の 準備で 食い違いが 出ました</span>' + 字 + '。ブックを 開き直して ください', 8000, 'warn');
 }
 function 板を揃える(){
   if(!hf) return;
