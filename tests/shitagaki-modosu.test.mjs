@@ -118,6 +118,13 @@ await T('= で始まる 打ちかけで マスを 押す＝確定せず 参照�
 win.fkbCancel(); fi.blur();
 await T('その後 やめる＝C1 に 下書きを 残さない', () => { eq(物(0, '0,2'), undefined, 'C1'); });
 
+/* ★指を 置いた（スクロールの 始め）だけでは 確定しない★＝前は 確定して 古い 控えが 残り、Esc で 値 7 なのに 見える字 a に なった */
+const 指を置く = (r, c) => { const p = マスの点(r, c); try { win.onTS({ touches: [{ clientX: p.x, clientY: p.y }], preventDefault() {}, stopPropagation() {} }); } catch (e) { /* 続ける */ } };
+新しい本(); win.setCell(0, 0, 'a'); 選ぶ(0, 0); PCの帯(); 帯で打つ('7'); 指を置く(5, 5); 帯で打つ('78'); Esc(); fi.blur();
+await T('★帯で 打つ→指を 置く→打つ→Esc＝値も 見える字も 元の a★', () => { eq(String(物(0, '0,0').v), 'a', 'A1 v'); eq(String(物(0, '0,0').d), 'a', 'A1 d'); eq(win.undoStack.length, 1, '控え'); });
+新しい本(); 選ぶ(1, 0); PCの帯(); 帯で打つ('5'); 指を置く(5, 5); 帯で打つ('55'); Esc(); fi.blur();
+await T('空のマスで 打つ→指を 置く→Esc＝空のまま', () => { eq(物(0, '1,0'), undefined, 'A2'); });
+
 /* ★下書きの 間に 計算し直された 答えを 古い 答えで 上書きしない★（F9・外のデータ・150ms 後の 計算は 同じ 物の d を 直に 書く） */
 新しい本(); win.setCell(0, 0, 1); win.setCell(0, 1, '=A1*2');
 win.eval("計算方法='manual'"); win.setCell(0, 0, 7);

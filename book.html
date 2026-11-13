@@ -12216,7 +12216,7 @@ function onTS(e){
     touchState={type:'refsel',startR:tr,startC:tc,r:canvas.getBoundingClientRect()};
     return;
   }
-  _帯を先に確定();
+  /* タッチの 始め（スクロール・幅を変える も 同じ 道）では 帯を 確定しない＝升目の タップは onTE が ci へ focus を 移して blur で 確定する（件⑥ 叩き直し） */
   // 列幅・行高リサイズ検出（タッチは閾値8px）→ resizecheck状態で保留
   var rc=getColResizeBorder(x,y,8);
   if(rc>=0){ touchState={type:'resizecheck',kind:'col',idx:rc,startX:t.clientX,startY:t.clientY,origW:sheets[activeSheet].colW[rc]||COL_W,ssl:scrollLeft,sst:scrollTop}; return; }
@@ -18264,6 +18264,7 @@ function _帯を先に確定(){
   if(kb && kb.style.display && kb.style.display!=='none') return;
   if(getRefInput()) return;
   _帯を確定();
+  _下書きを戻す();   /* 控えを 片付ける（確定していれば 物が 替わって 何もしない）＝古い 控えが 次の 打ちかけに 残らない */
 }
 // ===========================
 
