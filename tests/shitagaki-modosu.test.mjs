@@ -128,12 +128,41 @@ await T('空のマスで 打つ→指を 置く→Esc＝空のまま', () => { e
 /* ★件⑦(3)★ PC の帯で 打つ→指で 列・行の 見出し／左上の 角を タップ＝打った字は 確定する（マウスで 見出しを 押した時と 同じ・実Excel と 同じ）
  *   前は onTE の 見出しの 枝が commitEdit→sel だけで、sel→updateBar が 下書きを 戻し 打った 7 が 黙って 消えた */
 const 指でタップ = (x, y) => { try { win.onTS({ touches: [{ clientX: x, clientY: y }], preventDefault() {}, stopPropagation() {} }); win.onTE({ touches: [], changedTouches: [], preventDefault() {}, stopPropagation() {} }); } catch (e) { /* 続ける */ } };
+/* 点は 打った 後に 測る（選ぶ が スクロールを 動かす ので 先に 測ると ずれて 別の 枝に 入る＝偽の 緑） */
+const 打っておく = () => { 新しい本(); win.setCell(0, 0, 'a'); 選ぶ(0, 0); PCの帯(); 帯で打つ('7'); };
+const 今の範囲 = () => [win.selR1, win.selC1, win.selR2, win.selC2].join(',');
+const 確定した = () => { eq(String(物(0, '0,0').v), '7', 'A1 v'); eq(String(物(0, '0,0').d), '7', 'A1 d'); eq(win.undoStack.length, 2, '控え'); };
 {
-  const p = マスの点(5, 3);
-  for (const [名, x, y] of [['列の 見出し', p.x + 25, 8], ['行の 見出し', 8, p.y + 8], ['左上の 角', 8, 8]]) {
-    新しい本(); win.setCell(0, 0, 'a'); 選ぶ(0, 0); PCの帯(); 帯で打つ('7'); 指でタップ(x, y); fi.blur();
-    await T('★PC の帯で 打つ→指で ' + 名 + 'を タップ＝打った 7 は 確定する★', () => { eq(String(物(0, '0,0').v), '7', 'A1 v'); eq(String(物(0, '0,0').d), '7', 'A1 d'); eq(win.undoStack.length, 2, '控え'); });
+  const 全 = (n) => win.eval(n) - 1;
+  for (const [名, 点, 範囲] of [
+    ['列の 見出し', (p) => [p.x + 25, 8], () => [0, 3, 全('ROWS'), 3]],
+    ['行の 見出し', (p) => [8, p.y + 8], () => [5, 0, 5, 全('COLS')]],
+    ['左上の 角', () => [8, 8], () => [0, 0, 全('ROWS'), 全('COLS')]],
+  ]) {
+    打っておく(); const [x, y] = 点(マスの点(5, 3)); 指でタップ(x, y);
+    const 選んだ = 今の範囲(); fi.blur();
+    await T('★PC の帯で 打つ→指で ' + 名 + 'を タップ＝打った 7 は 確定する★', () => { eq(選んだ, 範囲().join(','), '選んだ範囲（見出しの 枝に 入ったか）'); 確定した(); });
   }
+  /* 長押し（500ms）で 升目を 選ぶ・指で なぞって 範囲を 選ぶ も 同じ（sel が 下書きを 戻す 前に 確定する）
+   *  上の「指を 置く」が 離さずに 残した 長押しの 時計を 先に 流しきる（残すと 待つ 間に 古い 点を 選ぶ） */
+  await new Promise((ok_) => setTimeout(ok_, 600)); win.eval('touchState=null;');
+  打っておく();
+  { const q = マスの点(4, 2); try { win.onTS({ touches: [{ clientX: q.x, clientY: q.y }], preventDefault() {}, stopPropagation() {} }); } catch (e) { /* 続ける */ } }
+  await new Promise((ok_) => setTimeout(ok_, 650));
+  const 長押しの範囲 = 今の範囲(); win.eval('if(typeof hideCtxMenu==="function") hideCtxMenu()'); fi.blur();
+  await T('★PC の帯で 打つ→升目を 長押し＝打った 7 は 確定する★', () => { eq(長押しの範囲, '4,2,4,2', '長押しで 選んだ マス'); 確定した(); });
+  打っておく();
+  let なぞりの種 = null, なぞりの範囲 = null;
+  try {
+    const q = マスの点(4, 2), q2 = マスの点(6, 4);
+    win.onTS({ touches: [{ clientX: q.x, clientY: q.y }], preventDefault() {}, stopPropagation() {} });
+    win.eval('touchState.time-=300; clearTimeout(touchState.lpt);');
+    win.onTM({ touches: [{ clientX: q2.x, clientY: q2.y }], preventDefault() {}, stopPropagation() {} });
+    なぞりの種 = win.eval('touchState && touchState.type'); なぞりの範囲 = 今の範囲();
+    win.onTE({ touches: [], changedTouches: [], preventDefault() {}, stopPropagation() {} });
+  } catch (e) { /* 続ける */ }
+  fi.blur();
+  await T('★PC の帯で 打つ→指で なぞって 範囲を 選ぶ＝打った 7 は 確定する★', () => { eq(なぞりの種, 'rangeselect', '範囲選びの 道に 入ったか'); eq(なぞりの範囲.split(',').slice(0, 2).join(','), '4,2', '選び始めた マス（jsdom は sel で スクロールが 動くので 終わりの マスは 見ない）'); 確定した(); });
 }
 
 /* ★下書きの 間に 計算し直された 答えを 古い 答えで 上書きしない★（F9・外のデータ・150ms 後の 計算は 同じ 物の d を 直に 書く） */
