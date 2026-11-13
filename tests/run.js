@@ -265,6 +265,8 @@ const FILES = [
   ['hf-ita-soroe.test.mjs', '--self-test'],// ★直しを 1つずつ 壊すと 赤に なるか（6通り）
   'hf-val-narabekae.test.mjs',            // ★並べ替えで 流し直しても 打った 値は 計算側で 数のまま（=SORT の 先頭が 字に 化けた・2026-11-13）
   ['hf-val-narabekae.test.mjs', '--self-test'],// ★直しを 1つずつ 壊すと 赤に なるか（3通り）
+  'torikeshi-atai.test.mjs',              // ★値の取り消し／やり直しは 打った板へ（別の板で Ctrl+Y すると その板を 上書きしていた）・保護は 巻き戻さない（2026-11-13）
+  ['torikeshi-atai.test.mjs', '--self-test'],// ★値で 板を移らない・控えの protect を 合わせない 形で 赤に なるか
   'shift-keeps-everything.test.mjs',      // ★行・列を 足しても 消しても 棚が 置いていかれない・選んだ 数だけ 入る（押し0b・2026-11-07）
   ['shift-keeps-everything.test.mjs', '--self-test'],// ★直す前の 形に 戻すと 赤に なるか
   'formula-nokori.test.mjs',              // ★2026-09-06に作った14個＝答えは全部★実Excelの実測★

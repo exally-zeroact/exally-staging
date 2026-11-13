@@ -11100,6 +11100,13 @@ function doUndo(){
     if(!sheets[op.sheet]){ notify('戻す板が 見つかりません（取り消しを 止めました）'); return; }
     switchSheet(op.sheet);
   }
+  /* ★値の控えも 打った板へ 移ってから戻す★（2026-11-13・前は 板を移らずに戻し、やり直しは 開いている板へ setCell＝
+     板1で打つ→板2で Ctrl+Z→Ctrl+Y で ★板2 の同じマスが 板1 の字で 上書きされた★）。
+     ★redoStack へ 積む前に 移る★＝switchSheet の commitEdit が 打ちかけを setCell して redoStack を空にするので、後で 積む */
+  if(!op.type && op.sheet!=null && op.sheet!==activeSheet){
+    if(!sheets[op.sheet]){ undoStack.push(op); notify('戻す板が 見つかりません（取り消しを 止めました）'); return; }
+    switchSheet(op.sheet);
+  }
   redoStack.push({type:op.type, snap:op.type==='rowcol'?JSON.parse(JSON.stringify(sheets[activeSheet])):op.snap, kind:op.kind, sheet:op.sheet, idx:op.idx, old:op.old, nw:op.nw, key:op.key, new_:op.new_});
   // 行列操作Undo（スナップショット復元）
   if(op.type==='rowcol'){
@@ -11166,6 +11173,11 @@ function doRedo(){
       else sheets[activeSheet].data[s.key][s.prop]=s.nw;
     });
     render(); updateBar(); return;
+  }
+  /* ★値の やり直しも 打った板へ 移ってから★（2026-11-13・前は 開いている板へ 書いた＝別の板を 上書きした） */
+  if(op.sheet!=null && op.sheet!==activeSheet){
+    if(!sheets[op.sheet]){ undoStack.pop(); redoStack.push(op); notify('やり直す板が 見つかりません（やり直しを 止めました）'); return; }
+    switchSheet(op.sheet);
   }
   var parts = op.key.split(',');
   setCell(parseInt(parts[0]), parseInt(parts[1]), op.new_, true);
@@ -13648,9 +13660,18 @@ function ここに書けるか(r, c){
   if (typeof 編集を許された所か === 'function' && 編集を許された所か(r, c)) return true;
   return !セルはロックされているか(r, c);
 }
+/* ★保護は 元に戻すで 巻き戻さない★（2026-11-13）＝行・列の控えは 板を丸ごと写すので protect も入っていて、
+   行の挿入→保護→Ctrl+Z で ★保護まで 外れた★。保護を 変えた時に 控えの中の protect を 今の物に 合わせる
+   （控えは 捨てない＝ほかの 取り消しは 残る） */
+function _控えの保護を合わせる(i, v){
+  [undoStack, redoStack].forEach(function(st){
+    st.forEach(function(o){ if(o && o.type==='rowcol' && o.sheet===i && o.snap) o.snap.protect = v; });
+  });
+}
 function シートを保護する(){
   var s = sheets[activeSheet];
   s.protect = true;
+  _控えの保護を合わせる(activeSheet, true);
   render(); updateBar();
   notify('このシートを 保護しました（ロックを 外したセルだけ 直せます）');
   return true;
@@ -13658,6 +13679,7 @@ function シートを保護する(){
 function シートの保護をやめる(){
   var s = sheets[activeSheet];
   s.protect = false;
+  _控えの保護を合わせる(activeSheet, false);
   render(); updateBar();
   notify('保護を やめました');
   return false;
