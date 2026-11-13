@@ -163,6 +163,20 @@ const 確定した = () => { eq(String(物(0, '0,0').v), '7', 'A1 v'); eq(String
   } catch (e) { /* 続ける */ }
   fi.blur();
   await T('★PC の帯で 打つ→指で なぞって 範囲を 選ぶ＝打った 7 は 確定する★', () => { eq(なぞりの種, 'rangeselect', '範囲選びの 道に 入ったか'); eq(なぞりの範囲.split(',').slice(0, 2).join(','), '4,2', '選び始めた マス（jsdom は sel で スクロールが 動くので 終わりの マスは 見ない）'); 確定した(); });
+  /* 素早く（200ms 未満）なぞる＝スクロール＝確定しない（下書きの まま・Esc で 元の a） */
+  打っておく();
+  let 流しの種 = null;
+  try {
+    const q = マスの点(4, 2), q2 = マスの点(6, 4);
+    win.onTS({ touches: [{ clientX: q.x, clientY: q.y }], preventDefault() {}, stopPropagation() {} });
+    win.eval('clearTimeout(touchState.lpt);');
+    win.onTM({ touches: [{ clientX: q2.x, clientY: q2.y }], preventDefault() {}, stopPropagation() {} });
+    流しの種 = win.eval('touchState && touchState.type');
+    win.onTE({ touches: [], changedTouches: [], preventDefault() {}, stopPropagation() {} });
+  } catch (e) { /* 続ける */ }
+  const 流しの後 = { v: String(物(0, '0,0').v), 控え: win.undoStack.length };
+  Esc(); fi.blur();
+  await T('★PC の帯で 打つ→素早く なぞる（スクロール）＝確定しない・Esc で 元の a★', () => { eq(流しの種, 'scroll', 'スクロールの 道に 入ったか'); eq(流しの後.v, 'a', 'スクロールの 後の A1 v'); eq(流しの後.控え, 1, 'スクロールの 後の 控え'); eq(String(物(0, '0,0').v), 'a', 'Esc の 後の A1 v'); eq(String(物(0, '0,0').d), 'a', 'Esc の 後の A1 d'); });
 }
 
 /* ★下書きの 間に 計算し直された 答えを 古い 答えで 上書きしない★（F9・外のデータ・150ms 後の 計算は 同じ 物の d を 直に 書く） */
