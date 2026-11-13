@@ -60,7 +60,7 @@ function 台(opt) {
     + '<div id="ai-response-area"></div><div id="popup-response-area"></div></body></html>',
     { pretendToBeVisual: true });
   const w = dom.window;
-  const 記録 = { 書いた: [], 知らせ: [], 履歴: [], 言った: [], 計算に足した: [] };
+  const 記録 = { 書いた: [], 知らせ: [], 履歴: [], 言った: [], 計算に足した: [], 揃えた時の名: [] };
   const 台本 = {
     document: w.document,
     sheets: opt.sheets || [],
@@ -73,6 +73,7 @@ function 台(opt) {
     switchSheet: (i) => { 記録.移った = i; },
     rebuildSheetTabs: () => { 記録.タブを作り直した = true; },
     addSheetToEngine: (n) => 記録.計算に足した.push(n),
+    板を揃える: () => { 記録.揃えた = (記録.揃えた || 0) + 1; 記録.揃えた時の名.push((opt.sheets || []).map((s) => s.name)); },   // ★計算側の板と 画面の板を 揃える（件B'・2026-11-13）＝呼ばれた時に 画面に在った 板の名を 残す
     loadSheetIntoEngine: () => {},
     Kikan: Kikan,
     showToast: (h) => 記録.知らせ.push(String(h)),
@@ -213,7 +214,8 @@ T('★押すと 新しいシートが 出来る（元の表は 触らない）�
   eq(JSON.stringify(t[0].data), 元, '★元の表が 書き換わった★');
   eq(記録.書いた.length, 0, '★元のシートに 書き込んでいる★');
   ok(記録.タブを作り直した, '★タブを 作り直していない（見えない）★');
-  eq(記録.計算に足した[0], '見本一四 1月分', '★計算する側に 入れていない（式が 動かない）★');
+  /* ★件B'（2026-11-13）から 計算側へは addSheetToEngine でなく 板を揃える（画面の板を 名で 揃える）で 入れる★ */
+  ok(記録.揃えた時の名.some((名たち) => 名たち.indexOf('見本一四 1月分') >= 0), '★計算する側に 入れていない（新しいシートを 足した後に 板を揃える を 呼んでいない＝式が 動かない）★');
   ok(記録.知らせ.some((x) => x.indexOf('AIを 0回 使いました') > 0), '★0回だと 言っていない★');
   eq(記録.履歴[0].credit, 0, '★履歴に AIを使った事にしている★');
 });
@@ -347,11 +349,11 @@ if (SELF) {
     ['book.html', '★出すシートを 見せずに 出す（直す前に 見せない）★',
       (s2) => s2.replace('  var 新 = _手順の待ち.出すシート;', '  var 新 = [];')],
     ['book.html', '★同じ名前のシートを 2枚 作る★',
-      (s2) => s2.replace("  while(在る(今)){ 今 = 元 + '(' + n + ')'; n++; }", '')],
+      (s2) => s2.replace("  while(シート名が在る(今)){ 今 = 元 + '(' + n + ')'; n++; }", '')],   // ★件B'（2026-11-13）で 在る→シート名が在る（大小を 区別しない）
     ['book.html', '★タブを 作り直さない（出したのに 見えない）★',
       (s2) => s2.replace('    rebuildSheetTabs();\n    switchSheet(sheets.length - 1);', '    switchSheet(sheets.length - 1);')],
     ['book.html', '★計算する側に 入れない（式が 動かない）★',
-      (s2) => s2.replace("    if(typeof addSheetToEngine === 'function'){ try{ addSheetToEngine(名); }catch(e){} }", '')],
+      (s2) => s2.replace("    板を揃える();   /* ★名で 足すだけでなく 中身も 流す★（前は 計算側で 空） */", '')],   // ★件B'（2026-11-13）で addSheetToEngine(名) → 板を揃える()
     ['book.html', '★日付を 通し番号のまま 見せる★',
       (s2) => s2.replace('    if(ymd) return Kikan.日の字(ymd, false);', '')],
     ['book.html', '★出せない理由を 言わない（黙って 外す）★',
