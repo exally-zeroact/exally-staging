@@ -261,6 +261,8 @@ const FILES = [
   ['hyou-ireru-ui.test.mjs', '--self-test'],// ＝前は1セルずつ積み★16回押さないと戻らなかった★
   'torikeshi-ita.test.mjs',               // ★取り消し／やり直しは 控えを取った板へ（別の板で Ctrl+Z すると その板が消えていた・2026-11-07）
   ['torikeshi-ita.test.mjs', '--self-test'],// ★控えから 板の番号を 消すと 赤に なるか
+  'hf-ita-soroe.test.mjs',                // ★計算の板（HF）と 画面の板の 名を 揃える（名替え・足す・切り出し・つなげて出す・2026-11-13）
+  ['hf-ita-soroe.test.mjs', '--self-test'],// ★直しを 1つずつ 壊すと 赤に なるか（5通り）
   'shift-keeps-everything.test.mjs',      // ★行・列を 足しても 消しても 棚が 置いていかれない・選んだ 数だけ 入る（押し0b・2026-11-07）
   ['shift-keeps-everything.test.mjs', '--self-test'],// ★直す前の 形に 戻すと 赤に なるか
   'formula-nokori.test.mjs',              // ★2026-09-06に作った14個＝答えは全部★実Excelの実測★

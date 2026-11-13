@@ -1866,9 +1866,54 @@ function initFormulaEngine(sheetNames) {
       });
     }
   } catch(e) { console.warn('HF関数名取得失敗', e); }
-  for(var i=0;i<sheetNames.length;i++) hf.addSheet(sheetNames[i]);
-  // ===== exally-formula.js に HyperFormula インスタンスを注入 =====
+  /* ★先に exally-formula.js へ 渡す★（2026-11-13 件B'）
+     前は 板を足す輪の 後ろで 渡していた＝輪が 投げると（HF は 名の 大小を 区別しない＝'A' と 'a' は 同じ名）
+     ★渡されず、book.html の hf（新）と exally-formula の _hf（古）が 別物に 分かれた★。
+     ★板は 1枚ずつ 守り、投げたら 名なしの 板で 番号を 保つ★（詰めると 後ろの 板が 1つずつ 隣へ ずれる）。
+     守り: tests/hf-ita-soroe.test.mjs */
   if (typeof initExallyFormula === 'function') initExallyFormula(hf);
+  for(var i=0;i<sheetNames.length;i++){
+    try { hf.addSheet(sheetNames[i]); }
+    catch(e){ hf.addSheet(); 板がずれた('「' + sheetNames[i] + '」と 同じ名の シートが 在ります'); }
+  }
+  /* ★板を足した後★ */
+}
+/* ★★計算側（HyperFormula）の板と 画面の sheets[] を 番号も名も 揃える★★（2026-11-13 件B'）
+   ★式の 計算は 板の「番号」で 書き（_hfSid は 番号を そのまま渡す）、式の中の 'シート名'! は 板の「名」で 引く★
+   ⇒ どちらかが ずれると ★黙って 違う 答え★（本番 818bd778 で 実測）：
+     ・給料明細を 受け取ると sheets[0] の名だけ 替わり HF は Sheet1 のまま ⇒ =SORT('給料明細'!A1:A2) が #REF!
+     ・その後 タブを 作り直すと 名で 板を 足していた ⇒ HF に 3枚目の「給料明細」が 出来、
+       次に 足した Sheet3 に 打った数が その板に 入る ⇒ =SORT('給料明細'!A1:A2) が Sheet3 の数を 返す
+   ★sheets[] を 足す・名を替える 所は 必ず これを 呼ぶ★（足す：addSheet・切り出し・つなげて出す／名：給料明細の受け取り）
+   ★作り直し（initFormulaEngine）は しない★＝ファイルから 開いた 板しか 流し直せない（_pushSheetToEngine の _fromFile）。
+   ★揃えられない時は 黙らず 知らせる★。 守り: tests/hf-ita-soroe.test.mjs（--self-test で 直しを 1つずつ 壊す） */
+function _中身が在る(sh){
+  if(!sh || !sh.data) return false;
+  for(var k in sh.data){ if(Object.prototype.hasOwnProperty.call(sh.data, k)) return true; }
+  return false;
+}
+function 板がずれた(訳){
+  if(window.console) console.error('[Exally] 計算側の シートが 画面と ずれました：' + 訳);
+  notify('<span class="toast-h">⚠️ 計算の 準備で 食い違いが 出ました</span>' + 訳 + '。ブックを 開き直して ください', 8000, 'warn');
+}
+function 板を揃える(){
+  if(!hf) return;
+  for(var i=0;i<sheets.length;i++){
+    var 名 = sheets[i].name, 今 = hf.getSheetName(i);
+    if(今 !== undefined){
+      if(今 !== 名){
+        if(hf.isItPossibleToRenameSheet(i, 名)) hf.renameSheet(i, 名);
+        else 板がずれた('「' + 名 + '」の名を 計算側へ 移せません');
+      }
+      continue;
+    }
+    if(hf.countSheets() !== i){ 板がずれた('シートの 数が 合いません'); return; }
+    try { hf.addSheet(名); } catch(e){ 板がずれた('「' + 名 + '」を 計算側へ 足せません'); return; }
+    if(hf.getSheetId(名) !== i){ 板がずれた('「' + 名 + '」の 番号が 合いません'); return; }
+    /* ★足した板に 中身が 在れば 流す★（切り出しの 新しいシートは 前は 計算側で 空だった） */
+    if(_中身が在る(sheets[i])) _pushGrid(i, sheets[i]);
+  }
+  if(hf.countSheets() > sheets.length) 板がずれた('計算側の シートが 多すぎます');
 }
 /* ★日付は「1899-12-30 から数えて何日目か」の数（シリアル値）にする。Excelと同じ考え方。
    こうしないと「2026/8/31」がただの文字になり、+30 が 2056（2026+30）になる。
@@ -4163,6 +4208,7 @@ function receivePasteData(pasteData) {
     if (pasteData.payType === 'hourly') sheetLabel = '給料明細（時給）';
     if (pasteData.payType === 'daily')  sheetLabel = '給料明細（日当）';
     sheets[0].name = sheetLabel;
+    板を揃える();   /* ★計算側の 板の名も 替える★（前は 画面だけ 替わり HF は Sheet1 のまま） */
 
     // 書式プロパティのマッピング（bg のみキー名を bgColor に変換）
     var styleKeyMap = {
@@ -4954,9 +5000,10 @@ function つなげて出す(i){
   if (!左 || !右) { notify('表が 見つかりません'); return 0; }
   var 出 = DataModel.つなげる(左, v.左列, 右, v.右列);
   if (!出) { notify('つなげられませんでした'); return 0; }
-  var 名 = 'つないだ表';
+  var 名 = 使えるシート名('つないだ表');   /* ★2回 押すと 同じ名が 2枚 出来ていた★ */
   var 新 = { name: 名, data: {}, colW: {}, rowH: {}, hiddenRows: {}, hiddenCols: {} };
   sheets.push(新);
+  板を揃える();   /* ★switchSheet より 前★＝前は 計算側に 板が 無いまま 書いていた */
   var 番 = sheets.length - 1;
   switchSheet(番);
   for (var r = 0; r < 出.length; r++) {
@@ -18217,8 +18264,12 @@ function addSheet(){
   /* ★ブックの保護★（2026-08-30 実測＝守ると シートが 足せない） */
   if(typeof ブックの守りに引っかかる === 'function' && ブックの守りに引っかかる('シートを 足す事')) return;
   var idx=sheets.length;
-  sheets.push({name:'Sheet'+(idx+1),data:{},colW:{},rowH:{}});
-  addSheetToEngine('Sheet'+(idx+1));
+  /* ★在る名と 重ねない★（前は 'Sheet'+(idx+1) を そのまま 足し、重なると 計算側が 黙って 捨てて 番号が ずれた）
+     ★空いて いる 番号まで 進める★（実Excel の 付け方は 未測定＝重ならない 時は 前と 同じ 名） */
+  var 番号=idx+1;
+  while(シート名が在る('Sheet'+番号)) 番号++;
+  sheets.push({name:'Sheet'+番号,data:{},colW:{},rowH:{}});
+  板を揃える();
   var tabs=document.getElementById('sheet-tabs');
   var btn=document.createElement('button');
   btn.className='sheet-tab'; btn.textContent=sheets[idx].name;
@@ -20033,7 +20084,7 @@ function 手順を書く(){
     var 名 = 使えるシート名(待.出すシート[m].name);
     sheets.push({ name: 名, data: 待.出すシート[m].data, colW: {}, rowH: {},
       hiddenRows: {}, hiddenCols: {} });
-    if(typeof addSheetToEngine === 'function'){ try{ addSheetToEngine(名); }catch(e){} }
+    板を揃える();   /* ★名で 足すだけでなく 中身も 流す★（前は 計算側で 空） */
     出した行 += 待.出すシート[m].何行;
     出したシート.push(名);
   }
@@ -20050,14 +20101,17 @@ function 手順を書く(){
   履歴に残す('自動化', '覚えた手順で ' + 文,
     { やった: '覚えた手順を 当てた（AIは呼んでいない）', 何か所: 番地.length + 出した行 }, null, 0);
 }
-/* ★同じ名前のシートを 2枚 作らない★（Excelは 同じ名前を 許さない） */
+/* ★同じ名前のシートを 2枚 作らない★（Excelは 同じ名前を 許さない）
+   ★大小は 区別しない★（2026-11-13 件B'）＝Excel も HF も 'DATA' と 'Data' を 同じ名と 見る。
+   前は === で 比べ、'DATA' が 在る所へ 'Data' を 通した ⇒ 計算側が 黙って 捨てて 番号が ずれた */
+function シート名が在る(x){
+  var 小 = function(x){ return String(x).toLowerCase(); };
+  for(var i=0;i<sheets.length;i++) if(小(sheets[i].name) === 小(x)) return true;
+  return false;
+}
 function 使えるシート名(名){
   var 元 = String(名 || 'シート').slice(0, 28), 今 = 元, n = 2;
-  var 在る = function(x){
-    for(var i=0;i<sheets.length;i++) if(sheets[i].name === x) return true;
-    return false;
-  };
-  while(在る(今)){ 今 = 元 + '(' + n + ')'; n++; }
+  while(シート名が在る(今)){ 今 = 元 + '(' + n + ')'; n++; }
   return 今;
 }
 /* 見せる時の 値の字（★中の値ではなく 客が見る字★）
@@ -20717,9 +20771,10 @@ function rebuildSheetTabs(){
     btn.title = sh.name;
     btn.onclick = (function(k){ return function(){ switchSheet(k); }; })(i);
     if(addBtn) tabs.insertBefore(btn, addBtn); else tabs.appendChild(btn);
-    // 式を計算する側にもシートを登録する（無いと そのシートの式が動かない）
-    if(typeof addSheetToEngine === 'function'){ try{ addSheetToEngine(sh.name); }catch(e){} }
   });
+  /* ★式を計算する側にも シートを 揃える★（無いと そのシートの式が動かない）
+     ★前は 名で 足していた★＝名が 替わった 板（給料明細）を 別の 番号に もう1枚 作り、番号が ずれた（件B'） */
+  板を揃える();
 }
 
 /* ===== ★受け取り口★（ファイル選択／ドラッグ&ドロップ） ===== */
