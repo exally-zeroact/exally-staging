@@ -38,7 +38,8 @@ export function guardedNames(srcRaw) {
   /* ★引用符は 3種類ある★（' " `）。1種類しか見ないと、
      わざと壊した物が素通りした（2026-08-09 実測。これで気づいた）。
      ==/!= の2文字版も拾う。 */
-  const re = /typeof\s+([A-Za-z_$][A-Za-z0-9_$.]*)\s*(?:===|!==|==|!=)\s*['"`]function['"`]/g;
+  /* ★名は 日本語でも 拾う（2026-11-14）★＝英字だけを 拾っていた＝日本語の 名の 守り 19種が 見張りの 外だった */
+  const re = /typeof\s+([\p{ID_Start}_$][\p{ID_Continue}_$.\u200c\u200d]*)\s*(?:===|!==|==|!=)\s*['"`]function['"`]/gu;
   let m;
   while ((m = re.exec(src))) out.push(m[1]);
   return [...new Set(out)];
@@ -56,11 +57,23 @@ export function declared(src) {
   stripComments(par).replace(/'([^']+)'\s*:\s*'([^']*)'/g, (_, k, v) => { param[k] = v; return ''; });
   return { required, optional, param };
 }
-/** その名前が どこかで定義されているか（book.html か 読み込む .js） */
+/** その名前が どこかで定義されているか（book.html か 読み込む .js）
+ *  ★前の境目は \\b でなく (?:^|[^\\p{ID_Continue}$.])★（後読みは 使わない＝tests/no-lookbehind の 決まり）＝日本語の 名の 前では \\b が 効かない（日本語は \\w でない）。
+ *  ★点つき（A.b）★＝頭の 名が どこかで 定義され（root.A = ／ window.A = ／ A = factory() も 定義）、
+ *    末尾の 名が ★頭を 定義した 同じ ファイル★に function 末尾( か 末尾: で 在る事。
+ *    ★これは 甘い 判定★＝本当の 守りは 起動時の 確かめを 本物の ブラウザで 見る 試験（tests/required-fns-webkit.mjs） */
+const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+function defRe(base) {
+  const b = esc(base);
+  return new RegExp('(?:async\\s+)?function\\s+' + b + '\\s*\\(|(?:^|[^\\p{ID_Continue}$.])' + b + '\\s*[:=]\\s*(?:async\\s+)?(?:function|\\()', 'u');
+}
 export function isDefined(name, sources) {
-  const base = name.split('.')[0];
-  const re = new RegExp('function\\s+' + base + '\\s*\\(|\\b' + base + '\\s*[:=]\\s*function|\\b' + base + '\\s*[:=]\\s*\\(');
-  return sources.some((s) => re.test(s));
+  const parts = name.split('.');
+  if (parts.length === 1) { const re = defRe(name); return sources.some((s) => re.test(s)); }
+  const head = esc(parts[0]), tail = esc(parts[parts.length - 1]);
+  const headRe = new RegExp('(?:(?:^|[^\\p{ID_Continue}$])(?:root|window|globalThis|self)\\.' + head + '|(?:^|[^\\p{ID_Continue}$.])' + head + ')\\s*=(?!=)', 'u');
+  const tailRe = new RegExp('(?:async\\s+)?function\\s+' + tail + '\\s*\\(|(?:^|[^\\p{ID_Continue}$.])' + tail + '\\s*:', 'u');
+  return sources.some((s) => headRe.test(s) && tailRe.test(s));
 }
 
 let pass = 0, fail = 0;
@@ -96,13 +109,36 @@ if (process.argv.includes('--self-test')) {
     const d = declared(bad);
     if (d.optional['a.b'] !== undefined && d.optional['a.b'].length >= 8) throw new Error('短い理由を通した');
   });
+  /* ★2026-11-14 日本語の 名と 点つき★ */
+  const jp = "var REQUIRED_FNS = ['すべて再計算'];\nvar OPTIONAL_FNS = {};\nfunction すべて再計算(){}\nif (typeof すべて再計算 === 'function') すべて再計算();\n";
+  T('★日本語の 名を 表に 載せずに 守ったら 赤', () => {
+    const bad = jp + "if (typeof ページ設定の初期化 === 'function') ページ設定の初期化();\n";
+    const d = declared(bad);
+    const un = guardedNames(bad).filter((n) => !d.required.includes(n) && !d.optional[n]);
+    if (un.length !== 1 || un[0] !== 'ページ設定の初期化') throw new Error('捕まえられない: ' + JSON.stringify(un));
+  });
+  T('★日本語の REQUIRED に 実体が 在れば 緑（\\b の 誤りで 赤に しない）', () => {
+    if (!isDefined('すべて再計算', [jp])) throw new Error('在るのに「無い」と言った');
+    if (!isDefined('_台の板を得る', ['var x=1;function _台の板を得る(){}'])) throw new Error('_ で始まる 日本語の 名を 見落とした');
+  });
+  T('★日本語の REQUIRED に 実体が 無ければ 赤', () => {
+    if (isDefined('ページ設定の初期化', [jp])) throw new Error('無いのに「有る」と言った');
+    if (isDefined('設定の初期化', ['var ページ設定の初期化 = function(){}'])) throw new Error('名の 途中を 定義と 読んだ');
+  });
+  const plug = "(function(root,factory){ root.FormulaSotoPlug = factory(); })(this, function(){ function 外へ出す(){} return { 外へ出す: 外へ出す }; });";
+  T('★点つきの 末尾が 在れば 緑・無ければ 赤・頭が 無ければ 赤', () => {
+    if (!isDefined('FormulaSotoPlug.外へ出す', [plug])) throw new Error('在るのに「無い」と言った');
+    if (isDefined('FormulaSotoPlug.外へ出さない', [plug])) throw new Error('末尾が 無いのに「有る」と言った');
+    if (isDefined('SotoPlug.外へ出す', [plug])) throw new Error('頭が 無いのに「有る」と言った');
+    if (isDefined('FormulaSotoPlug.外へ出す', [plug.replace('function 外へ出す(){} return { 外へ出す: 外へ出す };', ''), 'function 外へ出す(){}'])) throw new Error('頭と 末尾が 別の ファイルなのに「有る」と言った');
+  });
   console.log('\n' + pass + ' passed, ' + fail + ' failed');
   process.exit(fail ? 1 : 0);
 }
 
 console.log('\n[no-silent-optional] 「無ければ黙って素通り」する守りが残っていないか');
 const html = read('book.html');
-const libs = ['exally-formula.js', 'lib/grid-xlsx.js', 'js/book-open.js', 'lib/xlsx-io.js']
+const libs = ['exally-formula.js', 'lib/grid-xlsx.js', 'js/book-open.js', 'lib/xlsx-io.js', 'lib/formula-soto-plug.js', 'lib/shiki-hyou.js']
   .filter((f) => fs.existsSync(path.join(ROOT, f))).map(read);
 const sources = [html].concat(libs);
 const d = declared(html);

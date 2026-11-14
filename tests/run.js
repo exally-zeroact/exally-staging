@@ -162,6 +162,8 @@ const FILES = [
   ['no-hardcoded-supa.test.mjs', '--self-test'], // ★わざと壊して赤になるか＋誤検知が出ないか
   'no-silent-optional.test.mjs',          // ★typeof で守って「無ければ黙って素通り」を許さない(14シート開いてもタブが1枚だった事故)
   ['no-silent-optional.test.mjs', '--self-test'],
+  ['required-fns-webkit.mjs'],            // ★起動時の 要る部品の 確かめを 本物の ブラウザで 見る★（点つき・日本語の 名・0本だった・2026-11-14）
+  ['required-fns-webkit.mjs', '--self-test'], // ★在りもしない 名を 足した 写しで 赤い 帯が 出るか
   'smart-rounding.test.mjs',              // ★計算の結果を14桁で丸めさせない(消費税が1円ズレる)
   ['smart-rounding.test.mjs', '--self-test'],
   'text-format.test.mjs',                 // ★TEXT()の書式コード(曜日aaa/月名/時刻の分)。実物730本がシリアル値のまま出ていた

@@ -21764,8 +21764,14 @@ var REQUIRED_FNS = [
   '_hfSid',
   /* ★お客さんの Excel の 版★ … 無いと AIへ 版が 届かず ★全員 365 扱い★に 戻る（2026-09-05） */
   'getBookVer',
+  /* ★2026-11-14 日本語の 名★＝見張りが 英字の 名しか 拾わず、表の 外に 居た 物（book.html 自身が 持つ・在って 当たり前） */
+  'ページ設定の初期化', '_台の古い溢れを消す', '_台の板を得る', '_リボンキーをフォームが止める', 'ここに書けるか',
+  '計算していない印', 'クリップに足す', 'ウォッチを描く', '編集を許された所か', '切り替えを整える',
+  'ブックの守りに引っかかる', 'マクロを受け取る', 'マクロの知らせを出す', 'すべて再計算',
   // exally-formula.js が持っている物（★読み込みに失敗したら計算そのものが動かない★）
-  'initExallyFormula', 'addSheetToEngine'
+  'initExallyFormula', 'addSheetToEngine', '_hf答えの型',
+  /* lib/formula-soto-plug.js（同期の <script> で 読む・root.FormulaSotoPlug = factory()）の 口＝点つきは window から 1段ずつ 辿る */
+  'FormulaSotoPlug.外へ出す', 'FormulaSotoPlug.外へ出すを忘れる', 'FormulaSotoPlug.覚えを消す'
 ];
 /* ★本当に任意＝外部ライブラリの版で有無が変わる物だけ。理由を書く★ */
 var OPTIONAL_FNS = {
@@ -21775,16 +21781,27 @@ var OPTIONAL_FNS = {
 };
 /* ★グローバルではなく「引数」として渡ってくる物★（呼ぶ側が渡さない事がある） */
 var PARAM_FNS = {
-  'lookup': 'dateFmtForFormula(f, lookup) の第2引数。渡さない呼び方も許している（参照先を見ない＝日付にしないだけ）'
+  'lookup': 'dateFmtForFormula(f, lookup) の第2引数。渡さない呼び方も許している（参照先を見ない＝日付にしないだけ）',
+  '板.まとめて打つ始め': '_台を全部合わせる(板) の引数。来る板は _台の板を得る()＝ShikiHyou.表() の板で必ず持つ。無ければ1枚ずつ直す遅い道（前と同じ）'
 };
 window.__EXALLY_MISSING__ = [];
+/* ★点つき（A.b）は window から 1段ずつ 辿る★（window['A.b'] は いつも 無い）。途中が 無くても 投げない＝無い と 数える */
+function _要る部品を引く(n){
+  try{
+    var v = window, ks = String(n).split('.');
+    for(var i = 0; i < ks.length; i++){ if(v == null) return undefined; v = v[ks[i]]; }
+    return v;
+  }catch(e){ return undefined; }
+}
 function checkRequiredFns(){
-  var miss = REQUIRED_FNS.filter(function(n){ return typeof window[n] !== 'function'; });
+  window.__EXALLY_REQUIRED_CHECKED__ = true;
+  var miss = REQUIRED_FNS.filter(function(n){ return typeof _要る部品を引く(n) !== 'function'; });
   if(!miss.length) return [];
   window.__EXALLY_MISSING__ = miss;
   // ★黙らない。画面に出す★
   try{
     var box = document.createElement('div');
+    box.id = 'exally-missing-fns';
     box.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:99999;background:#B3261E;color:#fff;'
       + 'padding:10px 14px;font:700 13px/1.6 system-ui;box-shadow:0 2px 8px rgba(0,0,0,.3)';
     box.textContent = 'この画面は正しく動きません 部品が読み込めていません: ' + miss.join(', ')

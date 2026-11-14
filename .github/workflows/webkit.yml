@@ -39,6 +39,7 @@ on:
   pull_request:
     paths:
       - 'book.html'
+      - 'exally-formula.js'
       - 'lib/**'
       - 'js/**'
       - 'css/**'
@@ -64,6 +65,7 @@ on:
     paths:
       # ★見た目・約束に 関わる所を 触った時★＝直した日に その場で 分かる
       - 'book.html'
+      - 'exally-formula.js'
       - 'lib/**'
       - 'js/**'
       - 'css/**'
@@ -127,6 +129,11 @@ jobs:
       #   ★実Excel が 出した 答え★を 1行ずつ 見比べる（部品だけ 緑では 足りない）
       - name: ★タイ語の 金額＝実Excel の ブックを 開いて 答えが 同じか（実ブラウザ）
         run: node tests/bahttext-webkit.mjs
+      # ★起動時の 要る部品の 確かめ★（2026-11-14）＝点つき・日本語の 名を 本物の ブラウザで 引けるか（字の 見張りでは 分からない）
+      - name: ★要る部品が 全部 引けて 赤い 帯が 出ないか（実ブラウザ）
+        run: node tests/required-fns-webkit.mjs
+      - name: ★同 在りもしない 名を 足した 写しで 赤い 帯が 出るか（物差しの 自己確認）
+        run: node tests/required-fns-webkit.mjs --self-test
       # ★リボンの 重なり★（2026-09-07）＝★webkit だけ 潰れていた★
       #   `.rb-items` は `flex-flow: column wrap`。★webkit は その 箱の 幅を 1列ぶんしか 数えない★
       #   ⇒ 隣の 組が 上に 乗り、★見えている 55個 のうち 31個が「押すと 別の 物が 出る」★
