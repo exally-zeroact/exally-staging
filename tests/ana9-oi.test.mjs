@@ -20,7 +20,7 @@ const 守り = {
   '鍵：ログインの窓の栓': ['js/auth.js', '    if (!止める) { ログインの窓に栓(lo); return; }', '    if (!止める) { return; }'],
   '鍵：リボンのキー': ['book.html', "            if (document.body.classList.contains('exally-locked')) return;   /*", '            /*'],
   'L4：自前の印': ['book.html', '      if(今 === _鍵の印) return;\n', ''],
-  'L4：控えと比べる': ['book.html', '(_帯の控え === null || fi_.value !== _帯の控え) && ', ''],
+  'L4：控えと比べる': ['book.html', 'if(fi_ && (_帯の控え === null || fi_.value !== _帯の控え)) updateBar();', 'if(fi_) updateBar();'],
   'L4：セルの欄を捨てる': ['book.html', "      if(ci_ && !editingCell && ci_.value) ci_.value = '';\n", ''],
   'W：onKD': ['book.html', '  if(_覆いが開いている()){\n', '  if(false){\n'],
   'W：doUndo': ['book.html', '  if(_覆いが開いている()) return;   /* ★窓（覆い）が 開いている間は 板へ 書かない★（2026-11-14・穴9 層W） */\n  if(!undoStack.length) return;', '  if(!undoStack.length) return;'],

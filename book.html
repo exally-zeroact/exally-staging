@@ -10917,7 +10917,7 @@ window.addEventListener('load', function() {
       var fi_ = document.getElementById('formula-input'), ci_ = document.getElementById('cell-input');
       if(今){ _帯の控え = fi_ ? fi_.value : null; return; }
       if(ci_ && !editingCell && ci_.value) ci_.value = '';
-      if(fi_ && (_帯の控え === null || fi_.value !== _帯の控え) && typeof updateBar === 'function') updateBar();
+      if(fi_ && (_帯の控え === null || fi_.value !== _帯の控え)) updateBar();
       _帯の控え = null;
     });
     _鍵の後始末.observe(document.body, { attributes: true, attributeFilter: ['class'] });
@@ -21008,7 +21008,7 @@ function _窓へ戻す(上){
     /* (a) 開いた時＝状態を 持たない（覆いの style/class だけを 見る）。閉じた時は 何もしない */
     var mo = new MutationObserver(function(){
       var 上 = _覆いが開いている(); if (!上) return;
-      if (typeof hideFnAutocomplete === 'function') { try { hideFnAutocomplete(); } catch (e) {} }
+      hideFnAutocomplete();
       if (_覆いの中か(document.activeElement, _開いている覆い())) return;
       _窓へ戻す(上);
     });

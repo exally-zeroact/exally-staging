@@ -92,6 +92,7 @@ async function bootBook(htmlOverride) {
   for (const m of html.matchAll(/<script(?![^>]*\ssrc=)[^>]*>([\s\S]*?)<\/script>/g)) inject(m[1]);
   if (doc.readyState !== 'complete') await new Promise((r) => win.addEventListener('load', r, { once: true }));
   else win.dispatchEvent(new win.Event('load'));
+  doc.body.classList.remove('exally-locked');   /* ★ログインが 済んだ 形で 試す★（試験は 倉庫を 読まない＝auth.js が 鍵を 掛ける。鍵の 間は 門が 押しを 止める＝穴9。外さないと ②-b の 押しが 門で 止まり 中身を 見ない） */
   return { win, doc, blocked };
 }
 

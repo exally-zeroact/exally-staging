@@ -42,8 +42,12 @@ const authJs = 読む('js/auth.js');
 
 /* ── ① 表の画面に 掛かっているか ── */
 T('★book.html が ログインの部品を 4本とも読んでいる★', () => {
+  /* ★字が在るだけでは 読んでいない★＝注に「js/auth.js の 門」と書くと indexOf は 緑のまま（11-14 穴9 で 壊しが 素通り）。
+     注を 外した 所の <script src=…> だけを 数える */
+  const 動く所 = 注記を外す(book, { html: true });
+  const 読む札 = [...動く所.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/g)].map(m => m[1]);
   for (const 要る of ['supabase-js@2', 'js/supa-config.js', 'js/exally-login.js', 'js/auth.js']) {
-    ok(book.indexOf(要る) >= 0, '★' + 要る + ' を読んでいない＝素通り★');
+    ok(読む札.some(src => src.indexOf(要る) >= 0), '★' + 要る + ' を読んでいない＝素通り★');
   }
 });
 T('★ログインが済むまで 中身を隠す1行が 実在する★', () => {
@@ -52,8 +56,10 @@ T('★ログインが済むまで 中身を隠す1行が 実在する★', () =>
     '★隠す1行が無い（ログイン前に 表が見えてしまう）★');
 });
 T('★auth.js が body に印を付ける（#app が無い画面でも隠せる）★', () => {
-  ok(authJs.indexOf('exally-locked') >= 0, '★印を付けていない＝book.html では隠れない★');
+  /* ★字が在るだけでは 付けていない★＝鍵の門も exally-locked を 読む（11-14 穴9）。lockBody の 中で 付け外しする事を 見る */
   ok(/function\s+lockBody/.test(authJs), 'lockBody が無い');
+  ok(/function\s+lockBody\s*\([^)]*\)\s*\{[^}]*classList\s*\[[^\]]*'add'[^\]]*\]\s*\(\s*'exally-locked'\s*\)/.test(authJs),
+    '★印を付けていない（lockBody が body に exally-locked を付け外ししていない）＝book.html では隠れない★');
 });
 
 /* ── ② 忘れた人の逃げ道 ── */
