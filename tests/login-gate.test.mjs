@@ -43,7 +43,7 @@ const authJs = 読む('js/auth.js');
 /* ── ① 表の画面に 掛かっているか ── */
 T('★book.html が ログインの部品を 4本とも読んでいる★', () => {
   /* ★字が在るだけでは 読んでいない★＝注に「js/auth.js の 門」と書くと indexOf は 緑のまま（11-14 穴9 で 壊しが 素通り）。
-     注を 外した 所の <script src=…> だけを 数える */
+     注を 外した 所の script の src だけを 数える */
   const 動く所 = 注記を外す(book, { html: true });
   const 読む札 = [...動く所.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/g)].map(m => m[1]);
   for (const 要る of ['supabase-js@2', 'js/supa-config.js', 'js/exally-login.js', 'js/auth.js']) {
