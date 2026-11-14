@@ -279,6 +279,8 @@ const FILES = [
   ['zero-gyou-keshi.test.mjs', '--self-test'],// ★守りを 1本ずつ 抜いて 赤に なるか
   'ana9-oi.test.mjs',                     // ★窓（覆い）を 開いている間・鍵の 間は 板へ 何も 入らない＝実Excel の 窓は 閉じるまで 板へ 戻れない（2026-11-14・穴9）
   ['ana9-oi.test.mjs', '--self-test'],    // ★守りを 1本ずつ 抜いて 赤に なるか
+  'mado-esc.test.mjs',                    // ★Esc で 一番上の 窓を 閉じる・閉じたら 的を セルの 欄へ（実Excel と 同じ・2026-11-15）
+  ['mado-esc.test.mjs', '--self-test'],   // ★守りを 1本ずつ 抜いて 赤に なるか
   'shift-keeps-everything.test.mjs',      // ★行・列を 足しても 消しても 棚が 置いていかれない・選んだ 数だけ 入る（押し0b・2026-11-07）
   ['shift-keeps-everything.test.mjs', '--self-test'],// ★直す前の 形に 戻すと 赤に なるか
   'formula-nokori.test.mjs',              // ★2026-09-06に作った14個＝答えは全部★実Excelの実測★

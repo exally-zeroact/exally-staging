@@ -21024,6 +21024,98 @@ function _窓へ戻す(上){
     }, true);
   } catch (e) { if (window.console) console.warn('窓の 見張りを 付けられませんでした', e); }
 })();
+/* ══ ★★Esc で 一番上の 窓を 閉じる／窓を 全部 閉じたら 的を セルの 欄へ 戻す★★（2026-11-15）══
+   ★なぜ★ 実Excel の 窓（ダイアログ）は Esc で 閉じ、閉じると セルへ そのまま 打てる。
+     今までは Esc で 閉じず、閉じるボタンで 閉じた 後は 的が body に 落ちて 打った 字が 消えていた（測り＝kb9）。
+   ⇒ (1) 窓 id→閉じる 関数 の 表（名簿 − formOverlay）。字（ボタンの 文字）で 探さない＝字が 変わっても 割れない。
+        formOverlay は 外す＝「閉じて 入れる」は 書き込む（Esc で 黙って 書かない）。diffOverlay は やめる（#diffCancel）を 押す。
+     (2) Esc を 見送る 時＝字を 変換中（isComposing・keyCode 229＝WebKit は compositionend が 先）／
+        的が 一覧を 開いたかも しれない SELECT（押した・Alt+↓↑・F4・空白の 後で、まだ 選んでも 離れても いない）＝1回だけ 見送る
+        （Firefox・WebKit は 開いた 一覧を 閉じる Esc も 閉じた 時と 同じ形で 届く＝見分けられない・測り selesc.mjs）
+        ＝実Excel と 同じ「1回目で 一覧を 閉じ、2回目で 窓を 閉じる」。開いていない SELECT（6枚は 最初の 欄が SELECT）の Esc は 窓を 閉じる。
+        Chromium は 開いた 一覧の Esc を 自分で 受ける＝印が 残って 次の 1回を 見送る 事が ある（多くて 1回 多く 押す）／
+        的が 窓の 中でも body でもない（穴9 の 守りが 戻す 前の 隠れた 欄）／
+        ログインの 窓が 見えている／関数の 一覧（fnPalette）が 開いている（自分の Esc で 閉じる）。鍵の 間は _覆いが開いている() が null。
+     (3) 開いていた 窓が 全部 閉じたら、的が 奪ってよい 所（sel() の tagAllow と 同じ＋閉じた 窓の 中）なら #cell-input へ。
+        印は 鍵の 間は 動かさない（鍵の 間に 倒れて、鍵が 解けた 後に 閉じても 戻らない、を 防ぐ）。
+        setTimeout 0＝閉じる 関数が 自分で 的を 移した 時は そちらが 勝つ。 */
+var _窓を閉じる表 = {
+  findOverlay:'closeFind', tnOverlay:'closeTeian', rcOverlay:'手順をやめる', rkOverlay:'closeRireki', dgOverlay:'closeShindan',
+  mcOverlay:'closeMacro', vbOverlay:'closeVba', cfOverlay:'closeCondFormat', forecastOverlay:'予測の窓を閉じる',
+  consolOverlay:'統合の窓を閉じる', shapeOverlay:'図形の窓を閉じる', fitOverlay:'拡大縮小を閉じる', pivotOverlay:'ピボットの窓を閉じる',
+  fontOverlay:'フォントの窓を閉じる', orientOverlay:'文字の向きの窓を閉じる', clipOverlay:'クリップボードを閉じる',
+  pageMoreOverlay:'ページの詳しい設定を閉じる', goalOverlay:'ゴールシークを閉じる', zoomOverlay:'ズームの窓を閉じる',
+  bookProtOverlay:'ブックの保護を閉じる', editRangeOverlay:'範囲の編集を閉じる', statsOverlay:'ブックの数を閉じる',
+  evalOverlay:'数式の検証を閉じる', calcOverlay:'計算方法の窓を閉じる', funcOverlay:'関数の窓を閉じる',
+  mkNameOverlay:'範囲から名前の窓を閉じる', symOverlay:'記号の窓を閉じる', headFilterOverlay:'見出しの絞りを閉じる',
+  tableOverlay:'表の窓を閉じる', sparkOverlay:'スパークラインの窓を閉じる', linkOverlay:'リンクの窓を閉じる',
+  sortOverlay:'並べ替えの窓を閉じる', styleOverlay:'セルのスタイルを閉じる', shiftOverlay:'詰める向きの窓を閉じる',
+  sizeOverlay:'大きさの窓を閉じる', pageOverlay:'ページ設定を閉じる', commentOverlay:'コメントの窓を閉じる',
+  chartOverlay:'グラフを閉じる', splitOverlay:'区切り位置を閉じる', nameOverlay:'名前の窓を閉じる', validOverlay:'closeValid',
+  diffOverlay:'#diffCancel', bookVerOverlay:'closeBookVerModal', fmtModal:'closeFmtModal'
+};
+function _見えているか(id){
+  var el = document.getElementById(id);
+  return !!el && window.getComputedStyle(el).display !== 'none';
+}
+/* 閉じたら true。表に 無い 窓（formOverlay）は false＝Esc を 見送る */
+function _窓をEscで閉じる(上){
+  var 名 = _窓を閉じる表[上.id];
+  if (!名) return false;
+  if (名.charAt(0) === '#') { document.getElementById(名.slice(1)).click(); return true; }
+  window[名]();   /* ★typeof で 守らない★＝無ければ 落ちて 見える（試験で 44本 在るか 数える） */
+  return true;
+}
+function _閉じた後の的を戻す(){
+  if (document.body.classList.contains('exally-locked') || _覆いが開いている()) return;
+  var ci = document.getElementById('cell-input'), ae = document.activeElement;
+  if (!ci || ae === ci) return;
+  var 奪ってよい = !ae || ae === document.body || ae.tagName === 'CANVAS' || ae === document.documentElement;
+  for (var i = 0; !奪ってよい && i < _覆いの名簿.length; i++) {
+    var el = document.getElementById(_覆いの名簿[i]);
+    if (el && el.contains(ae)) 奪ってよい = true;
+  }
+  if (奪ってよい) ci.focus();
+}
+/* 一覧を 開いたかも しれない SELECT（押した・Alt+↓↑・F4・空白）。選んだ・離れた・Esc を 1回 見送った で 倒す */
+var _一覧が開いたかも = null;
+(function(){
+  try {
+    window.addEventListener('mousedown', function(e){
+      var s = e.target && e.target.closest ? e.target.closest('select') : null;
+      _一覧が開いたかも = s;
+    }, true);
+    ['change', 'focusout'].forEach(function(型){
+      window.addEventListener(型, function(e){ if (e.target === _一覧が開いたかも) _一覧が開いたかも = null; }, true);
+    });
+    window.addEventListener('keydown', function(e){
+      var t = e.target;
+      if (t && t.tagName === 'SELECT' && (e.key === 'F4' || e.key === ' ' || (e.altKey && (e.key === 'ArrowDown' || e.key === 'ArrowUp')))) _一覧が開いたかも = t;
+    }, true);
+    window.addEventListener('keydown', function(e){
+      if (e.key !== 'Escape' || e.isComposing || e.keyCode === 229 || e.defaultPrevented) return;
+      var 上 = _覆いが開いている(); if (!上) return;
+      var t = e.target;
+      if (t && t.tagName === 'SELECT' && _一覧が開いたかも === t) { _一覧が開いたかも = null; return; }
+      /* 窓の 中か body だけ（窓の 外の 隠れた 欄へ 来た Esc＝穴9 の 守りの 内＝ここでは 閉じない） */
+      if (!(t === document.body || t === document.documentElement || 上.contains(t))) return;
+      if (_見えているか('loginOv') || _見えているか('fnPalette')) return;
+      if (_窓をEscで閉じる(上)) { e.preventDefault(); e.stopPropagation(); }
+    }, true);
+    var 前は開いていた = false;
+    var mo = new MutationObserver(function(){
+      if (document.body.classList.contains('exally-locked')) return;   /* 鍵の 間は 印を 動かさない */
+      if (_覆いが開いている()) { 前は開いていた = true; return; }
+      if (!前は開いていた) return;
+      前は開いていた = false;
+      setTimeout(_閉じた後の的を戻す, 0);
+    });
+    _覆いの名簿.forEach(function(id){
+      var el = document.getElementById(id);
+      if (el) mo.observe(el, { attributes: true, attributeFilter: ['style', 'class'] });
+    });
+  } catch (e) { if (window.console) console.warn('Esc の 窓閉じを 付けられませんでした', e); }
+})();
 /* ══ ★★ファイルを 読めなかった 時（2026-09-25）★★ ══
      ★★実測（お客さんの 道・実物）★★
        同じ 本の 2つの 写しで 数えました:
