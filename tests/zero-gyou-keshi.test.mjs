@@ -36,6 +36,10 @@ const 守り = {
   'ログインが無ければ止める': [
     "if (!u) return { ok: false, reason: 'no-user' };   // 鍵切れ＝「ログインし直してください」\n            return Promise.resolve(sb.from('pay_partners')",
     "return Promise.resolve(sb.from('pay_partners')"
+  ],
+  'ログインが無ければ止める（記録）': [
+    "if (!u) return { ok: false, reason: 'no-user' };   // 鍵切れ＝「ログインし直してください」\n            return Promise.resolve(sb.from('pay_ledger')",
+    "return Promise.resolve(sb.from('pay_ledger')"
   ]
 };
 
@@ -138,7 +142,9 @@ test('作り物：select を 付けない update は data:null（本物の 204 �
 
 test('字の見張り：deleted_at を 書く update は 全部 .select( を 付けて kesetaKa で 判じる', () => {
   const 字 = fs.readFileSync(SRC, 'utf8');
-  const 消し = 字.match(/\.update\(\{\s*deleted_at[^\n]*/g) || [];
+  const 拾う = /\.update\(\{[^}\n]*\bdeleted_at\b[^\n]*/g;   // ★キーの 順に 頼らない（taiketsu 任意4）
+  eq(('x.update({ updated_at: 1, deleted_at: 2 }).eq(1)'.match(拾う) || []).length, 1, '順を 変えた 形を 拾う');
+  const 消し = 字.match(拾う) || [];
   eq(消し.length, 2, '消しの数（増えたら この試験も 見直す）');
   消し.forEach((l) => { if (!/\.select\(/.test(l)) throw new Error('select が 無い: ' + l.trim()); });
   eq((字.match(/\.then\(kesetaKa\)/g) || []).length, 2, 'kesetaKa で 判じる 数');

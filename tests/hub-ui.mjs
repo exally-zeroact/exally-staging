@@ -77,7 +77,7 @@ const fakeSD = {
       if (ex) { ex.ymd = r.ymd; ex.data = r.data; } else db.ledger.push({ id, employeeId: r.employeeId, ymd: r.ymd, data: r.data });
       return Promise.resolve({ ok: true, id });
     },
-    remove: (id) => { calls.push(['ledger.remove', id]); db.ledger = db.ledger.filter(x => x.id !== id); return Promise.resolve({ ok: true }); }
+    remove: (id) => { calls.push(['ledger.remove', id]); if (db.lgRemoveNotFound) { db.lgRemoveNotFound = false; return Promise.resolve({ ok: false, reason: 'not-found' }); } db.ledger = db.ledger.filter(x => x.id !== id); return Promise.resolve({ ok: true }); }
   },
   entitlements: { get: () => Promise.resolve({ plan: 'trial' }), ensure: () => Promise.resolve({ plan: 'trial', existed: true }) },
   // E2: 締め方は Kyually の会社設定が唯一の源＝読むだけ
@@ -542,6 +542,14 @@ await (async () => {
       ok(doc.getElementById('lge-save').textContent === '直す', 'ボタン=' + doc.getElementById('lge-save').textContent);
     });
     const n = db.ledger.length;
+    // ★倉庫が 0行（鍵切れ・他の口・もう無い）＝not-found の時は 台帳へ 戻らず 知らせる（2026-11-14 0行の件・taiketsu 任意1）
+    db.lgRemoveNotFound = true;
+    doc.getElementById('lge-del').click(); await sleep(60);
+    T('5b. ★消せなかった（0行）時は「削除しました」を出さず、編集のまま知らせる', () => {
+      ok(db.ledger.length === n, '一覧から消えた');
+      ok(doc.getElementById('scr-lg-entry').classList.contains('active'), '編集が閉じた');
+      ok(/見つかりませんでした/.test(doc.getElementById('lge-msg').textContent), 'msg=' + doc.getElementById('lge-msg').textContent);
+    });
     doc.getElementById('lge-del').click(); await sleep(60);
     T('5b. 削除できる(確認あり)', () => {
       ok(db.ledger.length === n - 1, '消えていない');
