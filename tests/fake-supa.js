@@ -34,8 +34,9 @@ function createFakeSupa(opts) {
   function Query(table, op, payload) {
     this._t = table; this._op = op; this._payload = payload;
     this._filters = []; this._cols = '*'; this._order = null; this._limit = null; this._single = null;
+    this._selectYonda = false;   // ★update の後に .select() を 呼んだか（_cols の '*' では 判じない＝引数無しの select も 呼んだ 内）
   }
-  Query.prototype.select = function (cols, o) { this._cols = cols || '*'; this._count = !!(o && o.count); return this; };
+  Query.prototype.select = function (cols, o) { this._cols = cols || '*'; this._count = !!(o && o.count); this._selectYonda = true; return this; };
   Query.prototype.eq = function (c, v) { this._filters.push(function (r) { return String(r[c]) === String(v); }); return this; };
   Query.prototype.gte = function (c, v) { this._filters.push(function (r) { return String(r[c]) >= String(v); }); return this; };
   Query.prototype.lte = function (c, v) { this._filters.push(function (r) { return String(r[c]) <= String(v); }); return this; };
@@ -83,7 +84,8 @@ function createFakeSupa(opts) {
 
     if (this._op === 'update') {
       match.forEach(function (r) { Object.assign(r, clone(self._payload)); });
-      return { data: match.map(clone), error: null };
+      // ★本物（PostgREST）は select を 付けないと 204・本文 空＝data は null。付けた 時だけ 書けた 行を 返す（0行なら []）
+      return { data: self._selectYonda ? match.map(clone) : null, error: null };
     }
     if (this._op === 'delete') {
       match.forEach(function (r) { var k = rows.indexOf(r); if (k >= 0) rows.splice(k, 1); });

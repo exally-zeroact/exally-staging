@@ -70,6 +70,15 @@
 
   function err(e) { return (e && (e.message || e.reason)) || 'error'; }
 
+  // ★ソフト削除の返りを 見る★（2026-11-14・Rakunally 10-25 と 同じ形）＝前は 書けた 行を 見ずに {ok:true}。
+  //   鍵が 切れて anon で 送る・他の口の 行・もう 無い 行は RLS で 0行（204・error null）なのに「削除しました」と 出た。
+  //   ⇒ 書けた 行（.select('id')）が 0 なら not-found（hub.js の jpFail・ledger.js の fail が「見つかりませんでした」と 出す）。
+  function kesetaKa(w) {
+    if (w && w.error) return { ok: false, reason: err(w.error) };
+    var n = (w && Array.isArray(w.data)) ? w.data.length : 0;
+    return n > 0 ? { ok: true } : { ok: false, reason: 'not-found' };
+  }
+
   // 入力検査の失敗も「拒否されたPromise」で返す(同期throwと非同期失敗の2系統に割れない)。
   // 呼び出し側は .catch / try-await の1本だけ書けばよい。
   function P(fn) { try { return Promise.resolve(fn()); } catch (e) { return Promise.reject(e); } }
@@ -242,9 +251,11 @@
         },
         // ソフト削除(物理削除しない)
         remove: function (id) {
-          return Promise.resolve(sb.from('pay_partners').update({ deleted_at: nowIso(), updated_at: nowIso() }).eq('id', id))
-            .then(function (w) { return (w && w.error) ? { ok: false, reason: err(w.error) } : { ok: true }; })
-            .catch(function (e) { return { ok: false, reason: err(e) }; });
+          return uid().then(function (u) {
+            if (!u) return { ok: false, reason: 'no-user' };   // 鍵切れ＝「ログインし直してください」
+            return Promise.resolve(sb.from('pay_partners').update({ deleted_at: nowIso(), updated_at: nowIso() }).eq('id', id).select('id'))
+              .then(kesetaKa);
+          }).catch(function (e) { return { ok: false, reason: err(e) }; });
         }
       },
 
@@ -290,9 +301,11 @@
         },
         // ソフト削除(お金の記録は物理削除しない)
         remove: function (id) {
-          return Promise.resolve(sb.from('pay_ledger').update({ deleted_at: nowIso(), updated_at: nowIso() }).eq('id', id))
-            .then(function (w) { return (w && w.error) ? { ok: false, reason: err(w.error) } : { ok: true }; })
-            .catch(function (e) { return { ok: false, reason: err(e) }; });
+          return uid().then(function (u) {
+            if (!u) return { ok: false, reason: 'no-user' };   // 鍵切れ＝「ログインし直してください」
+            return Promise.resolve(sb.from('pay_ledger').update({ deleted_at: nowIso(), updated_at: nowIso() }).eq('id', id).select('id'))
+              .then(kesetaKa);
+          }).catch(function (e) { return { ok: false, reason: err(e) }; });
         }
       },
 

@@ -65,7 +65,7 @@ const fakeSD = {
   partners: {
     list: () => Promise.resolve(db.partners.map(p => ({ ...p }))),
     upsert: (p) => { calls.push(['pt.upsert', p]); const id = p.id || ('pt_' + (db.partners.length + 1)); const ex = db.partners.find(x => x.id === id); if (ex) ex.data = p.data; else db.partners.push({ id, sort: 0, data: p.data }); return Promise.resolve({ ok: true, id }); },
-    remove: (id) => { calls.push(['pt.remove', id]); db.partners = db.partners.filter(x => x.id !== id); return Promise.resolve({ ok: true }); }
+    remove: (id) => { calls.push(['pt.remove', id]); if (db.ptRemoveNotFound) { db.ptRemoveNotFound = false; return Promise.resolve({ ok: false, reason: 'not-found' }); } db.partners = db.partners.filter(x => x.id !== id); return Promise.resolve({ ok: true }); }
   },
   ledger: {
     list: (q) => { calls.push(['ledger.list', q]); if (failNext === 'ledger') { failNext = null; return Promise.reject(new Error('台帳が多すぎて全部読めませんでした（1000/4200件）。期間を短く区切ってください')); } return Promise.resolve(db.ledger.filter(r => r.ymd >= q.from && r.ymd <= q.to && (!q.employeeId || r.employeeId === q.employeeId))); },
@@ -288,6 +288,15 @@ await (async () => {
   T('4. 既存をタップすると値が入り、削除ボタンが出る', () => {
     ok(doc.getElementById('pt-name').value === '○○建設株式会社');
     ok(doc.getElementById('pt-del').style.display !== 'none');
+  });
+  // ★倉庫が 0行（鍵切れ・他の口・もう無い）＝not-found の時は 閉じずに 知らせる（2026-11-14 0行の件）
+  const 消す前 = db.partners.length;
+  db.ptRemoveNotFound = true;
+  doc.getElementById('pt-del').click(); await sleep(40);
+  T('4. ★消せなかった（0行）時は「削除しました」を出さず、画面を閉じずに知らせる', () => {
+    ok(db.partners.length === 消す前, '一覧から消えた');
+    ok(doc.getElementById('pt-edit').style.display !== 'none', '画面が閉じた');
+    ok(/見つかりませんでした/.test(doc.getElementById('pt-edit-msg').textContent), 'msg=' + doc.getElementById('pt-edit-msg').textContent);
   });
   doc.getElementById('pt-del').click(); await sleep(40);
   T('4. 削除できる(確認あり)', () => {
