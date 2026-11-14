@@ -58,7 +58,7 @@ T('★ログインが済むまで 中身を隠す1行が 実在する★', () =>
 T('★auth.js が body に印を付ける（#app が無い画面でも隠せる）★', () => {
   /* ★字が在るだけでは 付けていない★＝鍵の門も exally-locked を 読む（11-14 穴9）。lockBody の 中で 付け外しする事を 見る */
   ok(/function\s+lockBody/.test(authJs), 'lockBody が無い');
-  ok(/function\s+lockBody\s*\([^)]*\)\s*\{[^}]*classList\s*\[[^\]]*'add'[^\]]*\]\s*\(\s*'exally-locked'\s*\)/.test(authJs),
+  ok(/function\s+lockBody\s*\([^)]*\)\s*\{[^}]*classList\s*\[[^\]]*'add'[^\]]*'remove'[^\]]*\]\s*\(\s*'exally-locked'\s*\)/.test(authJs),
     '★印を付けていない（lockBody が body に exally-locked を付け外ししていない）＝book.html では隠れない★');
 });
 
@@ -199,6 +199,7 @@ if (SELF) {
     ['js/exally-login.js', '★戻り先に 目印を付けない★', (s) => s.replace('var back = location.origin + location.pathname + "?" + RESET_MARK;', 'var back = location.origin + location.pathname;')],
     ['js/exally-login.js', '★送った画面で 登録の有無を 教える★', (s) => s.replace('<div class="login-title">パスワードの再設定メールを送りました</div>', '<div class="login-title">登録されています</div>')],
     ['js/exally-login.js', '★5文字でも 通す（境界を外す）★', (s) => s.replace('if (!pw || pw.length < 6)', 'if (!pw)')],
+    ['js/auth.js', '★鍵を 外さない（ログインしても 開けない）★', (s) => s.replace("classList[on ? 'add' : 'remove']('exally-locked')", "classList['add']('exally-locked')")],
     ['js/exally-login.js', '★他アプリの名前を 持ってくる★', (s) => s.replace('<div class="login-logo">Exally <span>エクサリー</span></div>', '<div class="login-logo">Rakually <span>ラクアリー</span></div>')],
   ];
   let red = 0;
