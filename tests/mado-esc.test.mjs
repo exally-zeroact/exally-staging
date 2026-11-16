@@ -23,6 +23,9 @@ const 守り = {
   'Esc：既定を止める': ['book.html', "{ e.preventDefault(); e.stopPropagation(); }\n    }, true);", "{ e.stopPropagation(); }\n    }, true);"],
   'Esc：表の1枚': ['book.html', "  sortOverlay:'並べ替えの窓を閉じる', ", '  '],
   'Esc：フォームは外す': ['book.html', "  diffOverlay:'#diffCancel',", "  formOverlay:'フォームを閉じる', diffOverlay:'#diffCancel',"],
+  '問い：自分の窓で訊く': ['book.html', "  var ov = document.getElementById('sotoOverlay');", "  var ov = document.getElementById('diffOverlay');"],
+  '問い：flexで開く': ['book.html', "  ov.style.display = 'flex';   /* ★'' だと block", "  ov.style.display = '';   /* ★'' だと block"],
+  '問い：表の1枚': ['book.html', " sotoOverlay:'#sotoCancel',", ''],
   '戻す：鍵の間は印を動かさない': ['book.html', "      if (document.body.classList.contains('exally-locked')) return;   /* 鍵の 間は 印を 動かさない */\n", ''],
   '戻す：鍵の間は奪わない': ['book.html', "  if (document.body.classList.contains('exally-locked') || _覆いが開いている()) return;\n  var ci", "  if (_覆いが開いている()) return;\n  var ci"],
   '戻す：まだ開いていれば奪わない': ['book.html', "  if (document.body.classList.contains('exally-locked') || _覆いが開いている()) return;\n  var ci", "  if (document.body.classList.contains('exally-locked')) return;\n  var ci"],
@@ -129,7 +132,7 @@ const 名簿 = win.eval('_覆いの名簿.slice()'), 表 = win.eval('_窓を閉�
 await T('★表の 窓＝名簿 − formOverlay（足りない・余る 0）★', () => {
   const 要る = 名簿.filter((id) => id !== 'formOverlay').sort(), 在る = Object.keys(表).sort();
   eq(JSON.stringify(在る), JSON.stringify(要る));
-  ok(要る.length === 44, '44枚 実際=' + 要る.length);
+  ok(要る.length === 45, '45枚 実際=' + 要る.length);
 });
 await T('★表の 閉じる 関数・ボタンが 全部 在る★', () => {
   const 無い = Object.entries(表).filter(([, n]) => (n[0] === '#' ? !$(n.slice(1)) : typeof win[n] !== 'function')).map(([id]) => id);
@@ -138,10 +141,12 @@ await T('★表の 閉じる 関数・ボタンが 全部 在る★', () => {
 /* 差分の 窓の やめるは 開く 関数が 付ける＝試験でも 付ける */
 let やめた = 0;
 const 差分を開く = async () => { $('diffCancel').onclick = () => { やめた++; $('diffOverlay').style.display = 'none'; }; await 開く('diffOverlay'); };
+/* 外の問いは 本物の 開く 関数（_外へ出してよいか訊く）で 開く＝やめるを 付けるのは その 関数 */
+const 外の問いを開く = async () => { win._外へ出してよいか訊く(2); await 待つ(); };
 const 閉じない = [];
 for (const id of Object.keys(表)) {
   新しい本(); ci.focus();
-  if (id === 'diffOverlay') await 差分を開く(); else await 開く(id);
+  if (id === 'diffOverlay') await 差分を開く(); else if (id === 'sotoOverlay') await 外の問いを開く(); else await 開く(id);
   const 上 = win.eval('_覆いが開いている()');
   const t = 上 && 上.id === id && $(id).contains(doc.activeElement) ? doc.activeElement : $(id);
   let e;
@@ -150,8 +155,21 @@ for (const id of Object.keys(表)) {
   if (見える(id) || !e.defaultPrevented) { 閉じない.push(id + (上 && 上.id !== id ? '（上=' + 上.id + '）' : '')); await 閉じる(id); continue; }
   if (doc.activeElement !== ci) 閉じない.push(id + '（的=' + 的() + '）');
 }
-await T('★44枚 全部＝窓の 中の Esc で 閉じて 的が セルの 欄へ 戻る★', () => { eq(閉じない.join(' / '), ''); });
+await T('★45枚 全部＝窓の 中の Esc で 閉じて 的が セルの 欄へ 戻る★', () => { eq(閉じない.join(' / '), ''); });
 await T('差分の 窓の Esc＝やめる を 押す（つながない）', () => { eq(やめた, 1); });
+await T('★外の問いは 自分の 窓＝保存の 窓は 出ない・目は つながない・Esc で つながない★', async () => {
+  新しい本(); ci.focus();
+  win._外へ出してよいか訊く(3); await 待つ();
+  ok(見える('sotoOverlay'), '問いの 窓が 見える');
+  eq($('sotoOverlay').style.display, 'flex');   /* '' だと block＝真ん中に 来ない */
+  ok(!見える('diffOverlay'), '保存の 窓は 出ない');
+  eq(doc.activeElement && doc.activeElement.id, 'sotoCancel');
+  ok(/3か所/.test($('sotoHead').textContent), '頭に 数');
+  eq($('sotoGo').textContent, 'つないで よい'); eq($('sotoCancel').textContent, 'つながない');
+  const e = キー(doc.activeElement, 'Escape'); await 待つ(); await 待つ();
+  ok(!見える('sotoOverlay'), 'Esc で 閉じる'); ok(e.defaultPrevented, '奪った');
+  ok(!見える('diffOverlay'), '保存の 窓は 最後まで 出ない');
+});
 await T('★フォームの 窓（閉じて 入れる）は Esc で 閉じない＝黙って 書かない★', async () => {
   await 開く('formOverlay'); const e = キー($('formOverlay').querySelector('input,button') || $('formOverlay'), 'Escape'); await 待つ();
   ok(見える('formOverlay'), '閉じた'); eq(e.defaultPrevented, false); await 閉じる('formOverlay');

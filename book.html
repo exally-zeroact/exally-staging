@@ -10131,6 +10131,25 @@ body.exally-locked > *:not(#loginOv){display:none!important;}
   </div>
 </div>
 
+<!-- ★★外へ つなぐ 前の 問い（2026-11-16）★★＝保存の 窓（diffOverlay）を 使い回さず ★自分の 窓★。
+     使い回すと 問いの 間も「書き出す前に確かめてください」・空の「書き出す名前」・「元のファイルは変わりません」が 見え、
+     答えた 後 diffCancel の 字が「つながない」のまま 戻らなかった（測り soto-m.mjs）。
+     ★#sotoCancel（つながない）を DOM で 先に 置く★＝窓が 開いた 時の 目は 先の ボタンへ 行く（Enter＝つながない＝安全側）。 -->
+<div id="sotoOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:10000;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#ffffff;border-radius:20px;width:100%;max-width:520px;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;">
+    <div style="padding:18px 20px 12px;border-bottom:1px solid #D4EDE1;">
+      <div style="font-size:16px;font-weight:700;color:#2E7D54;">外へ つなぐ 前に 確かめてください</div>
+      <div id="sotoHead" style="font-size:13px;color:#333333;margin-top:6px;line-height:1.6;"></div>
+    </div>
+    <div id="sotoBody" style="padding:14px 18px;overflow:auto;font-size:13px;color:#333333;line-height:1.7;"></div>
+    <div style="padding:10px 18px 14px;border-top:1px solid #D4EDE1;">
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button id="sotoCancel" style="background:#ffffff;border:1.5px solid #D4EDE1;color:#333333;font-size:14px;font-weight:600;padding:10px 18px;border-radius:12px;cursor:pointer;">つながない</button>
+        <button id="sotoGo" style="background:#2E7D54;border:1.5px solid #2E7D54;color:#ffffff;font-size:14px;font-weight:700;padding:10px 18px;border-radius:12px;cursor:pointer;">つないで よい</button>
+      </div>
+    </div>
+  </div>
+</div>
 <div id="bookVerOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;padding:16px;">
   <div style="background:#ffffff;border-radius:20px;width:100%;max-width:420px;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;">
     <div style="padding:18px 20px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #D4EDE1;">
@@ -20947,7 +20966,7 @@ var _覆いの名簿 = ['findOverlay','tnOverlay','rcOverlay','rkOverlay','dgOve
   'consolOverlay','shapeOverlay','fitOverlay','pivotOverlay','fontOverlay','orientOverlay','clipOverlay','pageMoreOverlay','goalOverlay',
   'zoomOverlay','bookProtOverlay','editRangeOverlay','statsOverlay','evalOverlay','calcOverlay','funcOverlay','mkNameOverlay','formOverlay',
   'symOverlay','headFilterOverlay','tableOverlay','sparkOverlay','linkOverlay','sortOverlay','styleOverlay','shiftOverlay','sizeOverlay',
-  'pageOverlay','commentOverlay','chartOverlay','splitOverlay','nameOverlay','validOverlay','diffOverlay','bookVerOverlay','fmtModal'];
+  'pageOverlay','commentOverlay','chartOverlay','splitOverlay','nameOverlay','validOverlay','diffOverlay','sotoOverlay','bookVerOverlay','fmtModal'];
 function _開いている覆い(){
   var 開 = [];
   try {
@@ -21052,7 +21071,7 @@ var _窓を閉じる表 = {
   sortOverlay:'並べ替えの窓を閉じる', styleOverlay:'セルのスタイルを閉じる', shiftOverlay:'詰める向きの窓を閉じる',
   sizeOverlay:'大きさの窓を閉じる', pageOverlay:'ページ設定を閉じる', commentOverlay:'コメントの窓を閉じる',
   chartOverlay:'グラフを閉じる', splitOverlay:'区切り位置を閉じる', nameOverlay:'名前の窓を閉じる', validOverlay:'closeValid',
-  diffOverlay:'#diffCancel', bookVerOverlay:'closeBookVerModal', fmtModal:'closeFmtModal'
+  diffOverlay:'#diffCancel', sotoOverlay:'#sotoCancel', bookVerOverlay:'closeBookVerModal', fmtModal:'closeFmtModal'
 };
 function _見えているか(id){
   var el = document.getElementById(id);
@@ -21355,16 +21374,17 @@ function _本の中身を数えた物(){
   });
 }
 /* ══ ★★外へ 出して よいかを 訊く 窓★★ ══（2026-09-26）
-     ★新しい 窓は 作りません★＝★保存の 窓（`diffOverlay`）を 使い回します★
-       （★作る前に 探せ＝押せる 窓が もう 1つ 在りました★）
+     ★自分の 窓（`sotoOverlay`）で 訊きます★（2026-11-16＝前は 保存の 窓（`diffOverlay`）を 使い回して いた）
+       ＝使い回しは 問いの 間も「書き出す前に…」・空の 書き出す名前が 見え、答えた 後 diffCancel の 字が「つながない」のまま 戻らなかった
+       ＝★#sotoCancel（つながない）を DOM で 先に 置く★＝目が 先の ボタンへ 行く（Enter＝つながない）
      ★★字は はっきり 書きます★★＝★「外へ 出ます」と 言わずに 訊かない★
      ★答えるまで 出しません★＝門は `lib/formula-soto-plug.js` の `頼む` に 1か所 */
 function _外へ出してよいか訊く(何個){
-  var ov = document.getElementById('diffOverlay');
-  var head = document.getElementById('diffHead');
-  var body = document.getElementById('diffBody');
-  var go = document.getElementById('diffGo');
-  var cancel = document.getElementById('diffCancel');
+  var ov = document.getElementById('sotoOverlay');
+  var head = document.getElementById('sotoHead');
+  var body = document.getElementById('sotoBody');
+  var go = document.getElementById('sotoGo');
+  var cancel = document.getElementById('sotoCancel');
   if (!ov || !head || !body || !go || !cancel) return;   /* ★窓が 無ければ 訊きません＝出しません★ */
   head.textContent = 'この本には 外へ つながる 式が ' + 何個 + 'か所 あります';
   /* ★印（`data-yakusoku`）＝台帳 `lib/yakusoku-daicho.js` の `soto-kiku`★
@@ -21449,7 +21469,7 @@ function _外へ出してよいか訊く(何個){
   go.onclick = function(){ 決める(true); };
   cancel.onclick = function(){ 決める(false); };
   ov.onclick = function(e){ if (e.target === ov) 決める(false); };   /* ★外を 押したら つながない★ */
-  ov.style.display = '';
+  ov.style.display = 'flex';   /* ★'' だと block＝真ん中に 来ない（保存の 窓は flex）★ */
   ov.classList.add('open');
 }
 function _askBeforeWrite(plan, fileName){

@@ -121,23 +121,27 @@ async function 開いて見る(本, 押し) {
     await page.waitForTimeout(900);
 
     const 窓 = await page.evaluate(() => {
-      const ov = document.getElementById('diffOverlay');
-      const go = document.getElementById('diffGo');
-      const head = document.getElementById('diffHead');
-      const body = document.getElementById('diffBody');
+      const ov = document.getElementById('sotoOverlay');
+      const go = document.getElementById('sotoGo');
+      const head = document.getElementById('sotoHead');
+      const body = document.getElementById('sotoBody');
       const 見える = !!(ov && ov.offsetWidth > 0 && ov.offsetHeight > 0);
       return {
         見える: 見える,
         頭: head ? String(head.textContent || '').trim() : '',
         字: body ? String(body.textContent || '').trim() : '',
         ボタン: go ? String(go.textContent || '').trim() : '',
+        目: document.activeElement ? document.activeElement.id : '',
+        保存の窓: (function () { var d = document.getElementById('diffOverlay'); return !!(d && d.offsetWidth > 0 && d.offsetHeight > 0); })(),
         許し: (window.FormulaSotoPlug && typeof FormulaSotoPlug.外へ出してよいか === 'function')
           ? FormulaSotoPlug.外へ出してよいか() : 'わからない',
       };
     });
 
-    if (押し === 'よい') await page.click('#diffGo');
-    if (押し === 'だめ') await page.click('#diffCancel');
+    if (押し === 'よい') await page.click('#sotoGo');
+    if (押し === 'だめ') await page.click('#sotoCancel');
+    if (押し === 'enter') await page.keyboard.press('Enter');
+    if (押し === 'esc') await page.keyboard.press('Escape');
     if (押し) await page.waitForTimeout(1500);
 
     const 後 = await page.evaluate(() => {
@@ -177,6 +181,8 @@ try {
   T('★★4つが 在る 本では 窓を 出す★★', あ.窓.見える === true, '窓 ' + JSON.stringify(あ.窓.頭));
   T('★窓の 字に 「インターネット」と 書いて ある★（★言わずに 訊かない★）',
     あ.窓.字.indexOf('インターネット') >= 0, '字 ' + JSON.stringify(あ.窓.字.slice(0, 120)));
+  T('★問いは 自分の 窓＝保存の 窓（書き出す前に…）は 出ない★', あ.窓.保存の窓 === false, String(あ.窓.保存の窓));
+  T('★開いたら 目は 「つながない」（Enter＝安全側）★', あ.窓.目 === 'sotoCancel', JSON.stringify(あ.窓.目));
   T('★答える 前は 許して いない★（`null`）', あ.窓.許し === null, JSON.stringify(あ.窓.許し));
   T('★答える 前は 1回も 外へ 出て いない★', あ.後.外へ出た === 0, String(あ.後.外へ出た));
 
@@ -186,6 +192,12 @@ try {
     + ' ／ 外へ出た ' + だ.後.外へ出た + '回');
   T('★★「つながない」を 押すと 1回も 外へ 出ない★★', だ.後.外へ出た === 0, String(だ.後.外へ出た));
   T('★「つながない」を 押すと 許しは false★', だ.後.許し === false, JSON.stringify(だ.後.許し));
+
+  /* ══ ⑶b 目の まま Enter／Esc ＝つながない（本物の キー） ══ */
+  const え = await 開いて見る(外在り, 'enter');
+  T('★開いて すぐ Enter ＝許しは false・1回も 外へ 出ない★', え.後.許し === false && え.後.外へ出た === 0, JSON.stringify(え.後.許し) + ' ／ ' + え.後.外へ出た);
+  const え2 = await 開いて見る(外在り, 'esc');
+  T('★開いて すぐ Esc ＝許しは false・1回も 外へ 出ない★', え2.後.許し === false && え2.後.外へ出た === 0, JSON.stringify(え2.後.許し) + ' ／ ' + え2.後.外へ出た);
 
   /* ══ ⑷「つないで よい」を 押す ══ */
   const よ = await 開いて見る(外在り, 'よい');
