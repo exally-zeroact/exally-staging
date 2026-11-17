@@ -16890,7 +16890,28 @@ function ゴールシークをやる(){
     欄.textContent = '式の セルは 式で なければ なりません'; return 0;
   }
   if (的.r === 変.r && 的.c === 変.c) { 欄.textContent = '同じ セルは 選べません'; return 0; }
+  var 変のマス = d[変.r + ',' + 変.c];
+  /* ★変える マスが 式なら 断る★（実Excel＝「セルには 値が 必要です」・件2）＝前は 0 の 定数に 化けて 式が 消え「元に戻しました」と 嘘を 出した */
+  if (変のマス && typeof 変のマス.f === 'string' && 変のマス.f.charAt(0) === '=') {
+    欄.textContent = '変える セルは 式では なく 値の セルを 選んでください'; return 0;
+  }
+  if (typeof ここに書けるか === 'function' && !ここに書けるか(変.r, 変.c)) {
+    欄.textContent = '変える セルは 保護されて いて 書けません'; return 0;
+  }
   欄.textContent = '';
+  /* ★元の 形を そのまま 控える★（値・書式・d字 ごと）＝失敗した 時は これを 書き戻す（0 や 字を 経由しない） */
+  var 控えの鍵 = 変.r + ',' + 変.c;
+  var 控え = 変のマス ? JSON.parse(JSON.stringify(変のマス)) : null;
+  var 元へ戻す = function () {
+    if (控え) d[控えの鍵] = JSON.parse(JSON.stringify(控え)); else delete d[控えの鍵];
+    try {
+      if (hf) {
+        var hv = !控え || 控え.v === '' || 控え.v === undefined ? null : (控え.d字 ? 控え.v : toHFVal(控え.v));
+        hf.setCellContents({ sheet: _hfSid(activeSheet), row: 変.r, col: 変.c }, hv);
+      }
+    } catch (e) { if (window.console) console.warn('[Exally] ゴールシークの 戻しを 計算側へ 流せませんでした', e); }
+    recalcSheet(activeSheet, d);
+  };
 
   var 元の値 = (function () {
     var cell = d[変.r + ',' + 変.c];
@@ -16918,7 +16939,7 @@ function ゴールシークをやる(){
   var f1 = 置く(x1) - 目標;
   var 答え = null, 回 = 0;
   if (isNaN(f0) || isNaN(f1)) {
-    置く(元の値);
+    元へ戻す();
     欄.textContent = '式の 答えが 数に なりません（何も 直していません）';
     return 0;
   }
@@ -16934,7 +16955,7 @@ function ゴールシークをやる(){
   }
   if (答え === null && Math.abs(f1) <= ゴールの下限) 答え = x1;
   if (答え === null) {
-    置く(元の値);
+    元へ戻す();
     render(); updateBar();
     欄.textContent = '' + 回 + '回 試しても 見つかりませんでした（元に 戻しました）';
     return 0;
