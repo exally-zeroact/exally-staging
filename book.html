@@ -11218,6 +11218,13 @@ function doUndo(){
     else delete _戻す.d字;
     sheets[op.sheet].data[op.key] = _戻す;
   }
+  /* ★戻した後も つられた マスを 計算し直す★（2026-11-17・実測＝A1 を 7→取り消し で B1 が 26 の まま残った）
+     ＝打つ 側（setCell）と 同じ 決まり：手動なら 印だけ・それ以外は 150ms 後に 引き直す */
+  if(typeof 計算方法 !== 'undefined' && 計算方法 === 'manual'){
+    if(typeof 計算していない印 === 'function') 計算していない印(true);
+  } else if(sheets[op.sheet]){
+    _scheduleRecalc(op.sheet, sheets[op.sheet].data);
+  }
   render(); updateBar();
 }
 function doRedo(){

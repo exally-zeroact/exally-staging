@@ -431,6 +431,7 @@ const FILES = [
   ['wareki-keika-gamen-webkit.mjs'],  //★和暦・経過時間の 書式の マスが 画面で 実Excel と 同じ 字か★（SSF で 48/155 → 台で 155/155・2026-10-04）
   ['hozon-no-ayamari-wo-yomu-webkit.mjs'],  //★答えが 誤りで 保存された 式は 開いた だけで 誤りの 字★（実物 69個 #REF! が 数に 化けた・2026-10-02）
   ['soto-wo-kiku-webkit.mjs'],  //★外へ つながる 式が 在る 本だけ お客さんに 訊く★（司さん 09-25「おすすめで 直せ」・2026-09-26）
+  ['undo-saikeisan-webkit.mjs'],  //★取り消し（Ctrl+Z）の後も つられた マスを 計算し直す★（2026-11-17・A1 を 7→取り消しで B1 が 26 の まま残った）
   ['yomenakatta-webkit.mjs'],        // ★ファイルを 読めなかったら 読み直す★（OneDrive で 24回中 15回 断られる・2026-09-25）
   ['mikire-webkit.mjs'],             // ★字は 隣が 空なら はみ出す（実Excel と 同じ）★（★絵で 数える★・2026-09-24）
   ['machi-no-kime.test.mjs'],        // ★待ちの 決めが 効いて いるか★（2つ目は 引数・決めは 3つ目／2026-09-24）
