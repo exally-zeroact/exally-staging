@@ -40,7 +40,8 @@ function 立てる(root) {
 /* A1=5・B1=C1*0（目標 5 には 届かない）・C1 は 場面ごとに 作る */
 const ws = XLSX.utils.aoa_to_sheet([[5, null, null]]);
 ws['B1'] = { t: 'n', f: 'C1*0', v: 0 };
-ws['!ref'] = 'A1:C1';
+ws['D1'] = { t: 's', f: 'C1&"x"', v: 'x' };
+ws['!ref'] = 'A1:D1';
 const wb = XLSX.utils.book_new();
 XLSX.utils.book_append_sheet(wb, ws, 'あ');
 const 本 = path.join(os.tmpdir(), 'exally-goal-seek-modosu.xlsx');
@@ -75,13 +76,15 @@ try {
     window.hf.setCellContents({ sheet: sid, row: 0, col: 2 }, 場面.hf === undefined ? null : 場面.hf);
     window.recalcSheet(window.activeSheet, d);
     const 形 = () => JSON.stringify(d['0,2'] === undefined ? null : d['0,2']);
-    const 前 = 形(); const hf前 = window.hf.getCellValue({ sheet: sid, row: 0, col: 2 });
+    const 前 = 形(); const Dd = () => JSON.stringify(d['0,3'] ? [d['0,3'].v, d['0,3'].d] : null);
+    const D前 = Dd() + String(window.hf.getCellValue({ sheet: sid, row: 0, col: 3 })); const hf前 = window.hf.getCellValue({ sheet: sid, row: 0, col: 2 });
     document.getElementById('gsTarget').value = 'B1';
     document.getElementById('gsValue').value = '5';
     document.getElementById('gsChange').value = 'C1';
     const 返 = window['ゴールシークをやる']();
     const hf後 = window.hf.getCellValue({ sheet: sid, row: 0, col: 2 });
-    return { 前, 後: 形(), hf前: String(hf前), hf後: String(hf後), 返: String(返),
+    const D後 = Dd() + String(window.hf.getCellValue({ sheet: sid, row: 0, col: 3 }));
+    return { D前, D後, 前, 後: 形(), hf前: String(hf前), hf後: String(hf後), 返: String(返),
       文: document.getElementById('gsWhy').textContent };
   }, 場面);
 
@@ -95,6 +98,7 @@ try {
     const r = await 回す(場面);
     T('★' + 名 + '＝失敗の 後 data が 元と 同じ★', r.後 === r.前, JSON.stringify(r));
     T('★' + 名 + '＝計算側（HF）も 元と 同じ★', r.hf後 === r.hf前, JSON.stringify(r));
+    T('★' + 名 + '＝つられる D1（=C1&"x"）も 元と 同じ★', r.D後 === r.D前, JSON.stringify(r));
     T('★' + 名 + '＝「戻しました」と 出る★', /元に 戻しました/.test(r.文), JSON.stringify(r));
   }
   const 式 = await 回す({ cell: { v: '=A1+1', f: '=A1+1', d: '6' }, hf: '=A1+1' });
