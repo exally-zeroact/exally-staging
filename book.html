@@ -9370,12 +9370,13 @@ body.exally-locked > *:not(#loginOv){display:none!important;}
       <div id="gsOut" style="font-size:12px;color:#2E7D54;min-height:1.4em;"></div>
       <div style="font-size:12px;color:#7A9A87;line-height:1.6;">
         実Excelと 同じ 決め＝多くて 100回 試し、変化が 0.001 より 小さく なったら 止めます。
-        見つからなければ 何も 直しません（近い所で 止めたと 出します）。
+        見つからなければ 何も 直しません（近い所で 止めたと 出します）。見つかったら「決める」で 確定、「やめる」か Esc で 元に 戻します。
       </div>
     </div>
     <div style="padding:10px 18px 16px;display:flex;gap:8px;justify-content:flex-end;border-top:1px solid #D4EDE1;">
       <button onclick="ゴールシークを閉じる()" style="min-height:44px;padding:0 16px;border:1px solid #C8ECD8;background:#ffffff;color:#333333;border-radius:10px;font-size:14px;font-family:inherit;cursor:pointer;">やめる</button>
-      <button onclick="ゴールシークをやる()" style="min-height:44px;padding:0 18px;border:0;background:#3D9E72;color:#ffffff;border-radius:10px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;">求める</button>
+      <button id="gsGo" onclick="ゴールシークをやる()" style="min-height:44px;padding:0 18px;border:0;background:#3D9E72;color:#ffffff;border-radius:10px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;">求める</button>
+      <button id="gsOk" onclick="ゴールシークを決める()" style="display:none;min-height:44px;padding:0 18px;border:0;background:#3D9E72;color:#ffffff;border-radius:10px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;">決める</button>
     </div>
   </div>
 </div>
@@ -16847,10 +16848,30 @@ function 絞りを再適用(){
  *   反復の 決め＝★多くて 100回／変化の下限 0.001★（Application.MaxIterations / MaxChange）
  *   ⇒ うちも 同じ 数で 止める。★見つからなければ 何も 直さない★ */
 var ゴールの回数 = 100, ゴールの下限 = 0.001;   /* 実測 */
+/* ★見つかった後の 保留（件3）★＝{板,r,c,鍵,控え,答え}。「決める」で 取り消し1件に 積み、「やめる」/Esc で 元の 形へ 戻す。 */
+var ゴールの保留 = null;
+function _ゴールの元へ戻す(板, r, c, 控え){
+  var d = sheets[板].data, 鍵 = r + ',' + c;
+  if (控え) d[鍵] = JSON.parse(JSON.stringify(控え)); else delete d[鍵];
+  try {
+    if (hf) {
+      var hv = !控え || 控え.v === '' || 控え.v === undefined ? null : (控え.d字 ? 控え.v : toHFVal(控え.v));
+      hf.setCellContents({ sheet: _hfSid(板), row: r, col: c }, hv);
+    }
+  } catch (e) { if (window.console) console.warn('[Exally] ゴールシークの 戻しを 計算側へ 流せませんでした', e); }
+  recalcSheet(板, d);
+}
 function ゴールシークを開く(){
   hideCtxMenu();
   var ov = document.getElementById('goalOverlay');
   if (!ov) return 0;
+  if (ゴールの保留) {
+    if (window.console) console.warn('[Exally] ゴールシークの 保留が 残っていたので 元へ 戻しました');
+    var 保 = ゴールの保留; ゴールの保留 = null;
+    _ゴールの元へ戻す(保.板, 保.r, 保.c, 保.控え); render(); updateBar();
+  }
+  var go = document.getElementById('gsGo'), ok = document.getElementById('gsOk');
+  if (go) go.style.display = ''; if (ok) ok.style.display = 'none';
   document.getElementById('gsTarget').value = cellAddr(selR1, selC1);
   document.getElementById('gsValue').value = '';
   document.getElementById('gsChange').value = '';
@@ -16861,7 +16882,27 @@ function ゴールシークを開く(){
 }
 function ゴールシークを閉じる(){
   var ov = document.getElementById('goalOverlay');
+  if (ゴールの保留) {
+    var 保 = ゴールの保留; ゴールの保留 = null;
+    _ゴールの元へ戻す(保.板, 保.r, 保.c, 保.控え);
+    render(); updateBar();
+    notify('元に戻しました');
+  }
   if (ov) ov.style.display = 'none';
+}
+/* ★決める★＝見つかった 値を 取り消し1件に 積む（Ctrl+Z で 控えへ・Ctrl+Y で 答えへ）。控えが 空の マス(null)でも 落ちない。 */
+function ゴールシークを決める(){
+  var 保 = ゴールの保留;
+  if (!保) return 0;
+  var 控え = 保.控え;
+  undoStack.push({sheet:保.板, key:保.鍵, old:控え ? 控え.v : '', new_:String(保.答え),
+    oldD:控え ? 控え.d : '', oldD字:!!(控え && 控え.d字)});
+  redoStack = [];
+  ゴールの保留 = null;
+  var ov = document.getElementById('goalOverlay');
+  if (ov) ov.style.display = 'none';
+  notify('ゴールシークを 決めました');
+  return 1;
 }
 /* ★数の 読み方は lib/typed-value.js の 1本だけ★（カンマを外す規則を ここに 写さない）
    2026-08-30＝見張り typed-value.test.mjs が 写した所を 見つけて 赤に した。 */
@@ -16875,6 +16916,7 @@ function _ゴールの数(v){
   return isFinite(n) ? n : NaN;
 }
 function ゴールシークをやる(){
+  if (ゴールの保留) return 0;   /* 見つかった後は 求められない（決める か やめる） */
   var 欄 = document.getElementById('gsWhy');
   var 出 = document.getElementById('gsOut');
   出.textContent = '';
@@ -16902,16 +16944,8 @@ function ゴールシークをやる(){
   /* ★元の 形を そのまま 控える★（値・書式・d字 ごと）＝失敗した 時は これを 書き戻す（0 や 字を 経由しない） */
   var 控えの鍵 = 変.r + ',' + 変.c;
   var 控え = 変のマス ? JSON.parse(JSON.stringify(変のマス)) : null;
-  var 元へ戻す = function () {
-    if (控え) d[控えの鍵] = JSON.parse(JSON.stringify(控え)); else delete d[控えの鍵];
-    try {
-      if (hf) {
-        var hv = !控え || 控え.v === '' || 控え.v === undefined ? null : (控え.d字 ? 控え.v : toHFVal(控え.v));
-        hf.setCellContents({ sheet: _hfSid(activeSheet), row: 変.r, col: 変.c }, hv);
-      }
-    } catch (e) { if (window.console) console.warn('[Exally] ゴールシークの 戻しを 計算側へ 流せませんでした', e); }
-    recalcSheet(activeSheet, d);
-  };
+  var 板 = activeSheet;
+  var 元へ戻す = function () { _ゴールの元へ戻す(板, 変.r, 変.c, 控え); };
 
   var 元の値 = (function () {
     var cell = d[変.r + ',' + 変.c];
@@ -16963,6 +16997,9 @@ function ゴールシークをやる(){
   /* きれいな 数に 近ければ そちらに 寄せる（Excelも 15 と 出す） */
   var 丸め = Math.round(答え * 1e6) / 1e6;
   if (Math.abs(置く(丸め) - 目標) <= ゴールの下限) 答え = 丸め; else 置く(答え);
+  ゴールの保留 = {板:板, r:変.r, c:変.c, 鍵:控えの鍵, 控え:控え, 答え:答え};
+  var go = document.getElementById('gsGo'), ok = document.getElementById('gsOk');
+  if (go) go.style.display = 'none'; if (ok) ok.style.display = '';
   render(); updateBar();
   出.textContent = '見つかりました ' + cellAddr(変.r, 変.c) + ' = ' + 答え + '（' + (回 + 1) + '回で）';
   notify('ゴール シーク … ' + cellAddr(変.r, 変.c) + ' = ' + 答え);
