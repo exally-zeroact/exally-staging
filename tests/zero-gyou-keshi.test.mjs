@@ -25,21 +25,25 @@ const 守り = {
     "return n > 0 ? { ok: true } : { ok: false, reason: 'not-found' };",
     'return { ok: true };'
   ],
-  '取引先の消しの select': [
-    "update({ deleted_at: nowIso(), updated_at: nowIso() }).eq('id', id).select('id'))\n              .then(kesetaKa);\n          }).catch(function (e) { return { ok: false, reason: err(e) }; });\n        }\n      },\n\n      /* ═══ 日次",
-    "update({ deleted_at: nowIso(), updated_at: nowIso() }).eq('id', id))\n              .then(kesetaKa);\n          }).catch(function (e) { return { ok: false, reason: err(e) }; });\n        }\n      },\n\n      /* ═══ 日次"
+  '消しの select': [
+    ".eq('id', id).is('deleted_at', null).select('id'))\n      .then(function (w) {",
+    ".eq('id', id).is('deleted_at', null))\n      .then(function (w) {"
   ],
-  '記録の消しの select': [
-    "from('pay_ledger').update({ deleted_at: nowIso(), updated_at: nowIso() }).eq('id', id).select('id'))",
-    "from('pay_ledger').update({ deleted_at: nowIso(), updated_at: nowIso() }).eq('id', id))"
+  '生きている行だけ消す': [
+    ".eq('id', id).is('deleted_at', null).select('id'))",
+    ".eq('id', id).select('id'))"
+  ],
+  '消えていれば already': [
+    "return (q && q.data && q.data.deleted_at) ? { ok: true, already: true } : { ok: false, reason: 'not-found' };",
+    "return { ok: false, reason: 'not-found' };"
   ],
   'ログインが無ければ止める': [
-    "if (!u) return { ok: false, reason: 'no-user' };   // 鍵切れ＝「ログインし直してください」\n            return Promise.resolve(sb.from('pay_partners')",
-    "return Promise.resolve(sb.from('pay_partners')"
+    "if (!u) return { ok: false, reason: 'no-user' };   // 鍵切れ＝「ログインし直してください」\n            return sofutoKesu(sb, nowIso, 'pay_partners'",
+    "return sofutoKesu(sb, nowIso, 'pay_partners'"
   ],
   'ログインが無ければ止める（記録）': [
-    "if (!u) return { ok: false, reason: 'no-user' };   // 鍵切れ＝「ログインし直してください」\n            return Promise.resolve(sb.from('pay_ledger')",
-    "return Promise.resolve(sb.from('pay_ledger')"
+    "if (!u) return { ok: false, reason: 'no-user' };   // 鍵切れ＝「ログインし直してください」\n            return sofutoKesu(sb, nowIso, 'pay_ledger'",
+    "return sofutoKesu(sb, nowIso, 'pay_ledger'"
   ]
 };
 
@@ -48,7 +52,7 @@ if (process.argv.includes('--self-test')) {
   for (const 名 of Object.keys(守り)) {
     const r = spawnSync(process.execPath, [fileURLToPath(import.meta.url), '--self-test=' + 名], { encoding: 'utf8' });
     const ng = (r.stdout.match(/^ {2}NG /gm) || []).length;
-    const 赤い = r.status !== 0 && ng > 0;
+    const 赤い = r.status === 1 && ng > 0;   // ★exit=2＝抜く字が 無い＝空振り（赤と 数えない・taiketsu 11-19 止め1）
     if (赤い) 赤++;
     console.log('  ' + (赤い ? 'ok ' : 'NG ') + '  守り「' + 名 + '」を 抜く→赤 ' + ng + (r.status === 2 ? '（抜く字が無い）' : ''));
   }
@@ -96,7 +100,26 @@ for (const [名, api, 表, 頭] of 口) {
     const { sd, tables } = setup();
     const r = await sd[api].remove(頭 + '_mine');
     eq(r.ok, true, 'ok');
+    eq(r.already, undefined, 'already（書けた 行を 数えず 引き直しで ok に した）');
     eq(!!tables[表].find((x) => x.id === 頭 + '_mine').deleted_at, true, 'deleted_at');
+  });
+  test(名 + '：先に 消えた 行を もう一度 消す→ok・already・最初の deleted_at を 残す', async () => {
+    const { sd, tables } = setup();
+    await sd[api].remove(頭 + '_mine');
+    const t1 = tables[表].find((x) => x.id === 頭 + '_mine').deleted_at;
+    eq(!!t1, true, '1回目');
+    const r = await sd[api].remove(頭 + '_mine');
+    eq(r.ok, true, 'ok');
+    eq(r.already, true, 'already');
+    eq(tables[表].find((x) => x.id === 頭 + '_mine').deleted_at, t1, '二度目で deleted_at が 動いた');
+  });
+  test(名 + '：引き直しの 失敗→ok にしない', async () => {
+    const { sb, sd } = setup();
+    await sd[api].remove(頭 + '_mine');
+    sb._failNext(表, 'select');
+    const r = await sd[api].remove(頭 + '_mine');
+    eq(r.ok, false, 'ok');
+    eq(r.reason, 'fake-failure', 'reason');
   });
   test(名 + '：他の口の行（RLS で 0行）→not-found・行は消えない', async () => {
     const { sd, tables } = setup();
@@ -140,14 +163,15 @@ test('作り物：select を 付けない update は data:null（本物の 204 �
   eq(Array.isArray(c.data) && c.data.length, 1, '引数無しの select');
 });
 
-test('字の見張り：deleted_at を 書く update は 全部 .select( を 付けて kesetaKa で 判じる', () => {
+test('字の見張り：deleted_at を 書く update は sofutoKesu の 1本だけ・生きている 行だけ・.select( を 付けて kesetaKa で 判じる', () => {
   const 字 = fs.readFileSync(SRC, 'utf8');
   const 拾う = /\.update\(\{[^}\n]*\bdeleted_at\b[^\n]*/g;   // ★キーの 順に 頼らない（taiketsu 任意4）
   eq(('x.update({ updated_at: 1, deleted_at: 2 }).eq(1)'.match(拾う) || []).length, 1, '順を 変えた 形を 拾う');
   const 消し = 字.match(拾う) || [];
-  eq(消し.length, 2, '消しの数（増えたら この試験も 見直す）');
-  消し.forEach((l) => { if (!/\.select\(/.test(l)) throw new Error('select が 無い: ' + l.trim()); });
-  eq((字.match(/\.then\(kesetaKa\)/g) || []).length, 2, 'kesetaKa で 判じる 数');
+  eq(消し.length, 1, '消しの数＝sofutoKesu の 1本だけ（増えたら この試験も 見直す）');
+  消し.forEach((l) => { if (!/\.is\('deleted_at', null\)\.select\(/.test(l)) throw new Error('生きている 行だけ・select が 無い: ' + l.trim()); });
+  eq((字.match(/return sofutoKesu\(sb, nowIso, 'pay_(partners|ledger)', id\)/g) || []).length, 2, '消しは 2口とも sofutoKesu を 通る');
+  eq((字.match(/var r = kesetaKa\(w\);/g) || []).length, 1, 'kesetaKa で 判じる 数');
 });
 
 let ng = 0;
