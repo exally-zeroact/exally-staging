@@ -26,12 +26,39 @@ const 守り = {
     'return { ok: true };'
   ],
   '消しの select': [
-    ".eq('id', id).is('deleted_at', null).select('id'))\n      .then(function (w) {",
-    ".eq('id', id).is('deleted_at', null))\n      .then(function (w) {"
+    "update({ deleted_at: nowIso(), updated_at: nowIso() }).eq('id', id).is('deleted_at', null).select('id'))\n      .then(function (w) {",
+    "update({ deleted_at: nowIso(), updated_at: nowIso() }).eq('id', id).is('deleted_at', null))\n      .then(function (w) {"
   ],
   '生きている行だけ消す': [
-    ".eq('id', id).is('deleted_at', null).select('id'))",
-    ".eq('id', id).select('id'))"
+    "update({ deleted_at: nowIso(), updated_at: nowIso() }).eq('id', id).is('deleted_at', null).select('id'))",
+    "update({ deleted_at: nowIso(), updated_at: nowIso() }).eq('id', id).select('id'))"
+  ],
+  /* ↓件B（2026-11-19）消した行を 保存で 生き返らせない */
+  '保存は生きている行だけ直す': [
+    "update(patch).eq('id', id).is('deleted_at', null).select('id'))",
+    "update(patch).eq('id', id).select('id'))"
+  ],
+  '保存で消えていれば deleted': [
+    "if (q && q.data) return { ok: false, reason: q.data.deleted_at ? 'deleted' : 'not-found' };",
+    "if (q && q.data && !q.data.deleted_at) return { ok: false, reason: 'not-found' };\n          if (q && q.data) return Promise.resolve(sb.from(table).upsert(Object.assign({}, atarashii, { deleted_at: null }))).then(function () { return { ok: true, id: id }; });"
+  ],
+  '保存の引き直しの失敗': [
+    "if (q && q.error) return { ok: false, reason: err(q.error) };\n          if (q && q.data) return",
+    "if (q && q.data) return"
+  ],
+  '保存の書けた行を数える': [
+    "if (w && Array.isArray(w.data) && w.data.length > 0) return { ok: true, id: id };",
+    "return { ok: true, id: id };"
+  ],
+  '画面の字（取引先）': [
+    "    if (s === 'deleted') return '別の画面で削除されています（保存していません・画面を更新してください）';\n",
+    '',
+    'js/hub.js'
+  ],
+  '画面の字（記録）': [
+    "    if (s === 'deleted') return '別の画面で削除されています（保存していません・更新してください）';\n",
+    '',
+    'js/ledger.js'
   ],
   '消えていれば already': [
     "return (q && q.data && q.data.deleted_at) ? { ok: true, already: true } : { ok: false, reason: 'not-found' };",
@@ -62,13 +89,18 @@ if (process.argv.includes('--self-test')) {
 
 const 抜く名 = (process.argv.find((a) => a.startsWith('--self-test=')) || '').slice('--self-test='.length);
 let SuiteData;
+const 画面の字 = {};   // ★画面の 字を 抜く 守りは ここへ 写しを 置く（無ければ 本物を 読む）
+function 画面(名) { return 画面の字[名] != null ? 画面の字[名] : fs.readFileSync(path.join(HERE, '..', 名), 'utf8'); }
 if (抜く名) {
-  const [前, 後] = 守り[抜く名] || [];
-  const 字 = fs.readFileSync(SRC, 'utf8');
+  const [前, 後, 別] = 守り[抜く名] || [];
+  const 字 = fs.readFileSync(別 ? path.join(HERE, '..', 別) : SRC, 'utf8');
   if (!前 || 字.split(前).length !== 2) { console.log('  NG   抜く字が 1か所に 見つからない: ' + 抜く名); process.exit(2); }
-  const 写し = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'zg-self-')), 'suite-data.js');
-  fs.writeFileSync(写し, 字.replace(前, 後));
-  SuiteData = require(写し);
+  if (別) { 画面の字[別] = 字.replace(前, 後); SuiteData = require(SRC); }
+  else {
+    const 写し = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'zg-self-')), 'suite-data.js');
+    fs.writeFileSync(写し, 字.replace(前, 後));
+    SuiteData = require(写し);
+  }
 } else {
   SuiteData = require(SRC);
 }
@@ -172,6 +204,107 @@ test('字の見張り：deleted_at を 書く update は sofutoKesu の 1本だ�
   消し.forEach((l) => { if (!/\.is\('deleted_at', null\)\.select\(/.test(l)) throw new Error('生きている 行だけ・select が 無い: ' + l.trim()); });
   eq((字.match(/return sofutoKesu\(sb, nowIso, 'pay_(partners|ledger)', id\)/g) || []).length, 2, '消しは 2口とも sofutoKesu を 通る');
   eq((字.match(/var r = kesetaKa\(w\);/g) || []).length, 1, 'kesetaKa で 判じる 数');
+});
+
+/* ★件B（2026-11-19）消した行を 保存で 生き返らせない★
+   前は upsert が 常に deleted_at:null を 書いたので、別の端末で 消された 記録・取引先を 古い 画面から 保存すると 変更ごと 一覧に 戻った。 */
+const 保存 = {
+  partners: (sd, id, 名) => sd.partners.upsert({ id, data: { name: 名 } }),
+  ledger: (sd, id, 名) => sd.ledger.upsert({ id, employeeId: 'e1', ymd: '2026-07-01', data: { uriage: 777, memo: 名 } })
+};
+const 中身 = { partners: (r) => r.data.name, ledger: (r) => r.data.memo };
+const 一覧 = { partners: (sd) => sd.partners.list(), ledger: (sd) => sd.ledger.list({ from: '2026-07-01', to: '2026-07-31' }) };
+for (const [名, api, 表, 頭] of 口) {
+  test(名 + '：別の画面で 消された 行を 保存→deleted・生き返らない・中身も 時刻も そのまま', async () => {
+    const { sd, tables } = setup();
+    await sd[api].remove(頭 + '_mine');
+    const 前 = JSON.parse(JSON.stringify(tables[表].find((x) => x.id === 頭 + '_mine')));
+    const r = await 保存[api](sd, 頭 + '_mine', '古い画面の直し');
+    eq(r.ok, false, 'ok（消えた 行の 保存が 通った）');
+    eq(r.reason, 'deleted', 'reason');
+    const 後 = tables[表].find((x) => x.id === 頭 + '_mine');
+    eq(後.deleted_at, 前.deleted_at, 'deleted_at が 動いた（生き返った）');
+    eq(JSON.stringify(後.data), JSON.stringify(前.data), '消えた 行の 中身が 書き換わった');
+    eq((await 一覧[api](sd)).some((x) => x.id === 頭 + '_mine'), false, '一覧に 戻ってきた');
+  });
+  test(名 + '：生きている 行は 今まで通り 直せる・deleted_at を 送らない・upsert を 送らない', async () => {
+    const { sb, sd, tables } = setup();
+    sb._reset();
+    const r = await 保存[api](sd, 頭 + '_mine', '直した');
+    eq(r.ok, true, 'ok ' + JSON.stringify(r));
+    eq(r.id, 頭 + '_mine', 'id');
+    eq(中身[api](tables[表].find((x) => x.id === 頭 + '_mine')), '直した', '中身');
+    const 書き = sb._calls.filter((c) => c.table === 表 && c.op !== 'select');
+    eq(書き.length, 1, '書きの 数');
+    eq(書き[0].op, 'update', '書きの 形');
+    eq('deleted_at' in 書き[0].payload, false, 'payload に deleted_at（読んで 書く 間に 消された 行を 戻す）');
+  });
+  test(名 + '：まだ 無い id を 渡す→新しく 作る（insert・deleted_at を 送らない）', async () => {
+    const { sb, sd, tables } = setup();
+    sb._reset();
+    const r = await 保存[api](sd, 頭 + '_new', '新しい');
+    eq(r.ok, true, 'ok ' + JSON.stringify(r));
+    eq(r.id, 頭 + '_new', 'id');
+    const 行 = tables[表].find((x) => x.id === 頭 + '_new');
+    eq(!!行 && 中身[api](行), '新しい', '作った 中身');
+    eq(行.account_id, 'u1', 'account_id');
+    const 作り = sb._calls.filter((c) => c.table === 表 && c.op === 'insert');
+    eq(作り.length, 1, 'insert の 数');
+    eq('deleted_at' in 作り[0].payload, false, 'insert の payload に deleted_at');
+    eq((await 一覧[api](sd)).some((x) => x.id === 頭 + '_new'), true, '一覧に 出ない');
+  });
+  test(名 + '：id 無しで 作る→insert・deleted_at を 送らない', async () => {
+    const { sb, sd } = setup();
+    sb._reset();
+    const r = api === 'partners' ? await sd.partners.upsert({ data: { name: 'N' } }) : await sd.ledger.upsert({ employeeId: 'e1', ymd: '2026-07-02', data: { uriage: 1 } });
+    eq(r.ok, true, 'ok ' + JSON.stringify(r));
+    const 書き = sb._calls.filter((c) => c.table === 表 && c.op !== 'select');
+    eq(書き.length === 1 && 書き[0].op, 'insert', '書きの 形');
+    eq('deleted_at' in 書き[0].payload, false, 'payload に deleted_at');
+  });
+  test(名 + '：他の口の 同じ id→ok にしない・他の口の 行は そのまま', async () => {
+    const { sd, tables } = setup();
+    const 前 = JSON.stringify(tables[表].find((x) => x.id === 頭 + '_tanin'));
+    const r = await 保存[api](sd, 頭 + '_tanin', '乗っ取り');
+    eq(r.ok, false, 'ok');
+    eq(JSON.stringify(tables[表].find((x) => x.id === 頭 + '_tanin')), 前, '他の口の 行が 変わった');
+  });
+  test(名 + '：保存の 引き直しの 失敗→ok にしない・作らない', async () => {
+    const { sb, sd, tables } = setup();
+    await sd[api].remove(頭 + '_mine');
+    sb._failNext(表, 'select');
+    const n = tables[表].length;
+    const r = await 保存[api](sd, 頭 + '_mine', '古い画面の直し');
+    eq(r.ok, false, 'ok');
+    eq(r.reason, 'fake-failure', 'reason');
+    eq(tables[表].length, n, '行が 増えた');
+  });
+  test(名 + '：保存の 倉庫の 失敗→ok にしない', async () => {
+    const { sb, sd } = setup();
+    sb._failNext(表, 'update');
+    const r = await 保存[api](sd, 頭 + '_mine', '直した');
+    eq(r.ok, false, 'ok');
+    eq(r.reason, 'fake-failure', 'reason');
+  });
+}
+
+test('取引先：sort を 渡さずに 直す→並び順は 倉庫の まま・渡せば 変わる', async () => {
+  const { sd, tables } = setup();
+  tables.pay_partners.find((x) => x.id === 'pt_mine').sort = 7;
+  await sd.partners.upsert({ id: 'pt_mine', data: { name: '改名' } });
+  eq(tables.pay_partners.find((x) => x.id === 'pt_mine').sort, 7, 'sort を 渡さないのに 動いた');
+  await sd.partners.upsert({ id: 'pt_mine', sort: 2, data: { name: '改名' } });
+  eq(tables.pay_partners.find((x) => x.id === 'pt_mine').sort, 2, 'sort を 渡したのに 動かない');
+});
+
+test('字の見張り：保存の 道に deleted_at:null と upsert が 無い・画面に deleted の 字', () => {
+  const 字 = fs.readFileSync(SRC, 'utf8');
+  const 中の字 = 字.split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n');   // 注の 行は 数えない
+  eq((中の字.match(/deleted_at:\s*null/g) || []).length, 0, 'deleted_at: null を 書く 所');
+  eq((字.match(/from\('pay_(partners|ledger)'\)\.upsert\(/g) || []).length, 0, '台帳・取引先の upsert');
+  eq((字.match(/ikiteruNaraNaosu\(sb, 'pay_(partners|ledger)', id, naosu, atarashii\)/g) || []).length, 2, '保存は 2口とも 生きている 行だけ 直す');
+  eq(/if \(s === 'deleted'\) return '別の画面で削除されています/.test(画面('js/hub.js')), true, '取引先の 画面に deleted の 字が 無い');
+  eq(/if \(s === 'deleted'\) return '別の画面で削除されています/.test(画面('js/ledger.js')), true, '記録の 画面に deleted の 字が 無い');
 });
 
 let ng = 0;

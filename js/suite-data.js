@@ -96,6 +96,25 @@
       });
   }
 
+  // ★消した行を 保存で 生き返らせない★（2026-11-19）＝前は upsert が 常に deleted_at:null を 書いたので、別の端末で
+  //   消された 台帳の記録・取引先を 古い 画面から 保存すると 変更ごと 生き返った（お金の記録が 黙って 一覧に 戻る）。
+  //   ⇒ 既存 id は update に .is('deleted_at', null)＝生きている 行だけ 直す（読んでから 書く 間に 消されても 戻さない）。
+  //      0行なら 引き直し、消えていれば {ok:false, reason:'deleted'}（hub.js の jpFail・ledger.js の fail が 字に する）、
+  //      行が 無ければ 新しく 作る（insert・deleted_at は 書かない＝倉庫の 既定 null）。他の口の 同じ id は insert が 断る。
+  function ikiteruNaraNaosu(sb, table, id, patch, atarashii) {
+    return Promise.resolve(sb.from(table).update(patch).eq('id', id).is('deleted_at', null).select('id'))
+      .then(function (w) {
+        if (w && w.error) return { ok: false, reason: err(w.error) };
+        if (w && Array.isArray(w.data) && w.data.length > 0) return { ok: true, id: id };
+        return Promise.resolve(sb.from(table).select('id,deleted_at').eq('id', id).maybeSingle()).then(function (q) {
+          if (q && q.error) return { ok: false, reason: err(q.error) };
+          if (q && q.data) return { ok: false, reason: q.data.deleted_at ? 'deleted' : 'not-found' };
+          return Promise.resolve(sb.from(table).insert(atarashii))
+            .then(function (i) { return (i && i.error) ? { ok: false, reason: err(i.error) } : { ok: true, id: id }; });
+        });
+      });
+  }
+
   // 入力検査の失敗も「拒否されたPromise」で返す(同期throwと非同期失敗の2系統に割れない)。
   // 呼び出し側は .catch / try-await の1本だけ書けばよい。
   function P(fn) { try { return Promise.resolve(fn()); } catch (e) { return Promise.reject(e); } }
@@ -254,15 +273,15 @@
           return uid().then(function (u) {
             if (!u) return { ok: false, reason: 'no-user' };
             var id = p.id || newId('pt');
-            // ★upsert は行を丸ごと置換する(欠けた列は既定値に戻る)。既存を直す時は
-            //   sort を渡さないと並び順が黙って0に戻るので、既存行から引き継ぐ。
-            var pre = p.id ? Promise.resolve(sb.from('pay_partners').select('sort').eq('id', id).maybeSingle()) : Promise.resolve({ data: null });
-            return pre.then(function (r) {
-              if (r && r.error) return { ok: false, reason: err(r.error) };
-              var sort = (p.sort != null) ? p.sort : ((r && r.data && r.data.sort) || 0);
-              return Promise.resolve(sb.from('pay_partners').upsert({ id: id, account_id: u, sort: sort, data: p.data, deleted_at: null, updated_at: nowIso() }))
-                .then(function (w) { return (w && w.error) ? { ok: false, reason: err(w.error) } : { ok: true, id: id }; });
-            }).catch(function (e) { return { ok: false, reason: err(e) }; });
+            // ★既存を 直す時は 渡された 列だけ update する＝sort を 渡さなければ 並び順は 倉庫の まま（前は 読んでから 丸ごと upsert）。
+            //   消えた 行は 直さない（ikiteruNaraNaosu）。
+            var naosu = { data: p.data, updated_at: nowIso() };
+            if (p.sort != null) naosu.sort = p.sort;
+            var atarashii = { id: id, account_id: u, sort: (p.sort != null) ? p.sort : 0, data: p.data, updated_at: naosu.updated_at };
+            var w = p.id ? ikiteruNaraNaosu(sb, 'pay_partners', id, naosu, atarashii)
+              : Promise.resolve(sb.from('pay_partners').insert(atarashii))
+                .then(function (i) { return (i && i.error) ? { ok: false, reason: err(i.error) } : { ok: true, id: id }; });
+            return w.catch(function (e) { return { ok: false, reason: err(e) }; });
           });
           });
         },
@@ -307,10 +326,12 @@
           return uid().then(function (u) {
             if (!u) return { ok: false, reason: 'no-user' };
             var id = row.id || newId('lg');
-            return Promise.resolve(sb.from('pay_ledger').upsert({
-              id: id, account_id: u, employee_id: row.employeeId, ymd: row.ymd,
-              data: row.data, deleted_at: null, updated_at: nowIso()
-            })).then(function (w) { return (w && w.error) ? { ok: false, reason: err(w.error), id: id } : { ok: true, id: id }; })
+            var naosu = { employee_id: row.employeeId, ymd: row.ymd, data: row.data, updated_at: nowIso() };
+            var atarashii = { id: id, account_id: u, employee_id: row.employeeId, ymd: row.ymd, data: row.data, updated_at: naosu.updated_at };
+            var w = row.id ? ikiteruNaraNaosu(sb, 'pay_ledger', id, naosu, atarashii)
+              : Promise.resolve(sb.from('pay_ledger').insert(atarashii))
+                .then(function (i) { return (i && i.error) ? { ok: false, reason: err(i.error) } : { ok: true, id: id }; });
+            return w.then(function (r) { r.id = id; return r; })
               .catch(function (e) { return { ok: false, reason: err(e), id: id }; });
           }).then(function (r) { r.id = r.id || null; return r; });
           });

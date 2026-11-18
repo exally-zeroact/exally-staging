@@ -56,6 +56,7 @@
     var s = String((r && r.reason) || r || '');
     if (/no-user/.test(s)) return 'ログインし直してください';
     if (/not-found/.test(s)) return '見つかりませんでした（更新してください）';
+    if (s === 'deleted') return '別の画面で削除されています（保存していません・更新してください）';
     if (/Failed to fetch|NetworkError|network/i.test(s)) return 'ネットに繋がりませんでした';
     return s || '保存できませんでした';
   }
