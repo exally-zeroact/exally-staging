@@ -267,6 +267,8 @@ const FILES = [
   ['hf-ita-soroe.test.mjs', '--self-test'],// ★直しを 1つずつ 壊すと 赤に なるか（6通り）
   'hf-val-narabekae.test.mjs',            // ★並べ替えで 流し直しても 打った 値は 計算側で 数のまま（=SORT の 先頭が 字に 化けた・2026-11-13）
   ['hf-val-narabekae.test.mjs', '--self-test'],// ★直しを 1つずつ 壊すと 赤に なるか（3通り）
+  'ji-no-masu-zero.test.mjs',             // ★字の マス '007 の 頭の 0 を 落とさない（台・HF の 3口・手打ちの ' は 答えに 入らない・2026-11-19）
+  ['ji-no-masu-zero.test.mjs', '--self-test'],// ★直しを 1つずつ 壊すと 赤に なるか（6通り）
   'torikeshi-atai.test.mjs',              // ★値の取り消し／やり直しは 打った板へ（別の板で Ctrl+Y すると その板を 上書きしていた）・保護は 巻き戻さない（2026-11-13）
   ['torikeshi-atai.test.mjs', '--self-test'],// ★値で 板を移らない・控えの protect を 合わせない 形で 赤に なるか
   'torikeshi-dji.test.mjs',               // ★値の取り消しで ファイルの字の マス（d字）が 数に 化けない・0 が 消えない・f は 字（2026-11-14 件f）

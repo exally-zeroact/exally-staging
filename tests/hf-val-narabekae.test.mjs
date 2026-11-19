@@ -19,7 +19,7 @@ const 元のhtml = fs.readFileSync(path.join(ROOT, 'book.html'), 'utf8');
 const 元のエンジン = fs.readFileSync(path.join(ROOT, 'exally-formula.js'), 'utf8');
 
 /* ★壊し方★＝直しを 1つずつ 元の形へ 戻す。★当たらなければ 壊せていない＝その場で 落とす★ */
-const 直し = "(cell.d字 ? cell.v : toHFVal(cell.v))";
+const 直し = "(cell.d字 ? \"'\" + cell.v : toHFVal(cell.v))";
 const 壊し方 = {
   通さない: (h) => h.replace(直し, 'cell.v'),
   字も通す: (h) => h.replace(直し, 'toHFVal(cell.v)'),
